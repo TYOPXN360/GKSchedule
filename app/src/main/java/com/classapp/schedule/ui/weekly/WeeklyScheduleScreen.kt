@@ -244,11 +244,11 @@ fun WeeklyScheduleScreen(
                             Column {
                                 Text(block.course.name, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold,
                                     color = CourseColors.getTextColor(block.course.colorIndex, monetColors),
-                                    maxLines = if (block.span <= 2) 2 else 4, overflow = TextOverflow.Ellipsis)
+                                    overflow = TextOverflow.Ellipsis)
                                 if (block.course.classroom.isNotEmpty()) {
                                     Text(block.course.classroom, style = MaterialTheme.typography.labelSmall,
                                         color = CourseColors.getTextColor(block.course.colorIndex, monetColors).copy(alpha = 0.7f),
-                                        maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                        overflow = TextOverflow.Ellipsis)
                                 }
                             }
                         }
