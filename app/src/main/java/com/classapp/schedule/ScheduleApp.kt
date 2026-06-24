@@ -47,7 +47,6 @@ sealed class Screen(val route: String) {
     data object Today : Screen("today")
     data object Weekly : Screen("weekly")
     data object Courses : Screen("courses")
-    data object Settings : Screen("settings")
     data object About : Screen("about")
     data object Login : Screen("login")
     data object CourseEdit : Screen("course_edit?courseId={courseId}") {
@@ -224,94 +223,10 @@ fun ScheduleApp(
                     savedDeptName = savedDeptName,
                     onLogin = { navController.navigate(Screen.Login.route) },
                     onLogout = { viewModel.logout() },
-                    onOpenSettings = { navController.navigate(Screen.Settings.route) },
+                    onOpenSettings = {
+                        context.startActivity(android.content.Intent(context, com.classapp.schedule.ui.settings.SettingsActivity::class.java))
+                    },
                     onOpenAbout = { }
-                )
-            }
-
-            composable(Screen.Settings.route) {
-                SettingsScreen(
-                    semesterStart = semesterStart, totalWeeks = totalWeeks,
-                    periodsPerDay = periodsPerDay, darkMode = darkMode,
-                    language = language, firstDayOfWeek = firstDayOfWeek,
-                    gridHeight = gridHeight, gridCorner = gridCorner,
-                    gridSpacing = gridSpacing, showPeriodLabel = showPeriodLabel,
-                    autoGridHeight = autoGridHeight,
-                    mergeConsecutive = mergeConsecutive,
-                    showTimeLabel = showTimeLabel,
-                    detailedSplit = detailedSplit,
-                    colorEngine = colorEngine,
-                    reminderMinutes = reminderMinutes,
-                    onSemesterStartChange = { viewModel.setSemesterStart(it) },
-                    onTotalWeeksChange = { viewModel.setTotalWeeks(it) },
-                    onPeriodsPerDayChange = { viewModel.setPeriodsPerDay(it) },
-                    onDarkModeChange = { viewModel.setDarkMode(it) },
-                    onLanguageChange = { viewModel.setLanguage(it) },
-                    onFirstDayOfWeekChange = { viewModel.setFirstDayOfWeek(it) },
-                    onGridHeightChange = { viewModel.setGridHeight(it) },
-                    onGridCornerChange = { viewModel.setGridCorner(it) },
-                    onGridSpacingChange = { viewModel.setGridSpacing(it) },
-                    onShowPeriodLabelChange = { viewModel.setShowPeriodLabel(it) },
-                    onAutoGridHeightChange = { viewModel.setAutoGridHeight(it) },
-                    onMergeConsecutiveChange = { viewModel.setMergeConsecutive(it) },
-                    onShowTimeLabelChange = { viewModel.setShowTimeLabel(it) },
-                    onDetailedSplitChange = { viewModel.setDetailedSplit(it) },
-                    onColorEngineChange = { viewModel.setColorEngine(it) },
-                    onReminderMinutesChange = { viewModel.setReminderMinutes(it) },
-                    onExportJson = {
-                        scope.launch {
-                            val json = com.classapp.schedule.util.JsonImportExport.exportToJson(courses)
-                            if (viewModel.saveJsonToDownload(json)) {
-                                android.widget.Toast.makeText(context, context.getString(R.string.export_success), android.widget.Toast.LENGTH_SHORT).show()
-                            }
-                        }
-                    },
-                    onImportJson = { importLauncher.launch("application/json") },
-                    onExportIcs = {
-                        scope.launch {
-                            val ics = viewModel.exportIcs()
-                            if (ics != null && viewModel.saveIcsToDownload(ics)) {
-                                android.widget.Toast.makeText(context, context.getString(R.string.export_success), android.widget.Toast.LENGTH_SHORT).show()
-                            }
-                        }
-                    },
-                    onExportImage = {
-                        scope.launch {
-                            try {
-                                val view = android.widget.FrameLayout(context)
-                                val composeView = androidx.compose.ui.platform.ComposeView(context).apply {
-                                    setContent {
-                                        MaterialTheme {
-                                            ScheduleGridForExport(
-                                                courses = courses,
-                                                periodsPerDay = periodsPerDay,
-                                                gridHeight = gridHeight,
-                                                gridCorner = gridCorner,
-                                                gridSpacing = gridSpacing
-                                            )
-                                        }
-                                    }
-                                }
-                                view.addView(composeView)
-                                val spec = android.view.View.MeasureSpec.makeMeasureSpec(1080, android.view.View.MeasureSpec.AT_MOST)
-                                view.measure(spec, spec)
-                                view.layout(0, 0, view.measuredWidth, view.measuredHeight)
-                                val bitmap = android.graphics.Bitmap.createBitmap(
-                                    view.measuredWidth.coerceAtLeast(1),
-                                    view.measuredHeight.coerceAtLeast(1),
-                                    android.graphics.Bitmap.Config.ARGB_8888
-                                )
-                                val canvas = android.graphics.Canvas(bitmap)
-                                canvas.drawColor(android.graphics.Color.WHITE)
-                                view.draw(canvas)
-                                if (com.classapp.schedule.util.ImageExport.saveBitmapToGallery(context, bitmap)) {
-                                    android.widget.Toast.makeText(context, context.getString(R.string.export_success), android.widget.Toast.LENGTH_SHORT).show()
-                                }
-                            } catch (e: Exception) {
-                                android.widget.Toast.makeText(context, "Export failed: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
-                            }
-                        }
-                    }
                 )
             }
 
