@@ -219,12 +219,20 @@ fun SettingsScreen(
             headlineContent = { Text(title) },
             supportingContent = { Text(label) },
             leadingContent = { Icon(icon, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+            trailingContent = {
+                Box {
+                    TextButton(onClick = { expanded = true }) {
+                        Text(label)
+                        Icon(Icons.Default.ArrowDropDown, null, modifier = Modifier.size(18.dp))
+                    }
+                    DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                        options.forEach { (key, text) ->
+                            DropdownMenuItem(text = { Text(text) }, onClick = { onSelect(key); expanded = false })
+                        }
+                    }
+                }
+            },
             modifier = Modifier.clickable { expanded = true }
         )
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            options.forEach { (key, text) ->
-                DropdownMenuItem(text = { Text(text) }, onClick = { onSelect(key); expanded = false })
-            }
-        }
     }
 }
