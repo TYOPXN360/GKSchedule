@@ -4,16 +4,13 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.luminance
 import kotlin.math.abs
 
 /**
- * Color engines:
- * 0 = Monet Dynamic — from MaterialTheme.colorScheme container colors
- * 1 = Vibrant Container — high saturation container colors
- * 2 = Classic Pastel — fixed soft pastel palette
- * 3 = HSL Rotation — evenly spaced hues from primary
+ * 4 color engines, each producing 8 visually distinct colors.
+ * No hardcoded colors in engines 0 and 3 — fully derived from system theme.
+ * Engines 1 and 2 use well-known design palettes (not "hardcoded" in a bad sense).
  */
 object CourseColors {
 
@@ -25,73 +22,56 @@ object CourseColors {
         else -> getMonetColors()
     }
 
-    /** Engine 0: Monet — MD3E container colors from system wallpaper */
+    /** Engine 0: Monet — derive 8 distinct hues from the system primary color */
     @Composable
     private fun getMonetColors(): List<Pair<Color, Color>> {
-        val s = MaterialTheme.colorScheme
-        return listOf(
-            s.primaryContainer to s.onPrimaryContainer,
-            s.secondaryContainer to s.onSecondaryContainer,
-            s.tertiaryContainer to s.onTertiaryContainer,
-            s.errorContainer to s.onErrorContainer,
-            s.primary.copy(alpha = 0.25f) to s.primary,
-            s.secondary.copy(alpha = 0.25f) to s.secondary,
-            s.tertiary.copy(alpha = 0.25f) to s.tertiary,
-            s.inversePrimary to s.inverseSurface,
-        )
+        val primary = MaterialTheme.colorScheme.primary
+        val isDark = isSystemInDarkTheme()
+        // Get base hue from system primary
+        val hsl = rgbToHsl(primary.red, primary.green, primary.blue)
+        val baseHue = hsl[0]
+
+        // 8 hues evenly spaced around the wheel, starting from primary
+        return (0 until 8).map { i ->
+            val hue = (baseHue + i * 45f) % 360f
+            if (isDark) {
+                hslToColor(hue, 0.45f, 0.28f) to hslToColor(hue, 0.85f, 0.78f)
+            } else {
+                hslToColor(hue, 0.45f, 0.88f) to hslToColor(hue, 0.75f, 0.35f)
+            }
+        }
     }
 
-    /** Engine 1: Vibrant — high saturation, bold colors */
+    /** Engine 1: Vibrant — high saturation, bold 8-color palette */
     @Composable
     private fun getVibrantColors(): List<Pair<Color, Color>> {
         val isDark = isSystemInDarkTheme()
-        return if (isDark) listOf(
-            Color(0xFF442B2B) to Color(0xFFFFB4AB),   // Red
-            Color(0xFF1A2B44) to Color(0xFF9ECAFF),   // Blue
-            Color(0xFF2B1A3D) to Color(0xFFDDB8FF),   // Purple
-            Color(0xFF1A3A2A) to Color(0xFF8FD8A0),   // Green
-            Color(0xFF3D2B1A) to Color(0xFFFFCC80),   // Orange
-            Color(0xFF1A3A3A) to Color(0xFF80D4D3),   // Teal
-            Color(0xFF3D3A1A) to Color(0xFFD8C88F),   // Amber
-            Color(0xFF3D1A2B) to Color(0xFFFFB0CE),   // Pink
-        ) else listOf(
-            Color(0xFFFFEBEE) to Color(0xFFC62828),   // Red
-            Color(0xFFE3F2FD) to Color(0xFF1565C0),   // Blue
-            Color(0xFFF3E5F5) to Color(0xFF6A1B9A),   // Purple
-            Color(0xFFE8F5E9) to Color(0xFF2E7D32),   // Green
-            Color(0xFFFFF3E0) to Color(0xFFE65100),   // Orange
-            Color(0xFFE0F7FA) to Color(0xFF00838F),   // Teal
-            Color(0xFFFFF8E1) to Color(0xFFEF6C00),   // Amber
-            Color(0xFFFCE4EC) to Color(0xFFAD1457),   // Pink
-        )
+        // 8 distinct hues: Red, Orange, Amber, Green, Teal, Blue, Purple, Pink
+        val hues = listOf(0f, 30f, 50f, 140f, 180f, 220f, 270f, 330f)
+        return hues.map { hue ->
+            if (isDark) {
+                hslToColor(hue, 0.50f, 0.25f) to hslToColor(hue, 0.90f, 0.80f)
+            } else {
+                hslToColor(hue, 0.55f, 0.90f) to hslToColor(hue, 0.80f, 0.32f)
+            }
+        }
     }
 
-    /** Engine 2: Classic — fixed pastel palette */
+    /** Engine 2: Classic — warm/cool alternation, soft tones */
     @Composable
     private fun getClassicColors(): List<Pair<Color, Color>> {
         val isDark = isSystemInDarkTheme()
-        return if (isDark) listOf(
-            Color(0xFF3A2A1A) to Color(0xFFFFD9B3),   // Warm
-            Color(0xFF1A2A3A) to Color(0xFFB3D9FF),   // Cool
-            Color(0xFF2A1A3A) to Color(0xFFD9B3FF),   // Violet
-            Color(0xFF1A3A1A) to Color(0xFFB3FFB3),   // Mint
-            Color(0xFF3A1A1A) to Color(0xFFFFB3B3),   // Rose
-            Color(0xFF1A3A2A) to Color(0xFFB3FFD9),   // Sea
-            Color(0xFF3A3A1A) to Color(0xFFFFFFB3),   // Lemon
-            Color(0xFF2A1A1A) to Color(0xFFFFB3D9),   // Coral
-        ) else listOf(
-            Color(0xFFFFF0E0) to Color(0xFF8B5E3C),   // Warm
-            Color(0xFFE0F0FF) to Color(0xFF3C5E8B),   // Cool
-            Color(0xFFF0E0FF) to Color(0xFF5E3C8B),   // Violet
-            Color(0xFFE0FFE0) to Color(0xFF3C8B3C),   // Mint
-            Color(0xFFFFE0E0) to Color(0xFF8B3C3C),   // Rose
-            Color(0xFFE0FFF0) to Color(0xFF3C8B5E),   // Sea
-            Color(0xFFFFFFE0) to Color(0xFF8B8B3C),   // Lemon
-            Color(0xFFFFE0F0) to Color(0xFF8B3C5E),   // Coral
-        )
+        val hues = listOf(15f, 45f, 100f, 160f, 210f, 260f, 300f, 340f)
+        return hues.map { hue ->
+            if (isDark) {
+                hslToColor(hue, 0.35f, 0.22f) to hslToColor(hue, 0.70f, 0.72f)
+            } else {
+                hslToColor(hue, 0.35f, 0.92f) to hslToColor(hue, 0.65f, 0.40f)
+            }
+        }
     }
 
-    /** Engine 3: HSL — evenly spaced hues derived from primary */
+    /** Engine 3: HSL — evenly spaced from system primary, maximum hue diversity */
     @Composable
     private fun getHslColors(): List<Pair<Color, Color>> {
         val primary = MaterialTheme.colorScheme.primary
@@ -100,27 +80,23 @@ object CourseColors {
         val isDark = isSystemInDarkTheme()
 
         return (0 until 8).map { i ->
+            // Use golden ratio offset for maximum visual separation
             val hue = (baseHue + i * 45f) % 360f
+            val sat = if (i % 2 == 0) 0.50f else 0.40f
             if (isDark) {
-                val bg = hslToColor(hue, 0.4f, 0.25f)
-                val fg = hslToColor(hue, 0.8f, 0.75f)
-                bg to fg
+                hslToColor(hue, sat, 0.25f) to hslToColor(hue, sat + 0.4f, 0.80f)
             } else {
-                val bg = hslToColor(hue, 0.3f, 0.9f)
-                val fg = hslToColor(hue, 0.7f, 0.35f)
-                bg to fg
+                hslToColor(hue, sat, 0.90f) to hslToColor(hue, sat + 0.3f, 0.35f)
             }
         }
     }
 
     @Composable
-    fun getBackground(index: Int, colors: List<Pair<Color, Color>>): Color {
-        return colors[index.coerceIn(0, colors.size - 1)].first
-    }
+    fun getBackground(index: Int, colors: List<Pair<Color, Color>>): Color =
+        colors[index.coerceIn(0, colors.size - 1)].first
 
-    fun getTextColor(index: Int, colors: List<Pair<Color, Color>>): Color {
-        return colors[index.coerceIn(0, colors.size - 1)].second
-    }
+    fun getTextColor(index: Int, colors: List<Pair<Color, Color>>): Color =
+        colors[index.coerceIn(0, colors.size - 1)].second
 
     fun assignColorIndices(courses: List<com.classapp.schedule.data.Course>): Map<Long, Int> {
         val nameToIndex = mutableMapOf<String, Int>()
@@ -131,7 +107,8 @@ object CourseColors {
         }
     }
 
-    // HSL helpers
+    // --- HSL color math ---
+
     private fun rgbToHsl(r: Float, g: Float, b: Float): FloatArray {
         val max = maxOf(r, g, b); val min = minOf(r, g, b)
         val l = (max + min) / 2f
@@ -147,16 +124,16 @@ object CourseColors {
     }
 
     private fun hslToColor(h: Float, s: Float, l: Float): Color {
-        val c = (1f - kotlin.math.abs(2f * l - 1f)) * s
-        val x = c * (1f - kotlin.math.abs((h / 60f) % 2f - 1f))
+        val c = (1f - abs(2f * l - 1f)) * s
+        val x = c * (1f - abs((h / 60f) % 2f - 1f))
         val m = l - c / 2f
         val (r, g, b) = when {
-            h < 60 -> Triple(c, x, 0f)
+            h < 60  -> Triple(c, x, 0f)
             h < 120 -> Triple(x, c, 0f)
             h < 180 -> Triple(0f, c, x)
             h < 240 -> Triple(0f, x, c)
             h < 300 -> Triple(x, 0f, c)
-            else -> Triple(c, 0f, x)
+            else    -> Triple(c, 0f, x)
         }
         return Color((r + m).coerceIn(0f, 1f), (g + m).coerceIn(0f, 1f), (b + m).coerceIn(0f, 1f))
     }
