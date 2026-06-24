@@ -135,21 +135,40 @@ fun ScheduleApp(
             }
         }
     ) { innerPadding ->
+        // Tab index for directional animation
+        val tabIndex = mapOf(
+            "today" to 0, "weekly" to 1, "courses" to 2, "about" to 3
+        )
+        fun tabIndexOf(route: String?): Int = tabIndex.entries
+            .firstOrNull { route?.startsWith(it.key) == true }?.value ?: 0
+
         NavHost(
             navController = navController,
             startDestination = Screen.Today.route,
             modifier = Modifier.padding(innerPadding),
             enterTransition = {
-                slideInHorizontally(initialOffsetX = { it }, animationSpec = tween(300)) + fadeIn(tween(300))
+                val from = tabIndexOf(initialState.destination.route)
+                val to = tabIndexOf(targetState.destination.route)
+                if (to >= from) {
+                    slideInHorizontally(initialOffsetX = { it }, animationSpec = tween(250)) + fadeIn(tween(200))
+                } else {
+                    slideInHorizontally(initialOffsetX = { -it }, animationSpec = tween(250)) + fadeIn(tween(200))
+                }
             },
             exitTransition = {
-                slideOutHorizontally(targetOffsetX = { -it }, animationSpec = tween(300)) + fadeOut(tween(200))
+                val from = tabIndexOf(initialState.destination.route)
+                val to = tabIndexOf(targetState.destination.route)
+                if (to >= from) {
+                    slideOutHorizontally(targetOffsetX = { -it }, animationSpec = tween(250)) + fadeOut(tween(150))
+                } else {
+                    slideOutHorizontally(targetOffsetX = { it }, animationSpec = tween(250)) + fadeOut(tween(150))
+                }
             },
             popEnterTransition = {
-                slideInHorizontally(initialOffsetX = { -it }, animationSpec = tween(300)) + fadeIn(tween(300))
+                slideInHorizontally(initialOffsetX = { -it }, animationSpec = tween(250)) + fadeIn(tween(200))
             },
             popExitTransition = {
-                slideOutHorizontally(targetOffsetX = { it }, animationSpec = tween(300)) + fadeOut(tween(200))
+                slideOutHorizontally(targetOffsetX = { it }, animationSpec = tween(250)) + fadeOut(tween(150))
             }
         ) {
             composable(Screen.Today.route) {
