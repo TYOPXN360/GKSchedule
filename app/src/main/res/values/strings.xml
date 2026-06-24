@@ -150,4 +150,10 @@
     <string name="about_copyright">© 2026 ClassApp</string>
     <string name="about_login_desc">Login with your campus account to sync courses</string>
     <string name="about_title">About</string>
+    <string name="credits_title">Credits</string>
+    <string name="credits_ai">AI Assistant</string>
+    <string name="credits_component">Component Library</string>
+    <string name="credits_language">Language</string>
+    <string name="credits_design">Design Style</string>
+    <string name="credits_projects">Referenced Projects</string>
 </resources>

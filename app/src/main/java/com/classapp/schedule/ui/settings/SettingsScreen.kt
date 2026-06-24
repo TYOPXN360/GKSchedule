@@ -167,10 +167,6 @@ fun SettingsScreen(
 
         HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
 
-        // === About ===
-        SectionHeader(stringResource(R.string.about))
-        SettingsItem(Icons.AutoMirrored.Filled.Article, stringResource(R.string.app_name), stringResource(R.string.version_format, "1.0.0"), onClick = {})
-
         Spacer(modifier = Modifier.height(32.dp))
     }
 }

@@ -200,14 +200,37 @@ fun AboutScreen(
             onDismissRequest = { showAboutDialog = false },
             title = { Text(stringResource(R.string.about_title)) },
             text = {
-                Column {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text("${stringResource(R.string.app_name)} v1.0.0")
-                    Spacer(modifier = Modifier.height(8.dp))
                     Text(stringResource(R.string.about_desc))
-                    Spacer(modifier = Modifier.height(8.dp))
+
+                    HorizontalDivider()
+
+                    Text(stringResource(R.string.credits_title), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+
+                    // AI
+                    CreditItem(stringResource(R.string.credits_ai), "XiaoMi-MiMo-v2.5-pro")
+
+                    // Component library
+                    CreditItem(stringResource(R.string.credits_component), "material-components-android")
+
+                    // Language
+                    CreditItem(stringResource(R.string.credits_language), "Jetpack Compose (Kotlin)")
+
+                    // Design
+                    CreditItem(stringResource(R.string.credits_design), "Material Design 3 Expressive")
+
+                    HorizontalDivider()
+
+                    Text(stringResource(R.string.credits_projects), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    Text("• SchedU (github.com/gnahz77/SchedU)", style = MaterialTheme.typography.bodySmall)
+                    Text("• 拾光课程表 (github.com/XingHeYuZhuan/shiguangschedule)", style = MaterialTheme.typography.bodySmall)
+                    Text("• TimeFlow (github.com/Lyxot/TimeFlow)", style = MaterialTheme.typography.bodySmall)
+
+                    HorizontalDivider()
+
                     Text(stringResource(R.string.about_school))
                     Text("portal.gdust.edu.cn")
-                    Spacer(modifier = Modifier.height(8.dp))
                     Text(stringResource(R.string.about_copyright))
                 }
             },
@@ -215,5 +238,13 @@ fun AboutScreen(
                 TextButton(onClick = { showAboutDialog = false }) { Text("OK") }
             }
         )
+    }
+}
+
+@Composable
+private fun CreditItem(label: String, value: String) {
+    Row {
+        Text("$label: ", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+        Text(value, style = MaterialTheme.typography.bodyMedium)
     }
 }
