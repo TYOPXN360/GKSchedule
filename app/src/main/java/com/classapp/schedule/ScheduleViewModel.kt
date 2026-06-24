@@ -47,6 +47,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     val savedDeptName: Flow<String> = settings.savedDeptName
     val detailedSplit: Flow<Boolean> = settings.detailedSplit
     val colorEngine: Flow<Int> = settings.colorEngine
+    val colorGroupMode: Flow<Int> = settings.colorGroupMode
     val themeColorIndex: Flow<Int> = settings.themeColorIndex
     val reminderMinutes: Flow<Int> = settings.reminderMinutes
     val courseNames: Flow<List<String>> = courseDao.getAllCourseNames()
@@ -147,6 +148,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     fun setShowTimeLabel(show: Boolean) { viewModelScope.launch { settings.setShowTimeLabel(show) } }
     fun setDetailedSplit(split: Boolean) { viewModelScope.launch { settings.setDetailedSplit(split) } }
     fun setColorEngine(engine: Int) { viewModelScope.launch { settings.setColorEngine(engine) } }
+    fun setColorGroupMode(mode: Int) { viewModelScope.launch { settings.setColorGroupMode(mode) } }
     fun setThemeColorIndex(idx: Int) { viewModelScope.launch { settings.setThemeColorIndex(idx) } }
     fun setReminderMinutes(min: Int) { viewModelScope.launch { settings.setReminderMinutes(min) } }
 

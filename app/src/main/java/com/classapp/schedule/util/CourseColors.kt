@@ -96,13 +96,40 @@ object CourseColors {
     fun getTextColor(index: Int, colors: List<Pair<Color, Color>>): Color =
         colors[index.coerceIn(0, colors.size - 1)].second
 
-    fun assignColorIndices(courses: List<com.classapp.schedule.data.Course>): Map<Long, Int> {
-        // Group by (name + classroom) — same subject different location = different color
-        val groupToIndex = mutableMapOf<String, Int>()
-        var nextIndex = 0
+    /**
+     * Assign color index per course with group mode:
+     * 0 = same color (by name only)
+     * 1 = same hue, different saturation (by name for hue, classroom for sat variation)
+     * 2 = different color (by name + classroom)
+     * Returns: Map<courseId, colorIndex>
+     */
+    fun assignColorIndices(
+        courses: List<com.classapp.schedule.data.Course>,
+        groupMode: Int = 2
+    ): Map<Long, Int> {
+        val nameToIndex = mutableMapOf<String, Int>()
+        val keyToIndex = mutableMapOf<String, Int>()
+        var nextColor = 0
+
         return courses.associate { course ->
-            val key = "${course.name}|${course.classroom}"
-            val idx = groupToIndex.getOrPut(key) { nextIndex++ }
+            val idx = when (groupMode) {
+                0 -> {
+                    // Same color by name
+                    nameToIndex.getOrPut(course.name) { nextColor++ }
+                }
+                1 -> {
+                    // Same hue base by name, but offset by classroom
+                    val baseIdx = nameToIndex.getOrPut(course.name) { nextColor++ }
+                    val classroomVariants = keyToIndex.getOrPut("${course.name}|${course.classroom}") {
+                        baseIdx // same base, but we'll handle saturation in rendering
+                    }
+                    classroomVariants
+                }
+                else -> {
+                    // Different color by name + classroom
+                    keyToIndex.getOrPut("${course.name}|${course.classroom}") { nextColor++ }
+                }
+            }
             course.id to idx
         }
     }

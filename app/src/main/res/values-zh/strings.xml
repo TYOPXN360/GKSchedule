@@ -92,6 +92,10 @@
     <string name="color_engine_vibrant">鲜艳色板</string>
     <string name="color_engine_classic">经典粉彩</string>
     <string name="color_engine_hsl">HSL 色环旋转</string>
+    <string name="color_group_mode">同科目颜色区分</string>
+    <string name="color_group_same">同色</string>
+    <string name="color_group_same_sat">同色不同饱和度</string>
+    <string name="color_group_diff">完全不同色</string>
     <string name="first_day_of_week">每周起始日</string>
     <string name="first_day_monday">周一</string>
     <string name="first_day_sunday">周日</string>

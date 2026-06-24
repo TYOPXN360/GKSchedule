@@ -41,6 +41,7 @@ fun SettingsScreen(
     showTimeLabel: Boolean,
     detailedSplit: Boolean,
     colorEngine: Int,
+    colorGroupMode: Int,
     reminderMinutes: Int,
     onSemesterStartChange: (LocalDate) -> Unit,
     onTotalWeeksChange: (Int) -> Unit,
@@ -57,6 +58,7 @@ fun SettingsScreen(
     onShowTimeLabelChange: (Boolean) -> Unit,
     onDetailedSplitChange: (Boolean) -> Unit,
     onColorEngineChange: (Int) -> Unit,
+    onColorGroupModeChange: (Int) -> Unit,
     onReminderMinutesChange: (Int) -> Unit,
     onExportJson: () -> Unit,
     onImportJson: () -> Unit,
@@ -121,6 +123,13 @@ fun SettingsScreen(
             "3" to stringResource(R.string.color_engine_hsl)
         )
         DropdownItem(Icons.Default.Palette, stringResource(R.string.color_engine), colorEngineOptions, colorEngine.toString(), { onColorEngineChange(it.toInt()) })
+
+        val groupModeOptions = listOf(
+            "0" to stringResource(R.string.color_group_same),
+            "1" to stringResource(R.string.color_group_same_sat),
+            "2" to stringResource(R.string.color_group_diff)
+        )
+        DropdownItem(Icons.Default.FormatColorFill, stringResource(R.string.color_group_mode), groupModeOptions, colorGroupMode.toString(), { onColorGroupModeChange(it.toInt()) })
         if (!autoGridHeight) {
             StepperItem(Icons.Default.Height, stringResource(R.string.grid_height), gridHeight, 36, 80, onGridHeightChange)
         }

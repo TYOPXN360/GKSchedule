@@ -92,6 +92,10 @@
     <string name="color_engine_vibrant">Vibrant</string>
     <string name="color_engine_classic">Classic Pastel</string>
     <string name="color_engine_hsl">HSL Rotation</string>
+    <string name="color_group_mode">Same Subject Colors</string>
+    <string name="color_group_same">Same Color</string>
+    <string name="color_group_same_sat">Same Hue, Diff Saturation</string>
+    <string name="color_group_diff">Completely Different</string>
     <string name="first_day_of_week">First Day of Week</string>
     <string name="first_day_monday">Monday</string>
     <string name="first_day_sunday">Sunday</string>

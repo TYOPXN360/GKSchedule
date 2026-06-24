@@ -47,6 +47,7 @@ fun WeeklyScheduleScreen(
     showTimeLabel: Boolean,
     detailedSplit: Boolean,
     colorEngine: Int,
+    colorGroupMode: Int,
     isRefreshing: Boolean,
     onWeekChange: (Int) -> Unit,
     onCourseClick: (Course) -> Unit,
@@ -65,27 +66,30 @@ fun WeeklyScheduleScreen(
 
     // Build render blocks
     // Build render blocks with dynamic color assignment
-    val renderBlocks = remember(courses, currentWeek, mergeConsecutive, detailedSplit) {
+    val renderBlocks = remember(courses, currentWeek, mergeConsecutive, detailedSplit, colorGroupMode) {
         val weekCourses = courses.filter { it.isInWeek(currentWeek) }
         data class Block(val course: Course, val day: Int, val start: Int, val span: Int, val colorIdx: Int)
-        // Assign unique color index per (name + classroom)
-        val colorMap = mutableMapOf<String, Int>()
+        val nameToIdx = mutableMapOf<String, Int>()
+        val keyToIdx = mutableMapOf<String, Int>()
         var nextColor = 0
         val blocks = mutableListOf<Block>()
         weekCourses.forEach { c ->
-            val key = "${c.name}|${c.classroom}"
-            val colorIdx = colorMap.getOrPut(key) { nextColor++ }
+            val ci = when (colorGroupMode) {
+                0 -> nameToIdx.getOrPut(c.name) { nextColor++ }
+                1 -> nameToIdx.getOrPut(c.name) { nextColor++ }
+                else -> keyToIdx.getOrPut("${c.name}|${c.classroom}") { nextColor++ }
+            }
             if (mergeConsecutive) {
-                blocks.add(Block(c, c.dayOfWeek, c.startPeriod, c.periods, colorIdx))
+                blocks.add(Block(c, c.dayOfWeek, c.startPeriod, c.periods, ci))
             } else if (detailedSplit) {
                 for (p in c.startPeriod..c.endPeriod()) {
-                    blocks.add(Block(c, c.dayOfWeek, p, 1, colorIdx))
+                    blocks.add(Block(c, c.dayOfWeek, p, 1, ci))
                 }
             } else {
                 var p = c.startPeriod
                 while (p <= c.endPeriod()) {
                     val pairEnd = minOf(p + 1, c.endPeriod())
-                    blocks.add(Block(c, c.dayOfWeek, p, pairEnd - p + 1, colorIdx))
+                    blocks.add(Block(c, c.dayOfWeek, p, pairEnd - p + 1, ci))
                     p = pairEnd + 1
                 }
             }
@@ -170,15 +174,19 @@ fun WeeklyScheduleScreen(
                 modifier = Modifier.fillMaxSize()
             ) { page ->
                 val week = page + 1
-                val weekBlocks = remember(week) {
+                val weekBlocks = remember(week, colorGroupMode) {
                     val weekCourses = courses.filter { it.isInWeek(week) }
                     data class B(val course: Course, val day: Int, val start: Int, val span: Int, val colorIdx: Int)
-                    val colorMap = mutableMapOf<String, Int>()
+                    val nameToIdx = mutableMapOf<String, Int>()
+                    val keyToIdx = mutableMapOf<String, Int>()
                     var nextColor = 0
                     val blocks = mutableListOf<B>()
                     weekCourses.forEach { c ->
-                        val key = "${c.name}|${c.classroom}"
-                        val ci = colorMap.getOrPut(key) { nextColor++ }
+                        val ci = when (colorGroupMode) {
+                            0 -> nameToIdx.getOrPut(c.name) { nextColor++ }
+                            1 -> nameToIdx.getOrPut(c.name) { nextColor++ }
+                            else -> keyToIdx.getOrPut("${c.name}|${c.classroom}") { nextColor++ }
+                        }
                         if (mergeConsecutive) {
                             blocks.add(B(c, c.dayOfWeek, c.startPeriod, c.periods, ci))
                         } else if (detailedSplit) {
