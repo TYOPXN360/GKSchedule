@@ -1,0 +1,33 @@
+# Build
+/build/
+/app/build/
+/.gradle/
+/.kotlin/
+/.android/
+*.apk
+*.aab
+
+# Source tools (JDK, SDK, Gradle zip)
+/source/
+
+# Local
+/local.properties
+/set-env.sh
+/build.sh
+*.har
+*.png
+*.db
+*.db-wal
+*.db-shm
+
+# IDE
+/.idea/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Plans (not source)
+PLAN.md
+PLAN_PHASE2.md
