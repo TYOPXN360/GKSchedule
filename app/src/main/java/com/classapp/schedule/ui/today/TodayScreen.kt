@@ -124,41 +124,43 @@ fun TodayScreen(
             }
         }
 
-        // Tomorrow preview
-        item {
-            Spacer(modifier = Modifier.height(8.dp))
-            HorizontalDivider()
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    Icons.Default.WbSunny, contentDescription = null,
-                    modifier = Modifier.size(20.dp),
-                    tint = MaterialTheme.colorScheme.primary
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = stringResource(R.string.tomorrow_title),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
-            Spacer(modifier = Modifier.height(4.dp))
-        }
-
-        if (tomorrowCourses.isEmpty()) {
+        // Tomorrow preview — only show between 16:00 and 23:59
+        if (currentTimeMinutes >= 960) {
             item {
-                EmptyCard(stringResource(R.string.no_course_tomorrow))
+                Spacer(modifier = Modifier.height(8.dp))
+                HorizontalDivider()
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Default.WbSunny, contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = stringResource(R.string.tomorrow_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+                Spacer(modifier = Modifier.height(4.dp))
             }
-        } else {
-            items(tomorrowCourses) { course ->
-                CourseCard(
-                    course = course,
-                    startTime = course.getActualStartTime(getStartTime),
-                    endTime = course.getActualEndTime(getEndTime),
-                    isCurrent = false,
-                    isNext = false,
-                    onClick = { detailCourse = course }
-                )
+
+            if (tomorrowCourses.isEmpty()) {
+                item {
+                    EmptyCard(stringResource(R.string.no_course_tomorrow))
+                }
+            } else {
+                items(tomorrowCourses) { course ->
+                    CourseCard(
+                        course = course,
+                        startTime = course.getActualStartTime(getStartTime),
+                        endTime = course.getActualEndTime(getEndTime),
+                        isCurrent = false,
+                        isNext = false,
+                        onClick = { detailCourse = course }
+                    )
+                }
             }
         }
 
