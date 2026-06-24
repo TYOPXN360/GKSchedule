@@ -17,32 +17,18 @@ object CourseColors {
      */
     @Composable
     fun getMonetColors(): List<Pair<Color, Color>> {
-        val scheme = MaterialTheme.colorScheme
-        // Derive from MaterialTheme tokens
-        val baseColors = listOf(
-            scheme.primary to scheme.onPrimary,
-            scheme.secondary to scheme.onSecondary,
-            scheme.tertiary to scheme.onTertiary,
-            scheme.error to scheme.onError,
-            scheme.primaryContainer to scheme.onPrimaryContainer,
-            scheme.secondaryContainer to scheme.onSecondaryContainer,
-            scheme.tertiaryContainer to scheme.onTertiaryContainer,
-            scheme.inversePrimary to scheme.inverseSurface,
+        val s = MaterialTheme.colorScheme
+        // MD3E container colors — vibrant and readable
+        return listOf(
+            s.primaryContainer to s.onPrimaryContainer,
+            s.secondaryContainer to s.onSecondaryContainer,
+            s.tertiaryContainer to s.onTertiaryContainer,
+            s.errorContainer to s.onErrorContainer,
+            s.primary.copy(alpha = 0.25f) to s.primary,
+            s.secondary.copy(alpha = 0.25f) to s.secondary,
+            s.tertiary.copy(alpha = 0.25f) to s.tertiary,
+            s.inversePrimary to s.inverseSurface,
         )
-        // Lighten/darken for variety
-        val isDark = isSystemInDarkTheme()
-        return baseColors.map { (bg, fg) ->
-            // Vibrant but readable backgrounds
-            if (isDark) {
-                // Dark mode: use primary color with more alpha for visibility
-                val darkBg = bg.copy(alpha = 0.3f).compositeOver(scheme.surfaceVariant)
-                darkBg to fg
-            } else {
-                // Light mode: soft pastel from primary
-                val lightBg = bg.copy(alpha = 0.18f).compositeOver(scheme.surface)
-                lightBg to bg
-            }
-        }
     }
 
     /**
