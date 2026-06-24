@@ -103,6 +103,8 @@ fun ScheduleApp(
     val bottomBarScreens = listOf(Screen.Today, Screen.Weekly, Screen.Courses, Screen.About)
     val showBottomBar = currentRoute in bottomBarScreens.map { it.route } && currentRoute != Screen.Login.route
 
+    val navView = androidx.compose.ui.platform.LocalView.current
+
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
@@ -119,6 +121,7 @@ fun ScheduleApp(
                             label = { Text(triple.second) },
                             selected = currentRoute == screen.route,
                             onClick = {
+                                com.classapp.schedule.util.HapticFeedback.light(navView)
                                 if (currentRoute != screen.route) {
                                     navController.navigate(screen.route) {
                                         popUpTo(Screen.Today.route) { saveState = true }
