@@ -1,5 +1,6 @@
 package com.classapp.schedule.util
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
@@ -29,10 +30,18 @@ object CourseColors {
             scheme.inversePrimary to scheme.inverseSurface,
         )
         // Lighten/darken for variety
+        val isDark = isSystemInDarkTheme()
         return baseColors.map { (bg, fg) ->
-            // Use a lighter variant for course blocks
-            val lightBg = bg.copy(alpha = 0.15f).compositeOver(scheme.surface)
-            lightBg to bg
+            // Vibrant but readable backgrounds
+            if (isDark) {
+                // Dark mode: use primary color with more alpha for visibility
+                val darkBg = bg.copy(alpha = 0.3f).compositeOver(scheme.surfaceVariant)
+                darkBg to fg
+            } else {
+                // Light mode: soft pastel from primary
+                val lightBg = bg.copy(alpha = 0.18f).compositeOver(scheme.surface)
+                lightBg to bg
+            }
         }
     }
 
