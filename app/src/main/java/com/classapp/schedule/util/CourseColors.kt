@@ -97,12 +97,8 @@ object CourseColors {
         colors[index.coerceIn(0, colors.size - 1)].second
 
     fun assignColorIndices(courses: List<com.classapp.schedule.data.Course>): Map<Long, Int> {
-        val nameToIndex = mutableMapOf<String, Int>()
-        var nextIndex = 0
-        return courses.associate { course ->
-            val idx = nameToIndex.getOrPut(course.name) { nextIndex++ }
-            course.id to idx  // no modulo — unique per course name
-        }
+        // Each course entry gets its own color based on position
+        return courses.mapIndexed { index, course -> course.id to index }.toMap()
     }
 
     // --- HSL color math ---
