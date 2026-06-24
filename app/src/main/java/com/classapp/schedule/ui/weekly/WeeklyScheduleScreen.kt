@@ -1,6 +1,7 @@
 package com.classapp.schedule.ui.weekly
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -14,6 +15,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Today
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import kotlinx.coroutines.launch
@@ -48,12 +50,15 @@ fun WeeklyScheduleScreen(
     detailedSplit: Boolean,
     colorEngine: Int,
     colorGroupMode: Int,
+    showDateInHeader: Boolean,
+    semesterStart: java.time.LocalDate,
     isRefreshing: Boolean,
     onWeekChange: (Int) -> Unit,
     onCourseClick: (Course) -> Unit,
     onCourseLongPress: (Course) -> Unit,
     onAddCourse: () -> Unit,
     onRefresh: () -> Unit,
+    realCurrentWeek: Int = currentWeek,
     getStartTime: (Int) -> String = { "" },
     getEndTime: (Int) -> String = { "" }
 ) {
@@ -161,6 +166,22 @@ fun WeeklyScheduleScreen(
                     Box(modifier = Modifier.weight(1f).padding(2.dp), contentAlignment = Alignment.Center) {
                         Text(stringResource(dayRes), style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            }
+            // Date row (optional)
+            if (showDateInHeader) {
+                Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
+                    if (showPeriodLabel) Spacer(modifier = Modifier.width(labelWidthDp))
+                    for (dow in 1..7) {
+                        val date = semesterStart.plusDays(((currentWeek - 1) * 7 + (dow - 1)).toLong())
+                        Box(modifier = Modifier.weight(1f).padding(2.dp), contentAlignment = Alignment.Center) {
+                            Text(
+                                text = "${date.monthValue}/${date.dayOfMonth}",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                            )
+                        }
                     }
                 }
             }
@@ -278,6 +299,23 @@ fun WeeklyScheduleScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            // Back to current week — only visible when not on current week
+            AnimatedVisibility(
+                visible = currentWeek != realCurrentWeek,
+                enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+                exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
+            ) {
+                SmallFloatingActionButton(
+                    onClick = {
+                        com.classapp.schedule.util.HapticFeedback.medium(hapticView)
+                        onWeekChange(realCurrentWeek)
+                    },
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                ) {
+                    Icon(Icons.Default.Today, stringResource(R.string.back_to_current_week))
+                }
+            }
             // Refresh button
             SmallFloatingActionButton(
                 onClick = {

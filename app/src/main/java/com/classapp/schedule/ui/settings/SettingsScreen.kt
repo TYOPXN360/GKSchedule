@@ -42,6 +42,7 @@ fun SettingsScreen(
     detailedSplit: Boolean,
     colorEngine: Int,
     colorGroupMode: Int,
+    showDateInHeader: Boolean,
     reminderMinutes: Int,
     onSemesterStartChange: (LocalDate) -> Unit,
     onTotalWeeksChange: (Int) -> Unit,
@@ -59,6 +60,7 @@ fun SettingsScreen(
     onDetailedSplitChange: (Boolean) -> Unit,
     onColorEngineChange: (Int) -> Unit,
     onColorGroupModeChange: (Int) -> Unit,
+    onShowDateInHeaderChange: (Boolean) -> Unit,
     onReminderMinutesChange: (Int) -> Unit,
     onExportJson: () -> Unit,
     onImportJson: () -> Unit,
@@ -114,6 +116,7 @@ fun SettingsScreen(
             SwitchItem(Icons.Default.ViewDay, stringResource(R.string.detailed_split), detailedSplit, onDetailedSplitChange)
         }
         SwitchItem(Icons.Default.AccessTime, stringResource(R.string.show_time_label), showTimeLabel, onShowTimeLabelChange)
+        SwitchItem(Icons.Default.CalendarMonth, stringResource(R.string.show_date_in_header), showDateInHeader, onShowDateInHeaderChange)
 
         // Color engine
         val colorEngineOptions = listOf(

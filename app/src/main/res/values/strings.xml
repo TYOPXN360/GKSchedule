@@ -96,6 +96,8 @@
     <string name="color_group_same">Same Color</string>
     <string name="color_group_same_sat">Same Hue, Diff Saturation</string>
     <string name="color_group_diff">Completely Different</string>
+    <string name="show_date_in_header">Show Dates in Header</string>
+    <string name="back_to_current_week">Back to Current Week</string>
     <string name="first_day_of_week">First Day of Week</string>
     <string name="first_day_monday">Monday</string>
     <string name="first_day_sunday">Sunday</string>

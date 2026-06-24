@@ -80,6 +80,7 @@ fun ScheduleApp(
     val detailedSplit by viewModel.detailedSplit.collectAsState(initial = false)
     val colorEngine by viewModel.colorEngine.collectAsState(initial = 0)
     val colorGroupMode by viewModel.colorGroupMode.collectAsState(initial = 2)
+    val showDateInHeader by viewModel.showDateInHeader.collectAsState(initial = false)
     val isRefreshing by viewModel.isRefreshing.collectAsState(initial = false)
     val reminderMinutes by viewModel.reminderMinutes.collectAsState(initial = 0)
     val semesterStart by viewModel.semesterStart.collectAsState(initial = java.time.LocalDate.now())
@@ -193,6 +194,9 @@ fun ScheduleApp(
                     detailedSplit = detailedSplit,
                     colorEngine = colorEngine,
                     colorGroupMode = colorGroupMode,
+                    showDateInHeader = showDateInHeader,
+                    semesterStart = semesterStart,
+                    realCurrentWeek = realCurrentWeek,
                     isRefreshing = isRefreshing,
                     onWeekChange = { viewModel.setWeek(it.coerceIn(1, totalWeeks)) },
                     onCourseClick = { },
