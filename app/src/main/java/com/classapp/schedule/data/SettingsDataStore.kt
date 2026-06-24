@@ -32,6 +32,7 @@ class SettingsDataStore(private val context: Context) {
         private val SAVED_REAL_NAME = stringPreferencesKey("saved_real_name")
         private val SAVED_DEPT_NAME = stringPreferencesKey("saved_dept_name")
         private val DETAILED_SPLIT = booleanPreferencesKey("detailed_split")
+        private val COLOR_ENGINE = intPreferencesKey("color_engine") // 0=Monet 1=Container 2=Classic 3=HSL
         private val REMINDER_MINUTES = intPreferencesKey("reminder_minutes") // 0=off,5,10,15,30
 
         private val DEFAULT_START_TIMES = listOf(
@@ -67,6 +68,7 @@ class SettingsDataStore(private val context: Context) {
     val savedRealName: Flow<String> = context.dataStore.data.map { prefs -> prefs[SAVED_REAL_NAME] ?: "" }
     val savedDeptName: Flow<String> = context.dataStore.data.map { prefs -> prefs[SAVED_DEPT_NAME] ?: "" }
     val detailedSplit: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[DETAILED_SPLIT] ?: false }
+    val colorEngine: Flow<Int> = context.dataStore.data.map { prefs -> prefs[COLOR_ENGINE] ?: 0 }
     val reminderMinutes: Flow<Int> = context.dataStore.data.map { prefs -> prefs[REMINDER_MINUTES] ?: 0 }
 
     fun getCurrentWeek(): Flow<Int> = context.dataStore.data.map { prefs ->
@@ -117,5 +119,6 @@ class SettingsDataStore(private val context: Context) {
         }
     }
     suspend fun setDetailedSplit(split: Boolean) { context.dataStore.edit { it[DETAILED_SPLIT] = split } }
+    suspend fun setColorEngine(engine: Int) { context.dataStore.edit { it[COLOR_ENGINE] = engine } }
     suspend fun setReminderMinutes(min: Int) { context.dataStore.edit { it[REMINDER_MINUTES] = min } }
 }

@@ -79,6 +79,7 @@ fun ScheduleApp(
     val mergeConsecutive by viewModel.mergeConsecutive.collectAsState(initial = true)
     val showTimeLabel by viewModel.showTimeLabel.collectAsState(initial = true)
     val detailedSplit by viewModel.detailedSplit.collectAsState(initial = false)
+    val colorEngine by viewModel.colorEngine.collectAsState(initial = 0)
     val isRefreshing by viewModel.isRefreshing.collectAsState(initial = false)
     val reminderMinutes by viewModel.reminderMinutes.collectAsState(initial = 0)
     val semesterStart by viewModel.semesterStart.collectAsState(initial = java.time.LocalDate.now())
@@ -190,6 +191,7 @@ fun ScheduleApp(
                     mergeConsecutive = mergeConsecutive,
                     showTimeLabel = showTimeLabel,
                     detailedSplit = detailedSplit,
+                    colorEngine = colorEngine,
                     isRefreshing = isRefreshing,
                     onWeekChange = { viewModel.setWeek(it.coerceIn(1, totalWeeks)) },
                     onCourseClick = { },
@@ -238,6 +240,7 @@ fun ScheduleApp(
                     mergeConsecutive = mergeConsecutive,
                     showTimeLabel = showTimeLabel,
                     detailedSplit = detailedSplit,
+                    colorEngine = colorEngine,
                     reminderMinutes = reminderMinutes,
                     onSemesterStartChange = { viewModel.setSemesterStart(it) },
                     onTotalWeeksChange = { viewModel.setTotalWeeks(it) },
@@ -253,6 +256,7 @@ fun ScheduleApp(
                     onMergeConsecutiveChange = { viewModel.setMergeConsecutive(it) },
                     onShowTimeLabelChange = { viewModel.setShowTimeLabel(it) },
                     onDetailedSplitChange = { viewModel.setDetailedSplit(it) },
+                    onColorEngineChange = { viewModel.setColorEngine(it) },
                     onReminderMinutesChange = { viewModel.setReminderMinutes(it) },
                     onExportJson = {
                         scope.launch {

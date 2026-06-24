@@ -46,6 +46,7 @@ fun WeeklyScheduleScreen(
     mergeConsecutive: Boolean,
     showTimeLabel: Boolean,
     detailedSplit: Boolean,
+    colorEngine: Int,
     isRefreshing: Boolean,
     onWeekChange: (Int) -> Unit,
     onCourseClick: (Course) -> Unit,
@@ -160,7 +161,7 @@ fun WeeklyScheduleScreen(
             }
 
             // Grid — HorizontalPager for native swipe
-            val monetColors = CourseColors.getMonetColors()
+            val monetColors = CourseColors.getColors(colorEngine)
             val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
             HorizontalPager(
                 state = pagerState,
@@ -308,7 +309,7 @@ fun CourseDetailSheet(course: Course, getStartTime: (Int) -> String, getEndTime:
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState()) {
         Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp).padding(bottom = 32.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                val detailColors = CourseColors.getMonetColors()
+                val detailColors = CourseColors.getColors(0)
                 Box(modifier = Modifier.size(12.dp).clip(RoundedCornerShape(50)).background(CourseColors.getTextColor(course.colorIndex, detailColors)))
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(course.name, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)

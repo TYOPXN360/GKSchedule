@@ -61,7 +61,7 @@ fun TodayScreen(
     val currentTimeMinutes = now.hour * 60 + now.minute
     val currentPeriod = findCurrentPeriod(todayCourses, getStartTime, getEndTime, currentTimeMinutes)
     var detailCourse by remember { mutableStateOf<Course?>(null) }
-    val monetColors = com.classapp.schedule.util.CourseColors.getMonetColors()
+    val monetColors = com.classapp.schedule.util.CourseColors.getColors(0)
 
     LazyColumn(
         modifier = Modifier
@@ -215,7 +215,7 @@ private fun CourseCard(
             .clickable(onClick = onClick),
         colors = CardDefaults.cardColors(
             containerColor = if (isCurrent) {
-                val mc = CourseColors.getMonetColors()
+                val mc = CourseColors.getColors(0)
                 CourseColors.getBackground(course.colorIndex, mc)
             } else MaterialTheme.colorScheme.surface
         ),
@@ -231,7 +231,7 @@ private fun CourseCard(
                     .width(4.dp)
                     .height(48.dp)
                     .clip(RoundedCornerShape(2.dp))
-                    .background(CourseColors.getTextColor(course.colorIndex, CourseColors.getMonetColors()))
+                    .background(CourseColors.getTextColor(course.colorIndex, CourseColors.getColors(0)))
             )
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {

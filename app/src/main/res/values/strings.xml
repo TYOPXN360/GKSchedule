@@ -87,6 +87,11 @@
     <string name="merge_consecutive">Merge Consecutive Periods</string>
     <string name="show_time_label">Show Time Slots</string>
     <string name="detailed_split">Detailed Split</string>
+    <string name="color_engine">Color Engine</string>
+    <string name="color_engine_monet">Monet Dynamic</string>
+    <string name="color_engine_vibrant">Vibrant</string>
+    <string name="color_engine_classic">Classic Pastel</string>
+    <string name="color_engine_hsl">HSL Rotation</string>
     <string name="first_day_of_week">First Day of Week</string>
     <string name="first_day_monday">Monday</string>
     <string name="first_day_sunday">Sunday</string>

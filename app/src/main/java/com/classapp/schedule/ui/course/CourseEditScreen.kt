@@ -183,7 +183,7 @@ fun CourseEditScreen(
 
             // Color
             Text(stringResource(R.string.course_color), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
-            val editMonetColors = CourseColors.getMonetColors()
+            val editMonetColors = CourseColors.getColors(0)
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 editMonetColors.forEachIndexed { index, (bg, fg) ->
                     Box(

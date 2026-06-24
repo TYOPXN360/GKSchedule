@@ -40,6 +40,7 @@ fun SettingsScreen(
     mergeConsecutive: Boolean,
     showTimeLabel: Boolean,
     detailedSplit: Boolean,
+    colorEngine: Int,
     reminderMinutes: Int,
     onSemesterStartChange: (LocalDate) -> Unit,
     onTotalWeeksChange: (Int) -> Unit,
@@ -55,6 +56,7 @@ fun SettingsScreen(
     onMergeConsecutiveChange: (Boolean) -> Unit,
     onShowTimeLabelChange: (Boolean) -> Unit,
     onDetailedSplitChange: (Boolean) -> Unit,
+    onColorEngineChange: (Int) -> Unit,
     onReminderMinutesChange: (Int) -> Unit,
     onExportJson: () -> Unit,
     onImportJson: () -> Unit,
@@ -110,6 +112,15 @@ fun SettingsScreen(
             SwitchItem(Icons.Default.ViewDay, stringResource(R.string.detailed_split), detailedSplit, onDetailedSplitChange)
         }
         SwitchItem(Icons.Default.AccessTime, stringResource(R.string.show_time_label), showTimeLabel, onShowTimeLabelChange)
+
+        // Color engine
+        val colorEngineOptions = listOf(
+            "0" to stringResource(R.string.color_engine_monet),
+            "1" to stringResource(R.string.color_engine_vibrant),
+            "2" to stringResource(R.string.color_engine_classic),
+            "3" to stringResource(R.string.color_engine_hsl)
+        )
+        DropdownItem(Icons.Default.Palette, stringResource(R.string.color_engine), colorEngineOptions, colorEngine.toString(), { onColorEngineChange(it.toInt()) })
         if (!autoGridHeight) {
             StepperItem(Icons.Default.Height, stringResource(R.string.grid_height), gridHeight, 36, 80, onGridHeightChange)
         }
