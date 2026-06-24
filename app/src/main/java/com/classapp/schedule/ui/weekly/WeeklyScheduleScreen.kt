@@ -161,7 +161,8 @@ fun WeeklyScheduleScreen(
             }
 
             // Grid — HorizontalPager for native swipe
-            val monetColors = CourseColors.getColors(colorEngine)
+            val uniqueCourseCount = remember(courses) { courses.map { it.name }.distinct().size }
+            val monetColors = CourseColors.getColors(colorEngine, count = uniqueCourseCount.coerceAtLeast(8))
             val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
             HorizontalPager(
                 state = pagerState,

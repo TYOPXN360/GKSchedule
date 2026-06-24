@@ -15,25 +15,23 @@ import kotlin.math.abs
 object CourseColors {
 
     @Composable
-    fun getColors(engine: Int): List<Pair<Color, Color>> = when (engine) {
-        1 -> getVibrantColors()
-        2 -> getClassicColors()
-        3 -> getHslColors()
-        else -> getMonetColors()
+    fun getColors(engine: Int, count: Int = 16): List<Pair<Color, Color>> = when (engine) {
+        1 -> getVibrantColors(count)
+        2 -> getClassicColors(count)
+        3 -> getHslColors(count)
+        else -> getMonetColors(count)
     }
 
-    /** Engine 0: Monet — derive 8 distinct hues from the system primary color */
+    /** Engine 0: Monet — derive N distinct hues from the system primary color */
     @Composable
-    private fun getMonetColors(): List<Pair<Color, Color>> {
+    private fun getMonetColors(count: Int): List<Pair<Color, Color>> {
         val primary = MaterialTheme.colorScheme.primary
         val isDark = isSystemInDarkTheme()
-        // Get base hue from system primary
         val hsl = rgbToHsl(primary.red, primary.green, primary.blue)
         val baseHue = hsl[0]
-
-        // 8 hues evenly spaced around the wheel, starting from primary
-        return (0 until 8).map { i ->
-            val hue = (baseHue + i * 45f) % 360f
+        val step = 360f / count
+        return (0 until count).map { i ->
+            val hue = (baseHue + i * step) % 360f
             if (isDark) {
                 hslToColor(hue, 0.45f, 0.28f) to hslToColor(hue, 0.85f, 0.78f)
             } else {
@@ -42,13 +40,13 @@ object CourseColors {
         }
     }
 
-    /** Engine 1: Vibrant — high saturation, bold 8-color palette */
+    /** Engine 1: Vibrant — high saturation, N colors evenly spaced */
     @Composable
-    private fun getVibrantColors(): List<Pair<Color, Color>> {
+    private fun getVibrantColors(count: Int): List<Pair<Color, Color>> {
         val isDark = isSystemInDarkTheme()
-        // 8 distinct hues: Red, Orange, Amber, Green, Teal, Blue, Purple, Pink
-        val hues = listOf(0f, 30f, 50f, 140f, 180f, 220f, 270f, 330f)
-        return hues.map { hue ->
+        val step = 360f / count
+        return (0 until count).map { i ->
+            val hue = i * step
             if (isDark) {
                 hslToColor(hue, 0.50f, 0.25f) to hslToColor(hue, 0.90f, 0.80f)
             } else {
@@ -57,12 +55,13 @@ object CourseColors {
         }
     }
 
-    /** Engine 2: Classic — warm/cool alternation, soft tones */
+    /** Engine 2: Classic — soft tones, N colors evenly spaced */
     @Composable
-    private fun getClassicColors(): List<Pair<Color, Color>> {
+    private fun getClassicColors(count: Int): List<Pair<Color, Color>> {
         val isDark = isSystemInDarkTheme()
-        val hues = listOf(15f, 45f, 100f, 160f, 210f, 260f, 300f, 340f)
-        return hues.map { hue ->
+        val step = 360f / count
+        return (0 until count).map { i ->
+            val hue = i * step
             if (isDark) {
                 hslToColor(hue, 0.35f, 0.22f) to hslToColor(hue, 0.70f, 0.72f)
             } else {
@@ -71,17 +70,16 @@ object CourseColors {
         }
     }
 
-    /** Engine 3: HSL — evenly spaced from system primary, maximum hue diversity */
+    /** Engine 3: HSL — from system primary, N colors with alternating saturation */
     @Composable
-    private fun getHslColors(): List<Pair<Color, Color>> {
+    private fun getHslColors(count: Int): List<Pair<Color, Color>> {
         val primary = MaterialTheme.colorScheme.primary
         val hsl = rgbToHsl(primary.red, primary.green, primary.blue)
         val baseHue = hsl[0]
         val isDark = isSystemInDarkTheme()
-
-        return (0 until 8).map { i ->
-            // Use golden ratio offset for maximum visual separation
-            val hue = (baseHue + i * 45f) % 360f
+        val step = 360f / count
+        return (0 until count).map { i ->
+            val hue = (baseHue + i * step) % 360f
             val sat = if (i % 2 == 0) 0.50f else 0.40f
             if (isDark) {
                 hslToColor(hue, sat, 0.25f) to hslToColor(hue, sat + 0.4f, 0.80f)
@@ -103,7 +101,7 @@ object CourseColors {
         var nextIndex = 0
         return courses.associate { course ->
             val idx = nameToIndex.getOrPut(course.name) { nextIndex++ }
-            course.id to (idx % 8)
+            course.id to idx  // no modulo — unique per course name
         }
     }
 
