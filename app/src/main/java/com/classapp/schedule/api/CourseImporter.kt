@@ -30,7 +30,7 @@ object CourseImporter {
                 dayOfWeek = first.dayWeek,
                 startPeriod = first.whichSection,
                 periods = 1, // Will be merged below
-                colorIndex = (first.courseName.hashCode() and 0x7FFFFFFF) % 8,
+                colorIndex = 0, // Assigned dynamically by CourseColors
                 weekRange = weekRange
             )
         }.let { courses ->

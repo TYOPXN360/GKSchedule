@@ -64,30 +64,31 @@ fun WeeklyScheduleScreen(
     val labelWidthDp = if (showPeriodLabel) { if (showTimeLabel) 64.dp else 36.dp } else 0.dp
 
     // Build render blocks
+    // Build render blocks with dynamic color assignment
     val renderBlocks = remember(courses, currentWeek, mergeConsecutive, detailedSplit) {
         val weekCourses = courses.filter { it.isInWeek(currentWeek) }
-        data class Block(val course: Course, val day: Int, val start: Int, val span: Int)
+        data class Block(val course: Course, val day: Int, val start: Int, val span: Int, val colorIdx: Int)
+        // Assign unique color index per (name + classroom)
+        val colorMap = mutableMapOf<String, Int>()
+        var nextColor = 0
         val blocks = mutableListOf<Block>()
         weekCourses.forEach { c ->
+            val key = "${c.name}|${c.classroom}"
+            val colorIdx = colorMap.getOrPut(key) { nextColor++ }
             if (mergeConsecutive) {
-                blocks.add(Block(c, c.dayOfWeek, c.startPeriod, c.periods))
+                blocks.add(Block(c, c.dayOfWeek, c.startPeriod, c.periods, colorIdx))
             } else if (detailedSplit) {
                 for (p in c.startPeriod..c.endPeriod()) {
-                    blocks.add(Block(c, c.dayOfWeek, p, 1))
+                    blocks.add(Block(c, c.dayOfWeek, p, 1, colorIdx))
                 }
             } else {
                 var p = c.startPeriod
                 while (p <= c.endPeriod()) {
                     val pairEnd = minOf(p + 1, c.endPeriod())
-                    blocks.add(Block(c, c.dayOfWeek, p, pairEnd - p + 1))
+                    blocks.add(Block(c, c.dayOfWeek, p, pairEnd - p + 1, colorIdx))
                     p = pairEnd + 1
                 }
             }
-        }
-        // Debug: dump blocks for current week
-        android.util.Log.d("GdustApi", "renderBlocks w=$currentWeek: ${blocks.size} blocks")
-        blocks.forEach { b ->
-            android.util.Log.d("GdustApi", "  block: ${b.course.name} day=${b.day} p${b.start}+${b.span}")
         }
         blocks
     }
@@ -171,18 +172,22 @@ fun WeeklyScheduleScreen(
                 val week = page + 1
                 val weekBlocks = remember(week) {
                     val weekCourses = courses.filter { it.isInWeek(week) }
-                    data class B(val course: Course, val day: Int, val start: Int, val span: Int)
+                    data class B(val course: Course, val day: Int, val start: Int, val span: Int, val colorIdx: Int)
+                    val colorMap = mutableMapOf<String, Int>()
+                    var nextColor = 0
                     val blocks = mutableListOf<B>()
                     weekCourses.forEach { c ->
+                        val key = "${c.name}|${c.classroom}"
+                        val ci = colorMap.getOrPut(key) { nextColor++ }
                         if (mergeConsecutive) {
-                            blocks.add(B(c, c.dayOfWeek, c.startPeriod, c.periods))
+                            blocks.add(B(c, c.dayOfWeek, c.startPeriod, c.periods, ci))
                         } else if (detailedSplit) {
-                            for (p in c.startPeriod..c.endPeriod()) blocks.add(B(c, c.dayOfWeek, p, 1))
+                            for (p in c.startPeriod..c.endPeriod()) blocks.add(B(c, c.dayOfWeek, p, 1, ci))
                         } else {
                             var p = c.startPeriod
                             while (p <= c.endPeriod()) {
                                 val pairEnd = minOf(p + 1, c.endPeriod())
-                                blocks.add(B(c, c.dayOfWeek, p, pairEnd - p + 1))
+                                blocks.add(B(c, c.dayOfWeek, p, pairEnd - p + 1, ci))
                                 p = pairEnd + 1
                             }
                         }
@@ -236,7 +241,7 @@ fun WeeklyScheduleScreen(
                             modifier = Modifier.offset(x = x, y = y)
                                 .size(width = w.coerceAtLeast(24.dp), height = h.coerceAtLeast(24.dp))
                                 .clip(RoundedCornerShape(gridCorner.dp))
-                                .background(CourseColors.getBackground(block.course.colorIndex, monetColors))
+                                .background(CourseColors.getBackground(block.colorIdx, monetColors))
                                 .clickable {
                                 com.classapp.schedule.util.HapticFeedback.medium(hapticView)
                                 detailCourse = block.course
@@ -245,11 +250,11 @@ fun WeeklyScheduleScreen(
                         ) {
                             Column {
                                 Text(block.course.name, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold,
-                                    color = CourseColors.getTextColor(block.course.colorIndex, monetColors),
+                                    color = CourseColors.getTextColor(block.colorIdx, monetColors),
                                     overflow = TextOverflow.Ellipsis)
                                 if (block.course.classroom.isNotEmpty()) {
                                     Text(block.course.classroom, style = MaterialTheme.typography.labelSmall,
-                                        color = CourseColors.getTextColor(block.course.colorIndex, monetColors).copy(alpha = 0.7f),
+                                        color = CourseColors.getTextColor(block.colorIdx, monetColors).copy(alpha = 0.7f),
                                         overflow = TextOverflow.Ellipsis)
                                 }
                             }
@@ -310,7 +315,7 @@ fun CourseDetailSheet(course: Course, getStartTime: (Int) -> String, getEndTime:
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState()) {
         Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp).padding(bottom = 32.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                val detailColors = CourseColors.getColors(0)
+                val detailColors = CourseColors.getColors(0, count = 32)
                 Box(modifier = Modifier.size(12.dp).clip(RoundedCornerShape(50)).background(CourseColors.getTextColor(course.colorIndex, detailColors)))
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(course.name, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
