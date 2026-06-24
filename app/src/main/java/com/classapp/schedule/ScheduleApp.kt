@@ -380,13 +380,13 @@ private fun ScheduleGridForExport(
                                 .padding(gridSpacing.dp)
                                 .height((gridHeight * course.periods).dp)
                                 .clip(RoundedCornerShape(gridCorner.dp))
-                                .background(com.classapp.schedule.util.CourseColors.getLightBackground(course.colorIndex))
+                                .background(androidx.compose.ui.graphics.Color(0xFFE8F5E9))
                                 .padding(4.dp)
                         ) {
                             Text(
                                 course.name,
                                 style = MaterialTheme.typography.labelSmall,
-                                color = com.classapp.schedule.util.CourseColors.getColor(course.colorIndex)
+                                color = androidx.compose.ui.graphics.Color(0xFF2E7D32)
                             )
                         }
                     } else if (course == null) {
