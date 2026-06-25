@@ -269,6 +269,7 @@ fun ScheduleApp(
             // WebView login route
             composable(Screen.WebViewLogin.route) {
                 WebViewLoginScreen(
+                    api = viewModel.api,
                     onLoginSuccess = { loginCode ->
                         viewModel.webViewLogin(loginCode)
                         navController.popBackStack()

@@ -70,6 +70,9 @@ dependencies {
     // OkHttp for API calls
     implementation(libs.okhttp)
 
+    // ZXing for QR code generation
+    implementation(libs.zxing.core)
+
     // AppCompat for locale switching
     implementation(libs.appcompat)
 

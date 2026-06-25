@@ -29,6 +29,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     private val courseDao: CourseDao = CourseDatabase.getDatabase(application).courseDao()
     private val settings = SettingsDataStore(application)
     private val app = application
+    val api = GdustApi() // Public for WebView login
 
     // Credential store
     val hasSavedCredentials: Flow<Boolean> = CredentialStore.hasCredentials(application)
@@ -62,7 +63,6 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     val selectedWeek: StateFlow<Int> = _selectedWeek
 
     // Login state
-    private val api = GdustApi()
     private val _loginState = MutableStateFlow<LoginState>(LoginState.LoggedOut)
     val loginState: StateFlow<LoginState> = _loginState
     private val _captchaImage = MutableStateFlow<String?>(null)

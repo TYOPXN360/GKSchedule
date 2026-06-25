@@ -313,6 +313,42 @@ class GdustApi {
     fun hasToken(): Boolean = authToken.isNotEmpty()
 
     /**
+     * Subscribe to SSE to get clientId for QR code login
+     */
+    fun getSseClientId(): String? = try {
+        val request = Request.Builder()
+            .url("$CAS_API/sse/subscribe")
+            .get()
+            .header("Accept", "text/event-stream")
+            .build()
+        val response = client.newCall(request).execute()
+        val body = response.body?.string() ?: ""
+        // SSE data format: "data: <clientId>\n\n"
+        body.lineSequence()
+            .firstOrNull { it.startsWith("data:") }
+            ?.removePrefix("data:")?.trim()
+            ?.takeIf { it.isNotEmpty() }
+    } catch (_: Exception) { null }
+
+    /**
+     * Check if the QR code login has been completed
+     * Returns the ticket if successful, null if still waiting
+     */
+    fun checkSseResult(clientId: String): String? = try {
+        val request = Request.Builder()
+            .url("$CAS_API/cas/checkTicket?clientId=$clientId")
+            .get()
+            .build()
+        val response = client.newCall(request).execute()
+        val body = response.body?.string() ?: ""
+        if (body.contains("ticket") || body.contains("GKCAS")) {
+            // Extract ticket from response
+            val ticketMatch = Regex("GKCAS[a-zA-Z0-9]+").find(body)
+            ticketMatch?.value
+        } else null
+    } catch (_: Exception) { null }
+
+    /**
      * Get user info (name, department, etc.)
      */
     fun getUserInfo(): Result<UserInfo> = runCatching {
