@@ -322,7 +322,7 @@ fun WeeklyScheduleScreen(
                         val h = rowH * block.span - gridSpacing.dp * 2
                         val satOffset = if (colorGroupMode == 1) block.colorIdx % 10 else 0
 
-                        val bg = CourseColors.getBackground(block.colorIdx, monetColors, satOffset).copy(alpha = 0.75f)
+                        val bg = CourseColors.getBackground(block.colorIdx, monetColors, satOffset).copy(alpha = 0.5f)
 
                         Box(
                             modifier = Modifier.offset(x = x, y = y)
