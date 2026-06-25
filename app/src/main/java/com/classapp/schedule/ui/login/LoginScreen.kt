@@ -10,7 +10,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
@@ -208,8 +211,13 @@ fun LoginScreen(
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Column(modifier = Modifier.padding(12.dp)) {
-                        Text("❌ 错误", fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onErrorContainer)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Error, null, modifier = Modifier.size(18.dp),
+                                tint = MaterialTheme.colorScheme.onErrorContainer)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("错误", fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onErrorContainer)
+                        }
                         Text(errorMessage, color = MaterialTheme.colorScheme.onErrorContainer,
                             style = MaterialTheme.typography.bodySmall)
                     }
@@ -222,8 +230,13 @@ fun LoginScreen(
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Column(modifier = Modifier.padding(12.dp)) {
-                        Text("✅ 成功", fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.CheckCircle, null, modifier = Modifier.size(18.dp),
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("成功", fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer)
+                        }
                         Text(successMessage, color = MaterialTheme.colorScheme.onPrimaryContainer,
                             style = MaterialTheme.typography.bodySmall)
                     }
@@ -236,8 +249,13 @@ fun LoginScreen(
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Column(modifier = Modifier.padding(12.dp)) {
-                        Text("📚 导入", fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onTertiaryContainer)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.School, null, modifier = Modifier.size(18.dp),
+                                tint = MaterialTheme.colorScheme.onTertiaryContainer)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("导入", fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onTertiaryContainer)
+                        }
                         Text(importResult, color = MaterialTheme.colorScheme.onTertiaryContainer,
                             style = MaterialTheme.typography.bodySmall)
                     }
