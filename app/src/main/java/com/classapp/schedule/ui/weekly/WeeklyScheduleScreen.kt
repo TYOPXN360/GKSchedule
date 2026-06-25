@@ -363,19 +363,18 @@ fun WeeklyScheduleScreen(
                 .align(Alignment.BottomEnd)
                 .padding(16.dp)
         ) {
-            // Collapse/Expand toggle — always at bottom-right, fixed position
+            // Collapse/Expand toggle — same size as FAB for alignment
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .size(40.dp)
-                    .shadow(6.dp, RoundedCornerShape(50))
-                    .clip(RoundedCornerShape(50))
+                    .size(56.dp)
+                    .shadow(6.dp, RoundedCornerShape(16.dp))
+                    .clip(RoundedCornerShape(16.dp))
                     .background(MaterialTheme.colorScheme.surfaceVariant)
                     .clickable {
                         com.classapp.schedule.util.HapticFeedback.light(hapticView)
                         fabExpanded = !fabExpanded
-                    }
-                    ,
+                    },
                 contentAlignment = Alignment.Center
             ) {
                 Text(
