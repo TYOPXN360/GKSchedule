@@ -140,13 +140,14 @@
     <string name="webview_login_title">教务登录</string>
     <string name="scan_login_title">扫码登录</string>
     <string name="scan_login_desc">打开钉钉扫描下方二维码登录</string>
-    <string name="scan_login_tip">二维码自动刷新，长按可保存</string>
+    <string name="scan_login_tip">二维码2分钟过期，可点下方按钮保存</string>
     <string name="save_qr">保存二维码</string>
     <string name="refresh_qr">刷新</string>
     <string name="qr_expired">二维码已过期</string>
     <string name="qr_tap_to_refresh">点击刷新</string>
     <string name="qr_fetch_failed">获取二维码失败</string>
     <string name="qr_saved">二维码已保存到 相册/截图</string>
+    <string name="qr_refreshing">正在刷新二维码…</string>
     <string name="login_success">登录成功！</string>
     <string name="login_importing">正在导入课程…</string>
     <string name="login_import_success">成功导入 %1$d 门课程！</string>
