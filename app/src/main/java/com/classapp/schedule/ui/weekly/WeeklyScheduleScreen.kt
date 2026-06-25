@@ -51,6 +51,7 @@ fun WeeklyScheduleScreen(
     detailedSplit: Boolean,
     colorEngine: Int,
     colorGroupMode: Int,
+    hideEmptyWeeks: Boolean,
     showDateInHeader: Boolean,
     semesterStart: java.time.LocalDate,
     isRefreshing: Boolean,
@@ -108,22 +109,36 @@ fun WeeklyScheduleScreen(
         blocks
     }
 
-    // Pager state for week switching
+    // Compute visible weeks (skip empty weeks if hideEmptyWeeks is on)
+    val visibleWeeks = remember(courses, totalWeeks, hideEmptyWeeks) {
+        if (!hideEmptyWeeks) (1..totalWeeks).toList()
+        else {
+            val weeksWithCourses = courses.mapNotNull { course ->
+                (1..totalWeeks).filter { course.isInWeek(it) }
+            }.flatten().toSet()
+            val nonEmpty = (1..totalWeeks).filter { week ->
+                courses.any { it.isInWeek(week) }
+            }
+            if (nonEmpty.isEmpty()) listOf(1) else nonEmpty
+        }
+    }
+
+    // Pager: maps visible index → actual week number
     val pagerState = rememberPagerState(
-        initialPage = (currentWeek - 1).coerceIn(0, totalWeeks - 1),
-        pageCount = { totalWeeks }
+        initialPage = visibleWeeks.indexOf(currentWeek).coerceAtLeast(0),
+        pageCount = { visibleWeeks.size }
     )
     val coroutineScope = rememberCoroutineScope()
     val realWeek = remember { mutableIntStateOf(currentWeek) }
 
     // Sync pager → week
     LaunchedEffect(pagerState.settledPage) {
-        val week = pagerState.settledPage + 1
+        val week = visibleWeeks.getOrElse(pagerState.settledPage) { currentWeek }
         if (week != currentWeek) onWeekChange(week)
     }
     // Sync week → pager (from arrow buttons / picker)
     LaunchedEffect(currentWeek) {
-        val page = (currentWeek - 1).coerceIn(0, totalWeeks - 1)
+        val page = visibleWeeks.indexOf(currentWeek).coerceAtLeast(0)
         if (pagerState.currentPage != page) {
             coroutineScope.launch { pagerState.animateScrollToPage(page) }
         }
@@ -209,7 +224,8 @@ fun WeeklyScheduleScreen(
                 ) {
                     IconButton(onClick = {
                         com.classapp.schedule.util.HapticFeedback.light(hapticView)
-                        if (currentWeek > 1) onWeekChange(currentWeek - 1)
+                        val idx = visibleWeeks.indexOf(currentWeek)
+                        if (idx > 0) onWeekChange(visibleWeeks[idx - 1])
                     }) {
                         Icon(Icons.Default.ChevronLeft, "Prev", tint = MaterialTheme.colorScheme.onPrimaryContainer)
                     }
@@ -218,7 +234,8 @@ fun WeeklyScheduleScreen(
                         color = MaterialTheme.colorScheme.onPrimaryContainer)
                     IconButton(onClick = {
                         com.classapp.schedule.util.HapticFeedback.light(hapticView)
-                        if (currentWeek < totalWeeks) onWeekChange(currentWeek + 1)
+                        val idx = visibleWeeks.indexOf(currentWeek)
+                        if (idx < visibleWeeks.size - 1) onWeekChange(visibleWeeks[idx + 1])
                     }) {
                         Icon(Icons.Default.ChevronRight, "Next", tint = MaterialTheme.colorScheme.onPrimaryContainer)
                     }

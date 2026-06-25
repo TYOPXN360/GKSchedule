@@ -198,6 +198,7 @@ fun ScheduleApp(
                     colorEngine = colorEngine,
                     colorGroupMode = colorGroupMode,
                     showDateInHeader = showDateInHeader,
+                    hideEmptyWeeks = hideEmptyWeeks,
                     semesterStart = semesterStart,
                     realCurrentWeek = realCurrentWeek,
                     isRefreshing = isRefreshing,
