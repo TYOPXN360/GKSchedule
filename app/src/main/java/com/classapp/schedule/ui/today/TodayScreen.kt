@@ -264,7 +264,13 @@ private fun CourseCard(
         shape = RoundedCornerShape(12.dp)
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
-            if (isCurrent && animatedProgress > 0f) {
+            if (isPast) {
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .background(CourseColors.getBackground(course.colorIndex, colors).copy(alpha = 0.15f))
+                )
+            } else if (isCurrent && animatedProgress > 0f) {
                 val fillColor = CourseColors.getBackground(course.colorIndex, colors).copy(alpha = 0.3f)
                 androidx.compose.foundation.Canvas(modifier = Modifier.matchParentSize()) {
                     val w = size.width
