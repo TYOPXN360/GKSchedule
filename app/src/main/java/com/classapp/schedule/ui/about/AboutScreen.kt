@@ -25,6 +25,9 @@ fun AboutScreen(
     savedStudentId: String,
     savedRealName: String,
     savedDeptName: String,
+    semesterStart: java.time.LocalDate,
+    totalWeeks: Int,
+    periodsPerDay: Int,
     onLogin: () -> Unit,
     onLogout: () -> Unit,
     onOpenSettings: () -> Unit,
@@ -39,28 +42,7 @@ fun AboutScreen(
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // App icon placeholder
-        Icon(
-            Icons.Default.Schedule,
-            contentDescription = null,
-            modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.primary
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        Text(
-            text = stringResource(R.string.app_name),
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold
-        )
-        Text(
-            text = stringResource(R.string.version_format, "1.0.0"),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Account card
         val isLoggedIn = loginState is LoginState.Success || loginState is LoginState.ImportResult
@@ -161,6 +143,31 @@ fun AboutScreen(
         }
 
         Spacer(modifier = Modifier.height(16.dp))
+
+        // Semester info (read-only)
+        Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) {
+            Column {
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.semester_start)) },
+                    supportingContent = { Text(semesterStart.toString()) },
+                    leadingContent = { Icon(Icons.Default.CalendarMonth, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
+                )
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.total_weeks)) },
+                    supportingContent = { Text("$totalWeeks") },
+                    leadingContent = { Icon(Icons.Default.DateRange, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
+                )
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.periods_per_day)) },
+                    supportingContent = { Text("$periodsPerDay") },
+                    leadingContent = { Icon(Icons.Default.AccessTime, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
 
         // Settings
         Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) {

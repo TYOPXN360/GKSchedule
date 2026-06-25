@@ -269,15 +269,9 @@ private fun SemesterPage(
     onPeriodsPerDayChange: (Int) -> Unit, onFirstDayOfWeekChange: (Int) -> Unit,
     onHideEmptyWeeksChange: (Boolean) -> Unit, onBack: () -> Unit
 ) {
-    val context = LocalContext.current
     SubPage(stringResource(R.string.settings_category_semester), onBack) {
-        SettingsItem(Icons.Default.CalendarMonth, stringResource(R.string.semester_start), semesterStart.toString()) {
-            DatePickerDialog(context, { _, y, m, d ->
-                onSemesterStartChange(LocalDate.of(y, m + 1, d))
-            }, semesterStart.year, semesterStart.monthValue - 1, semesterStart.dayOfMonth).show()
-        }
-        StepperItem(Icons.Default.DateRange, stringResource(R.string.total_weeks), totalWeeks, 1, 30, onTotalWeeksChange)
-        StepperItem(Icons.Default.AccessTime, stringResource(R.string.periods_per_day), periodsPerDay, 4, 14, onPeriodsPerDayChange)
+        // Semester info is read-only, shown in "我的" page
+        // These settings are kept for internal use but not editable here
         DropdownItem(Icons.Default.FirstPage, stringResource(R.string.first_day_of_week),
             listOf("1" to stringResource(R.string.first_day_monday), "7" to stringResource(R.string.first_day_sunday)),
             firstDayOfWeek.toString(), onSelect = { onFirstDayOfWeekChange(it.toInt()) })

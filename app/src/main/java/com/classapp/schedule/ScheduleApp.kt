@@ -240,11 +240,20 @@ fun ScheduleApp(
                 val savedStudentId by viewModel.savedStudentIdFlow.collectAsState()
                 val savedRealName by viewModel.savedRealName.collectAsState(initial = "")
                 val savedDeptName by viewModel.savedDeptName.collectAsState(initial = "")
+                val totalWeeksVal by viewModel.totalWeeks.collectAsState(initial = 20)
+                val periodsPerDayVal by viewModel.periodsPerDay.collectAsState(initial = 10)
+                val displayWeeks = if (hideEmptyWeeks && courses.isNotEmpty()) {
+                    val weeksWithCourses = courses.flatMap { course -> (1..totalWeeksVal).filter { course.isInWeek(it) } }.toSet()
+                    weeksWithCourses.size.coerceAtLeast(1)
+                } else totalWeeksVal
                 AboutScreen(
                     loginState = loginState,
                     savedStudentId = savedStudentId,
                     savedRealName = savedRealName,
                     savedDeptName = savedDeptName,
+                    semesterStart = semesterStart,
+                    totalWeeks = displayWeeks,
+                    periodsPerDay = periodsPerDayVal,
                     onLogin = { navController.navigate(Screen.Login.route) },
                     onLogout = { viewModel.logout() },
                     onOpenSettings = {
