@@ -55,6 +55,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     val colorEngine: Flow<Int> = settings.colorEngine
     val colorGroupMode: Flow<Int> = settings.colorGroupMode
     val showDateInHeader: Flow<Boolean> = settings.showDateInHeader
+    val hideEmptyWeeks: Flow<Boolean> = settings.hideEmptyWeeks
     val themeColorIndex: Flow<Int> = settings.themeColorIndex
     val reminderMinutes: Flow<Int> = settings.reminderMinutes
     val courseNames: Flow<List<String>> = courseDao.getAllCourseNames()
@@ -156,6 +157,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     fun setColorEngine(engine: Int) { viewModelScope.launch { settings.setColorEngine(engine) } }
     fun setColorGroupMode(mode: Int) { viewModelScope.launch { settings.setColorGroupMode(mode) } }
     fun setShowDateInHeader(show: Boolean) { viewModelScope.launch { settings.setShowDateInHeader(show) } }
+    fun setHideEmptyWeeks(hide: Boolean) { viewModelScope.launch { settings.setHideEmptyWeeks(hide) } }
     fun setThemeColorIndex(idx: Int) { viewModelScope.launch { settings.setThemeColorIndex(idx) } }
     fun setReminderMinutes(min: Int) { viewModelScope.launch { settings.setReminderMinutes(min) } }
 

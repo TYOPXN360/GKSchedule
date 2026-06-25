@@ -63,13 +63,23 @@
     <string name="confirm_delete_all">确认清空？</string>
     <string name="confirm_delete_all_msg">将删除所有课程数据，不可恢复。</string>
     <string name="course_count_format">%1$d 门课</string>
-    <!-- Settings -->
+    <!-- Settings - Categories -->
     <string name="settings_title">设置</string>
-    <string name="semester_config">学期配置</string>
+    <string name="settings_category_semester">学期</string>
+    <string name="settings_category_appearance">外观</string>
+    <string name="settings_category_schedule">课表样式</string>
+    <string name="settings_category_notification">通知</string>
+    <string name="settings_category_data">数据</string>
+    <!-- Settings - Semester -->
     <string name="semester_start">开学日期</string>
     <string name="total_weeks">总周数</string>
     <string name="periods_per_day">每天节数</string>
-    <string name="appearance">外观</string>
+    <string name="first_day_of_week">每周起始日</string>
+    <string name="first_day_monday">周一</string>
+    <string name="first_day_sunday">周日</string>
+    <string name="hide_empty_weeks">隐藏无课周</string>
+    <string name="hide_empty_weeks_desc">自动跳过没有任何课程的周次</string>
+    <!-- Settings - Appearance -->
     <string name="dark_mode">深色模式</string>
     <string name="dark_mode_system">跟随系统</string>
     <string name="dark_mode_light">浅色</string>
@@ -78,15 +88,11 @@
     <string name="language_system">跟随系统</string>
     <string name="language_en">English</string>
     <string name="language_zh">中文</string>
-    <string name="schedule_style">课表样式</string>
-    <string name="grid_height">格子高度</string>
-    <string name="grid_corner">圆角</string>
-    <string name="grid_spacing">间距</string>
-    <string name="show_period_label">显示节次标号</string>
+    <!-- Settings - Schedule Style -->
     <string name="auto_grid_height">自适应内容高度</string>
     <string name="merge_consecutive">合并连续节次</string>
     <string name="show_time_label">显示时间段</string>
-    <string name="detailed_split">详细分割</string>
+    <string name="show_date_in_header">显示具体日期</string>
     <string name="color_engine">颜色引擎</string>
     <string name="color_engine_monet">Monet 动态取色</string>
     <string name="color_engine_vibrant">鲜艳色板</string>
@@ -96,19 +102,17 @@
     <string name="color_group_same">同色</string>
     <string name="color_group_same_sat">同色不同饱和度</string>
     <string name="color_group_diff">完全不同色</string>
-    <string name="show_date_in_header">显示具体日期</string>
-    <string name="back_to_current_week">回到当前周</string>
-    <string name="pull_to_refresh">下拉刷新</string>
-    <string name="release_to_refresh">松开刷新</string>
-    <string name="refreshing">刷新中…</string>
-    <string name="first_day_of_week">每周起始日</string>
-    <string name="first_day_monday">周一</string>
-    <string name="first_day_sunday">周日</string>
-    <string name="theme_color">主题色</string>
+    <string name="grid_height">格子高度</string>
+    <string name="grid_corner">圆角</string>
+    <string name="grid_spacing">间距</string>
+    <string name="show_period_label">显示节次标号</string>
+    <string name="detailed_split">详细分割</string>
+    <!-- Settings - Notification -->
     <string name="reminder">课程提醒</string>
     <string name="reminder_off">关闭</string>
     <string name="reminder_format">课前%1$d分钟</string>
-    <string name="data_management">数据管理</string>
+    <!-- Settings - Data -->
+    <string name="import_from_school">从教务导入</string>
     <string name="export_json">导出 JSON</string>
     <string name="import_json">导入 JSON</string>
     <string name="export_ics">导出 ICS 日历</string>
@@ -116,14 +120,20 @@
     <string name="export_success">导出成功</string>
     <string name="import_success">导入成功</string>
     <string name="import_failed">导入失败</string>
+    <!-- About -->
     <string name="about">关于</string>
-    <string name="version_format">版本 %1$s</string>
-    <!-- Time Table -->
-    <string name="timetable">作息时间</string>
-    <string name="morning">上午</string>
-    <string name="afternoon">下午</string>
-    <string name="evening">晚上</string>
-    <string name="time_format">%1$02d:%2$02d</string>
+    <string name="about_title">关于</string>
+    <string name="about_desc">专为广科学生设计的课程表应用</string>
+    <string name="about_school">广科教务系统</string>
+    <string name="about_copyright">© 2026 ClassApp</string>
+    <string name="about_login_desc">使用校园账号登录，同步课程表</string>
+    <string name="about_settings_desc">学期、外观、课表样式</string>
+    <string name="credits_title">鸣谢</string>
+    <string name="credits_ai">AI 助手</string>
+    <string name="credits_component">组件库</string>
+    <string name="credits_language">开发语言</string>
+    <string name="credits_design">设计规范</string>
+    <string name="credits_projects">参考项目</string>
     <!-- Login -->
     <string name="login_title">教务登录</string>
     <string name="login_school_title">广科教务系统登录</string>
@@ -134,6 +144,12 @@
     <string name="login_captcha">验证码</string>
     <string name="login_button">登录</string>
     <string name="login_tips">您的账号信息仅发送至学校服务器，不会存储在任何第三方服务。</string>
+    <string name="login_success">登录成功！</string>
+    <string name="login_importing">正在导入课程…</string>
+    <string name="login_import_success">成功导入 %1$d 门课程！</string>
+    <string name="login_import_empty">未找到课程。</string>
+    <string name="logout">退出登录</string>
+    <string name="logged_in_as">已登录: %1$s</string>
     <string name="quick_relogin">快速登录</string>
     <string name="quick_relogin_hint">已保存凭据，只需输入验证码即可重新登录。</string>
     <string name="webview_login">扫码登录 / 网页登录</string>
@@ -148,26 +164,17 @@
     <string name="qr_fetch_failed">获取二维码失败</string>
     <string name="qr_saved">二维码已保存到 相册/截图</string>
     <string name="qr_refreshing">正在刷新二维码…</string>
-    <string name="login_success">登录成功！</string>
-    <string name="login_importing">正在导入课程…</string>
-    <string name="login_import_success">成功导入 %1$d 门课程！</string>
-    <string name="login_import_empty">未找到课程。</string>
-    <string name="logout">退出登录</string>
-    <string name="logged_in_as">已登录: %1$s</string>
-    <string name="import_from_school">从教务导入</string>
-    <string name="import_banner_title">导入你的课表</string>
-    <string name="import_banner_desc">使用广科校园账号登录，一键导入课程</string>
+    <!-- Time Table -->
+    <string name="timetable">作息时间</string>
+    <string name="morning">上午</string>
+    <string name="afternoon">下午</string>
+    <string name="evening">晚上</string>
+    <string name="time_format">%1$02d:%2$02d</string>
+    <!-- Misc -->
+    <string name="version_format">版本 %1$s</string>
     <string name="nav_about">我的</string>
-    <string name="about_desc">专为广科学生设计的课程表应用</string>
-    <string name="about_settings_desc">学期配置、外观、课表样式</string>
-    <string name="about_school">广科教务系统</string>
-    <string name="about_copyright">© 2026 ClassApp</string>
-    <string name="about_login_desc">使用校园账号登录，同步课程表</string>
-    <string name="about_title">关于</string>
-    <string name="credits_title">鸣谢</string>
-    <string name="credits_ai">AI 助手</string>
-    <string name="credits_component">组件库</string>
-    <string name="credits_language">开发语言</string>
-    <string name="credits_design">设计规范</string>
-    <string name="credits_projects">参考项目</string>
+    <string name="back_to_current_week">回到当前周</string>
+    <string name="pull_to_refresh">下拉刷新</string>
+    <string name="release_to_refresh">松开刷新</string>
+    <string name="refreshing">刷新中…</string>
 </resources>

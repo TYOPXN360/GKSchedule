@@ -65,6 +65,11 @@
     <string name="course_count_format">%1$d courses</string>
     <!-- Settings -->
     <string name="settings_title">Settings</string>
+    <string name="settings_category_semester">Semester</string>
+    <string name="settings_category_appearance">Appearance</string>
+    <string name="settings_category_schedule">Schedule Style</string>
+    <string name="settings_category_notification">Notifications</string>
+    <string name="settings_category_data">Data</string>
     <string name="semester_config">Semester</string>
     <string name="semester_start">Semester Start Date</string>
     <string name="total_weeks">Total Weeks</string>
@@ -104,6 +109,8 @@
     <string name="first_day_of_week">First Day of Week</string>
     <string name="first_day_monday">Monday</string>
     <string name="first_day_sunday">Sunday</string>
+    <string name="hide_empty_weeks">Hide Empty Weeks</string>
+    <string name="hide_empty_weeks_desc">Auto-skip weeks with no courses</string>
     <string name="theme_color">Theme Color</string>
     <string name="reminder">Reminder</string>
     <string name="reminder_off">Off</string>

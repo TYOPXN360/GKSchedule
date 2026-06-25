@@ -83,6 +83,7 @@ fun ScheduleApp(
     val colorEngine by viewModel.colorEngine.collectAsState(initial = 0)
     val colorGroupMode by viewModel.colorGroupMode.collectAsState(initial = 2)
     val showDateInHeader by viewModel.showDateInHeader.collectAsState(initial = false)
+    val hideEmptyWeeks by viewModel.hideEmptyWeeks.collectAsState(initial = false)
     val isRefreshing by viewModel.isRefreshing.collectAsState(initial = false)
     val reminderMinutes by viewModel.reminderMinutes.collectAsState(initial = 0)
     val semesterStart by viewModel.semesterStart.collectAsState(initial = java.time.LocalDate.now())

@@ -8,10 +8,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Article
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.filled.School
-import androidx.compose.material.icons.filled.ViewColumn
-import androidx.compose.material.icons.filled.ViewDay
-import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -42,6 +38,7 @@ fun SettingsScreen(
     detailedSplit: Boolean,
     colorEngine: Int,
     colorGroupMode: Int,
+    hideEmptyWeeks: Boolean,
     showDateInHeader: Boolean,
     reminderMinutes: Int,
     onSemesterStartChange: (LocalDate) -> Unit,
@@ -60,6 +57,7 @@ fun SettingsScreen(
     onDetailedSplitChange: (Boolean) -> Unit,
     onColorEngineChange: (Int) -> Unit,
     onColorGroupModeChange: (Int) -> Unit,
+    onHideEmptyWeeksChange: (Boolean) -> Unit,
     onShowDateInHeaderChange: (Boolean) -> Unit,
     onReminderMinutesChange: (Int) -> Unit,
     onExportJson: () -> Unit,
@@ -81,8 +79,8 @@ fun SettingsScreen(
             modifier = Modifier.padding(16.dp)
         )
 
-        // === Semester ===
-        SectionHeader(stringResource(R.string.semester_config))
+        // === 学期 ===
+        SectionHeader(stringResource(R.string.settings_category_semester))
         SettingsItem(
             icon = Icons.Default.CalendarMonth,
             title = stringResource(R.string.semester_start),
@@ -95,22 +93,29 @@ fun SettingsScreen(
         )
         StepperItem(Icons.Default.DateRange, stringResource(R.string.total_weeks), totalWeeks, 1, 30, onTotalWeeksChange)
         StepperItem(Icons.Default.AccessTime, stringResource(R.string.periods_per_day), periodsPerDay, 4, 14, onPeriodsPerDayChange)
+        val fdowOptions = listOf(1 to stringResource(R.string.first_day_monday), 7 to stringResource(R.string.first_day_sunday))
+        DropdownItem(Icons.Default.FirstPage, stringResource(R.string.first_day_of_week), fdowOptions.map { it.first.toString() to it.second }, firstDayOfWeek.toString(), { onFirstDayOfWeekChange(it.toInt()) })
+        SwitchItem(Icons.Default.Visibility, stringResource(R.string.hide_empty_weeks), hideEmptyWeeks, onHideEmptyWeeksChange)
 
         HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
 
-        // === Appearance ===
-        SectionHeader(stringResource(R.string.appearance))
+        // === 外观 ===
+        SectionHeader(stringResource(R.string.settings_category_appearance))
         val darkOptions = listOf("system" to stringResource(R.string.dark_mode_system), "light" to stringResource(R.string.dark_mode_light), "dark" to stringResource(R.string.dark_mode_dark))
         DropdownItem(Icons.Default.DarkMode, stringResource(R.string.dark_mode), darkOptions, darkMode, onDarkModeChange)
-
         val langOptions = listOf("system" to stringResource(R.string.language_system), "en" to stringResource(R.string.language_en), "zh" to stringResource(R.string.language_zh))
         DropdownItem(Icons.Default.Language, stringResource(R.string.language), langOptions, language, onLanguageChange)
 
         HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
 
-        // === Schedule Style ===
-        SectionHeader(stringResource(R.string.schedule_style))
+        // === 课表样式 ===
+        SectionHeader(stringResource(R.string.settings_category_schedule))
         SwitchItem(Icons.Default.AutoAwesome, stringResource(R.string.auto_grid_height), autoGridHeight, onAutoGridHeightChange)
+        if (!autoGridHeight) {
+            StepperItem(Icons.Default.Height, stringResource(R.string.grid_height), gridHeight, 36, 80, onGridHeightChange)
+        }
+        StepperItem(Icons.Default.RoundedCorner, stringResource(R.string.grid_corner), gridCorner, 0, 20, onGridCornerChange)
+        StepperItem(Icons.Default.SpaceBar, stringResource(R.string.grid_spacing), gridSpacing, 0, 8, onGridSpacingChange)
         SwitchItem(Icons.Default.ViewColumn, stringResource(R.string.merge_consecutive), mergeConsecutive, onMergeConsecutiveChange)
         if (!mergeConsecutive) {
             SwitchItem(Icons.Default.ViewDay, stringResource(R.string.detailed_split), detailedSplit, onDetailedSplitChange)
@@ -118,7 +123,7 @@ fun SettingsScreen(
         SwitchItem(Icons.Default.AccessTime, stringResource(R.string.show_time_label), showTimeLabel, onShowTimeLabelChange)
         SwitchItem(Icons.Default.CalendarMonth, stringResource(R.string.show_date_in_header), showDateInHeader, onShowDateInHeaderChange)
 
-        // Color engine
+        // 颜色引擎
         val colorEngineOptions = listOf(
             "0" to stringResource(R.string.color_engine_monet),
             "1" to stringResource(R.string.color_engine_vibrant),
@@ -126,27 +131,17 @@ fun SettingsScreen(
             "3" to stringResource(R.string.color_engine_hsl)
         )
         DropdownItem(Icons.Default.Palette, stringResource(R.string.color_engine), colorEngineOptions, colorEngine.toString(), { onColorEngineChange(it.toInt()) })
-
         val groupModeOptions = listOf(
             "0" to stringResource(R.string.color_group_same),
             "1" to stringResource(R.string.color_group_same_sat),
             "2" to stringResource(R.string.color_group_diff)
         )
         DropdownItem(Icons.Default.FormatColorFill, stringResource(R.string.color_group_mode), groupModeOptions, colorGroupMode.toString(), { onColorGroupModeChange(it.toInt()) })
-        if (!autoGridHeight) {
-            StepperItem(Icons.Default.Height, stringResource(R.string.grid_height), gridHeight, 36, 80, onGridHeightChange)
-        }
-        StepperItem(Icons.Default.RoundedCorner, stringResource(R.string.grid_corner), gridCorner, 0, 20, onGridCornerChange)
-        StepperItem(Icons.Default.SpaceBar, stringResource(R.string.grid_spacing), gridSpacing, 0, 8, onGridSpacingChange)
-        SwitchItem(Icons.Default.Pin, stringResource(R.string.show_period_label), showPeriodLabel, onShowPeriodLabelChange)
-
-        val fdowOptions = listOf(1 to stringResource(R.string.first_day_monday), 7 to stringResource(R.string.first_day_sunday))
-        DropdownItem(Icons.Default.FirstPage, stringResource(R.string.first_day_of_week), fdowOptions.map { it.first.toString() to it.second }, firstDayOfWeek.toString(), { onFirstDayOfWeekChange(it.toInt()) })
 
         HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
 
-        // === Reminder ===
-        SectionHeader(stringResource(R.string.reminder))
+        // === 通知 ===
+        SectionHeader(stringResource(R.string.settings_category_notification))
         val reminderOptions = listOf(
             "0" to stringResource(R.string.reminder_off),
             "5" to stringResource(R.string.reminder_format, 5),
@@ -158,14 +153,12 @@ fun SettingsScreen(
 
         HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
 
-        // === Data ===
-        SectionHeader(stringResource(R.string.data_management))
+        // === 数据 ===
+        SectionHeader(stringResource(R.string.settings_category_data))
         SettingsItem(Icons.Default.FileUpload, stringResource(R.string.import_json), onClick = onImportJson)
         SettingsItem(Icons.Default.FileDownload, stringResource(R.string.export_json), onClick = onExportJson)
         SettingsItem(Icons.Default.CalendarMonth, stringResource(R.string.export_ics), onClick = onExportIcs)
         SettingsItem(Icons.Default.Image, stringResource(R.string.export_image), onClick = onExportImage)
-
-        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
 
         Spacer(modifier = Modifier.height(32.dp))
     }

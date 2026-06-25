@@ -58,6 +58,7 @@ private fun SettingsContent(vm: ScheduleViewModel, onBack: () -> Unit) {
     val colorEngine by vm.colorEngine.collectAsState(initial = 0)
     val colorGroupMode by vm.colorGroupMode.collectAsState(initial = 2)
     val showDateInHeader by vm.showDateInHeader.collectAsState(initial = false)
+    val hideEmptyWeeks by vm.hideEmptyWeeks.collectAsState(initial = false)
     val reminderMinutes by vm.reminderMinutes.collectAsState(initial = 0)
 
     Scaffold(
@@ -92,6 +93,7 @@ private fun SettingsContent(vm: ScheduleViewModel, onBack: () -> Unit) {
                 colorEngine = colorEngine,
                 colorGroupMode = colorGroupMode,
                 showDateInHeader = showDateInHeader,
+                hideEmptyWeeks = hideEmptyWeeks,
                 reminderMinutes = reminderMinutes,
                 onSemesterStartChange = { vm.setSemesterStart(it) },
                 onTotalWeeksChange = { vm.setTotalWeeks(it) },
@@ -110,6 +112,7 @@ private fun SettingsContent(vm: ScheduleViewModel, onBack: () -> Unit) {
                 onColorEngineChange = { vm.setColorEngine(it) },
                 onColorGroupModeChange = { vm.setColorGroupMode(it) },
                 onShowDateInHeaderChange = { vm.setShowDateInHeader(it) },
+                onHideEmptyWeeksChange = { vm.setHideEmptyWeeks(it) },
                 onReminderMinutesChange = { vm.setReminderMinutes(it) },
                 onExportJson = {},
                 onImportJson = {},
