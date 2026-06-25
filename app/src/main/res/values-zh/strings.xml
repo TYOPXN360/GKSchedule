@@ -152,7 +152,7 @@
     <string name="logged_in_as">已登录: %1$s</string>
     <string name="quick_relogin">快速登录</string>
     <string name="quick_relogin_hint">已保存凭据，只需输入验证码即可重新登录。</string>
-    <string name="webview_login">扫码登录 / 网页登录</string>
+    <string name="webview_login">扫码登录</string>
     <string name="webview_login_title">教务登录</string>
     <string name="scan_login_title">扫码登录</string>
     <string name="scan_login_desc">打开钉钉扫描下方二维码登录</string>
