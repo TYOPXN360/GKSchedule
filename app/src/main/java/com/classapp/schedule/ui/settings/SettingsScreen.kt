@@ -75,7 +75,7 @@ fun SettingsScreen(
     // Predictive back: sub-pages go back to main
     if (currentPage != "main") {
         androidx.activity.compose.PredictiveBackHandler { progress ->
-            // Just commit the back on release
+            progress.collect {} // Collect the progress flow (required)
             currentPage = "main"
         }
     }
