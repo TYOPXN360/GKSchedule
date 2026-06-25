@@ -357,7 +357,7 @@ fun WeeklyScheduleScreen(
                 enter = if (currentWeek > realCurrentWeek) slideInHorizontally(initialOffsetX = { -it }) + fadeIn() else slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
                 exit = if (currentWeek > realCurrentWeek) slideOutHorizontally(targetOffsetX = { -it }) + fadeOut() else slideOutHorizontally(targetOffsetX = { it }) + fadeOut()
             ) {
-                SmallFloatingActionButton(
+                FloatingActionButton(
                     onClick = {
                         com.classapp.schedule.util.HapticFeedback.medium(hapticView)
                         onWeekChange(realCurrentWeek)

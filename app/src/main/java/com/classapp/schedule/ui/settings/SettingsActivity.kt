@@ -14,6 +14,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.classapp.schedule.R
 import com.classapp.schedule.ScheduleViewModel
 import com.classapp.schedule.ui.theme.ClassAppTheme
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class SettingsActivity : AppCompatActivity() {
@@ -156,7 +157,51 @@ class SettingsActivity : AppCompatActivity() {
                             }
                         },
                         onExportImage = {
-                            android.widget.Toast.makeText(context, "TODO", android.widget.Toast.LENGTH_SHORT).show()
+                            scope.launch {
+                                val courses = vm.courses.first()
+                                if (courses.isEmpty()) {
+                                    android.widget.Toast.makeText(context, context.getString(R.string.import_failed), android.widget.Toast.LENGTH_SHORT).show()
+                                    return@launch
+                                }
+                                val periodsPerDay = vm.periodsPerDay.first()
+                                val gridHeight = vm.gridHeight.first()
+                                val gridCorner = vm.gridCorner.first()
+                                val gridSpacing = vm.gridSpacing.first()
+
+                                // Create a bitmap from the schedule grid
+                                val composeView = androidx.compose.ui.platform.ComposeView(context)
+                                composeView.setContent {
+                                    ClassAppTheme(darkTheme = darkMode) {
+                                        com.classapp.schedule.ScheduleGridForExport(
+                                            courses = courses,
+                                            periodsPerDay = periodsPerDay,
+                                            gridHeight = gridHeight,
+                                            gridCorner = gridCorner,
+                                            gridSpacing = gridSpacing
+                                        )
+                                    }
+                                }
+
+                                // Measure and layout the view
+                                val widthSpec = android.view.View.MeasureSpec.makeMeasureSpec(1080, android.view.View.MeasureSpec.EXACTLY)
+                                val heightSpec = android.view.View.MeasureSpec.makeMeasureSpec(0, android.view.View.MeasureSpec.UNSPECIFIED)
+                                composeView.measure(widthSpec, heightSpec)
+                                composeView.layout(0, 0, composeView.measuredWidth, composeView.measuredHeight)
+
+                                // Draw to bitmap
+                                val bitmap = android.graphics.Bitmap.createBitmap(
+                                    composeView.measuredWidth, composeView.measuredHeight,
+                                    android.graphics.Bitmap.Config.ARGB_8888
+                                )
+                                val canvas = android.graphics.Canvas(bitmap)
+                                composeView.draw(canvas)
+
+                                if (vm.saveBitmapToGallery(bitmap)) {
+                                    android.widget.Toast.makeText(context, context.getString(R.string.export_success), android.widget.Toast.LENGTH_SHORT).show()
+                                } else {
+                                    android.widget.Toast.makeText(context, context.getString(R.string.import_failed), android.widget.Toast.LENGTH_SHORT).show()
+                                }
+                            }
                         }
                     )
                 }

@@ -18,6 +18,7 @@ import com.classapp.schedule.data.CredentialStore
 import com.classapp.schedule.data.SettingsDataStore
 import com.classapp.schedule.notification.ReminderScheduler
 import com.classapp.schedule.util.IcsExport
+import com.classapp.schedule.util.ImageExport
 import com.classapp.schedule.util.JsonImportExport
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -262,6 +263,10 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
             courseDao.deleteAllCourses()
             courses.forEach { courseDao.insertCourse(it) }
         }
+    }
+
+    fun saveBitmapToGallery(bitmap: Bitmap): Boolean {
+        return ImageExport.saveBitmapToGallery(app, bitmap)
     }
 
     // --- Login ---

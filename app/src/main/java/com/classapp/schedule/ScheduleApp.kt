@@ -336,7 +336,7 @@ fun ScheduleApp(
 
 /** Simplified schedule grid for image export */
 @Composable
-private fun ScheduleGridForExport(
+fun ScheduleGridForExport(
     courses: List<Course>,
     periodsPerDay: Int,
     gridHeight: Int,
