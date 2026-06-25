@@ -66,10 +66,15 @@
     <!-- Settings -->
     <string name="settings_title">Settings</string>
     <string name="settings_category_semester">Semester</string>
+    <string name="settings_category_semester_desc">Start date, weeks, periods per day</string>
     <string name="settings_category_appearance">Appearance</string>
+    <string name="settings_category_appearance_desc">Dark mode, language</string>
     <string name="settings_category_schedule">Schedule Style</string>
+    <string name="settings_category_schedule_desc">Grid size, colors, labels</string>
     <string name="settings_category_notification">Notifications</string>
+    <string name="settings_category_notification_desc">Course reminders</string>
     <string name="settings_category_data">Data</string>
+    <string name="settings_category_data_desc">Import, export, backup</string>
     <string name="semester_config">Semester</string>
     <string name="semester_start">Semester Start Date</string>
     <string name="total_weeks">Total Weeks</string>

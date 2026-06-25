@@ -6,7 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Article
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -17,7 +17,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.classapp.schedule.R
-import com.classapp.schedule.util.CourseColors
 import java.time.LocalDate
 
 @Composable
@@ -65,13 +64,78 @@ fun SettingsScreen(
     onExportIcs: () -> Unit,
     onExportImage: () -> Unit
 ) {
-    val context = LocalContext.current
+    var currentPage by remember { mutableStateOf("main") }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-    ) {
+    when (currentPage) {
+        "main" -> SettingsMainPage(
+            onOpenPage = { currentPage = it }
+        )
+        "semester" -> SemesterPage(
+            semesterStart = semesterStart,
+            totalWeeks = totalWeeks,
+            periodsPerDay = periodsPerDay,
+            firstDayOfWeek = firstDayOfWeek,
+            hideEmptyWeeks = hideEmptyWeeks,
+            onSemesterStartChange = onSemesterStartChange,
+            onTotalWeeksChange = onTotalWeeksChange,
+            onPeriodsPerDayChange = onPeriodsPerDayChange,
+            onFirstDayOfWeekChange = onFirstDayOfWeekChange,
+            onHideEmptyWeeksChange = onHideEmptyWeeksChange,
+            onBack = { currentPage = "main" }
+        )
+        "appearance" -> AppearancePage(
+            darkMode = darkMode,
+            language = language,
+            onDarkModeChange = onDarkModeChange,
+            onLanguageChange = onLanguageChange,
+            onBack = { currentPage = "main" }
+        )
+        "schedule_style" -> ScheduleStylePage(
+            gridHeight = gridHeight,
+            gridCorner = gridCorner,
+            gridSpacing = gridSpacing,
+            showPeriodLabel = showPeriodLabel,
+            autoGridHeight = autoGridHeight,
+            mergeConsecutive = mergeConsecutive,
+            showTimeLabel = showTimeLabel,
+            detailedSplit = detailedSplit,
+            colorEngine = colorEngine,
+            colorGroupMode = colorGroupMode,
+            showDateInHeader = showDateInHeader,
+            onGridHeightChange = onGridHeightChange,
+            onGridCornerChange = onGridCornerChange,
+            onGridSpacingChange = onGridSpacingChange,
+            onShowPeriodLabelChange = onShowPeriodLabelChange,
+            onAutoGridHeightChange = onAutoGridHeightChange,
+            onMergeConsecutiveChange = onMergeConsecutiveChange,
+            onShowTimeLabelChange = onShowTimeLabelChange,
+            onDetailedSplitChange = onDetailedSplitChange,
+            onColorEngineChange = onColorEngineChange,
+            onColorGroupModeChange = onColorGroupModeChange,
+            onShowDateInHeaderChange = onShowDateInHeaderChange,
+            onBack = { currentPage = "main" }
+        )
+        "notification" -> NotificationPage(
+            reminderMinutes = reminderMinutes,
+            onReminderMinutesChange = onReminderMinutesChange,
+            onBack = { currentPage = "main" }
+        )
+        "data" -> DataPage(
+            onExportJson = onExportJson,
+            onImportJson = onImportJson,
+            onExportIcs = onExportIcs,
+            onExportImage = onExportImage,
+            onBack = { currentPage = "main" }
+        )
+    }
+}
+
+// === Main page: category list ===
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SettingsMainPage(onOpenPage: (String) -> Unit) {
+    Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
         Text(
             text = stringResource(R.string.settings_title),
             style = MaterialTheme.typography.headlineMedium,
@@ -79,37 +143,159 @@ fun SettingsScreen(
             modifier = Modifier.padding(16.dp)
         )
 
-        // === 学期 ===
-        SectionHeader(stringResource(R.string.settings_category_semester))
+        CategoryItem(Icons.Default.CalendarMonth, stringResource(R.string.settings_category_semester), stringResource(R.string.settings_category_semester_desc)) {
+            onOpenPage("semester")
+        }
+        CategoryItem(Icons.Default.Palette, stringResource(R.string.settings_category_appearance), stringResource(R.string.settings_category_appearance_desc)) {
+            onOpenPage("appearance")
+        }
+        CategoryItem(Icons.Default.GridOn, stringResource(R.string.settings_category_schedule), stringResource(R.string.settings_category_schedule_desc)) {
+            onOpenPage("schedule_style")
+        }
+        CategoryItem(Icons.Default.Notifications, stringResource(R.string.settings_category_notification), stringResource(R.string.settings_category_notification_desc)) {
+            onOpenPage("notification")
+        }
+        CategoryItem(Icons.Default.Storage, stringResource(R.string.settings_category_data), stringResource(R.string.settings_category_data_desc)) {
+            onOpenPage("data")
+        }
+
+        Spacer(modifier = Modifier.height(32.dp))
+    }
+}
+
+@Composable
+private fun CategoryItem(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, subtitle: String, onClick: () -> Unit) {
+    ListItem(
+        headlineContent = { Text(title, fontWeight = FontWeight.Medium) },
+        supportingContent = { Text(subtitle) },
+        leadingContent = { Icon(icon, null, tint = MaterialTheme.colorScheme.primary) },
+        trailingContent = { Icon(Icons.Default.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+        modifier = Modifier.clickable(onClick = onClick)
+    )
+}
+
+// === Sub-pages with back button ===
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SubPage(title: String, onBack: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
+    Scaffold(
+        contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
+        topBar = {
+            TopAppBar(
+                title = { Text(title) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
+                    }
+                }
+            )
+        }
+    ) { padding ->
+        Column(
+            modifier = Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState())
+        ) {
+            content()
+            Spacer(modifier = Modifier.height(32.dp))
+        }
+    }
+}
+
+// === Semester settings ===
+
+@Composable
+private fun SemesterPage(
+    semesterStart: LocalDate,
+    totalWeeks: Int,
+    periodsPerDay: Int,
+    firstDayOfWeek: Int,
+    hideEmptyWeeks: Boolean,
+    onSemesterStartChange: (LocalDate) -> Unit,
+    onTotalWeeksChange: (Int) -> Unit,
+    onPeriodsPerDayChange: (Int) -> Unit,
+    onFirstDayOfWeekChange: (Int) -> Unit,
+    onHideEmptyWeeksChange: (Boolean) -> Unit,
+    onBack: () -> Unit
+) {
+    val context = LocalContext.current
+    SubPage(stringResource(R.string.settings_category_semester), onBack) {
         SettingsItem(
-            icon = Icons.Default.CalendarMonth,
-            title = stringResource(R.string.semester_start),
-            subtitle = semesterStart.toString(),
-            onClick = {
-                DatePickerDialog(context, { _, y, m, d ->
-                    onSemesterStartChange(LocalDate.of(y, m + 1, d))
-                }, semesterStart.year, semesterStart.monthValue - 1, semesterStart.dayOfMonth).show()
-            }
-        )
+            Icons.Default.CalendarMonth,
+            stringResource(R.string.semester_start),
+            semesterStart.toString()
+        ) {
+            DatePickerDialog(context, { _, y, m, d ->
+                onSemesterStartChange(LocalDate.of(y, m + 1, d))
+            }, semesterStart.year, semesterStart.monthValue - 1, semesterStart.dayOfMonth).show()
+        }
         StepperItem(Icons.Default.DateRange, stringResource(R.string.total_weeks), totalWeeks, 1, 30, onTotalWeeksChange)
         StepperItem(Icons.Default.AccessTime, stringResource(R.string.periods_per_day), periodsPerDay, 4, 14, onPeriodsPerDayChange)
-        val fdowOptions = listOf(1 to stringResource(R.string.first_day_monday), 7 to stringResource(R.string.first_day_sunday))
-        DropdownItem(Icons.Default.FirstPage, stringResource(R.string.first_day_of_week), fdowOptions.map { it.first.toString() to it.second }, firstDayOfWeek.toString(), { onFirstDayOfWeekChange(it.toInt()) })
+        val fdowOptions = listOf(
+            "1" to stringResource(R.string.first_day_monday),
+            "7" to stringResource(R.string.first_day_sunday)
+        )
+        DropdownItem(Icons.Default.FirstPage, stringResource(R.string.first_day_of_week), fdowOptions, firstDayOfWeek.toString()) {
+            onFirstDayOfWeekChange(it.toInt())
+        }
         SwitchItem(Icons.Default.Visibility, stringResource(R.string.hide_empty_weeks), hideEmptyWeeks, onHideEmptyWeeksChange)
+    }
+}
 
-        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+// === Appearance settings ===
 
-        // === 外观 ===
-        SectionHeader(stringResource(R.string.settings_category_appearance))
-        val darkOptions = listOf("system" to stringResource(R.string.dark_mode_system), "light" to stringResource(R.string.dark_mode_light), "dark" to stringResource(R.string.dark_mode_dark))
+@Composable
+private fun AppearancePage(
+    darkMode: String,
+    language: String,
+    onDarkModeChange: (String) -> Unit,
+    onLanguageChange: (String) -> Unit,
+    onBack: () -> Unit
+) {
+    SubPage(stringResource(R.string.settings_category_appearance), onBack) {
+        val darkOptions = listOf(
+            "system" to stringResource(R.string.dark_mode_system),
+            "light" to stringResource(R.string.dark_mode_light),
+            "dark" to stringResource(R.string.dark_mode_dark)
+        )
         DropdownItem(Icons.Default.DarkMode, stringResource(R.string.dark_mode), darkOptions, darkMode, onDarkModeChange)
-        val langOptions = listOf("system" to stringResource(R.string.language_system), "en" to stringResource(R.string.language_en), "zh" to stringResource(R.string.language_zh))
+        val langOptions = listOf(
+            "system" to stringResource(R.string.language_system),
+            "en" to stringResource(R.string.language_en),
+            "zh" to stringResource(R.string.language_zh)
+        )
         DropdownItem(Icons.Default.Language, stringResource(R.string.language), langOptions, language, onLanguageChange)
+    }
+}
 
-        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+// === Schedule Style settings ===
 
-        // === 课表样式 ===
-        SectionHeader(stringResource(R.string.settings_category_schedule))
+@Composable
+private fun ScheduleStylePage(
+    gridHeight: Int,
+    gridCorner: Int,
+    gridSpacing: Int,
+    showPeriodLabel: Boolean,
+    autoGridHeight: Boolean,
+    mergeConsecutive: Boolean,
+    showTimeLabel: Boolean,
+    detailedSplit: Boolean,
+    colorEngine: Int,
+    colorGroupMode: Int,
+    showDateInHeader: Boolean,
+    onGridHeightChange: (Int) -> Unit,
+    onGridCornerChange: (Int) -> Unit,
+    onGridSpacingChange: (Int) -> Unit,
+    onShowPeriodLabelChange: (Boolean) -> Unit,
+    onAutoGridHeightChange: (Boolean) -> Unit,
+    onMergeConsecutiveChange: (Boolean) -> Unit,
+    onShowTimeLabelChange: (Boolean) -> Unit,
+    onDetailedSplitChange: (Boolean) -> Unit,
+    onColorEngineChange: (Int) -> Unit,
+    onColorGroupModeChange: (Int) -> Unit,
+    onShowDateInHeaderChange: (Boolean) -> Unit,
+    onBack: () -> Unit
+) {
+    SubPage(stringResource(R.string.settings_category_schedule), onBack) {
         SwitchItem(Icons.Default.AutoAwesome, stringResource(R.string.auto_grid_height), autoGridHeight, onAutoGridHeightChange)
         if (!autoGridHeight) {
             StepperItem(Icons.Default.Height, stringResource(R.string.grid_height), gridHeight, 36, 80, onGridHeightChange)
@@ -122,26 +308,39 @@ fun SettingsScreen(
         }
         SwitchItem(Icons.Default.AccessTime, stringResource(R.string.show_time_label), showTimeLabel, onShowTimeLabelChange)
         SwitchItem(Icons.Default.CalendarMonth, stringResource(R.string.show_date_in_header), showDateInHeader, onShowDateInHeaderChange)
+        SwitchItem(Icons.Default.Pin, stringResource(R.string.show_period_label), showPeriodLabel, onShowPeriodLabelChange)
 
-        // 颜色引擎
+        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+
         val colorEngineOptions = listOf(
             "0" to stringResource(R.string.color_engine_monet),
             "1" to stringResource(R.string.color_engine_vibrant),
             "2" to stringResource(R.string.color_engine_classic),
             "3" to stringResource(R.string.color_engine_hsl)
         )
-        DropdownItem(Icons.Default.Palette, stringResource(R.string.color_engine), colorEngineOptions, colorEngine.toString(), { onColorEngineChange(it.toInt()) })
+        DropdownItem(Icons.Default.Palette, stringResource(R.string.color_engine), colorEngineOptions, colorEngine.toString()) {
+            onColorEngineChange(it.toInt())
+        }
         val groupModeOptions = listOf(
             "0" to stringResource(R.string.color_group_same),
             "1" to stringResource(R.string.color_group_same_sat),
             "2" to stringResource(R.string.color_group_diff)
         )
-        DropdownItem(Icons.Default.FormatColorFill, stringResource(R.string.color_group_mode), groupModeOptions, colorGroupMode.toString(), { onColorGroupModeChange(it.toInt()) })
+        DropdownItem(Icons.Default.FormatColorFill, stringResource(R.string.color_group_mode), groupModeOptions, colorGroupMode.toString()) {
+            onColorGroupModeChange(it.toInt())
+        }
+    }
+}
 
-        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+// === Notification settings ===
 
-        // === 通知 ===
-        SectionHeader(stringResource(R.string.settings_category_notification))
+@Composable
+private fun NotificationPage(
+    reminderMinutes: Int,
+    onReminderMinutesChange: (Int) -> Unit,
+    onBack: () -> Unit
+) {
+    SubPage(stringResource(R.string.settings_category_notification), onBack) {
         val reminderOptions = listOf(
             "0" to stringResource(R.string.reminder_off),
             "5" to stringResource(R.string.reminder_format, 5),
@@ -149,27 +348,34 @@ fun SettingsScreen(
             "15" to stringResource(R.string.reminder_format, 15),
             "30" to stringResource(R.string.reminder_format, 30)
         )
-        DropdownItem(Icons.Default.Notifications, stringResource(R.string.reminder), reminderOptions, reminderMinutes.toString(), { onReminderMinutesChange(it.toInt()) })
+        DropdownItem(Icons.Default.Notifications, stringResource(R.string.reminder), reminderOptions, reminderMinutes.toString()) {
+            onReminderMinutesChange(it.toInt())
+        }
+    }
+}
 
-        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+// === Data settings ===
 
-        // === 数据 ===
-        SectionHeader(stringResource(R.string.settings_category_data))
+@Composable
+private fun DataPage(
+    onExportJson: () -> Unit,
+    onImportJson: () -> Unit,
+    onExportIcs: () -> Unit,
+    onExportImage: () -> Unit,
+    onBack: () -> Unit
+) {
+    SubPage(stringResource(R.string.settings_category_data), onBack) {
         SettingsItem(Icons.Default.FileUpload, stringResource(R.string.import_json), onClick = onImportJson)
         SettingsItem(Icons.Default.FileDownload, stringResource(R.string.export_json), onClick = onExportJson)
         SettingsItem(Icons.Default.CalendarMonth, stringResource(R.string.export_ics), onClick = onExportIcs)
         SettingsItem(Icons.Default.Image, stringResource(R.string.export_image), onClick = onExportImage)
-
-        Spacer(modifier = Modifier.height(32.dp))
     }
 }
 
-@Composable private fun SectionHeader(title: String) {
-    Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold,
-        color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
-}
+// === Shared components ===
 
-@Composable private fun SettingsItem(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, subtitle: String? = null, onClick: () -> Unit) {
+@Composable
+private fun SettingsItem(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, subtitle: String? = null, onClick: () -> Unit) {
     ListItem(
         headlineContent = { Text(title) },
         supportingContent = subtitle?.let { { Text(it) } },
@@ -178,7 +384,8 @@ fun SettingsScreen(
     )
 }
 
-@Composable private fun StepperItem(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, value: Int, min: Int, max: Int, onChange: (Int) -> Unit) {
+@Composable
+private fun StepperItem(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, value: Int, min: Int, max: Int, onChange: (Int) -> Unit) {
     ListItem(
         headlineContent = { Text(title) },
         supportingContent = {
@@ -192,7 +399,8 @@ fun SettingsScreen(
     )
 }
 
-@Composable private fun SwitchItem(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, checked: Boolean, onChange: (Boolean) -> Unit) {
+@Composable
+private fun SwitchItem(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, checked: Boolean, onChange: (Boolean) -> Unit) {
     ListItem(
         headlineContent = { Text(title) },
         leadingContent = { Icon(icon, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
@@ -200,7 +408,8 @@ fun SettingsScreen(
     )
 }
 
-@Composable private fun DropdownItem(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, options: List<Pair<String, String>>, currentKey: String, onSelect: (String) -> Unit) {
+@Composable
+private fun DropdownItem(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, options: List<Pair<String, String>>, currentKey: String, onSelect: (String) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
     val label = options.find { it.first == currentKey }?.second ?: ""
     Box {

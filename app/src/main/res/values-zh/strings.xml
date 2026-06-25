@@ -66,10 +66,15 @@
     <!-- Settings - Categories -->
     <string name="settings_title">设置</string>
     <string name="settings_category_semester">学期</string>
+    <string name="settings_category_semester_desc">开学日期、总周数、每天节数</string>
     <string name="settings_category_appearance">外观</string>
+    <string name="settings_category_appearance_desc">深色模式、语言</string>
     <string name="settings_category_schedule">课表样式</string>
+    <string name="settings_category_schedule_desc">格子大小、颜色、标签</string>
     <string name="settings_category_notification">通知</string>
+    <string name="settings_category_notification_desc">课程提醒</string>
     <string name="settings_category_data">数据</string>
+    <string name="settings_category_data_desc">导入、导出、备份</string>
     <!-- Settings - Semester -->
     <string name="semester_start">开学日期</string>
     <string name="total_weeks">总周数</string>
