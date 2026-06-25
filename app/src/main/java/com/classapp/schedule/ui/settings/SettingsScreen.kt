@@ -1,8 +1,6 @@
 package com.classapp.schedule.ui.settings
 
-import android.app.Activity
 import android.app.DatePickerDialog
-import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
@@ -20,6 +18,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
 import com.classapp.schedule.R
 import java.time.LocalDate
 
@@ -70,86 +70,98 @@ fun SettingsScreen(
     onExportImage: () -> Unit
 ) {
     val context = LocalContext.current
-    var currentPage by remember { mutableStateOf("main") }
+    val navController = androidx.navigation.compose.rememberNavController()
 
-    // Predictive back: sub-pages go back to main
-    if (currentPage != "main") {
-        androidx.activity.compose.PredictiveBackHandler { progress ->
-            progress.collect {} // Collect the progress flow (required)
-            currentPage = "main"
-        }
-    }
-
-    AnimatedContent(
-        targetState = currentPage,
-        transitionSpec = {
-            slideInHorizontally(tween(250)) { it } + fadeIn(tween(200)) togetherWith
+    androidx.compose.animation.AnimatedVisibility(visible = true) {
+        NavHost(
+            navController = navController,
+            startDestination = "main",
+            enterTransition = {
+                slideInHorizontally(tween(250)) { it } + fadeIn(tween(200))
+            },
+            exitTransition = {
                 slideOutHorizontally(tween(250)) { -it } + fadeOut(tween(150))
-        },
-        label = "settingsPage"
-    ) { page ->
-        when (page) {
-            "main" -> SettingsMainPage(
-                onOpenPage = { currentPage = it },
-                onExit = { (context as? Activity)?.finish() }
-            )
-            "semester" -> SemesterPage(
-                semesterStart = semesterStart,
-                totalWeeks = totalWeeks,
-                periodsPerDay = periodsPerDay,
-                firstDayOfWeek = firstDayOfWeek,
-                hideEmptyWeeks = hideEmptyWeeks,
-                onSemesterStartChange = onSemesterStartChange,
-                onTotalWeeksChange = onTotalWeeksChange,
-                onPeriodsPerDayChange = onPeriodsPerDayChange,
-                onFirstDayOfWeekChange = onFirstDayOfWeekChange,
-                onHideEmptyWeeksChange = onHideEmptyWeeksChange,
-                onBack = { currentPage = "main" }
-            )
-            "appearance" -> AppearancePage(
-                darkMode = darkMode,
-                language = language,
-                onDarkModeChange = onDarkModeChange,
-                onLanguageChange = onLanguageChange,
-                onBack = { currentPage = "main" }
-            )
-            "schedule_style" -> ScheduleStylePage(
-                gridHeight = gridHeight,
-                gridCorner = gridCorner,
-                gridSpacing = gridSpacing,
-                showPeriodLabel = showPeriodLabel,
-                autoGridHeight = autoGridHeight,
-                mergeConsecutive = mergeConsecutive,
-                showTimeLabel = showTimeLabel,
-                detailedSplit = detailedSplit,
-                colorEngine = colorEngine,
-                colorGroupMode = colorGroupMode,
-                showDateInHeader = showDateInHeader,
-                onGridHeightChange = onGridHeightChange,
-                onGridCornerChange = onGridCornerChange,
-                onGridSpacingChange = onGridSpacingChange,
-                onShowPeriodLabelChange = onShowPeriodLabelChange,
-                onAutoGridHeightChange = onAutoGridHeightChange,
-                onMergeConsecutiveChange = onMergeConsecutiveChange,
-                onShowTimeLabelChange = onShowTimeLabelChange,
-                onDetailedSplitChange = onDetailedSplitChange,
-                onColorEngineChange = onColorEngineChange,
-                onColorGroupModeChange = onColorGroupModeChange,
-                onShowDateInHeaderChange = onShowDateInHeaderChange,
-                onBack = { currentPage = "main" }
-            )
-            "notification" -> NotificationPage(
-                reminderMinutes = reminderMinutes,
-                onReminderMinutesChange = onReminderMinutesChange,
-                onBack = { currentPage = "main" }
-            )
-            "data" -> DataPage(
-                onExportJson = onExportJson,
-                onImportJson = onImportJson,
-                onExportIcs = onExportIcs,
-                onExportImage = onExportImage,
-                onBack = { currentPage = "main" }
-            )
+            },
+            popEnterTransition = {
+                slideInHorizontally(tween(250)) { -it } + fadeIn(tween(200))
+            },
+            popExitTransition = {
+                slideOutHorizontally(tween(250)) { it } + fadeOut(tween(150))
+            }
+        ) {
+            composable("main") {
+                SettingsMainPage(
+                    onOpenPage = { navController.navigate(it) },
+                    onExit = { (context as? android.app.Activity)?.finish() }
+                )
+            }
+            composable("semester") {
+                SemesterPage(
+                    semesterStart = semesterStart,
+                    totalWeeks = totalWeeks,
+                    periodsPerDay = periodsPerDay,
+                    firstDayOfWeek = firstDayOfWeek,
+                    hideEmptyWeeks = hideEmptyWeeks,
+                    onSemesterStartChange = onSemesterStartChange,
+                    onTotalWeeksChange = onTotalWeeksChange,
+                    onPeriodsPerDayChange = onPeriodsPerDayChange,
+                    onFirstDayOfWeekChange = onFirstDayOfWeekChange,
+                    onHideEmptyWeeksChange = onHideEmptyWeeksChange,
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable("appearance") {
+                AppearancePage(
+                    darkMode = darkMode,
+                    language = language,
+                    onDarkModeChange = onDarkModeChange,
+                    onLanguageChange = onLanguageChange,
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable("schedule_style") {
+                ScheduleStylePage(
+                    gridHeight = gridHeight,
+                    gridCorner = gridCorner,
+                    gridSpacing = gridSpacing,
+                    showPeriodLabel = showPeriodLabel,
+                    autoGridHeight = autoGridHeight,
+                    mergeConsecutive = mergeConsecutive,
+                    showTimeLabel = showTimeLabel,
+                    detailedSplit = detailedSplit,
+                    colorEngine = colorEngine,
+                    colorGroupMode = colorGroupMode,
+                    showDateInHeader = showDateInHeader,
+                    onGridHeightChange = onGridHeightChange,
+                    onGridCornerChange = onGridCornerChange,
+                    onGridSpacingChange = onGridSpacingChange,
+                    onShowPeriodLabelChange = onShowPeriodLabelChange,
+                    onAutoGridHeightChange = onAutoGridHeightChange,
+                    onMergeConsecutiveChange = onMergeConsecutiveChange,
+                    onShowTimeLabelChange = onShowTimeLabelChange,
+                    onDetailedSplitChange = onDetailedSplitChange,
+                    onColorEngineChange = onColorEngineChange,
+                    onColorGroupModeChange = onColorGroupModeChange,
+                    onShowDateInHeaderChange = onShowDateInHeaderChange,
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable("notification") {
+                NotificationPage(
+                    reminderMinutes = reminderMinutes,
+                    onReminderMinutesChange = onReminderMinutesChange,
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable("data") {
+                DataPage(
+                    onExportJson = onExportJson,
+                    onImportJson = onImportJson,
+                    onExportIcs = onExportIcs,
+                    onExportImage = onExportImage,
+                    onBack = { navController.popBackStack() }
+                )
+            }
         }
     }
 }
