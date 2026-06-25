@@ -240,28 +240,27 @@ private fun CourseCard(
     animDelay: Long = 0L,
     onClick: () -> Unit
 ) {
-    // Progress calculation for current course
-    val progress = if (isCurrent) {
-        val now = LocalTime.now()
-        val startMins = parseTime(startTime)
-        val endMins = parseTime(endTime)
-        val nowMins = now.hour * 60 + now.minute
-        ((nowMins - startMins).toFloat() / (endMins - startMins)).coerceIn(0f, 1f)
-    } else 0f
+    // Progress calculation
+    val progress = when {
+        isCurrent -> {
+            val now = LocalTime.now()
+            val startMins = parseTime(startTime)
+            val endMins = parseTime(endTime)
+            val nowMins = now.hour * 60 + now.minute
+            ((nowMins - startMins).toFloat() / (endMins - startMins)).coerceIn(0f, 1f)
+        }
+        isPast -> 1f
+        else -> 0f
+    }
 
     // Animated progress — starts from 0, animates to target with stagger delay
-    val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
     var startAnimation by remember { mutableStateOf(false) }
-    LaunchedEffect(lifecycleOwner.lifecycle.currentStateFlow) {
-        lifecycleOwner.lifecycle.currentStateFlow.collect { state ->
-            if (state == androidx.lifecycle.Lifecycle.State.RESUMED && !startAnimation) {
-                kotlinx.coroutines.delay(300 + animDelay)
-                startAnimation = true
-            }
-        }
+    LaunchedEffect(Unit) {
+        kotlinx.coroutines.delay(500 + animDelay)
+        startAnimation = true
     }
     val animatedProgress by androidx.compose.animation.core.animateFloatAsState(
-        targetValue = if (startAnimation && isCurrent) progress else 0f,
+        targetValue = if (startAnimation) progress else 0f,
         animationSpec = androidx.compose.animation.core.tween(durationMillis = 600, easing = androidx.compose.animation.core.FastOutSlowInEasing),
         label = "progress"
     )
@@ -286,27 +285,27 @@ private fun CourseCard(
         shape = RoundedCornerShape(12.dp)
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
-            if (isPast) {
-                Box(
-                    modifier = Modifier
-                        .matchParentSize()
-                        .background(CourseColors.getBackground(course.colorIndex, colors).copy(alpha = 0.15f))
-                )
-            } else if (isCurrent && animatedProgress > 0f) {
-                val fillColor = CourseColors.getBackground(course.colorIndex, colors).copy(alpha = 0.3f)
+            if (animatedProgress > 0f) {
+                val fillColor = CourseColors.getBackground(course.colorIndex, colors)
+                    .copy(alpha = if (isPast) 0.15f else 0.3f)
                 androidx.compose.foundation.Canvas(modifier = Modifier.matchParentSize()) {
                     val w = size.width
                     val h = size.height
                     val progressX = w * animatedProgress
-                    val amp = 6.dp.toPx()
-                    val freq = 3f
                     val path = Path().apply {
                         moveTo(0f, 0f)
-                        lineTo(progressX, 0f)
-                        for (y in 0..h.toInt()) {
-                            val yF = y.toFloat()
-                            val wave = amp * sin(freq * yF / h * 2f * Math.PI.toFloat() + waveOffset).toFloat()
-                            lineTo(progressX + wave, yF)
+                        if (isCurrent && waveOffset != 0f) {
+                            val amp = 6.dp.toPx()
+                            val freq = 3f
+                            lineTo(progressX, 0f)
+                            for (y in 0..h.toInt()) {
+                                val yF = y.toFloat()
+                                val wave = amp * sin(freq * yF / h * 2f * Math.PI.toFloat() + waveOffset).toFloat()
+                                lineTo(progressX + wave, yF)
+                            }
+                        } else {
+                            lineTo(progressX, 0f)
+                            lineTo(progressX, h)
                         }
                         lineTo(0f, h)
                         close()
