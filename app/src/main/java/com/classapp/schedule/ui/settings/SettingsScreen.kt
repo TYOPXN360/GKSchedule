@@ -72,9 +72,12 @@ fun SettingsScreen(
     val context = LocalContext.current
     var currentPage by remember { mutableStateOf("main") }
 
-    // Back handler: sub-pages go back to main, main page exits activity
-    BackHandler(enabled = currentPage != "main") {
-        currentPage = "main"
+    // Predictive back: sub-pages go back to main
+    if (currentPage != "main") {
+        androidx.activity.compose.PredictiveBackHandler { progress ->
+            // Just commit the back on release
+            currentPage = "main"
+        }
     }
 
     AnimatedContent(
