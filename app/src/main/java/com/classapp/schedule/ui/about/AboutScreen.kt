@@ -243,7 +243,7 @@ fun AboutScreen(
 
 @Composable
 private fun CreditItem(label: String, value: String) {
-    Row {
+    Row(verticalAlignment = Alignment.CenterVertically) {
         Text("$label: ", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
         Text(value, style = MaterialTheme.typography.bodyMedium)
     }

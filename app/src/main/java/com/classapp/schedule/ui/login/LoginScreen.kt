@@ -162,7 +162,7 @@ fun LoginScreen(
             }
 
             // Quick re-login (when credentials saved)
-            if (hasSavedCredentials && loginState is LoginState.Error) {
+            if (hasSavedCredentials) {
                 HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                 Text(
                     text = stringResource(R.string.quick_relogin_hint),

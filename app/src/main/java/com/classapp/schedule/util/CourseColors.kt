@@ -90,11 +90,21 @@ object CourseColors {
     }
 
     @Composable
-    fun getBackground(index: Int, colors: List<Pair<Color, Color>>): Color =
-        colors[index.coerceIn(0, colors.size - 1)].first
+    fun getBackground(index: Int, colors: List<Pair<Color, Color>>, satOffset: Int = 0): Color {
+        val base = colors[(index / 10).coerceIn(0, colors.size - 1)].first
+        return if (satOffset > 0) adjustSaturation(base, satOffset) else base
+    }
 
-    fun getTextColor(index: Int, colors: List<Pair<Color, Color>>): Color =
-        colors[index.coerceIn(0, colors.size - 1)].second
+    fun getTextColor(index: Int, colors: List<Pair<Color, Color>>, satOffset: Int = 0): Color {
+        val base = colors[(index / 10).coerceIn(0, colors.size - 1)].second
+        return if (satOffset > 0) adjustSaturation(base, satOffset) else base
+    }
+
+    private fun adjustSaturation(color: Color, offset: Int): Color {
+        val hsl = rgbToHsl(color.red, color.green, color.blue)
+        val newSat = (hsl[1] + offset * 0.15f).coerceIn(0f, 1f)
+        return hslToColor(hsl[0], newSat, hsl[2])
+    }
 
     /**
      * Assign color index per course with group mode:

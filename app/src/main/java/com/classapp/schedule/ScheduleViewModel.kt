@@ -77,6 +77,10 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing
 
+    // One-shot messages for snackbar
+    private val _messages = MutableSharedFlow<String>()
+    val messages: SharedFlow<String> = _messages
+
     init {
         viewModelScope.launch {
             _selectedWeek.value = settings.getCurrentWeek().first()
@@ -312,7 +316,14 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
 
     // Public refresh — re-fetch courses using saved token
     fun refreshFromSchool() {
-        if (!api.hasToken() || savedStudentId.isEmpty()) return
+        if (!api.hasToken() || savedStudentId.isEmpty()) {
+            _isRefreshing.value = true
+            viewModelScope.launch {
+                _messages.emit("请先登录教务系统")
+                _isRefreshing.value = false
+            }
+            return
+        }
         _isRefreshing.value = true
         viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
             try {
@@ -344,10 +355,13 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                     val courses = CourseImporter.convertRemoteCourses(remoteCourses)
                     courseDao.deleteAllCourses()
                     courses.forEach { courseDao.insertCourse(it) }
+                    _messages.emit("已更新 ${courses.size} 门课程")
                 }
             } catch (e: Exception) {
                 if (isTokenExpired(e.message)) {
                     handleTokenExpired()
+                } else {
+                    _messages.emit("刷新失败: ${e.message ?: "网络错误"}")
                 }
             } finally {
                 _isRefreshing.value = false
@@ -366,6 +380,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
         api.setToken("")
         settings.clearLoginInfo()
         _loginState.value = LoginState.Error("登录已过期，请重新登录")
+        _messages.emit("登录已过期，请重新登录")
     }
 
     /**

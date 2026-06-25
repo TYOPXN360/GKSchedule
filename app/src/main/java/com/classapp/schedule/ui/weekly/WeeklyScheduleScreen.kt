@@ -7,6 +7,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -25,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -172,9 +175,24 @@ fun WeeklyScheduleScreen(
                     }) {
                         Icon(Icons.Default.ChevronLeft, "Prev", tint = MaterialTheme.colorScheme.onPrimaryContainer)
                     }
-                    Text(stringResource(R.string.week_format, currentWeek),
-                        style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (currentWeek == realCurrentWeek) {
+                            Box(
+                                modifier = Modifier
+                                    .padding(end = 6.dp)
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(MaterialTheme.colorScheme.primary)
+                                    .padding(horizontal = 4.dp, vertical = 1.dp)
+                            ) {
+                                Text("今", style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onPrimary)
+                            }
+                        }
+                        Text(stringResource(R.string.week_format, currentWeek),
+                            style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer)
+                    }
                     IconButton(onClick = {
                         com.classapp.schedule.util.HapticFeedback.light(hapticView)
                         val idx = visibleWeeks.indexOf(currentWeek)
@@ -228,10 +246,16 @@ fun WeeklyScheduleScreen(
                     val keyToIdx = mutableMapOf<String, Int>()
                     var nextColor = 0
                     val blocks = mutableListOf<B>()
+                    val classroomSatMap = mutableMapOf<String, MutableMap<String, Int>>()
                     weekCourses.forEach { c ->
                         val ci = when (colorGroupMode) {
                             0 -> nameToIdx.getOrPut(c.name) { nextColor++ }
-                            1 -> nameToIdx.getOrPut(c.name) { nextColor++ }
+                            1 -> {
+                                val baseIdx = nameToIdx.getOrPut(c.name) { nextColor++ }
+                                val satMap = classroomSatMap.getOrPut(c.name) { mutableMapOf() }
+                                val satOffset = satMap.getOrPut(c.classroom) { satMap.size }
+                                baseIdx * 10 + satOffset
+                            }
                             else -> keyToIdx.getOrPut("${c.name}|${c.classroom}") { nextColor++ }
                         }
                         if (mergeConsecutive) {
@@ -259,7 +283,7 @@ fun WeeklyScheduleScreen(
                     val cellW = (totalW - labelWidthDp) / 7
 
                     // Background: empty grid + period labels
-                    Column(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
                         for (period in 1..periodsPerDay) {
                             Row(modifier = Modifier.fillMaxWidth().height(rowH)) {
                                 if (showPeriodLabel) {
@@ -291,12 +315,13 @@ fun WeeklyScheduleScreen(
                         val y = rowH * (block.start - 1) + gridSpacing.dp
                         val w = cellW - gridSpacing.dp * 2
                         val h = rowH * block.span - gridSpacing.dp * 2
+                        val satOffset = if (colorGroupMode == 1) block.colorIdx % 10 else 0
 
                         Box(
                             modifier = Modifier.offset(x = x, y = y)
                                 .size(width = w.coerceAtLeast(24.dp), height = h.coerceAtLeast(24.dp))
                                 .clip(RoundedCornerShape(gridCorner.dp))
-                                .background(CourseColors.getBackground(block.colorIdx, monetColors))
+                                .background(CourseColors.getBackground(block.colorIdx, monetColors, satOffset))
                                 .clickable {
                                 com.classapp.schedule.util.HapticFeedback.medium(hapticView)
                                 detailCourse = block.course
@@ -305,11 +330,11 @@ fun WeeklyScheduleScreen(
                         ) {
                             Column {
                                 Text(block.course.name, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold,
-                                    color = CourseColors.getTextColor(block.colorIdx, monetColors),
+                                    color = CourseColors.getTextColor(block.colorIdx, monetColors, satOffset),
                                     overflow = TextOverflow.Ellipsis)
                                 if (block.course.classroom.isNotEmpty()) {
                                     Text(block.course.classroom, style = MaterialTheme.typography.labelSmall,
-                                        color = CourseColors.getTextColor(block.colorIdx, monetColors).copy(alpha = 0.7f),
+                                        color = CourseColors.getTextColor(block.colorIdx, monetColors, satOffset).copy(alpha = 0.7f),
                                         overflow = TextOverflow.Ellipsis)
                                 }
                             }
@@ -328,8 +353,8 @@ fun WeeklyScheduleScreen(
             // Back to current week — only visible when not on current week
             AnimatedVisibility(
                 visible = currentWeek != realCurrentWeek,
-                enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
-                exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
+                enter = if (currentWeek > realCurrentWeek) slideInHorizontally(initialOffsetX = { -it }) + fadeIn() else slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
+                exit = if (currentWeek > realCurrentWeek) slideOutHorizontally(targetOffsetX = { -it }) + fadeOut() else slideOutHorizontally(targetOffsetX = { it }) + fadeOut()
             ) {
                 SmallFloatingActionButton(
                     onClick = {
@@ -339,11 +364,14 @@ fun WeeklyScheduleScreen(
                     containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                     contentColor = MaterialTheme.colorScheme.onTertiaryContainer
                 ) {
-                    Icon(Icons.Default.Today, stringResource(R.string.back_to_current_week))
+                    Icon(
+                        if (currentWeek > realCurrentWeek) Icons.Default.ChevronLeft else Icons.Default.ChevronRight,
+                        stringResource(R.string.back_to_current_week)
+                    )
                 }
             }
             // Refresh button
-            SmallFloatingActionButton(
+            FloatingActionButton(
                 onClick = {
                     com.classapp.schedule.util.HapticFeedback.medium(hapticView)
                     onRefresh()
@@ -352,7 +380,7 @@ fun WeeklyScheduleScreen(
                 contentColor = MaterialTheme.colorScheme.onSecondaryContainer
             ) {
                 if (isRefreshing) {
-                    CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
                 } else {
                     Icon(Icons.Default.Refresh, "Refresh")
                 }

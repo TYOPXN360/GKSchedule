@@ -92,6 +92,13 @@ fun ScheduleApp(
     val loginState by viewModel.loginState.collectAsState()
     val captchaImage by viewModel.captchaImage.collectAsState()
 
+    // Show snackbar messages
+    LaunchedEffect(Unit) {
+        viewModel.messages.collect { message ->
+            snackbarHostState.showSnackbar(message, duration = SnackbarDuration.Short)
+        }
+    }
+
     // File picker for JSON import
     val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let {
@@ -104,6 +111,13 @@ fun ScheduleApp(
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+
+    // Navigate to login on token expiration
+    LaunchedEffect(loginState) {
+        if (loginState is LoginState.Error && currentRoute != Screen.Login.route) {
+            navController.navigate(Screen.Login.route)
+        }
+    }
 
     val bottomBarScreens = listOf(Screen.Today, Screen.Weekly, Screen.Courses, Screen.About)
     val showBottomBar = currentRoute in bottomBarScreens.map { it.route } && currentRoute != Screen.Login.route
