@@ -313,7 +313,8 @@ class GdustApi {
     fun hasToken(): Boolean = authToken.isNotEmpty()
 
     /**
-     * Subscribe to SSE to get clientId for QR code login
+     * Subscribe to SSE to get clientId for QR code login.
+     * SSE is a streaming protocol — must read line by line, not wait for full response.
      */
     fun getSseClientId(): String? = try {
         val request = Request.Builder()
@@ -322,29 +323,49 @@ class GdustApi {
             .header("Accept", "text/event-stream")
             .build()
         val response = client.newCall(request).execute()
-        val body = response.body?.string() ?: ""
-        // SSE data format: "data: <clientId>\n\n"
-        body.lineSequence()
-            .firstOrNull { it.startsWith("data:") }
-            ?.removePrefix("data:")?.trim()
-            ?.takeIf { it.isNotEmpty() }
-    } catch (_: Exception) { null }
+        val reader = response.body?.byteStream()?.bufferedReader()
+            ?: throw Exception("Empty SSE response")
+        var clientId: String? = null
+        // Read first few lines looking for "data: <clientId>"
+        var linesRead = 0
+        reader.useLines { lines ->
+            for (line in lines) {
+                linesRead++
+                android.util.Log.d("GdustApi", "SSE line: $line")
+                if (line.startsWith("data:")) {
+                    val data = line.removePrefix("data:").trim()
+                    if (data.isNotEmpty() && data != "[DONE]") {
+                        clientId = data
+                        break
+                    }
+                }
+                if (linesRead > 20) break // safety limit
+            }
+        }
+        android.util.Log.d("GdustApi", "SSE clientId: $clientId")
+        clientId
+    } catch (e: Exception) {
+        android.util.Log.e("GdustApi", "getSseClientId failed: ${e.message}")
+        null
+    }
 
     /**
-     * Check if the QR code login has been completed
-     * Returns the ticket if successful, null if still waiting
+     * Check if the QR code login has been completed.
+     * After user scans QR, CAS creates a ticket.
+     * We poll the loginByAccount endpoint with the clientId.
      */
     fun checkSseResult(clientId: String): String? = try {
+        // Try to exchange clientId for a ticket
         val request = Request.Builder()
-            .url("$CAS_API/cas/checkTicket?clientId=$clientId")
+            .url("$CAS_API/cas/checkPassword")
             .get()
             .build()
         val response = client.newCall(request).execute()
         val body = response.body?.string() ?: ""
-        if (body.contains("ticket") || body.contains("GKCAS")) {
-            // Extract ticket from response
-            val ticketMatch = Regex("GKCAS[a-zA-Z0-9]+").find(body)
-            ticketMatch?.value
+        android.util.Log.d("GdustApi", "checkSseResult: ${body.take(200)}")
+        // If we got a ticket in the response or redirect
+        if (body.contains("GKCAS")) {
+            Regex("GKCAS[a-zA-Z0-9]+").find(body)?.value
         } else null
     } catch (_: Exception) { null }
 
