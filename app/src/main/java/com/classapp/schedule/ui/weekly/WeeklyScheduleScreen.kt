@@ -170,19 +170,17 @@ fun WeeklyScheduleScreen(
         val coroutineScope = rememberCoroutineScope()
         val context = androidx.compose.ui.platform.LocalContext.current
         val rootView = androidx.compose.ui.platform.LocalView.current
-        var contentBounds by remember { mutableStateOf(androidx.compose.ui.geometry.Rect.Zero) }
+        var weekSelectorTop by remember { mutableFloatStateOf(0f) }
+        var gridBottom by remember { mutableFloatStateOf(0f) }
 
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .onGloballyPositioned { coords ->
-                    contentBounds = coords.boundsInRoot()
-                }
-        ) {
-            // Week selector with refresh
+        Column(modifier = Modifier.fillMaxSize()) {
+            // Week selector with refresh — anchor top
             Card(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
-                    .clickable { showWeekPicker = true },
+                    .clickable { showWeekPicker = true }
+                    .onGloballyPositioned { coords ->
+                        weekSelectorTop = coords.boundsInRoot().top
+                    },
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
             ) {
                 Row(
@@ -259,6 +257,9 @@ fun WeeklyScheduleScreen(
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier.fillMaxSize()
+                    .onGloballyPositioned { coords ->
+                        gridBottom = coords.boundsInRoot().bottom
+                    }
             ) { page ->
                 val week = page + 1
                 val weekBlocks = remember(week, colorGroupMode) {
@@ -525,10 +526,10 @@ fun WeeklyScheduleScreen(
                                 val canvas = android.graphics.Canvas(fullBitmap)
                                 rootView.draw(canvas)
                                 val density = context.resources.displayMetrics.density
-                                val left = (contentBounds.left * density).toInt().coerceIn(0, fullBitmap.width)
-                                val top = (contentBounds.top * density).toInt().coerceIn(0, fullBitmap.height)
-                                val right = (contentBounds.right * density).toInt().coerceIn(0, fullBitmap.width)
-                                val bottom = (contentBounds.bottom * density).toInt().coerceIn(0, fullBitmap.height)
+                                val left = 0
+                                val top = (weekSelectorTop * density).toInt().coerceIn(0, fullBitmap.height)
+                                val right = fullBitmap.width
+                                val bottom = (gridBottom * density).toInt().coerceIn(0, fullBitmap.height)
                                 val cropped = android.graphics.Bitmap.createBitmap(fullBitmap, left, top, right - left, bottom - top)
                                 val saved = com.classapp.schedule.util.ImageExport.saveBitmapToGallery(context, cropped, "Pictures/Screenshots/schedule_${System.currentTimeMillis()}.png")
                                 android.widget.Toast.makeText(
