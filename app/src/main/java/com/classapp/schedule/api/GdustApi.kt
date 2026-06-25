@@ -314,34 +314,41 @@ class GdustApi {
 
     /**
      * Subscribe to SSE to get clientId for QR code login.
-     * SSE is a streaming protocol — must read line by line, not wait for full response.
+     * SSE format: id:xxx\nevent:HELLO\ndata:xxx\n\n
      */
     fun getSseClientId(): String? = try {
         val request = Request.Builder()
             .url("$CAS_API/sse/subscribe")
             .get()
             .header("Accept", "text/event-stream")
+            .header("User-Agent", "Mozilla/5.0")
             .build()
         val response = client.newCall(request).execute()
-        val reader = response.body?.byteStream()?.bufferedReader()
-            ?: throw Exception("Empty SSE response")
+        val stream = response.body?.byteStream() ?: throw Exception("Empty SSE stream")
+        val buffer = ByteArray(4096)
+        val sb = StringBuilder()
         var clientId: String? = null
-        // Read first few lines looking for "data: <clientId>"
-        var linesRead = 0
-        reader.useLines { lines ->
-            for (line in lines) {
-                linesRead++
-                android.util.Log.d("GdustApi", "SSE line: $line")
-                if (line.startsWith("data:")) {
-                    val data = line.removePrefix("data:").trim()
-                    if (data.isNotEmpty() && data != "[DONE]") {
-                        clientId = data
-                        break
+
+        stream.use { input ->
+            var bytesRead: Int
+            while (input.read(buffer).also { bytesRead = it } != -1) {
+                sb.append(String(buffer, 0, bytesRead))
+                // Look for "data:" line
+                val text = sb.toString()
+                for (line in text.lines()) {
+                    if (line.startsWith("data:")) {
+                        val data = line.removePrefix("data:").trim()
+                        if (data.isNotEmpty() && data != "[DONE]") {
+                            clientId = data
+                            break
+                        }
                     }
                 }
-                if (linesRead > 20) break // safety limit
+                if (clientId != null) break
+                if (sb.length > 8192) break // safety
             }
         }
+        android.util.Log.d("GdustApi", "SSE raw: ${sb.toString().take(200)}")
         android.util.Log.d("GdustApi", "SSE clientId: $clientId")
         clientId
     } catch (e: Exception) {
