@@ -417,7 +417,16 @@ fun WeeklyScheduleScreen(
                 containerColor = MaterialTheme.colorScheme.surfaceVariant,
                 contentColor = MaterialTheme.colorScheme.onSurfaceVariant
             ) {
-                Text(if (fabExpanded) "▼" else "▲", style = MaterialTheme.typography.labelLarge)
+                Box(
+                    modifier = Modifier.size(18.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        if (fabExpanded) "▼" else "▲",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
         }
     }
