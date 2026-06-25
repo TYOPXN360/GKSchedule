@@ -258,16 +258,17 @@ private fun CourseCard(
     var startAnimation by remember { mutableStateOf(false) }
     val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
     LaunchedEffect(Unit) {
-        // Wait until RESUMED (splash screen done)
         lifecycleOwner.lifecycle.currentStateFlow.first { it == androidx.lifecycle.Lifecycle.State.RESUMED }
         kotlinx.coroutines.delay(animDelay)
         startAnimation = true
     }
+    val animSpec = androidx.compose.animation.core.tween<Float>(durationMillis = 600, easing = androidx.compose.animation.core.FastOutSlowInEasing)
     val animatedProgress by androidx.compose.animation.core.animateFloatAsState(
         targetValue = if (startAnimation) progress else 0f,
-        animationSpec = androidx.compose.animation.core.tween(durationMillis = 600, easing = androidx.compose.animation.core.FastOutSlowInEasing),
+        animationSpec = animSpec,
         label = "progress"
     )
+    val animDone by remember { derivedStateOf { startAnimation && (animatedProgress - progress).coerceAtLeast(0f) < 0.01f } }
 
     val colors = CourseColors.getColors(0, count = 32)
 
@@ -352,13 +353,17 @@ private fun CourseCard(
                             )
                         }
                         if (isPast) {
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Icon(
-                                Icons.Default.CheckCircle,
-                                contentDescription = null,
-                                modifier = Modifier.size(20.dp),
-                                tint = MaterialTheme.colorScheme.primary
-                            )
+                            androidx.compose.animation.AnimatedVisibility(
+                                visible = animDone,
+                                enter = androidx.compose.animation.scaleIn() + androidx.compose.animation.fadeIn()
+                            ) {
+                                Icon(
+                                    Icons.Default.CheckCircle,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp),
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            }
                         }
                     }
                     Spacer(modifier = Modifier.height(4.dp))
