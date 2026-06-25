@@ -473,7 +473,7 @@ fun CourseDetailSheet(course: Course, getStartTime: (Int) -> String, getEndTime:
 
 @Composable
 private fun DetailRow(label: String, value: String) {
-    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
         Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.width(60.dp))
         Text(value, style = MaterialTheme.typography.bodyMedium)
     }
