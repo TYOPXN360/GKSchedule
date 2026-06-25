@@ -146,6 +146,7 @@
     <string name="qr_expired">QR Code Expired</string>
     <string name="qr_tap_to_refresh">Tap to refresh</string>
     <string name="qr_fetch_failed">Failed to get QR code</string>
+    <string name="qr_saved">QR code saved to Pictures/ClassApp</string>
     <string name="login_success">Login successful!</string>
     <string name="login_importing">Importing courses…</string>
     <string name="login_import_success">Imported %1$d courses successfully!</string>

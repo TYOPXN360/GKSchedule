@@ -105,7 +105,15 @@ fun WebViewLoginScreen(
                     dir.mkdirs()
                     java.io.File(dir, fileName).outputStream().use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) }
                 }
-            } catch (_: Exception) {}
+                // Toast on main thread
+                kotlinx.coroutines.withContext(Dispatchers.Main) {
+                    android.widget.Toast.makeText(context, context.getString(R.string.qr_saved), android.widget.Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                kotlinx.coroutines.withContext(Dispatchers.Main) {
+                    android.widget.Toast.makeText(context, "Save failed: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
+                }
+            }
         }
     }
 
