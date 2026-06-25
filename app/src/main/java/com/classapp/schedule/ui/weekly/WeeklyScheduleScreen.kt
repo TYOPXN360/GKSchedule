@@ -345,6 +345,7 @@ fun WeeklyScheduleScreen(
         }
 
         // FABs
+        var fabExpanded by remember { mutableStateOf(true) }
         Column(
             modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -352,7 +353,7 @@ fun WeeklyScheduleScreen(
         ) {
             // Back to current week — only visible when not on current week
             AnimatedVisibility(
-                visible = currentWeek != realCurrentWeek,
+                visible = currentWeek != realCurrentWeek && fabExpanded,
                 enter = if (currentWeek > realCurrentWeek) slideInHorizontally(initialOffsetX = { -it }) + fadeIn() else slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
                 exit = if (currentWeek > realCurrentWeek) slideOutHorizontally(targetOffsetX = { -it }) + fadeOut() else slideOutHorizontally(targetOffsetX = { it }) + fadeOut()
             ) {
@@ -371,29 +372,52 @@ fun WeeklyScheduleScreen(
                 }
             }
             // Refresh button
-            FloatingActionButton(
-                onClick = {
-                    com.classapp.schedule.util.HapticFeedback.medium(hapticView)
-                    onRefresh()
-                },
-                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+            AnimatedVisibility(
+                visible = fabExpanded,
+                enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+                exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
             ) {
-                if (isRefreshing) {
-                    CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
-                } else {
-                    Icon(Icons.Default.Refresh, "Refresh")
+                FloatingActionButton(
+                    onClick = {
+                        com.classapp.schedule.util.HapticFeedback.medium(hapticView)
+                        onRefresh()
+                    },
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                ) {
+                    if (isRefreshing) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                    } else {
+                        Icon(Icons.Default.Refresh, "Refresh")
+                    }
                 }
             }
             // Add course button
-            FloatingActionButton(
-                onClick = {
-                    com.classapp.schedule.util.HapticFeedback.medium(hapticView)
-                    onAddCourse()
-                },
-                containerColor = MaterialTheme.colorScheme.primary
+            AnimatedVisibility(
+                visible = fabExpanded,
+                enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+                exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
             ) {
-                Icon(Icons.Default.Add, stringResource(R.string.add_course))
+                FloatingActionButton(
+                    onClick = {
+                        com.classapp.schedule.util.HapticFeedback.medium(hapticView)
+                        onAddCourse()
+                    },
+                    containerColor = MaterialTheme.colorScheme.primary
+                ) {
+                    Icon(Icons.Default.Add, stringResource(R.string.add_course))
+                }
+            }
+            // Collapse/Expand toggle
+            SmallFloatingActionButton(
+                onClick = {
+                    com.classapp.schedule.util.HapticFeedback.light(hapticView)
+                    fabExpanded = !fabExpanded
+                },
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+            ) {
+                Text(if (fabExpanded) "▼" else "▲", style = MaterialTheme.typography.labelLarge)
             }
         }
     }

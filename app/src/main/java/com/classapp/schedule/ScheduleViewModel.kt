@@ -112,7 +112,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
             combine(courses, settings.reminderMinutes, settings.semesterStart) { courseList, minutes, start ->
                 Triple(courseList, minutes, start)
             }.collect { (courseList, minutes, start) ->
-                if (minutes > 0) {
+                if (minutes > 0 && canScheduleExactAlarms()) {
                     ReminderScheduler.scheduleDailyReminders(
                         getApplication(), courseList, start, minutes, ::getStartTime
                     )
@@ -125,6 +125,14 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
             val unit = settings.autoSyncIntervalUnit.first()
             com.classapp.schedule.sync.AutoSyncWorker.schedule(app, value, unit)
         }
+    }
+
+    private fun canScheduleExactAlarms(): Boolean {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            val alarmManager = app.getSystemService(android.app.AlarmManager::class.java)
+            return alarmManager.canScheduleExactAlarms()
+        }
+        return true
     }
 
     fun setWeek(week: Int) { _selectedWeek.value = week }
