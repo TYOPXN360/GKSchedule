@@ -316,48 +316,61 @@ fun WeeklyScheduleScreen(
                         }
                     }
 
-                    // Pre-compute blended colors for overlapping blocks
-                    val blockColors = remember(weekBlocks, monetColors, colorGroupMode) {
+                    // Pre-compute base colors
+                    val blockBaseColors = remember(weekBlocks, monetColors, colorGroupMode) {
                         weekBlocks.map { block ->
                             val satOffset = if (colorGroupMode == 1) block.colorIdx % 10 else 0
-                            val baseColor = CourseColors.getBackgroundStatic(block.colorIdx, monetColors, satOffset)
-                            val overlapping = weekBlocks.filter { other ->
-                                other !== block && other.day == block.day &&
-                                other.start < block.start + block.span && other.start + other.span > block.start
-                            }
-                            if (overlapping.isEmpty()) baseColor
-                            else {
-                                var r = baseColor.red; var g = baseColor.green; var b = baseColor.blue; var a = baseColor.alpha
-                                overlapping.forEach { other ->
-                                    val oSat = if (colorGroupMode == 1) other.colorIdx % 10 else 0
-                                    val oColor = CourseColors.getBackgroundStatic(other.colorIdx, monetColors, oSat)
-                                    r = (r + oColor.red) / 2f; g = (g + oColor.green) / 2f
-                                    b = (b + oColor.blue) / 2f; a = (a + oColor.alpha) / 2f
-                                }
-                                Color(r, g, b, a)
-                            }
+                            CourseColors.getBackgroundStatic(block.colorIdx, monetColors, satOffset)
                         }
                     }
 
-                    // Draw colored backgrounds with Canvas
+                    // Draw backgrounds: base colors + overlapping regions blended
                     androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize()) {
-                        val h = size.height
-                        val rowH2 = h / periodsPerDay
+                        val ch = size.height
+                        val rowH2 = ch / periodsPerDay
                         val cellW2 = (size.width - labelWidthDp.toPx()) / 7
                         val spacing = gridSpacing.dp.toPx()
                         val corner = gridCorner.dp.toPx()
 
+                        // Draw all blocks with original colors
                         weekBlocks.forEachIndexed { idx, block ->
                             val x = labelWidthDp.toPx() + cellW2 * (block.day - 1) + spacing
                             val y = rowH2 * (block.start - 1) + spacing
                             val bw = cellW2 - spacing * 2
                             val bh = rowH2 * block.span - spacing * 2
                             drawRoundRect(
-                                color = blockColors[idx],
+                                color = blockBaseColors[idx],
                                 topLeft = Offset(x, y),
                                 size = Size(bw.coerceAtLeast(24.dp.toPx()), bh.coerceAtLeast(24.dp.toPx())),
                                 cornerRadius = CornerRadius(corner)
                             )
+                        }
+
+                        // Draw blended overlay on overlapping regions
+                        for (i in weekBlocks.indices) {
+                            for (j in i + 1 until weekBlocks.size) {
+                                val a = weekBlocks[i]; val b = weekBlocks[j]
+                                if (a.day == b.day && a.start < b.start + b.span && a.start + a.span > b.start) {
+                                    val overlapStart = maxOf(a.start, b.start)
+                                    val overlapEnd = minOf(a.start + a.span, b.start + b.span)
+                                    val ox = labelWidthDp.toPx() + cellW2 * (a.day - 1) + spacing
+                                    val oy = rowH2 * (overlapStart - 1) + spacing
+                                    val ow = cellW2 - spacing * 2
+                                    val oh = rowH2 * (overlapEnd - overlapStart) - spacing * 2
+                                    val blend = Color(
+                                        (blockBaseColors[i].red + blockBaseColors[j].red) / 2f,
+                                        (blockBaseColors[i].green + blockBaseColors[j].green) / 2f,
+                                        (blockBaseColors[i].blue + blockBaseColors[j].blue) / 2f,
+                                        (blockBaseColors[i].alpha + blockBaseColors[j].alpha) / 2f
+                                    )
+                                    drawRoundRect(
+                                        color = blend,
+                                        topLeft = Offset(ox, oy),
+                                        size = Size(ow, oh),
+                                        cornerRadius = CornerRadius(corner)
+                                    )
+                                }
+                            }
                         }
                     }
 
