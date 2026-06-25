@@ -156,7 +156,7 @@
     <string name="webview_login_title">教务登录</string>
     <string name="scan_login_title">扫码登录</string>
     <string name="scan_login_desc">打开钉钉扫描下方二维码登录</string>
-    <string name="scan_login_tip">二维码2分钟过期，可点下方按钮保存</string>
+    <string name="scan_login_tip">二维码2分钟过期，可点上方按钮保存</string>
     <string name="save_qr">保存二维码</string>
     <string name="refresh_qr">刷新</string>
     <string name="qr_expired">二维码已过期</string>
