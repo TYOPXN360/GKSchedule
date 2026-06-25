@@ -362,24 +362,30 @@ class GdustApi {
         return try {
             val buffer = ByteArray(4096)
             val sb = StringBuilder()
-            var result: String? = null
+            val startTime = System.currentTimeMillis()
+            val timeoutMs = 5 * 60 * 1000L // 5 minutes
 
-            while (true) {
-                val bytesRead = stream.read(buffer)
-                if (bytesRead == -1) break
-                sb.append(String(buffer, 0, bytesRead))
-                for (line in sb.toString().lines()) {
-                    if (line.startsWith("data:")) {
-                        val data = line.removePrefix("data:").trim()
-                        if (data.isNotEmpty() && data != "[DONE]") {
-                            result = data
-                            android.util.Log.d("GdustApi", "SSE scan result: $result")
-                            return result
+            while (System.currentTimeMillis() - startTime < timeoutMs) {
+                val available = stream.available()
+                if (available > 0) {
+                    val bytesRead = stream.read(buffer, 0, minOf(available, buffer.size))
+                    if (bytesRead == -1) break
+                    sb.append(String(buffer, 0, bytesRead))
+                    android.util.Log.d("GdustApi", "SSE chunk: ${String(buffer, 0, bytesRead).trim()}")
+                    for (line in sb.toString().lines()) {
+                        if (line.startsWith("data:")) {
+                            val data = line.removePrefix("data:").trim()
+                            if (data.isNotEmpty() && data != "[DONE]") {
+                                android.util.Log.d("GdustApi", "SSE scan result: $data")
+                                return data
+                            }
                         }
                     }
+                } else {
+                    Thread.sleep(500)
                 }
-                if (sb.length > 16384) break
             }
+            android.util.Log.d("GdustApi", "SSE timeout or closed")
             null
         } catch (e: Exception) {
             android.util.Log.e("GdustApi", "readSseResult failed: ${e.message}")

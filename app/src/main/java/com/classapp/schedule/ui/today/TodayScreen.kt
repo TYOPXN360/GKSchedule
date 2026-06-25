@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Login
@@ -119,6 +120,7 @@ fun TodayScreen(
                     endTime = course.getActualEndTime(getEndTime),
                     isCurrent = isCurrent,
                     isNext = isNext,
+                    isPast = isPast,
                     onClick = { detailCourse = course }
                 )
             }
@@ -210,84 +212,124 @@ private fun CourseCard(
     endTime: String,
     isCurrent: Boolean,
     isNext: Boolean,
+    isPast: Boolean = false,
     onClick: () -> Unit
 ) {
+    // Progress calculation for current course
+    val progress = if (isCurrent) {
+        val now = LocalTime.now()
+        val startMins = parseTime(startTime)
+        val endMins = parseTime(endTime)
+        val nowMins = now.hour * 60 + now.minute
+        ((nowMins - startMins).toFloat() / (endMins - startMins)).coerceIn(0f, 1f)
+    } else 0f
+
+    // Animated progress
+    var animatedProgress by remember { mutableFloatStateOf(0f) }
+    LaunchedEffect(progress) {
+        if (isCurrent) {
+            // Animate from 0 to current progress on first display
+            kotlinx.coroutines.delay(300)
+            animatedProgress = progress
+        }
+    }
+
+    val colors = CourseColors.getColors(0, count = 32)
+
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
         colors = CardDefaults.cardColors(
-            containerColor = if (isCurrent) {
-                val mc = CourseColors.getColors(0, count = 32)
-                CourseColors.getBackground(course.colorIndex, mc)
-            } else MaterialTheme.colorScheme.surface
+            containerColor = MaterialTheme.colorScheme.surface
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = if (isCurrent) 4.dp else 1.dp),
         shape = RoundedCornerShape(12.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .width(4.dp)
-                    .height(48.dp)
-                    .clip(RoundedCornerShape(2.dp))
-                    .background(CourseColors.getTextColor(course.colorIndex, CourseColors.getColors(0)))
-            )
-            Spacer(modifier = Modifier.width(16.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = course.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    if (isCurrent) {
-                        Spacer(modifier = Modifier.width(8.dp))
-                        SuggestionChip(
-                            onClick = {},
-                            label = { Text(stringResource(R.string.current_course), style = MaterialTheme.typography.labelSmall) }
+        Box(modifier = Modifier.fillMaxWidth()) {
+            // Progress overlay for current course
+            if (isCurrent && animatedProgress > 0f) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(fraction = animatedProgress)
+                        .matchParentSize()
+                        .background(
+                            CourseColors.getBackground(course.colorIndex, colors).copy(alpha = 0.3f)
                         )
-                    } else if (isNext) {
-                        Spacer(modifier = Modifier.width(8.dp))
-                        SuggestionChip(
-                            onClick = {},
-                            label = { Text(stringResource(R.string.next_course), style = MaterialTheme.typography.labelSmall) }
-                        )
-                    }
-                }
-                Spacer(modifier = Modifier.height(4.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    // Period number
-                    val periodText = if (course.periods > 1)
-                        "${course.startPeriod}-${course.endPeriod()}"
-                    else
-                        "${course.startPeriod}"
-                    Text(
-                        text = stringResource(R.string.period_format_short, periodText),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Medium
-                    )
-                    if (course.teacher.isNotEmpty()) {
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(course.teacher, style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    if (course.classroom.isNotEmpty()) {
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(course.classroom, style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                }
+                )
             }
-            Text(
-                text = "$startTime\n$endTime",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Color indicator
+                Box(
+                    modifier = Modifier
+                        .width(4.dp)
+                        .height(48.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(CourseColors.getTextColor(course.colorIndex, colors))
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = course.name,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        if (isCurrent) {
+                            Spacer(modifier = Modifier.width(8.dp))
+                            SuggestionChip(
+                                onClick = {},
+                                label = { Text("${(progress * 100).toInt()}%", style = MaterialTheme.typography.labelSmall) }
+                            )
+                        } else if (isNext) {
+                            Spacer(modifier = Modifier.width(8.dp))
+                            SuggestionChip(
+                                onClick = {},
+                                label = { Text(stringResource(R.string.next_course), style = MaterialTheme.typography.labelSmall) }
+                            )
+                        }
+                        if (isPast) {
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Icon(
+                                Icons.Default.CheckCircle,
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        val periodText = if (course.periods > 1)
+                            "${course.startPeriod}-${course.endPeriod()}"
+                        else "${course.startPeriod}"
+                        Text(
+                            text = stringResource(R.string.period_format_short, periodText),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Medium
+                        )
+                        if (course.teacher.isNotEmpty()) {
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(course.teacher, style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        if (course.classroom.isNotEmpty()) {
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(course.classroom, style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+                // Time
+                Text(
+                    text = "$startTime\n$endTime",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 }

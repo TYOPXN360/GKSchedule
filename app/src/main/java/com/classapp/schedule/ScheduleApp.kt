@@ -149,7 +149,7 @@ fun ScheduleApp(
         NavHost(
             navController = navController,
             startDestination = Screen.Today.route,
-            modifier = Modifier.padding(innerPadding),
+            modifier = Modifier.padding(if (showBottomBar) innerPadding else PaddingValues(0.dp)),
             enterTransition = {
                 val from = tabIndexOf(initialState.destination.route)
                 val to = tabIndexOf(targetState.destination.route)
