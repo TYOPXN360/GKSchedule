@@ -33,8 +33,10 @@ import com.classapp.schedule.R
 fun LoginScreen(
     loginState: LoginState?,
     captchaImageBase64: String?,
+    hasSavedCredentials: Boolean,
     onRefreshCaptcha: () -> Unit,
     onLogin: (studentId: String, password: String, captcha: String) -> Unit,
+    onQuickRelogin: (captcha: String) -> Unit,
     onBack: () -> Unit
 ) {
     var studentId by remember { mutableStateOf("") }
@@ -156,6 +158,36 @@ fun LoginScreen(
                     Spacer(modifier = Modifier.width(8.dp))
                 }
                 Text(stringResource(R.string.login_button))
+            }
+
+            // Quick re-login (when credentials saved)
+            if (hasSavedCredentials && loginState is LoginState.Error) {
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                Text(
+                    text = stringResource(R.string.quick_relogin_hint),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    OutlinedTextField(
+                        value = captcha,
+                        onValueChange = { captcha = it },
+                        label = { Text(stringResource(R.string.login_captcha)) },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true,
+                        enabled = !isLoading
+                    )
+                    Button(
+                        onClick = { onQuickRelogin(captcha) },
+                        enabled = !isLoading && captcha.isNotBlank()
+                    ) {
+                        Text(stringResource(R.string.quick_relogin))
+                    }
+                }
             }
 
             // === Server response display ===

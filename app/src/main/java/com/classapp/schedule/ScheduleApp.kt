@@ -237,11 +237,14 @@ fun ScheduleApp(
             }
 
             composable(Screen.Login.route) {
+                val hasSavedCredentials by viewModel.hasSavedCredentials.collectAsState(initial = false)
                 LoginScreen(
                     loginState = loginState,
                     captchaImageBase64 = captchaImage,
+                    hasSavedCredentials = hasSavedCredentials,
                     onRefreshCaptcha = { viewModel.refreshCaptcha() },
                     onLogin = { sid, pwd, cap -> viewModel.login(sid, pwd, cap) },
+                    onQuickRelogin = { cap -> viewModel.quickRelogin(cap) },
                     onBack = { viewModel.clearLoginError(); navController.popBackStack() }
                 )
 

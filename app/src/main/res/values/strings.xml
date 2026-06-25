@@ -134,6 +134,8 @@
     <string name="login_captcha">Captcha</string>
     <string name="login_button">Login</string>
     <string name="login_tips">Your credentials are only sent to the school server and not stored on any third-party service.</string>
+    <string name="quick_relogin">Quick Login</string>
+    <string name="quick_relogin_hint">Credentials saved. Just enter the captcha to re-login.</string>
     <string name="login_success">Login successful!</string>
     <string name="login_importing">Importing courses…</string>
     <string name="login_import_success">Imported %1$d courses successfully!</string>

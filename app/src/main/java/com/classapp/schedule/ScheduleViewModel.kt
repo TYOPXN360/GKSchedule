@@ -14,6 +14,7 @@ import com.classapp.schedule.api.GdustApi
 import com.classapp.schedule.data.Course
 import com.classapp.schedule.data.CourseDao
 import com.classapp.schedule.data.CourseDatabase
+import com.classapp.schedule.data.CredentialStore
 import com.classapp.schedule.data.SettingsDataStore
 import com.classapp.schedule.notification.ReminderScheduler
 import com.classapp.schedule.util.IcsExport
@@ -27,6 +28,10 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
 
     private val courseDao: CourseDao = CourseDatabase.getDatabase(application).courseDao()
     private val settings = SettingsDataStore(application)
+    private val app = application
+
+    // Credential store
+    val hasSavedCredentials: Flow<Boolean> = CredentialStore.hasCredentials(application)
 
     val courses: Flow<List<Course>> = courseDao.getAllCourses()
     val currentWeek: Flow<Int> = settings.getCurrentWeek()
@@ -251,6 +256,8 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                     } catch (_: Exception) {
                         settings.saveLoginInfo(user.token, studentId, user.realName)
                     }
+                    // Save encrypted credentials for auto-relogin
+                    CredentialStore.save(app, studentId, password)
                     importFromSchool(studentId)
                 }
                 .onFailure { e ->
@@ -351,13 +358,49 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     }
 
     private suspend fun handleTokenExpired() {
-        android.util.Log.w("GdustApi", "Token expired, logging out")
         _isRefreshing.value = false
         savedStudentId = ""
         _savedStudentIdFlow.value = ""
         api.setToken("")
         settings.clearLoginInfo()
         _loginState.value = LoginState.Error("登录已过期，请重新登录")
+    }
+
+    /**
+     * Quick re-login: only needs captcha. Credentials are stored encrypted.
+     */
+    fun quickRelogin(captcha: String) {
+        _loginState.value = LoginState.Loading
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            // Load saved credentials
+            val sid = CredentialStore.loadStudentId(app).first()
+            val pwd = CredentialStore.loadPassword(app).first()
+            if (sid.isEmpty() || pwd.isEmpty()) {
+                _loginState.value = LoginState.Error("无保存的凭据，请手动登录")
+                return@launch
+            }
+            api.login(sid, pwd, captcha, captchaUuid)
+                .onSuccess { user ->
+                    savedStudentId = sid
+                    _savedStudentIdFlow.value = sid
+                    _loginState.value = LoginState.Success(user.realName.ifEmpty { sid }, sid)
+                    try {
+                        val userInfo = api.getUserInfo().getOrNull()
+                        settings.saveLoginInfo(user.token, sid, user.realName, userInfo?.deptName ?: "")
+                    } catch (_: Exception) {
+                        settings.saveLoginInfo(user.token, sid, user.realName)
+                    }
+                    importFromSchool(sid)
+                }
+                .onFailure { e ->
+                    if (isTokenExpired(e.message)) {
+                        handleTokenExpired()
+                    } else {
+                        _loginState.value = LoginState.Error(e.message ?: "登录失败")
+                        refreshCaptcha()
+                    }
+                }
+        }
     }
 
     fun logout() {

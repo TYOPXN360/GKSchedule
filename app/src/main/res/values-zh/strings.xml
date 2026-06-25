@@ -134,6 +134,8 @@
     <string name="login_captcha">验证码</string>
     <string name="login_button">登录</string>
     <string name="login_tips">您的账号信息仅发送至学校服务器，不会存储在任何第三方服务。</string>
+    <string name="quick_relogin">快速登录</string>
+    <string name="quick_relogin_hint">已保存凭据，只需输入验证码即可重新登录。</string>
     <string name="login_success">登录成功！</string>
     <string name="login_importing">正在导入课程…</string>
     <string name="login_import_success">成功导入 %1$d 门课程！</string>
