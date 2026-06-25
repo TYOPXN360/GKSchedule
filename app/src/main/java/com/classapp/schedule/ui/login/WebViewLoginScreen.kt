@@ -57,25 +57,26 @@ fun WebViewLoginScreen(
             isExpired = false
             statusText = ""
             try {
-                // This blocks until user scans or stream ends
-                val (clientId, result) = api.getSseClientIdAndListen()
-                if (clientId == null) {
+                // Phase 1: Get clientId from SSE (blocks until first event)
+                val (clientId, stream) = api.openSseConnection()
+                if (clientId == null || stream == null) {
                     statusText = context.getString(R.string.qr_fetch_failed)
                     isLoading = false
                     return@launch
                 }
+
+                // Phase 2: Generate QR code
                 val qrUrl = "https://cas.gdust.edu.cn/cas/mobieAuth?clientId=$clientId"
                 qrBitmap = generateZxingQr(qrUrl, 600)
                 isLoading = false
 
-                // result is non-null if user already scanned during SSE setup
+                // Phase 3: Keep reading SSE for scan result (blocks until scan or timeout)
+                val result = api.readSseResult(stream)
                 if (result != null) {
                     onLoginSuccess(result)
-                    return@launch
+                } else {
+                    isExpired = true
                 }
-
-                // If SSE closed without result, mark expired
-                isExpired = true
             } catch (e: Exception) {
                 statusText = e.message ?: "Error"
                 isLoading = false

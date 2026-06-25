@@ -313,10 +313,10 @@ class GdustApi {
     fun hasToken(): Boolean = authToken.isNotEmpty()
 
     /**
-     * Subscribe to SSE, get clientId, then keep listening for scan result.
-     * Returns (clientId, ticket) — blocks until user scans or timeout.
+     * Open SSE connection, read first event to get clientId.
+     * Returns (clientId, inputStream) — caller must keep reading inputStream for scan result.
      */
-    fun getSseClientIdAndListen(): Pair<String?, String?> {
+    fun openSseConnection(): Pair<String?, java.io.InputStream?> {
         return try {
             val request = Request.Builder()
                 .url("$CAS_API/sse/subscribe")
@@ -329,44 +329,65 @@ class GdustApi {
             val buffer = ByteArray(4096)
             val sb = StringBuilder()
             var clientId: String? = null
-            var result: String? = null
 
-            stream.use { input ->
-                var bytesRead: Int
-                while (input.read(buffer).also { bytesRead = it } != -1) {
-                    sb.append(String(buffer, 0, bytesRead))
-                    val text = sb.toString()
-                    for (line in text.lines()) {
-                        if (line.startsWith("data:")) {
-                            val data = line.removePrefix("data:").trim()
-                            if (data.isEmpty() || data == "[DONE]") continue
-                            if (clientId == null) {
-                                // First data event = clientId
-                                clientId = data
-                                android.util.Log.d("GdustApi", "SSE clientId: $clientId")
-                            } else {
-                                // Subsequent data event = scan result (ticket or loginCode)
-                                result = data
-                                android.util.Log.d("GdustApi", "SSE result: $result")
-                                break
-                            }
+            // Read until we get the first data event (clientId)
+            while (true) {
+                val bytesRead = stream.read(buffer)
+                if (bytesRead == -1) break
+                sb.append(String(buffer, 0, bytesRead))
+                for (line in sb.toString().lines()) {
+                    if (line.startsWith("data:")) {
+                        val data = line.removePrefix("data:").trim()
+                        if (data.isNotEmpty() && data != "[DONE]") {
+                            clientId = data
+                            android.util.Log.d("GdustApi", "SSE clientId: $clientId")
+                            return clientId to stream
                         }
                     }
-                    if (result != null) break
                 }
+                if (sb.length > 16384) break
             }
-            clientId to result
+            null to null
         } catch (e: Exception) {
-            android.util.Log.e("GdustApi", "SSE failed: ${e.message}")
+            android.util.Log.e("GdustApi", "openSseConnection failed: ${e.message}")
             null to null
         }
     }
 
     /**
-     * Check if the QR code login has been completed.
-     * Polls the SSE result from a separate connection.
+     * Keep reading SSE stream for scan result (second data event).
+     * Blocks until result arrives or stream closes.
      */
-    fun checkSseResult(clientId: String): String? = null // Not needed — getSseClientIdAndListen blocks
+    fun readSseResult(stream: java.io.InputStream): String? {
+        return try {
+            val buffer = ByteArray(4096)
+            val sb = StringBuilder()
+            var result: String? = null
+
+            while (true) {
+                val bytesRead = stream.read(buffer)
+                if (bytesRead == -1) break
+                sb.append(String(buffer, 0, bytesRead))
+                for (line in sb.toString().lines()) {
+                    if (line.startsWith("data:")) {
+                        val data = line.removePrefix("data:").trim()
+                        if (data.isNotEmpty() && data != "[DONE]") {
+                            result = data
+                            android.util.Log.d("GdustApi", "SSE scan result: $result")
+                            return result
+                        }
+                    }
+                }
+                if (sb.length > 16384) break
+            }
+            null
+        } catch (e: Exception) {
+            android.util.Log.e("GdustApi", "readSseResult failed: ${e.message}")
+            null
+        } finally {
+            try { stream.close() } catch (_: Exception) {}
+        }
+    }
 
     /**
      * Get user info (name, department, etc.)
