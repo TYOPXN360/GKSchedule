@@ -27,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
@@ -355,13 +356,43 @@ fun WeeklyScheduleScreen(
             } // HorizontalPager
         }
 
-        // FABs
+        // FABs — use Box with fixed-size slots to avoid any layout shift
         var fabExpanded by remember { mutableStateOf(true) }
-        Column(
-            modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp)
         ) {
+            // Collapse/Expand toggle — always at bottom-right, fixed position
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .size(40.dp)
+                    .shadow(6.dp, RoundedCornerShape(50))
+                    .clip(RoundedCornerShape(50))
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .clickable {
+                        com.classapp.schedule.util.HapticFeedback.light(hapticView)
+                        fabExpanded = !fabExpanded
+                    }
+                    ,
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    if (fabExpanded) "—" else "+",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.width(20.dp)
+                )
+            }
+            // Expanded FABs — stacked above the toggle button
+            Column(
+                modifier = Modifier.align(Alignment.BottomEnd).padding(bottom = 52.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
             // Back to current week — only visible when not on current week
             AnimatedVisibility(
                 visible = currentWeek != realCurrentWeek && fabExpanded,
@@ -419,28 +450,9 @@ fun WeeklyScheduleScreen(
                     Icon(Icons.Default.Add, stringResource(R.string.add_course))
                 }
             }
-            // Collapse/Expand toggle — pure Box, no Material component sizing issues
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .shadow(6.dp, RoundedCornerShape(50))
-                    .clip(RoundedCornerShape(50))
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                    .clickable {
-                        com.classapp.schedule.util.HapticFeedback.light(hapticView)
-                        fabExpanded = !fabExpanded
-                    },
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    if (fabExpanded) "—" else "+",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-    }
+            } // Column
+        } // Box
+    } // PullToRefreshBox
 
     // Detail sheet
     detailCourse?.let { course ->
