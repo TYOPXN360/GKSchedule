@@ -7,8 +7,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.classapp.schedule.ScheduleViewModel
@@ -22,6 +21,21 @@ class SettingsActivity : AppCompatActivity() {
         setContent {
             val vm: ScheduleViewModel = viewModel()
             val darkMode by vm.darkMode.collectAsState(initial = "system")
+            val language by vm.language.collectAsState(initial = "system")
+
+            // Apply language change — recreate activity when language changes
+            var lastLanguage by remember { mutableStateOf(language) }
+            LaunchedEffect(language) {
+                if (language != lastLanguage) {
+                    lastLanguage = language
+                    val locales = when (language) {
+                        "en" -> androidx.core.os.LocaleListCompat.forLanguageTags("en")
+                        "zh" -> androidx.core.os.LocaleListCompat.forLanguageTags("zh")
+                        else -> androidx.core.os.LocaleListCompat.getEmptyLocaleList()
+                    }
+                    androidx.appcompat.app.AppCompatDelegate.setApplicationLocales(locales)
+                }
+            }
 
             ClassAppTheme(darkTheme = darkMode) {
                 Surface(
@@ -32,7 +46,6 @@ class SettingsActivity : AppCompatActivity() {
                     val semesterStart by vm.semesterStart.collectAsState(initial = java.time.LocalDate.now())
                     val totalWeeks by vm.totalWeeks.collectAsState(initial = 20)
                     val periodsPerDay by vm.periodsPerDay.collectAsState(initial = 10)
-                    val language by vm.language.collectAsState(initial = "system")
                     val firstDayOfWeek by vm.firstDayOfWeek.collectAsState(initial = 1)
                     val gridHeight by vm.gridHeight.collectAsState(initial = 52)
                     val gridCorner by vm.gridCorner.collectAsState(initial = 8)
