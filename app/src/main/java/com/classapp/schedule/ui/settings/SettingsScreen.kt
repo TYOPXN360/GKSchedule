@@ -280,7 +280,7 @@ private fun SemesterPage(
         StepperItem(Icons.Default.AccessTime, stringResource(R.string.periods_per_day), periodsPerDay, 4, 14, onPeriodsPerDayChange)
         DropdownItem(Icons.Default.FirstPage, stringResource(R.string.first_day_of_week),
             listOf("1" to stringResource(R.string.first_day_monday), "7" to stringResource(R.string.first_day_sunday)),
-            firstDayOfWeek.toString()) { onFirstDayOfWeekChange(it.toInt()) }
+            firstDayOfWeek.toString(), onSelect = { onFirstDayOfWeekChange(it.toInt()) })
         SwitchItem(Icons.Default.Visibility, stringResource(R.string.hide_empty_weeks), hideEmptyWeeks, onHideEmptyWeeksChange)
     }
 }
@@ -295,10 +295,10 @@ private fun AppearancePage(
     SubPage(stringResource(R.string.settings_category_appearance), onBack) {
         DropdownItem(Icons.Default.DarkMode, stringResource(R.string.dark_mode),
             listOf("system" to stringResource(R.string.dark_mode_system), "light" to stringResource(R.string.dark_mode_light), "dark" to stringResource(R.string.dark_mode_dark)),
-            darkMode, onDarkModeChange)
+            darkMode, onSelect = onDarkModeChange)
         DropdownItem(Icons.Default.Language, stringResource(R.string.language),
             listOf("system" to stringResource(R.string.language_system), "en" to stringResource(R.string.language_en), "zh" to stringResource(R.string.language_zh)),
-            language, onLanguageChange)
+            language, onSelect = onLanguageChange)
     }
 }
 
@@ -331,10 +331,10 @@ private fun ScheduleStylePage(
 
         DropdownItem(Icons.Default.Palette, stringResource(R.string.color_engine),
             listOf("0" to stringResource(R.string.color_engine_monet), "1" to stringResource(R.string.color_engine_vibrant), "2" to stringResource(R.string.color_engine_classic), "3" to stringResource(R.string.color_engine_hsl)),
-            colorEngine.toString()) { onColorEngineChange(it.toInt()) }
+            colorEngine.toString(), onSelect = { onColorEngineChange(it.toInt()) })
         DropdownItem(Icons.Default.FormatColorFill, stringResource(R.string.color_group_mode),
             listOf("0" to stringResource(R.string.color_group_same), "1" to stringResource(R.string.color_group_same_sat), "2" to stringResource(R.string.color_group_diff)),
-            colorGroupMode.toString()) { onColorGroupModeChange(it.toInt()) }
+            colorGroupMode.toString(), onSelect = { onColorGroupModeChange(it.toInt()) })
     }
 }
 
@@ -345,7 +345,7 @@ private fun NotificationPage(reminderMinutes: Int, onReminderMinutesChange: (Int
     SubPage(stringResource(R.string.settings_category_notification), onBack) {
         DropdownItem(Icons.Default.Notifications, stringResource(R.string.reminder),
             listOf("0" to stringResource(R.string.reminder_off), "5" to stringResource(R.string.reminder_format, 5), "10" to stringResource(R.string.reminder_format, 10), "15" to stringResource(R.string.reminder_format, 15), "30" to stringResource(R.string.reminder_format, 30)),
-            reminderMinutes.toString()) { onReminderMinutesChange(it.toInt()) }
+            reminderMinutes.toString(), onSelect = { onReminderMinutesChange(it.toInt()) })
     }
 }
 
@@ -382,18 +382,20 @@ private fun SyncPage(
 
         HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
 
+        val syncAlpha = if (autoSyncOnStart) 0.38f else 1f
+
         ListItem(
             headlineContent = {
                 Text(stringResource(R.string.auto_sync_schedule),
-                    color = if (autoSyncOnStart) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f) else MaterialTheme.colorScheme.onSurface)
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = syncAlpha))
             },
             supportingContent = {
                 Text(stringResource(R.string.auto_sync_schedule_desc),
-                    color = if (autoSyncOnStart) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f) else MaterialTheme.colorScheme.onSurfaceVariant)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = syncAlpha))
             },
             leadingContent = {
                 Icon(Icons.Default.Schedule, null,
-                    tint = if (autoSyncOnStart) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f) else MaterialTheme.colorScheme.onSurfaceVariant)
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = syncAlpha))
             }
         )
 
@@ -404,11 +406,14 @@ private fun SyncPage(
                 "h" to stringResource(R.string.auto_sync_unit_h),
                 "d" to stringResource(R.string.auto_sync_unit_d)
             ),
-            autoSyncIntervalUnit, onAutoSyncIntervalUnitChange)
+            autoSyncIntervalUnit, enabled = !autoSyncOnStart, onSelect = onAutoSyncIntervalUnitChange)
 
         // Value slider with +/- buttons
         ListItem(
-            headlineContent = { Text("$autoSyncIntervalValue $unitLabel") },
+            headlineContent = {
+                Text("$autoSyncIntervalValue $unitLabel",
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = syncAlpha))
+            },
             supportingContent = {
                 Column {
                     Slider(
@@ -427,24 +432,27 @@ private fun SyncPage(
                             onClick = { onAutoSyncIntervalValueChange((autoSyncIntervalValue - 1).coerceIn(minVal, maxVal)) },
                             enabled = !autoSyncOnStart && autoSyncIntervalValue > minVal
                         ) {
-                            Icon(Icons.Default.Remove, null)
+                            Icon(Icons.Default.Remove, null,
+                                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = syncAlpha))
                         }
                         Text(
                             "$autoSyncIntervalValue $unitLabel",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = syncAlpha),
                             modifier = Modifier.padding(horizontal = 16.dp)
                         )
                         IconButton(
                             onClick = { onAutoSyncIntervalValueChange((autoSyncIntervalValue + 1).coerceIn(minVal, maxVal)) },
                             enabled = !autoSyncOnStart && autoSyncIntervalValue < maxVal
                         ) {
-                            Icon(Icons.Default.Add, null)
+                            Icon(Icons.Default.Add, null,
+                                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = syncAlpha))
                         }
                     }
                 }
             },
-            leadingContent = { Icon(Icons.Default.Tune, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
+            leadingContent = { Icon(Icons.Default.Tune, null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = syncAlpha)) }
         )
     }
 }
@@ -498,17 +506,18 @@ private fun SwitchItem(icon: androidx.compose.ui.graphics.vector.ImageVector, ti
 }
 
 @Composable
-private fun DropdownItem(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, options: List<Pair<String, String>>, currentKey: String, onSelect: (String) -> Unit) {
+private fun DropdownItem(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, options: List<Pair<String, String>>, currentKey: String, enabled: Boolean = true, onSelect: (String) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
     val label = options.find { it.first == currentKey }?.second ?: ""
+    val alpha = if (enabled) 1f else 0.38f
     Box {
         ListItem(
-            headlineContent = { Text(title) },
-            supportingContent = { Text(label) },
-            leadingContent = { Icon(icon, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+            headlineContent = { Text(title, color = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha)) },
+            supportingContent = { Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha)) },
+            leadingContent = { Icon(icon, null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha)) },
             trailingContent = {
                 Box {
-                    TextButton(onClick = { expanded = true }) {
+                    TextButton(onClick = { expanded = true }, enabled = enabled) {
                         Text(label)
                         Icon(Icons.Default.ArrowDropDown, null, modifier = Modifier.size(18.dp))
                     }
@@ -519,7 +528,7 @@ private fun DropdownItem(icon: androidx.compose.ui.graphics.vector.ImageVector, 
                     }
                 }
             },
-            modifier = Modifier.clickable { expanded = true }
+            modifier = if (enabled) Modifier.clickable { expanded = true } else Modifier
         )
     }
 }
