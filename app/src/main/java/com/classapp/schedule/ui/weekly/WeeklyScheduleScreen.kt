@@ -25,6 +25,7 @@ import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -414,19 +415,17 @@ fun WeeklyScheduleScreen(
                     com.classapp.schedule.util.HapticFeedback.light(hapticView)
                     fabExpanded = !fabExpanded
                 },
+                modifier = Modifier.size(40.dp),
                 containerColor = MaterialTheme.colorScheme.surfaceVariant,
                 contentColor = MaterialTheme.colorScheme.onSurfaceVariant
             ) {
-                Box(
-                    modifier = Modifier.size(18.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        if (fabExpanded) "▼" else "▲",
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
+                Icon(
+                    Icons.Default.ChevronLeft,
+                    contentDescription = if (fabExpanded) "Collapse" else "Expand",
+                    modifier = Modifier
+                        .size(20.dp)
+                        .graphicsLayer { rotationZ = if (fabExpanded) 90f else -90f }
+                )
             }
         }
     }
