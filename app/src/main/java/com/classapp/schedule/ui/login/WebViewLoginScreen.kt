@@ -1,36 +1,41 @@
 package com.classapp.schedule.ui.login
 
+import android.content.ContentValues
 import android.graphics.Bitmap
 import android.graphics.Color
+import android.os.Build
+import android.os.Environment
+import android.provider.MediaStore
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color as ComposeColor
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.classapp.schedule.R
 import com.classapp.schedule.api.GdustApi
+import com.classapp.schedule.util.HapticFeedback
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
-/**
- * Pure Compose QR code login screen.
- * 1. Subscribes to CAS SSE to get clientId
- * 2. Builds QR URL: https://cas.gdust.edu.cn/cas/mobieAuth?clientId=xxx
- * 3. Generates QR code bitmap
- * 4. Polls for login result
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WebViewLoginScreen(
@@ -38,34 +43,33 @@ fun WebViewLoginScreen(
     onLoginSuccess: (loginCode: String) -> Unit,
     onBack: () -> Unit
 ) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
     var qrBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var statusText by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(true) }
-    val scope = rememberCoroutineScope()
+    var isExpired by remember { mutableStateOf(false) }
 
     fun generateQr() {
         scope.launch(Dispatchers.IO) {
             isLoading = true
+            isExpired = false
             statusText = ""
             try {
-                // Step 1: Get clientId from SSE
                 val clientId = api.getSseClientId()
                 if (clientId == null) {
-                    statusText = "获取二维码失败"
+                    statusText = context.getString(R.string.qr_fetch_failed)
                     isLoading = false
                     return@launch
                 }
-
-                // Step 2: Build QR URL
                 val qrUrl = "https://cas.gdust.edu.cn/cas/mobieAuth?clientId=$clientId"
-
-                // Step 3: Generate QR code bitmap
-                qrBitmap = generateQrBitmap(qrUrl, 600)
+                qrBitmap = generateZxingQr(qrUrl, 600)
                 isLoading = false
 
-                // Step 4: Poll for login result
+                // Poll for scan result, timeout after 120s
                 var attempts = 0
-                while (isActive && attempts < 120) { // 2 minutes timeout
+                while (isActive && attempts < 120 && !isExpired) {
                     delay(1000)
                     attempts++
                     val result = api.checkSseResult(clientId)
@@ -74,11 +78,34 @@ fun WebViewLoginScreen(
                         return@launch
                     }
                 }
-                statusText = "二维码已过期，请刷新"
+                isExpired = true
             } catch (e: Exception) {
-                statusText = "错误: ${e.message}"
+                statusText = e.message ?: "Error"
                 isLoading = false
             }
+        }
+    }
+
+    fun saveQrToGallery() {
+        val bmp = qrBitmap ?: return
+        scope.launch(Dispatchers.IO) {
+            try {
+                val fileName = "qr_login_${System.currentTimeMillis()}.png"
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    val values = ContentValues().apply {
+                        put(MediaStore.Images.Media.DISPLAY_NAME, fileName)
+                        put(MediaStore.Images.Media.MIME_TYPE, "image/png")
+                        put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/ClassApp")
+                    }
+                    val uri = context.contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
+                    uri?.let { context.contentResolver.openOutputStream(it)?.use { os -> bmp.compress(Bitmap.CompressFormat.PNG, 100, os) } }
+                } else {
+                    @Suppress("DEPRECATION")
+                    val dir = java.io.File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "ClassApp")
+                    dir.mkdirs()
+                    java.io.File(dir, fileName).outputStream().use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) }
+                }
+            } catch (_: Exception) {}
         }
     }
 
@@ -93,11 +120,6 @@ fun WebViewLoginScreen(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { generateQr() }) {
-                        Icon(Icons.Default.Refresh, "Refresh")
                     }
                 }
             )
@@ -119,7 +141,7 @@ fun WebViewLoginScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // QR code card
+            // QR code card with expired overlay
             Card(
                 modifier = Modifier.size(280.dp),
                 shape = RoundedCornerShape(24.dp),
@@ -135,24 +157,91 @@ fun WebViewLoginScreen(
                         Image(
                             bitmap = qrBitmap!!.asImageBitmap(),
                             contentDescription = "QR Code",
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(16.dp),
+                            modifier = Modifier.fillMaxSize().padding(24.dp),
                             contentScale = ContentScale.Fit
                         )
+                    }
+
+                    // Expired overlay
+                    if (isExpired) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(ComposeColor.Black.copy(alpha = 0.6f))
+                                .clickable {
+                                    HapticFeedback.light(context)
+                                    generateQr()
+                                },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Icon(
+                                    Icons.Default.Refresh,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(40.dp),
+                                    tint = ComposeColor.White
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = stringResource(R.string.qr_expired),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = ComposeColor.White
+                                )
+                                Text(
+                                    text = stringResource(R.string.qr_tap_to_refresh),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = ComposeColor.White.copy(alpha = 0.7f)
+                                )
+                            }
+                        }
                     }
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Action buttons: Save + Refresh
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                OutlinedButton(
+                    onClick = {
+                        HapticFeedback.medium(context)
+                        saveQrToGallery()
+                    },
+                    modifier = Modifier.weight(1f),
+                    enabled = qrBitmap != null && !isLoading
+                ) {
+                    Icon(Icons.Default.Save, null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(R.string.save_qr))
+                }
+                FilledTonalButton(
+                    onClick = {
+                        HapticFeedback.medium(context)
+                        generateQr()
+                    },
+                    modifier = Modifier.weight(1f),
+                    enabled = !isLoading
+                ) {
+                    Icon(Icons.Default.Refresh, null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(R.string.refresh_qr))
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Status text
             if (statusText.isNotEmpty()) {
                 Text(
                     text = statusText,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.error
                 )
-            } else {
+            } else if (!isExpired) {
                 Text(
                     text = stringResource(R.string.scan_login_tip),
                     style = MaterialTheme.typography.bodySmall,
@@ -164,26 +253,7 @@ fun WebViewLoginScreen(
     }
 }
 
-/**
- * Simple QR code bitmap generation using a web API fallback.
- * For production, use zxing library. This uses Google Charts API as fallback.
- */
-private fun generateQrBitmap(data: String, size: Int): Bitmap {
-    // Simple QR code generation using Android's built-in capabilities
-    // For now, create a placeholder that encodes the data visually
-    // In production, use com.google.zxing:core library
-
-    // Use zxing-core if available, otherwise create a simple representation
-    return try {
-        generateZxingQr(data, size)
-    } catch (_: Exception) {
-        // Fallback: create a simple bitmap with the URL text
-        createSimpleQrPlaceholder(data, size)
-    }
-}
-
 private fun generateZxingQr(data: String, size: Int): Bitmap {
-    // Try to use zxing if it's on the classpath
     val writer = com.google.zxing.qrcode.QRCodeWriter()
     val bitMatrix = writer.encode(data, com.google.zxing.BarcodeFormat.QR_CODE, size, size)
     val w = bitMatrix.width
@@ -196,20 +266,5 @@ private fun generateZxingQr(data: String, size: Int): Bitmap {
     }
     val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.RGB_565)
     bmp.setPixels(pixels, 0, w, 0, 0, w, h)
-    return bmp
-}
-
-private fun createSimpleQrPlaceholder(data: String, size: Int): Bitmap {
-    val bmp = Bitmap.createBitmap(size, size, Bitmap.Config.RGB_565)
-    bmp.eraseColor(Color.WHITE)
-    // Draw a simple pattern to indicate QR code
-    val canvas = android.graphics.Canvas(bmp)
-    val paint = android.graphics.Paint().apply {
-        color = Color.BLACK
-        textSize = 16f
-        textAlign = android.graphics.Paint.Align.CENTER
-    }
-    canvas.drawText("QR Code", size / 2f, size / 2f - 10, paint)
-    canvas.drawText("(Install zxing)", size / 2f, size / 2f + 10, paint)
     return bmp
 }

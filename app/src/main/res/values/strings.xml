@@ -141,6 +141,11 @@
     <string name="scan_login_title">Scan to Login</string>
     <string name="scan_login_desc">Open DingTalk and scan the QR code below to login</string>
     <string name="scan_login_tip">QR code refreshes automatically. Long-press to save.</string>
+    <string name="save_qr">Save QR</string>
+    <string name="refresh_qr">Refresh</string>
+    <string name="qr_expired">QR Code Expired</string>
+    <string name="qr_tap_to_refresh">Tap to refresh</string>
+    <string name="qr_fetch_failed">Failed to get QR code</string>
     <string name="login_success">Login successful!</string>
     <string name="login_importing">Importing courses…</string>
     <string name="login_import_success">Imported %1$d courses successfully!</string>
