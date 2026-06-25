@@ -1,5 +1,11 @@
 package com.classapp.schedule.ui.today
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -17,9 +23,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import kotlin.math.sin
 import com.classapp.schedule.R
 import com.classapp.schedule.data.Course
 import com.classapp.schedule.util.CourseColors
@@ -236,6 +246,15 @@ private fun CourseCard(
 
     val colors = CourseColors.getColors(0, count = 32)
 
+    val waveOffset = if (isCurrent) {
+        val transition = rememberInfiniteTransition(label = "wave")
+        transition.animateFloat(
+            initialValue = 0f, targetValue = 2f * Math.PI.toFloat(),
+            animationSpec = infiniteRepeatable(tween(2000, easing = LinearEasing)),
+            label = "wavePhase"
+        ).value
+    } else 0f
+
     Card(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
         colors = CardDefaults.cardColors(
@@ -245,16 +264,27 @@ private fun CourseCard(
         shape = RoundedCornerShape(12.dp)
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
-            // Progress overlay for current course
             if (isCurrent && animatedProgress > 0f) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth(fraction = animatedProgress)
-                        .matchParentSize()
-                        .background(
-                            CourseColors.getBackground(course.colorIndex, colors).copy(alpha = 0.3f)
-                        )
-                )
+                val fillColor = CourseColors.getBackground(course.colorIndex, colors).copy(alpha = 0.3f)
+                androidx.compose.foundation.Canvas(modifier = Modifier.matchParentSize()) {
+                    val w = size.width
+                    val h = size.height
+                    val progressX = w * animatedProgress
+                    val amp = 6.dp.toPx()
+                    val freq = 3f
+                    val path = Path().apply {
+                        moveTo(0f, 0f)
+                        lineTo(progressX, 0f)
+                        for (y in 0..h.toInt()) {
+                            val yF = y.toFloat()
+                            val wave = amp * sin(freq * yF / h * 2f * Math.PI.toFloat() + waveOffset).toFloat()
+                            lineTo(progressX + wave, yF)
+                        }
+                        lineTo(0f, h)
+                        close()
+                    }
+                    drawPath(path, color = fillColor)
+                }
             }
 
             Row(
