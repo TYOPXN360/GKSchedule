@@ -250,10 +250,15 @@ private fun CourseCard(
     } else 0f
 
     // Animated progress — starts from 0, animates to target with stagger delay
+    val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
     var startAnimation by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) {
-        kotlinx.coroutines.delay(300 + animDelay)
-        startAnimation = true
+    LaunchedEffect(lifecycleOwner.lifecycle.currentStateFlow) {
+        lifecycleOwner.lifecycle.currentStateFlow.collect { state ->
+            if (state == androidx.lifecycle.Lifecycle.State.RESUMED && !startAnimation) {
+                kotlinx.coroutines.delay(300 + animDelay)
+                startAnimation = true
+            }
+        }
     }
     val animatedProgress by androidx.compose.animation.core.animateFloatAsState(
         targetValue = if (startAnimation && isCurrent) progress else 0f,
