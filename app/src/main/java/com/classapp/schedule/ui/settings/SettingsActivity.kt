@@ -1,6 +1,7 @@
 package com.classapp.schedule.ui.settings
 
 import android.os.Bundle
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -10,8 +11,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.classapp.schedule.R
 import com.classapp.schedule.ScheduleViewModel
 import com.classapp.schedule.ui.theme.ClassAppTheme
+import kotlinx.coroutines.launch
 
 class SettingsActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -20,6 +23,8 @@ class SettingsActivity : AppCompatActivity() {
 
         setContent {
             val vm: ScheduleViewModel = viewModel()
+            val scope = rememberCoroutineScope()
+            val context = this
             val darkMode by vm.darkMode.collectAsState(initial = "system")
             val language by vm.language.collectAsState(initial = "system")
 
@@ -34,6 +39,19 @@ class SettingsActivity : AppCompatActivity() {
                         else -> androidx.core.os.LocaleListCompat.getEmptyLocaleList()
                     }
                     androidx.appcompat.app.AppCompatDelegate.setApplicationLocales(locales)
+                }
+            }
+
+            val importJsonLauncher = rememberLauncherForActivityResult(
+                androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
+            ) { result ->
+                if (result.resultCode == android.app.Activity.RESULT_OK) {
+                    result.data?.data?.let { uri ->
+                        try {
+                            val json = contentResolver.openInputStream(uri)?.bufferedReader()?.readText()
+                            if (json != null) vm.importJson(json)
+                        } catch (_: Exception) {}
+                    }
                 }
             }
 
@@ -109,10 +127,37 @@ class SettingsActivity : AppCompatActivity() {
                         onAutoSyncOnStartChange = { vm.setAutoSyncOnStart(it) },
                         onAutoSyncIntervalValueChange = { vm.setAutoSyncIntervalValue(it) },
                         onAutoSyncIntervalUnitChange = { vm.setAutoSyncIntervalUnit(it) },
-                        onExportJson = {},
-                        onImportJson = {},
-                        onExportIcs = {},
-                        onExportImage = {}
+                        onExportJson = {
+                            scope.launch {
+                                val json = vm.exportJson()
+                                if (json != null) {
+                                    if (vm.saveJsonToDownload(json)) {
+                                        android.widget.Toast.makeText(context, context.getString(R.string.export_success), android.widget.Toast.LENGTH_SHORT).show()
+                                    }
+                                } else {
+                                    android.widget.Toast.makeText(context, context.getString(R.string.import_failed), android.widget.Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        },
+                        onImportJson = {
+                            val intent = android.content.Intent(android.content.Intent.ACTION_GET_CONTENT).apply {
+                                type = "application/json"
+                            }
+                            importJsonLauncher.launch(intent)
+                        },
+                        onExportIcs = {
+                            scope.launch {
+                                val ics = vm.exportIcs()
+                                if (ics != null) {
+                                    if (vm.saveIcsToDownload(ics)) {
+                                        android.widget.Toast.makeText(context, context.getString(R.string.export_success), android.widget.Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            }
+                        },
+                        onExportImage = {
+                            android.widget.Toast.makeText(context, "TODO", android.widget.Toast.LENGTH_SHORT).show()
+                        }
                     )
                 }
             }

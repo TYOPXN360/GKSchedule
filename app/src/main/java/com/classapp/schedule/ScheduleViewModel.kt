@@ -210,6 +210,12 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
         return IcsExport.exportToIcs(allCourses, start, ::getStartTime, ::getEndTime)
     }
 
+    suspend fun exportJson(): String? {
+        val allCourses = courseDao.getAllCourses().first()
+        if (allCourses.isEmpty()) return null
+        return JsonImportExport.exportToJson(allCourses)
+    }
+
     fun saveIcsToDownload(icsContent: String): Boolean {
         return try {
             val context = getApplication<android.app.Application>()
