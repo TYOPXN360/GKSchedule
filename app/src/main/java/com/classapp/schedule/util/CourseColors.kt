@@ -95,6 +95,11 @@ object CourseColors {
         return if (satOffset > 0) adjustSaturation(base, satOffset) else base
     }
 
+    fun getBackgroundStatic(index: Int, colors: List<Pair<Color, Color>>, satOffset: Int = 0): Color {
+        val base = colors[(index / 10).coerceIn(0, colors.size - 1)].first
+        return if (satOffset > 0) adjustSaturation(base, satOffset) else base
+    }
+
     fun getTextColor(index: Int, colors: List<Pair<Color, Color>>, satOffset: Int = 0): Color {
         val base = colors[(index / 10).coerceIn(0, colors.size - 1)].second
         return if (satOffset > 0) adjustSaturation(base, satOffset) else base

@@ -27,7 +27,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
@@ -313,8 +316,52 @@ fun WeeklyScheduleScreen(
                         }
                     }
 
-                    // Overlay: course blocks
-                    // All blocks drawn with 0.75 alpha so overlapping areas naturally blend
+                    // Pre-compute blended colors for overlapping blocks
+                    val blockColors = remember(weekBlocks, monetColors, colorGroupMode) {
+                        weekBlocks.map { block ->
+                            val satOffset = if (colorGroupMode == 1) block.colorIdx % 10 else 0
+                            val baseColor = CourseColors.getBackgroundStatic(block.colorIdx, monetColors, satOffset)
+                            val overlapping = weekBlocks.filter { other ->
+                                other !== block && other.day == block.day &&
+                                other.start < block.start + block.span && other.start + other.span > block.start
+                            }
+                            if (overlapping.isEmpty()) baseColor
+                            else {
+                                var r = baseColor.red; var g = baseColor.green; var b = baseColor.blue; var a = baseColor.alpha
+                                overlapping.forEach { other ->
+                                    val oSat = if (colorGroupMode == 1) other.colorIdx % 10 else 0
+                                    val oColor = CourseColors.getBackgroundStatic(other.colorIdx, monetColors, oSat)
+                                    r = (r + oColor.red) / 2f; g = (g + oColor.green) / 2f
+                                    b = (b + oColor.blue) / 2f; a = (a + oColor.alpha) / 2f
+                                }
+                                Color(r, g, b, a)
+                            }
+                        }
+                    }
+
+                    // Draw colored backgrounds with Canvas
+                    androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize()) {
+                        val h = size.height
+                        val rowH2 = h / periodsPerDay
+                        val cellW2 = (size.width - labelWidthDp.toPx()) / 7
+                        val spacing = gridSpacing.dp.toPx()
+                        val corner = gridCorner.dp.toPx()
+
+                        weekBlocks.forEachIndexed { idx, block ->
+                            val x = labelWidthDp.toPx() + cellW2 * (block.day - 1) + spacing
+                            val y = rowH2 * (block.start - 1) + spacing
+                            val bw = cellW2 - spacing * 2
+                            val bh = rowH2 * block.span - spacing * 2
+                            drawRoundRect(
+                                color = blockColors[idx],
+                                topLeft = Offset(x, y),
+                                size = Size(bw.coerceAtLeast(24.dp.toPx()), bh.coerceAtLeast(24.dp.toPx())),
+                                cornerRadius = CornerRadius(corner)
+                            )
+                        }
+                    }
+
+                    // Overlay: course text
                     weekBlocks.forEach { block ->
                         val x = labelWidthDp + cellW * (block.day - 1) + gridSpacing.dp
                         val y = rowH * (block.start - 1) + gridSpacing.dp
@@ -322,13 +369,9 @@ fun WeeklyScheduleScreen(
                         val h = rowH * block.span - gridSpacing.dp * 2
                         val satOffset = if (colorGroupMode == 1) block.colorIdx % 10 else 0
 
-                        val bg = CourseColors.getBackground(block.colorIdx, monetColors, satOffset).copy(alpha = 0.5f)
-
                         Box(
                             modifier = Modifier.offset(x = x, y = y)
                                 .size(width = w.coerceAtLeast(24.dp), height = h.coerceAtLeast(24.dp))
-                                .clip(RoundedCornerShape(gridCorner.dp))
-                                .background(bg)
                                 .clickable {
                                 com.classapp.schedule.util.HapticFeedback.medium(hapticView)
                                 detailCourse = block.course
