@@ -268,7 +268,7 @@ private fun CourseCard(
         animationSpec = animSpec,
         label = "progress"
     )
-    val animDone by remember { derivedStateOf { startAnimation && (animatedProgress - progress).coerceAtLeast(0f) < 0.01f } }
+    val animDone by remember { derivedStateOf { startAnimation && progress > 0f && (progress - animatedProgress) < 0.01f } }
 
     val colors = CourseColors.getColors(0, count = 32)
 
