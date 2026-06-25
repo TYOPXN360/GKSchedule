@@ -314,7 +314,7 @@ fun WeeklyScheduleScreen(
                     }
 
                     // Overlay: course blocks
-                    // Detect overlaps: a block overlaps if another block shares same day and period range
+                    // All blocks drawn with 0.75 alpha so overlapping areas naturally blend
                     weekBlocks.forEach { block ->
                         val x = labelWidthDp + cellW * (block.day - 1) + gridSpacing.dp
                         val y = rowH * (block.start - 1) + gridSpacing.dp
@@ -322,12 +322,7 @@ fun WeeklyScheduleScreen(
                         val h = rowH * block.span - gridSpacing.dp * 2
                         val satOffset = if (colorGroupMode == 1) block.colorIdx % 10 else 0
 
-                        val hasOverlap = weekBlocks.any { other ->
-                            other !== block && other.day == block.day &&
-                            other.start < block.start + block.span && other.start + other.span > block.start
-                        }
-                        val bgAlpha = if (hasOverlap) 0.55f else 1f
-                        val bg = CourseColors.getBackground(block.colorIdx, monetColors, satOffset).copy(alpha = bgAlpha)
+                        val bg = CourseColors.getBackground(block.colorIdx, monetColors, satOffset).copy(alpha = 0.75f)
 
                         Box(
                             modifier = Modifier.offset(x = x, y = y)
