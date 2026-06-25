@@ -33,6 +33,7 @@ import kotlin.math.sin
 import com.classapp.schedule.R
 import com.classapp.schedule.data.Course
 import com.classapp.schedule.util.CourseColors
+import kotlinx.coroutines.flow.first
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
@@ -253,10 +254,13 @@ private fun CourseCard(
         else -> 0f
     }
 
-    // Animated progress — starts from 0, animates to target with stagger delay
+    // Animated progress — starts from 0, animates to target after splash screen
     var startAnimation by remember { mutableStateOf(false) }
+    val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
     LaunchedEffect(Unit) {
-        kotlinx.coroutines.delay(500 + animDelay)
+        // Wait until RESUMED (splash screen done)
+        lifecycleOwner.lifecycle.currentStateFlow.first { it == androidx.lifecycle.Lifecycle.State.RESUMED }
+        kotlinx.coroutines.delay(animDelay)
         startAnimation = true
     }
     val animatedProgress by androidx.compose.animation.core.animateFloatAsState(
