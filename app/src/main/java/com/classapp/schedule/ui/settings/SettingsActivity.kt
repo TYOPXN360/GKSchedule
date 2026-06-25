@@ -60,6 +60,9 @@ class SettingsActivity : AppCompatActivity() {
                     val hideEmptyWeeks by vm.hideEmptyWeeks.collectAsState(initial = false)
                     val showDateInHeader by vm.showDateInHeader.collectAsState(initial = false)
                     val reminderMinutes by vm.reminderMinutes.collectAsState(initial = 0)
+                    val autoSyncOnStart by vm.autoSyncOnStart.collectAsState(initial = true)
+                    val autoSyncIntervalValue by vm.autoSyncIntervalValue.collectAsState(initial = 1)
+                    val autoSyncIntervalUnit by vm.autoSyncIntervalUnit.collectAsState(initial = "d")
 
                     SettingsScreen(
                         semesterStart = semesterStart,
@@ -81,6 +84,9 @@ class SettingsActivity : AppCompatActivity() {
                         hideEmptyWeeks = hideEmptyWeeks,
                         showDateInHeader = showDateInHeader,
                         reminderMinutes = reminderMinutes,
+                        autoSyncOnStart = autoSyncOnStart,
+                        autoSyncIntervalValue = autoSyncIntervalValue,
+                        autoSyncIntervalUnit = autoSyncIntervalUnit,
                         onSemesterStartChange = { vm.setSemesterStart(it) },
                         onTotalWeeksChange = { vm.setTotalWeeks(it) },
                         onPeriodsPerDayChange = { vm.setPeriodsPerDay(it) },
@@ -100,6 +106,9 @@ class SettingsActivity : AppCompatActivity() {
                         onHideEmptyWeeksChange = { vm.setHideEmptyWeeks(it) },
                         onShowDateInHeaderChange = { vm.setShowDateInHeader(it) },
                         onReminderMinutesChange = { vm.setReminderMinutes(it) },
+                        onAutoSyncOnStartChange = { vm.setAutoSyncOnStart(it) },
+                        onAutoSyncIntervalValueChange = { vm.setAutoSyncIntervalValue(it) },
+                        onAutoSyncIntervalUnitChange = { vm.setAutoSyncIntervalUnit(it) },
                         onExportJson = {},
                         onImportJson = {},
                         onExportIcs = {},

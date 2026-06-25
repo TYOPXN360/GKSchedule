@@ -97,4 +97,7 @@ dependencies {
 
     // Serialization
     implementation(libs.kotlinx.serialization.json)
+
+    // WorkManager for periodic sync
+    implementation(libs.workmanager.runtime)
 }

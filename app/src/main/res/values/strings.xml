@@ -120,6 +120,17 @@
     <string name="reminder">Reminder</string>
     <string name="reminder_off">Off</string>
     <string name="reminder_format">%1$d min before</string>
+    <!-- Auto Sync -->
+    <string name="settings_category_sync">Auto Sync</string>
+    <string name="settings_category_sync_desc">Sync on startup, scheduled sync</string>
+    <string name="auto_sync_on_start">Sync on Startup</string>
+    <string name="auto_sync_on_start_desc">Auto-update courses when opening the app</string>
+    <string name="auto_sync_schedule">Scheduled Sync</string>
+    <string name="auto_sync_schedule_desc">Update courses at set intervals</string>
+    <string name="auto_sync_interval">Sync Interval</string>
+    <string name="auto_sync_unit_min">minutes</string>
+    <string name="auto_sync_unit_h">hours</string>
+    <string name="auto_sync_unit_d">days</string>
     <string name="data_management">Data</string>
     <string name="export_json">Export JSON</string>
     <string name="import_json">Import JSON</string>

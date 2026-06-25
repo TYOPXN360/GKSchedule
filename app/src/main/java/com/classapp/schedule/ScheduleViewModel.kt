@@ -58,6 +58,9 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     val hideEmptyWeeks: Flow<Boolean> = settings.hideEmptyWeeks
     val themeColorIndex: Flow<Int> = settings.themeColorIndex
     val reminderMinutes: Flow<Int> = settings.reminderMinutes
+    val autoSyncOnStart: Flow<Boolean> = settings.autoSyncOnStart
+    val autoSyncIntervalValue: Flow<Int> = settings.autoSyncIntervalValue
+    val autoSyncIntervalUnit: Flow<String> = settings.autoSyncIntervalUnit
     val courseNames: Flow<List<String>> = courseDao.getAllCourseNames()
 
     private val _selectedWeek = MutableStateFlow(0)
@@ -97,8 +100,9 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                 _savedStudentIdFlow.value = sid
                 _loginState.value = LoginState.Success(name.ifEmpty { sid }, sid)
                 android.util.Log.d("GdustApi", "restore: login restored, hasToken=${api.hasToken()}")
-                // Auto-refresh on app start
-                refreshFromSchool()
+                // Auto-refresh on app start if enabled
+                val syncOnStart = settings.autoSyncOnStart.first()
+                if (syncOnStart) refreshFromSchool()
             } else {
                 android.util.Log.d("GdustApi", "restore: no saved login found")
             }
@@ -114,6 +118,12 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                     )
                 }
             }
+        }
+        // Schedule periodic auto-sync
+        viewModelScope.launch {
+            val value = settings.autoSyncIntervalValue.first()
+            val unit = settings.autoSyncIntervalUnit.first()
+            com.classapp.schedule.sync.AutoSyncWorker.schedule(app, value, unit)
         }
     }
 
@@ -164,6 +174,25 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     fun setHideEmptyWeeks(hide: Boolean) { viewModelScope.launch { settings.setHideEmptyWeeks(hide) } }
     fun setThemeColorIndex(idx: Int) { viewModelScope.launch { settings.setThemeColorIndex(idx) } }
     fun setReminderMinutes(min: Int) { viewModelScope.launch { settings.setReminderMinutes(min) } }
+    fun setAutoSyncOnStart(enabled: Boolean) { viewModelScope.launch { settings.setAutoSyncOnStart(enabled) } }
+    fun setAutoSyncIntervalValue(value: Int) {
+        viewModelScope.launch {
+            settings.setAutoSyncIntervalValue(value)
+            rescheduleSync()
+        }
+    }
+    fun setAutoSyncIntervalUnit(unit: String) {
+        viewModelScope.launch {
+            settings.setAutoSyncIntervalUnit(unit)
+            rescheduleSync()
+        }
+    }
+
+    private suspend fun rescheduleSync() {
+        val value = settings.autoSyncIntervalValue.first()
+        val unit = settings.autoSyncIntervalUnit.first()
+        com.classapp.schedule.sync.AutoSyncWorker.schedule(app, value, unit)
+    }
 
     // Export - suspend-based for proper data access
     suspend fun exportIcs(): String? {

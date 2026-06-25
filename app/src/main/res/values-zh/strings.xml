@@ -116,6 +116,17 @@
     <string name="reminder">课程提醒</string>
     <string name="reminder_off">关闭</string>
     <string name="reminder_format">课前%1$d分钟</string>
+    <!-- Settings - Auto Sync -->
+    <string name="settings_category_sync">自动同步</string>
+    <string name="settings_category_sync_desc">启动时同步、定时同步</string>
+    <string name="auto_sync_on_start">启动时自动同步</string>
+    <string name="auto_sync_on_start_desc">每次打开App自动从教务系统更新课程</string>
+    <string name="auto_sync_schedule">定时同步</string>
+    <string name="auto_sync_schedule_desc">按设定间隔自动更新课程</string>
+    <string name="auto_sync_interval">同步间隔</string>
+    <string name="auto_sync_unit_min">分钟</string>
+    <string name="auto_sync_unit_h">小时</string>
+    <string name="auto_sync_unit_d">天</string>
     <!-- Settings - Data -->
     <string name="import_from_school">从教务导入</string>
     <string name="export_json">导出 JSON</string>

@@ -45,6 +45,9 @@ fun SettingsScreen(
     hideEmptyWeeks: Boolean,
     showDateInHeader: Boolean,
     reminderMinutes: Int,
+    autoSyncOnStart: Boolean,
+    autoSyncIntervalValue: Int,
+    autoSyncIntervalUnit: String,
     onSemesterStartChange: (LocalDate) -> Unit,
     onTotalWeeksChange: (Int) -> Unit,
     onPeriodsPerDayChange: (Int) -> Unit,
@@ -64,6 +67,9 @@ fun SettingsScreen(
     onHideEmptyWeeksChange: (Boolean) -> Unit,
     onShowDateInHeaderChange: (Boolean) -> Unit,
     onReminderMinutesChange: (Int) -> Unit,
+    onAutoSyncOnStartChange: (Boolean) -> Unit,
+    onAutoSyncIntervalValueChange: (Int) -> Unit,
+    onAutoSyncIntervalUnitChange: (String) -> Unit,
     onExportJson: () -> Unit,
     onImportJson: () -> Unit,
     onExportIcs: () -> Unit,
@@ -153,6 +159,17 @@ fun SettingsScreen(
                     onBack = { navController.popBackStack() }
                 )
             }
+            composable("sync") {
+                SyncPage(
+                    autoSyncOnStart = autoSyncOnStart,
+                    autoSyncIntervalValue = autoSyncIntervalValue,
+                    autoSyncIntervalUnit = autoSyncIntervalUnit,
+                    onAutoSyncOnStartChange = onAutoSyncOnStartChange,
+                    onAutoSyncIntervalValueChange = onAutoSyncIntervalValueChange,
+                    onAutoSyncIntervalUnitChange = onAutoSyncIntervalUnitChange,
+                    onBack = { navController.popBackStack() }
+                )
+            }
             composable("data") {
                 DataPage(
                     onExportJson = onExportJson,
@@ -194,6 +211,7 @@ private fun SettingsMainPage(onOpenPage: (String) -> Unit, onExit: () -> Unit) {
             CategoryItem(Icons.Default.Palette, stringResource(R.string.settings_category_appearance), stringResource(R.string.settings_category_appearance_desc)) { onOpenPage("appearance") }
             CategoryItem(Icons.Default.GridOn, stringResource(R.string.settings_category_schedule), stringResource(R.string.settings_category_schedule_desc)) { onOpenPage("schedule_style") }
             CategoryItem(Icons.Default.Notifications, stringResource(R.string.settings_category_notification), stringResource(R.string.settings_category_notification_desc)) { onOpenPage("notification") }
+            CategoryItem(Icons.Default.Sync, stringResource(R.string.settings_category_sync), stringResource(R.string.settings_category_sync_desc)) { onOpenPage("sync") }
             CategoryItem(Icons.Default.Storage, stringResource(R.string.settings_category_data), stringResource(R.string.settings_category_data_desc)) { onOpenPage("data") }
             Spacer(modifier = Modifier.height(32.dp))
         }
@@ -328,6 +346,93 @@ private fun NotificationPage(reminderMinutes: Int, onReminderMinutesChange: (Int
         DropdownItem(Icons.Default.Notifications, stringResource(R.string.reminder),
             listOf("0" to stringResource(R.string.reminder_off), "5" to stringResource(R.string.reminder_format, 5), "10" to stringResource(R.string.reminder_format, 10), "15" to stringResource(R.string.reminder_format, 15), "30" to stringResource(R.string.reminder_format, 30)),
             reminderMinutes.toString()) { onReminderMinutesChange(it.toInt()) }
+    }
+}
+
+// === Sync ===
+
+@Composable
+private fun SyncPage(
+    autoSyncOnStart: Boolean,
+    autoSyncIntervalValue: Int,
+    autoSyncIntervalUnit: String,
+    onAutoSyncOnStartChange: (Boolean) -> Unit,
+    onAutoSyncIntervalValueChange: (Int) -> Unit,
+    onAutoSyncIntervalUnitChange: (String) -> Unit,
+    onBack: () -> Unit
+) {
+    val unitLabel = when (autoSyncIntervalUnit) {
+        "min" -> stringResource(R.string.auto_sync_unit_min)
+        "h" -> stringResource(R.string.auto_sync_unit_h)
+        "d" -> stringResource(R.string.auto_sync_unit_d)
+        else -> ""
+    }
+    val (minVal, maxVal) = when (autoSyncIntervalUnit) {
+        "min" -> 30 to 60
+        "h" -> 1 to 24
+        "d" -> 1 to 31
+        else -> 1 to 60
+    }
+
+    SubPage(stringResource(R.string.settings_category_sync), onBack) {
+        SwitchItem(Icons.Default.PowerSettingsNew, stringResource(R.string.auto_sync_on_start), autoSyncOnStart, onAutoSyncOnStartChange)
+
+        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+
+        ListItem(
+            headlineContent = { Text(stringResource(R.string.auto_sync_schedule)) },
+            supportingContent = { Text(stringResource(R.string.auto_sync_schedule_desc)) },
+            leadingContent = { Icon(Icons.Default.Schedule, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
+        )
+
+        // Unit selector
+        DropdownItem(Icons.Default.Tune, stringResource(R.string.auto_sync_interval),
+            listOf(
+                "min" to stringResource(R.string.auto_sync_unit_min),
+                "h" to stringResource(R.string.auto_sync_unit_h),
+                "d" to stringResource(R.string.auto_sync_unit_d)
+            ),
+            autoSyncIntervalUnit, onAutoSyncIntervalUnitChange)
+
+        // Value slider with +/- buttons
+        ListItem(
+            headlineContent = { Text("$autoSyncIntervalValue $unitLabel") },
+            supportingContent = {
+                Column {
+                    Slider(
+                        value = autoSyncIntervalValue.toFloat(),
+                        onValueChange = { onAutoSyncIntervalValueChange(it.toInt()) },
+                        valueRange = minVal.toFloat()..maxVal.toFloat(),
+                        steps = maxVal - minVal - 1
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                    ) {
+                        IconButton(
+                            onClick = { onAutoSyncIntervalValueChange((autoSyncIntervalValue - 1).coerceIn(minVal, maxVal)) },
+                            enabled = autoSyncIntervalValue > minVal
+                        ) {
+                            Icon(Icons.Default.Remove, null)
+                        }
+                        Text(
+                            "$autoSyncIntervalValue $unitLabel",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 16.dp)
+                        )
+                        IconButton(
+                            onClick = { onAutoSyncIntervalValueChange((autoSyncIntervalValue + 1).coerceIn(minVal, maxVal)) },
+                            enabled = autoSyncIntervalValue < maxVal
+                        ) {
+                            Icon(Icons.Default.Add, null)
+                        }
+                    }
+                }
+            },
+            leadingContent = { Icon(Icons.Default.Tune, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
+        )
     }
 }
 
