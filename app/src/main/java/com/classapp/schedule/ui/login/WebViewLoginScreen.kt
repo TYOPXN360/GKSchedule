@@ -34,44 +34,65 @@ fun WebViewLoginScreen(
     // CAS login URL with service redirect
     val casLoginUrl = "https://cas.gdust.edu.cn/cas/?service=https%3A%2F%2Fportal.gdust.edu.cn%2Fsmart-admin-api%2Fuser%2FssoLogin%2F%3FappId%3DportalRemote"
 
-    // CSS to hide everything except QR code
+    // Aggressive CSS: hide ALL text, show only the QR code image/canvas
     val injectCss = """
         javascript:(function() {
             var s = document.createElement('style');
             s.textContent = `
-                /* Hide CAS chrome */
-                header, footer, nav, .header, .footer, .navbar, .sidebar,
-                .cas-header, .cas-footer, .login-header, .login-footer,
-                .logo, .copyright, .links, .version,
-                [class*="header"], [class*="footer"], [class*="nav-"],
-                [class*="logo"], [class*="copyright"], [class*="tab-"],
-                .wechat-login-title, .cas-login-title,
-                h1, h2, h3, h4 { display: none !important; }
-                
-                /* Show QR code area */
+                * {
+                    margin: 0 !important;
+                    padding: 0 !important;
+                }
                 body {
                     background: transparent !important;
-                    margin: 0 !important;
-                    padding: 16px !important;
-                    display: flex !important;
-                    justify-content: center !important;
-                    align-items: center !important;
-                    min-height: 100vh !important;
+                    overflow: hidden !important;
                 }
-                
-                /* Make QR code large and centered */
-                img[src*="qr"], img[src*="QR"], canvas, 
-                .qrcode, .qr-code, [class*="qr"], [class*="QR"],
-                iframe[src*="dingtalk"], iframe[src*="ding"],
-                #dingtalk-qr, .dingtalk-qr,
-                div[style*="width: 300"], div[style*="width:300"] {
+                /* Hide everything by default */
+                body > *:not(canvas):not(img):not(iframe) {
+                    visibility: hidden !important;
+                }
+                /* But show containers that hold the QR */
+                div, section, article, main {
+                    visibility: visible !important;
+                }
+                /* Hide all text elements */
+                p, span, h1, h2, h3, h4, h5, h6, a, li, label, 
+                strong, em, small, b, i, button:not([style*="qr"]),
+                footer, header, nav {
+                    display: none !important;
+                }
+                /* Make images/canvas large and centered */
+                img, canvas {
                     display: block !important;
                     margin: 0 auto !important;
-                    max-width: 280px !important;
-                    max-height: 280px !important;
+                    max-width: 250px !important;
+                    max-height: 250px !important;
+                    object-fit: contain !important;
+                }
+                /* Hide specific CAS elements */
+                [class*="header"], [class*="footer"], [class*="nav"],
+                [class*="title"], [class*="desc"], [class*="tip"],
+                [class*="logo"], [class*="copyright"], [class*="link"],
+                [class*="tab"], [class*="switch"], [class*="form"],
+                [id*="header"], [id*="footer"], [id*="nav"],
+                [id*="title"], [id*="tab"] {
+                    display: none !important;
+                }
+                /* Show QR containers */
+                [class*="qr"], [class*="QR"], [id*="qr"], [id*="QR"],
+                [class*="scan"], [class*="code"], [id*="code"],
+                iframe[src*="dingtalk"], iframe[src*="ding"] {
+                    display: block !important;
+                    visibility: visible !important;
                 }
             `;
             document.head.appendChild(s);
+            // Also try to remove non-QR text nodes
+            document.querySelectorAll('p, span, h1, h2, h3, h4, h5, h6, label, strong, em').forEach(function(el) {
+                if (!el.querySelector('canvas') && !el.querySelector('img[src*="qr"]')) {
+                    el.style.display = 'none';
+                }
+            });
         })();
     """.trimIndent()
 
