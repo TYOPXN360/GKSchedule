@@ -37,6 +37,7 @@ fun LoginScreen(
     onRefreshCaptcha: () -> Unit,
     onLogin: (studentId: String, password: String, captcha: String) -> Unit,
     onQuickRelogin: (captcha: String) -> Unit,
+    onWebViewLogin: () -> Unit,
     onBack: () -> Unit
 ) {
     var studentId by remember { mutableStateOf("") }
@@ -188,6 +189,16 @@ fun LoginScreen(
                         Text(stringResource(R.string.quick_relogin))
                     }
                 }
+            }
+
+            // WebView login option
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+            OutlinedButton(
+                onClick = onWebViewLogin,
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !isLoading
+            ) {
+                Text(stringResource(R.string.webview_login))
             }
 
             // === Server response display ===

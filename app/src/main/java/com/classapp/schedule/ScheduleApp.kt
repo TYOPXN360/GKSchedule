@@ -37,6 +37,7 @@ import com.classapp.schedule.data.Course
 import com.classapp.schedule.ui.about.AboutScreen
 import com.classapp.schedule.ui.course.CourseEditScreen
 import com.classapp.schedule.ui.login.LoginScreen
+import com.classapp.schedule.ui.login.WebViewLoginScreen
 import com.classapp.schedule.ui.manage.CourseManageScreen
 import com.classapp.schedule.ui.settings.SettingsScreen
 import com.classapp.schedule.ui.today.TodayScreen
@@ -49,6 +50,7 @@ sealed class Screen(val route: String) {
     data object Courses : Screen("courses")
     data object About : Screen("about")
     data object Login : Screen("login")
+    data object WebViewLogin : Screen("webview_login")
     data object CourseEdit : Screen("course_edit?courseId={courseId}") {
         fun createRoute(courseId: Long? = null): String =
             if (courseId != null) "course_edit?courseId=$courseId" else "course_edit"
@@ -245,6 +247,7 @@ fun ScheduleApp(
                     onRefreshCaptcha = { viewModel.refreshCaptcha() },
                     onLogin = { sid, pwd, cap -> viewModel.login(sid, pwd, cap) },
                     onQuickRelogin = { cap -> viewModel.quickRelogin(cap) },
+                    onWebViewLogin = { navController.navigate(Screen.WebViewLogin.route) },
                     onBack = { viewModel.clearLoginError(); navController.popBackStack() }
                 )
 
@@ -261,6 +264,17 @@ fun ScheduleApp(
                         navController.popBackStack()
                     }
                 }
+            }
+
+            // WebView login route
+            composable(Screen.WebViewLogin.route) {
+                WebViewLoginScreen(
+                    onLoginSuccess = { loginCode ->
+                        viewModel.webViewLogin(loginCode)
+                        navController.popBackStack()
+                    },
+                    onBack = { navController.popBackStack() }
+                )
             }
 
             composable(

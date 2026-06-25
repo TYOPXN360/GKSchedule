@@ -369,6 +369,32 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     /**
      * Quick re-login: only needs captcha. Credentials are stored encrypted.
      */
+    /**
+     * WebView login: called when CAS redirects to portal with loginCode.
+     */
+    fun webViewLogin(loginCode: String) {
+        _loginState.value = LoginState.Loading
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            try {
+                // Use the loginCode (which is the ticket) to get portal token
+                api.checkTicket(loginCode).getOrNull()
+                val user = api.portalLogin(loginCode).getOrThrow()
+                savedStudentId = user.id
+                _savedStudentIdFlow.value = user.id
+                _loginState.value = LoginState.Success(user.realName.ifEmpty { user.id }, user.id)
+                try {
+                    val userInfo = api.getUserInfo().getOrNull()
+                    settings.saveLoginInfo(user.token, user.id, user.realName, userInfo?.deptName ?: "")
+                } catch (_: Exception) {
+                    settings.saveLoginInfo(user.token, user.id, user.realName)
+                }
+                importFromSchool(user.id)
+            } catch (e: Exception) {
+                _loginState.value = LoginState.Error("登录失败: ${e.message}")
+            }
+        }
+    }
+
     fun quickRelogin(captcha: String) {
         _loginState.value = LoginState.Loading
         viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
