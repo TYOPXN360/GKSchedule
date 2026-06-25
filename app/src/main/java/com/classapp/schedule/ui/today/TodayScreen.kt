@@ -110,15 +110,28 @@ fun TodayScreen(
                 EmptyCard(stringResource(R.string.no_course_today))
             }
         } else {
+            // Pre-compute stagger delays for current courses (highest progress first)
+            val currentCoursesWithProgress = todayCourses.mapNotNull { course ->
+                if (currentPeriod in course.startPeriod..course.endPeriod()) {
+                    val startMins = parseTime(course.getActualStartTime(getStartTime))
+                    val endMins = parseTime(course.getActualEndTime(getEndTime))
+                    val nowMins = LocalTime.now().hour * 60 + LocalTime.now().minute
+                    val p = ((nowMins - startMins).toFloat() / (endMins - startMins)).coerceIn(0f, 1f)
+                    course.id to p
+                } else null
+            }.sortedByDescending { it.second }
+
+            val staggerMap = currentCoursesWithProgress.mapIndexed { index, (id, _) ->
+                id to index * 200L
+            }.toMap()
+
             items(todayCourses) { course ->
                 val isCurrent = currentPeriod in course.startPeriod..course.endPeriod()
-                // "Next" = first future course (start time is after current time)
                 val currentTimeMinutes = LocalTime.now().hour * 60 + LocalTime.now().minute
                 val courseStartMinutes = parseTime(course.getActualStartTime(getStartTime))
                 val courseEndMinutes = parseTime(course.getActualEndTime(getEndTime))
                 val isPast = currentTimeMinutes > courseEndMinutes
                 val isFuture = currentTimeMinutes < courseStartMinutes
-                // Find the first future course
                 val firstFuture = todayCourses.firstOrNull {
                     parseTime(it.getActualStartTime(getStartTime)) > currentTimeMinutes
                 }
@@ -131,6 +144,7 @@ fun TodayScreen(
                     isCurrent = isCurrent,
                     isNext = isNext,
                     isPast = isPast,
+                    animDelay = staggerMap[course.id] ?: 0L,
                     onClick = { detailCourse = course }
                 )
             }
@@ -223,6 +237,7 @@ private fun CourseCard(
     isCurrent: Boolean,
     isNext: Boolean,
     isPast: Boolean = false,
+    animDelay: Long = 0L,
     onClick: () -> Unit
 ) {
     // Progress calculation for current course
@@ -234,15 +249,17 @@ private fun CourseCard(
         ((nowMins - startMins).toFloat() / (endMins - startMins)).coerceIn(0f, 1f)
     } else 0f
 
-    // Animated progress
-    var animatedProgress by remember { mutableFloatStateOf(0f) }
-    LaunchedEffect(progress) {
-        if (isCurrent) {
-            // Animate from 0 to current progress on first display
-            kotlinx.coroutines.delay(300)
-            animatedProgress = progress
-        }
+    // Animated progress — starts from 0, animates to target with stagger delay
+    var startAnimation by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        kotlinx.coroutines.delay(300 + animDelay)
+        startAnimation = true
     }
+    val animatedProgress by androidx.compose.animation.core.animateFloatAsState(
+        targetValue = if (startAnimation && isCurrent) progress else 0f,
+        animationSpec = androidx.compose.animation.core.tween(durationMillis = 600, easing = androidx.compose.animation.core.FastOutSlowInEasing),
+        label = "progress"
+    )
 
     val colors = CourseColors.getColors(0, count = 32)
 
