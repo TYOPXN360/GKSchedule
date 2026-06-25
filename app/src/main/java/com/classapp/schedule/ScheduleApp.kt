@@ -258,10 +258,10 @@ fun ScheduleApp(
                     if (captchaImage == null) viewModel.refreshCaptcha()
                 }
 
-                // Navigate back on import success
+                // Navigate back on login success or import result
                 LaunchedEffect(loginState) {
-                    if (loginState is LoginState.ImportResult) {
-                        kotlinx.coroutines.delay(1500)
+                    if (loginState is LoginState.Success || loginState is LoginState.ImportResult) {
+                        kotlinx.coroutines.delay(500)
                         navController.popBackStack()
                     }
                 }
@@ -273,10 +273,17 @@ fun ScheduleApp(
                     api = viewModel.api,
                     onLoginSuccess = { loginCode ->
                         viewModel.webViewLogin(loginCode)
-                        navController.popBackStack()
                     },
                     onBack = { navController.popBackStack() }
                 )
+
+                // Auto-navigate back on success
+                LaunchedEffect(loginState) {
+                    if (loginState is LoginState.Success || loginState is LoginState.ImportResult) {
+                        kotlinx.coroutines.delay(500)
+                        navController.popBackStack()
+                    }
+                }
             }
 
             composable(
