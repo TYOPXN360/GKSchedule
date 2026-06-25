@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Refresh
@@ -29,10 +30,13 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
@@ -163,7 +167,18 @@ fun WeeklyScheduleScreen(
         },
         modifier = Modifier.fillMaxSize()
     ) {
-        Column(modifier = Modifier.fillMaxSize()) {
+        val coroutineScope = rememberCoroutineScope()
+        val context = androidx.compose.ui.platform.LocalContext.current
+        val rootView = androidx.compose.ui.platform.LocalView.current
+        var contentBounds by remember { mutableStateOf(androidx.compose.ui.geometry.Rect.Zero) }
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .onGloballyPositioned { coords ->
+                    contentBounds = coords.boundsInRoot()
+                }
+        ) {
             // Week selector with refresh
             Card(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
@@ -493,6 +508,43 @@ fun WeeklyScheduleScreen(
                     containerColor = MaterialTheme.colorScheme.primary
                 ) {
                     Icon(Icons.Default.Add, stringResource(R.string.add_course))
+                }
+            }
+            // Screenshot button
+            AnimatedVisibility(
+                visible = fabExpanded,
+                enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+                exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
+            ) {
+                FloatingActionButton(
+                    onClick = {
+                        com.classapp.schedule.util.HapticFeedback.medium(hapticView)
+                        coroutineScope.launch {
+                            try {
+                                val fullBitmap = android.graphics.Bitmap.createBitmap(rootView.width, rootView.height, android.graphics.Bitmap.Config.ARGB_8888)
+                                val canvas = android.graphics.Canvas(fullBitmap)
+                                rootView.draw(canvas)
+                                val density = context.resources.displayMetrics.density
+                                val left = (contentBounds.left * density).toInt().coerceIn(0, fullBitmap.width)
+                                val top = (contentBounds.top * density).toInt().coerceIn(0, fullBitmap.height)
+                                val right = (contentBounds.right * density).toInt().coerceIn(0, fullBitmap.width)
+                                val bottom = (contentBounds.bottom * density).toInt().coerceIn(0, fullBitmap.height)
+                                val cropped = android.graphics.Bitmap.createBitmap(fullBitmap, left, top, right - left, bottom - top)
+                                val saved = com.classapp.schedule.util.ImageExport.saveBitmapToGallery(context, cropped, "Pictures/Screenshots/schedule_${System.currentTimeMillis()}.png")
+                                android.widget.Toast.makeText(
+                                    context,
+                                    if (saved) "已保存到 Pictures/Screenshots" else "保存失败",
+                                    android.widget.Toast.LENGTH_SHORT
+                                ).show()
+                            } catch (e: Exception) {
+                                android.widget.Toast.makeText(context, "截图失败: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    },
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                ) {
+                    Icon(Icons.Default.CameraAlt, "Screenshot")
                 }
             }
             } // Column
