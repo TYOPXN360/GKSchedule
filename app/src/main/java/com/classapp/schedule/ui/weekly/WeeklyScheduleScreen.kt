@@ -173,6 +173,7 @@ fun WeeklyScheduleScreen(
         val rootView = androidx.compose.ui.platform.LocalView.current
         var cropTopPx by remember { mutableIntStateOf(0) }
         var cropBottomPx by remember { mutableIntStateOf(0) }
+        var hideFabs by remember { mutableStateOf(false) }
 
         Column(modifier = Modifier.fillMaxSize()) {
             // Week selector — track top edge in pixels
@@ -420,7 +421,8 @@ fun WeeklyScheduleScreen(
             } // HorizontalPager
         }
 
-        // FABs — use Box with fixed-size slots to avoid any layout shift
+        // FABs — hidden during screenshot capture
+        if (!hideFabs) {
         var fabExpanded by remember { mutableStateOf(true) }
         Box(
             modifier = Modifier
@@ -519,8 +521,11 @@ fun WeeklyScheduleScreen(
                         com.classapp.schedule.util.HapticFeedback.medium(hapticView)
                         coroutineScope.launch {
                             try {
+                                hideFabs = true
+                                kotlinx.coroutines.delay(100) // wait for recomposition
                                 val fullBitmap = android.graphics.Bitmap.createBitmap(rootView.width, rootView.height, android.graphics.Bitmap.Config.ARGB_8888)
                                 rootView.draw(android.graphics.Canvas(fullBitmap))
+                                hideFabs = false
                                 val left = 0
                                 val top = cropTopPx.coerceIn(0, fullBitmap.height)
                                 val right = fullBitmap.width
@@ -547,6 +552,7 @@ fun WeeklyScheduleScreen(
             }
             } // Column
         } // Box
+        } // if (!hideFabs)
     } // PullToRefreshBox
 
     // Detail sheet
