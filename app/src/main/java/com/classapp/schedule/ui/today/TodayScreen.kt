@@ -255,7 +255,8 @@ private fun CourseCard(
     }
 
     // Animated progress — starts from 0, animates to target after splash screen
-    var startAnimation by remember { mutableStateOf(false) }
+    // rememberSaveable keeps state across tab switches
+    var startAnimation by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
     LaunchedEffect(Unit) {
         lifecycleOwner.lifecycle.currentStateFlow.first { it == androidx.lifecycle.Lifecycle.State.RESUMED }
@@ -272,7 +273,9 @@ private fun CourseCard(
 
     val colors = CourseColors.getColors(0, count = 32)
 
-    val waveOffset = if (isCurrent) {
+    // Wave animation: during loading for all, or always for current courses
+    val showWave = isCurrent || !animDone
+    val waveOffset = if (showWave) {
         val transition = rememberInfiniteTransition(label = "wave")
         transition.animateFloat(
             initialValue = 0f, targetValue = 2f * Math.PI.toFloat(),
@@ -299,7 +302,7 @@ private fun CourseCard(
                     val progressX = w * animatedProgress
                     val path = Path().apply {
                         moveTo(0f, 0f)
-                        if (isCurrent && waveOffset != 0f) {
+                        if (showWave && waveOffset != 0f) {
                             val amp = 6.dp.toPx()
                             val freq = 3f
                             lineTo(progressX, 0f)
