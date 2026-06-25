@@ -73,6 +73,17 @@ fun TodayScreen(
     val currentTimeMinutes = now.hour * 60 + now.minute
     val currentPeriod = findCurrentPeriod(todayCourses, getStartTime, getEndTime, currentTimeMinutes)
     var detailCourse by remember { mutableStateOf<Course?>(null) }
+    // Only trigger animation once per screen composition, not on course refresh
+    var animationPlayed by remember { mutableStateOf(false) }
+    val maxStagger = (todayCourses.size - 1) * 200L
+    val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
+    LaunchedEffect(todayCourses.size) {
+        if (!animationPlayed) {
+            lifecycleOwner.lifecycle.currentStateFlow.first { it == androidx.lifecycle.Lifecycle.State.RESUMED }
+            kotlinx.coroutines.delay(500 + maxStagger + 700)
+            animationPlayed = true
+        }
+    }
     val uniqueCourseCount = remember(courses) { courses.map { it.name }.distinct().size }
     val monetColors = com.classapp.schedule.util.CourseColors.getColors(0, count = uniqueCourseCount.coerceAtLeast(8))
 
@@ -147,7 +158,8 @@ fun TodayScreen(
                     isCurrent = isCurrent,
                     isNext = isNext,
                     isPast = isPast,
-                    animDelay = staggerMap[course.id] ?: 0L,
+                    animDelay = if (animationPlayed) 0L else staggerMap[course.id] ?: 0L,
+                    skipAnim = animationPlayed,
                     onClick = { detailCourse = course }
                 )
             }
@@ -241,6 +253,7 @@ private fun CourseCard(
     isNext: Boolean,
     isPast: Boolean = false,
     animDelay: Long = 0L,
+    skipAnim: Boolean = false,
     onClick: () -> Unit
 ) {
     // Progress calculation
@@ -258,12 +271,14 @@ private fun CourseCard(
 
     // Animated progress — starts from 0, animates to target after splash screen
     // rememberSaveable keeps state across tab switches
-    var startAnimation by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    var startAnimation by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(skipAnim) }
     val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
-    LaunchedEffect(Unit) {
-        lifecycleOwner.lifecycle.currentStateFlow.first { it == androidx.lifecycle.Lifecycle.State.RESUMED }
-        kotlinx.coroutines.delay(animDelay)
-        startAnimation = true
+    LaunchedEffect(skipAnim) {
+        if (!skipAnim) {
+            lifecycleOwner.lifecycle.currentStateFlow.first { it == androidx.lifecycle.Lifecycle.State.RESUMED }
+            kotlinx.coroutines.delay(animDelay)
+            startAnimation = true
+        }
     }
     val animSpec = androidx.compose.animation.core.tween<Float>(durationMillis = 600, easing = androidx.compose.animation.core.FastOutSlowInEasing)
     val animatedProgress by androidx.compose.animation.core.animateFloatAsState(
