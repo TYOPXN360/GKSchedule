@@ -375,14 +375,26 @@ private fun SyncPage(
     }
 
     SubPage(stringResource(R.string.settings_category_sync), onBack) {
-        SwitchItem(Icons.Default.PowerSettingsNew, stringResource(R.string.auto_sync_on_start), autoSyncOnStart, onAutoSyncOnStartChange)
+        // Mode: startup sync OR scheduled sync (mutually exclusive)
+        SwitchItem(Icons.Default.PowerSettingsNew, stringResource(R.string.auto_sync_on_start), autoSyncOnStart) {
+            onAutoSyncOnStartChange(it)
+        }
 
         HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
 
         ListItem(
-            headlineContent = { Text(stringResource(R.string.auto_sync_schedule)) },
-            supportingContent = { Text(stringResource(R.string.auto_sync_schedule_desc)) },
-            leadingContent = { Icon(Icons.Default.Schedule, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
+            headlineContent = {
+                Text(stringResource(R.string.auto_sync_schedule),
+                    color = if (autoSyncOnStart) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f) else MaterialTheme.colorScheme.onSurface)
+            },
+            supportingContent = {
+                Text(stringResource(R.string.auto_sync_schedule_desc),
+                    color = if (autoSyncOnStart) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f) else MaterialTheme.colorScheme.onSurfaceVariant)
+            },
+            leadingContent = {
+                Icon(Icons.Default.Schedule, null,
+                    tint = if (autoSyncOnStart) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f) else MaterialTheme.colorScheme.onSurfaceVariant)
+            }
         )
 
         // Unit selector
@@ -403,7 +415,8 @@ private fun SyncPage(
                         value = autoSyncIntervalValue.toFloat(),
                         onValueChange = { onAutoSyncIntervalValueChange(it.toInt()) },
                         valueRange = minVal.toFloat()..maxVal.toFloat(),
-                        steps = maxVal - minVal - 1
+                        steps = maxVal - minVal - 1,
+                        enabled = !autoSyncOnStart
                     )
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -412,7 +425,7 @@ private fun SyncPage(
                     ) {
                         IconButton(
                             onClick = { onAutoSyncIntervalValueChange((autoSyncIntervalValue - 1).coerceIn(minVal, maxVal)) },
-                            enabled = autoSyncIntervalValue > minVal
+                            enabled = !autoSyncOnStart && autoSyncIntervalValue > minVal
                         ) {
                             Icon(Icons.Default.Remove, null)
                         }
@@ -424,7 +437,7 @@ private fun SyncPage(
                         )
                         IconButton(
                             onClick = { onAutoSyncIntervalValueChange((autoSyncIntervalValue + 1).coerceIn(minVal, maxVal)) },
-                            enabled = autoSyncIntervalValue < maxVal
+                            enabled = !autoSyncOnStart && autoSyncIntervalValue < maxVal
                         ) {
                             Icon(Icons.Default.Add, null)
                         }
