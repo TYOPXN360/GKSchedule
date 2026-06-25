@@ -6,11 +6,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.ui.graphics.luminance
-import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ChevronLeft
@@ -35,6 +35,7 @@ import com.classapp.schedule.data.Course
 import com.classapp.schedule.util.CourseColors
 import kotlin.math.abs
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WeeklyScheduleScreen(
     courses: List<Course>,
@@ -70,11 +71,6 @@ fun WeeklyScheduleScreen(
     val hapticContext = androidx.compose.ui.platform.LocalContext.current
     val hapticView = androidx.compose.ui.platform.LocalView.current
     val labelWidthDp = if (showPeriodLabel) { if (showTimeLabel) 64.dp else 36.dp } else 0.dp
-
-    // Pull-to-refresh state
-    var pullOffset by remember { mutableFloatStateOf(0f) }
-    var isPulling by remember { mutableStateOf(false) }
-    val pullThreshold = 150f
 
     // Build render blocks
     // Build render blocks with dynamic color assignment
@@ -149,67 +145,14 @@ fun WeeklyScheduleScreen(
         onWeekChange(realWeek.intValue)
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .pointerInput(isRefreshing) {
-                detectVerticalDragGestures(
-                    onDragEnd = {
-                        if (pullOffset > pullThreshold && !isRefreshing) {
-                            com.classapp.schedule.util.HapticFeedback.medium(hapticView)
-                            onRefresh()
-                        }
-                        isPulling = false
-                        pullOffset = 0f
-                    },
-                    onDragCancel = { isPulling = false; pullOffset = 0f },
-                    onVerticalDrag = { change, dragAmount ->
-                        if (dragAmount > 0) {
-                            isPulling = true
-                            pullOffset = (pullOffset + dragAmount).coerceAtMost(200f)
-                        }
-                    }
-                )
-            }
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = {
+            com.classapp.schedule.util.HapticFeedback.medium(hapticView)
+            onRefresh()
+        },
+        modifier = Modifier.fillMaxSize()
     ) {
-        // Pull-to-refresh indicator
-        AnimatedVisibility(
-            visible = isPulling || isRefreshing,
-            enter = fadeIn(),
-            exit = fadeOut(),
-            modifier = Modifier.align(Alignment.TopCenter).padding(top = 8.dp)
-        ) {
-            Surface(
-                shape = RoundedCornerShape(50),
-                color = MaterialTheme.colorScheme.primaryContainer,
-                tonalElevation = 4.dp,
-                modifier = Modifier.padding(8.dp)
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    if (isRefreshing) {
-                        CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
-                        Text(stringResource(R.string.refreshing), style = MaterialTheme.typography.labelMedium)
-                    } else {
-                        Icon(
-                            Icons.Default.Refresh, null,
-                            modifier = Modifier.size(18.dp),
-                            tint = if (pullOffset > pullThreshold) MaterialTheme.colorScheme.primary
-                            else MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = if (pullOffset > pullThreshold) stringResource(R.string.release_to_refresh)
-                            else stringResource(R.string.pull_to_refresh),
-                            style = MaterialTheme.typography.labelMedium
-                        )
-                    }
-                }
-            }
-        }
-
         Column(modifier = Modifier.fillMaxSize()) {
             // Week selector with refresh
             Card(
