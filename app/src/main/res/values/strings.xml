@@ -138,6 +138,9 @@
     <string name="quick_relogin_hint">Credentials saved. Just enter the captcha to re-login.</string>
     <string name="webview_login">Scan QR Code / WebView Login</string>
     <string name="webview_login_title">School Login</string>
+    <string name="scan_login_title">Scan to Login</string>
+    <string name="scan_login_desc">Open DingTalk and scan the QR code below to login</string>
+    <string name="scan_login_tip">QR code refreshes automatically. Long-press to save.</string>
     <string name="login_success">Login successful!</string>
     <string name="login_importing">Importing courses…</string>
     <string name="login_import_success">Imported %1$d courses successfully!</string>

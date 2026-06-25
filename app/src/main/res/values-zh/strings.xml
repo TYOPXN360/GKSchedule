@@ -138,6 +138,9 @@
     <string name="quick_relogin_hint">已保存凭据，只需输入验证码即可重新登录。</string>
     <string name="webview_login">扫码登录 / 网页登录</string>
     <string name="webview_login_title">教务登录</string>
+    <string name="scan_login_title">扫码登录</string>
+    <string name="scan_login_desc">打开钉钉扫描下方二维码登录</string>
+    <string name="scan_login_tip">二维码自动刷新，长按可保存</string>
     <string name="login_success">登录成功！</string>
     <string name="login_importing">正在导入课程…</string>
     <string name="login_import_success">成功导入 %1$d 门课程！</string>
