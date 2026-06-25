@@ -111,18 +111,20 @@ fun TodayScreen(
                 EmptyCard(stringResource(R.string.no_course_today))
             }
         } else {
-            // Pre-compute stagger delays for current courses (highest progress first)
-            val currentCoursesWithProgress = todayCourses.mapNotNull { course ->
-                if (currentPeriod in course.startPeriod..course.endPeriod()) {
-                    val startMins = parseTime(course.getActualStartTime(getStartTime))
-                    val endMins = parseTime(course.getActualEndTime(getEndTime))
-                    val nowMins = LocalTime.now().hour * 60 + LocalTime.now().minute
-                    val p = ((nowMins - startMins).toFloat() / (endMins - startMins)).coerceIn(0f, 1f)
-                    course.id to p
-                } else null
+            // Pre-compute stagger delays for all courses (by progress, highest first)
+            val coursesWithProgress = todayCourses.map { course ->
+                val startMins = parseTime(course.getActualStartTime(getStartTime))
+                val endMins = parseTime(course.getActualEndTime(getEndTime))
+                val nowMins = LocalTime.now().hour * 60 + LocalTime.now().minute
+                val p = when {
+                    nowMins > endMins -> 1f
+                    nowMins < startMins -> 0f
+                    else -> ((nowMins - startMins).toFloat() / (endMins - startMins)).coerceIn(0f, 1f)
+                }
+                course.id to p
             }.sortedByDescending { it.second }
 
-            val staggerMap = currentCoursesWithProgress.mapIndexed { index, (id, _) ->
+            val staggerMap = coursesWithProgress.mapIndexed { index, (id, _) ->
                 id to index * 200L
             }.toMap()
 
