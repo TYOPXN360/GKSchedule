@@ -411,18 +411,24 @@ fun WeeklyScheduleScreen(
                 }
             }
             // Collapse/Expand toggle
-            SmallFloatingActionButton(
-                onClick = {
-                    com.classapp.schedule.util.HapticFeedback.light(hapticView)
-                    fabExpanded = !fabExpanded
-                },
-                containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .clickable {
+                        com.classapp.schedule.util.HapticFeedback.light(hapticView)
+                        fabExpanded = !fabExpanded
+                    },
+                contentAlignment = Alignment.Center
             ) {
                 Icon(
                     Icons.Default.ChevronLeft,
                     contentDescription = if (fabExpanded) "Collapse" else "Expand",
-                    modifier = Modifier.rotate(if (fabExpanded) 90f else -90f)
+                    modifier = Modifier
+                        .size(20.dp)
+                        .rotate(if (fabExpanded) 90f else -90f),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
