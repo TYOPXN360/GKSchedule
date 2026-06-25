@@ -25,6 +25,7 @@ import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
@@ -415,16 +416,13 @@ fun WeeklyScheduleScreen(
                     com.classapp.schedule.util.HapticFeedback.light(hapticView)
                     fabExpanded = !fabExpanded
                 },
-                modifier = Modifier.size(40.dp),
                 containerColor = MaterialTheme.colorScheme.surfaceVariant,
                 contentColor = MaterialTheme.colorScheme.onSurfaceVariant
             ) {
                 Icon(
                     Icons.Default.ChevronLeft,
                     contentDescription = if (fabExpanded) "Collapse" else "Expand",
-                    modifier = Modifier
-                        .size(20.dp)
-                        .graphicsLayer { rotationZ = if (fabExpanded) 90f else -90f }
+                    modifier = Modifier.rotate(if (fabExpanded) 90f else -90f)
                 )
             }
         }
