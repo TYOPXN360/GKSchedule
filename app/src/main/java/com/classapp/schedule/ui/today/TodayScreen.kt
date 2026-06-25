@@ -73,8 +73,8 @@ fun TodayScreen(
     val currentTimeMinutes = now.hour * 60 + now.minute
     val currentPeriod = findCurrentPeriod(todayCourses, getStartTime, getEndTime, currentTimeMinutes)
     var detailCourse by remember { mutableStateOf<Course?>(null) }
-    // Only trigger animation once per screen composition, not on course refresh
-    var animationPlayed by remember { mutableStateOf(false) }
+    // Only trigger animation once per app session, not on course refresh
+    var animationPlayed by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     val maxStagger = (todayCourses.size - 1) * 200L
     val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
     LaunchedEffect(todayCourses.size) {
