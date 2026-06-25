@@ -26,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
@@ -312,6 +313,7 @@ fun WeeklyScheduleScreen(
                     }
 
                     // Overlay: course blocks
+                    // Detect overlaps: a block overlaps if another block shares same day and period range
                     weekBlocks.forEach { block ->
                         val x = labelWidthDp + cellW * (block.day - 1) + gridSpacing.dp
                         val y = rowH * (block.start - 1) + gridSpacing.dp
@@ -319,11 +321,18 @@ fun WeeklyScheduleScreen(
                         val h = rowH * block.span - gridSpacing.dp * 2
                         val satOffset = if (colorGroupMode == 1) block.colorIdx % 10 else 0
 
+                        val hasOverlap = weekBlocks.any { other ->
+                            other !== block && other.day == block.day &&
+                            other.start < block.start + block.span && other.start + other.span > block.start
+                        }
+                        val bgAlpha = if (hasOverlap) 0.55f else 1f
+                        val bg = CourseColors.getBackground(block.colorIdx, monetColors, satOffset).copy(alpha = bgAlpha)
+
                         Box(
                             modifier = Modifier.offset(x = x, y = y)
                                 .size(width = w.coerceAtLeast(24.dp), height = h.coerceAtLeast(24.dp))
                                 .clip(RoundedCornerShape(gridCorner.dp))
-                                .background(CourseColors.getBackground(block.colorIdx, monetColors, satOffset))
+                                .background(bg)
                                 .clickable {
                                 com.classapp.schedule.util.HapticFeedback.medium(hapticView)
                                 detailCourse = block.course
@@ -410,27 +419,25 @@ fun WeeklyScheduleScreen(
                     Icon(Icons.Default.Add, stringResource(R.string.add_course))
                 }
             }
-            // Collapse/Expand toggle — fixed 40dp size, no layout shift
-            SmallFloatingActionButton(
-                onClick = {
-                    com.classapp.schedule.util.HapticFeedback.light(hapticView)
-                    fabExpanded = !fabExpanded
-                },
-                modifier = Modifier.defaultMinSize(minWidth = 40.dp, minHeight = 40.dp),
-                containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+            // Collapse/Expand toggle — pure Box, no Material component sizing issues
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .shadow(6.dp, RoundedCornerShape(50))
+                    .clip(RoundedCornerShape(50))
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .clickable {
+                        com.classapp.schedule.util.HapticFeedback.light(hapticView)
+                        fabExpanded = !fabExpanded
+                    },
+                contentAlignment = Alignment.Center
             ) {
-                androidx.compose.animation.AnimatedContent(
-                    targetState = fabExpanded,
-                    transitionSpec = { fadeIn() togetherWith fadeOut() },
-                    label = "fabToggle"
-                ) { expanded ->
-                    Text(
-                        if (expanded) "—" else "+",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
+                Text(
+                    if (fabExpanded) "—" else "+",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }

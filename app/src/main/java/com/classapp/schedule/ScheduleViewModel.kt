@@ -403,13 +403,35 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                     }
                 }
                 if (remoteCourses.isNotEmpty()) {
-                    val courses = CourseImporter.convertRemoteCourses(remoteCourses)
-                    val manualCourses = courseDao.getAllCourses().first().filter { it.isManuallyEdited }
-                    courseDao.deleteAllCourses()
-                    courses.forEach { courseDao.insertCourse(it) }
-                    // Re-insert manually edited courses
-                    manualCourses.forEach { courseDao.insertCourse(it.copy(id = 0)) }
-                    _messages.emit("已更新 ${courses.size} 门课程")
+                    val newCourses = CourseImporter.convertRemoteCourses(remoteCourses)
+                    val existingCourses = courseDao.getAllCourses().first()
+                    val manualCourses = existingCourses.filter { it.isManuallyEdited }
+                    
+                    // Smart diff: compare by name+day+startPeriod+weekRange
+                    val existingKeys = existingCourses.filter { !it.isManuallyEdited }.map {
+                        "${it.name}|${it.dayOfWeek}|${it.startPeriod}|${it.weekRange}"
+                    }.toSet()
+                    val newKeys = newCourses.map {
+                        "${it.name}|${it.dayOfWeek}|${it.startPeriod}|${it.weekRange}"
+                    }.toSet()
+                    
+                    val hasChanges = existingKeys != newKeys || 
+                        newCourses.any { newC ->
+                            val old = existingCourses.find { 
+                                it.name == newC.name && it.dayOfWeek == newC.dayOfWeek && 
+                                it.startPeriod == newC.startPeriod && it.weekRange == newC.weekRange 
+                            }
+                            old == null || old.teacher != newC.teacher || old.classroom != newC.classroom || old.periods != newC.periods
+                        }
+                    
+                    if (hasChanges) {
+                        courseDao.deleteAllCourses()
+                        newCourses.forEach { courseDao.insertCourse(it) }
+                        manualCourses.forEach { courseDao.insertCourse(it.copy(id = 0)) }
+                        _messages.emit("已更新 ${newCourses.size} 门课程")
+                    } else {
+                        _messages.emit("课程无变化")
+                    }
                 }
             } catch (e: Exception) {
                 if (isTokenExpired(e.message)) {
