@@ -363,32 +363,27 @@ fun WeeklyScheduleScreen(
                 .align(Alignment.BottomEnd)
                 .padding(16.dp)
         ) {
-            // Collapse/Expand toggle — same size as FAB for alignment
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .size(56.dp)
-                    .shadow(6.dp, RoundedCornerShape(12.dp))
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                    .clickable {
-                        com.classapp.schedule.util.HapticFeedback.light(hapticView)
-                        fabExpanded = !fabExpanded
-                    },
-                contentAlignment = Alignment.Center
+            // Collapse/Expand toggle — use FloatingActionButton for identical shape
+            FloatingActionButton(
+                onClick = {
+                    com.classapp.schedule.util.HapticFeedback.light(hapticView)
+                    fabExpanded = !fabExpanded
+                },
+                modifier = Modifier.align(Alignment.BottomEnd),
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
             ) {
                 Text(
                     if (fabExpanded) "—" else "+",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.width(20.dp)
                 )
             }
             // Expanded FABs — stacked above the toggle button
             Column(
-                modifier = Modifier.align(Alignment.BottomEnd).padding(bottom = 80.dp),
+                modifier = Modifier.align(Alignment.BottomEnd).padding(bottom = 68.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
