@@ -88,20 +88,25 @@ fun WebViewLoginScreen(
         val bmp = qrBitmap ?: return
         scope.launch(Dispatchers.IO) {
             try {
-                val fileName = "qr_login_${System.currentTimeMillis()}.png"
+                val fileName = "qr_login.png"
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    // Delete old file first
+                    val collection = MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+                    context.contentResolver.delete(collection, "${MediaStore.Images.Media.DISPLAY_NAME} = ?", arrayOf(fileName))
                     val values = ContentValues().apply {
                         put(MediaStore.Images.Media.DISPLAY_NAME, fileName)
                         put(MediaStore.Images.Media.MIME_TYPE, "image/png")
                         put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/Screenshots")
                     }
-                    val uri = context.contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
+                    val uri = context.contentResolver.insert(collection, values)
                     uri?.let { context.contentResolver.openOutputStream(it)?.use { os -> bmp.compress(Bitmap.CompressFormat.PNG, 100, os) } }
                 } else {
                     @Suppress("DEPRECATION")
                     val dir = java.io.File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "Screenshots")
                     dir.mkdirs()
-                    java.io.File(dir, fileName).outputStream().use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) }
+                    val file = java.io.File(dir, fileName)
+                    if (file.exists()) file.delete()
+                    file.outputStream().use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) }
                 }
                 // Toast on main thread
                 kotlinx.coroutines.withContext(Dispatchers.Main) {
