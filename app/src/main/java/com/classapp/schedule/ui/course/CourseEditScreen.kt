@@ -240,7 +240,8 @@ fun CourseEditScreen(
                         dayOfWeek = dayOfWeek, startPeriod = startPeriod, periods = periods,
                         colorIndex = colorIndex, weekRange = finalWeekRange,
                         remark = remark.trim(), isCustomTime = isCustomTime,
-                        customStartTime = customStartTime, customEndTime = customEndTime
+                        customStartTime = customStartTime, customEndTime = customEndTime,
+                        isManuallyEdited = true
                     ))
                 },
                 modifier = Modifier.fillMaxWidth(),

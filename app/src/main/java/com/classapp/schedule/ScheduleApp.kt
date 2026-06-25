@@ -193,6 +193,7 @@ fun ScheduleApp(
             composable(Screen.Today.route) {
                 TodayScreen(
                     courses = courses, currentWeek = realCurrentWeek,
+                    colorEngine = colorEngine, colorGroupMode = colorGroupMode,
                     getStartTime = { viewModel.getStartTime(it) },
                     getEndTime = { viewModel.getEndTime(it) },
                     onCourseLongPress = { navController.navigate(Screen.CourseEdit.createRoute(it.id)) }

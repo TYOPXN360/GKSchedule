@@ -17,7 +17,8 @@ data class Course(
     val remark: String = "",   // 备注
     val isCustomTime: Boolean = false, // 自定义时间
     val customStartTime: String = "",  // HH:mm
-    val customEndTime: String = ""     // HH:mm
+    val customEndTime: String = "",    // HH:mm
+    val isManuallyEdited: Boolean = false // 手动编辑过，同步时不会被覆盖
 ) {
     fun endPeriod(): Int = startPeriod + periods - 1
 

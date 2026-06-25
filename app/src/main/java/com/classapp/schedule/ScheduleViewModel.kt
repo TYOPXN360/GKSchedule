@@ -351,10 +351,13 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                 return
             }
 
-            // Convert and save
+            // Convert and save — preserve manually edited courses
             val courses = CourseImporter.convertRemoteCourses(allRemoteCourses)
+            val manualCourses = courseDao.getAllCourses().first().filter { it.isManuallyEdited }
             courseDao.deleteAllCourses()
             courses.forEach { courseDao.insertCourse(it) }
+            // Re-insert manually edited courses (they overwrite school data)
+            manualCourses.forEach { courseDao.insertCourse(it.copy(id = 0)) }
 
             _loginState.value = LoginState.ImportResult(courses.size)
         } catch (e: Exception) {
@@ -401,8 +404,11 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                 }
                 if (remoteCourses.isNotEmpty()) {
                     val courses = CourseImporter.convertRemoteCourses(remoteCourses)
+                    val manualCourses = courseDao.getAllCourses().first().filter { it.isManuallyEdited }
                     courseDao.deleteAllCourses()
                     courses.forEach { courseDao.insertCourse(it) }
+                    // Re-insert manually edited courses
+                    manualCourses.forEach { courseDao.insertCourse(it.copy(id = 0)) }
                     _messages.emit("已更新 ${courses.size} 门课程")
                 }
             } catch (e: Exception) {

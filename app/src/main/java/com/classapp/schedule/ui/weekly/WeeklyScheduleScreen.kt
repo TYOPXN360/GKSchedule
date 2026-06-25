@@ -410,26 +410,27 @@ fun WeeklyScheduleScreen(
                     Icon(Icons.Default.Add, stringResource(R.string.add_course))
                 }
             }
-            // Collapse/Expand toggle
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                    .clickable {
-                        com.classapp.schedule.util.HapticFeedback.light(hapticView)
-                        fabExpanded = !fabExpanded
-                    },
-                contentAlignment = Alignment.Center
+            // Collapse/Expand toggle — fixed 40dp size, no layout shift
+            SmallFloatingActionButton(
+                onClick = {
+                    com.classapp.schedule.util.HapticFeedback.light(hapticView)
+                    fabExpanded = !fabExpanded
+                },
+                modifier = Modifier.defaultMinSize(minWidth = 40.dp, minHeight = 40.dp),
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
             ) {
-                Icon(
-                    Icons.Default.ChevronLeft,
-                    contentDescription = if (fabExpanded) "Collapse" else "Expand",
-                    modifier = Modifier
-                        .size(20.dp)
-                        .rotate(if (fabExpanded) 90f else -90f),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                androidx.compose.animation.AnimatedContent(
+                    targetState = fabExpanded,
+                    transitionSpec = { fadeIn() togetherWith fadeOut() },
+                    label = "fabToggle"
+                ) { expanded ->
+                    Text(
+                        if (expanded) "—" else "+",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
         }
     }

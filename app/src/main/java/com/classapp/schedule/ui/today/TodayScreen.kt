@@ -42,6 +42,8 @@ import java.time.LocalTime
 fun TodayScreen(
     courses: List<Course>,
     currentWeek: Int,
+    colorEngine: Int = 0,
+    colorGroupMode: Int = 2,
     getStartTime: (Int) -> String,
     getEndTime: (Int) -> String,
     onCourseLongPress: (Course) -> Unit
@@ -85,7 +87,21 @@ fun TodayScreen(
         }
     }
     val uniqueCourseCount = remember(courses) { courses.map { it.name }.distinct().size }
-    val monetColors = com.classapp.schedule.util.CourseColors.getColors(0, count = uniqueCourseCount.coerceAtLeast(8))
+    val monetColors = com.classapp.schedule.util.CourseColors.getColors(colorEngine, count = uniqueCourseCount.coerceAtLeast(8))
+    // Build color index map matching weekly schedule logic
+    val colorIndexMap = remember(courses, colorGroupMode) {
+        val nameToIdx = mutableMapOf<String, Int>()
+        val keyToIdx = mutableMapOf<String, Int>()
+        var nextColor = 0
+        courses.associate { c ->
+            val ci = when (colorGroupMode) {
+                0 -> nameToIdx.getOrPut(c.name) { nextColor++ }
+                1 -> nameToIdx.getOrPut(c.name) { nextColor++ }
+                else -> keyToIdx.getOrPut("${c.name}|${c.classroom}") { nextColor++ }
+            }
+            c.id to ci
+        }
+    }
 
     LazyColumn(
         modifier = Modifier
@@ -160,6 +176,7 @@ fun TodayScreen(
                     isPast = isPast,
                     animDelay = if (animationPlayed) 0L else staggerMap[course.id] ?: 0L,
                     skipAnim = animationPlayed,
+                    colorIndex = colorIndexMap[course.id] ?: course.colorIndex,
                     onClick = { detailCourse = course }
                 )
             }
@@ -199,6 +216,7 @@ fun TodayScreen(
                         endTime = course.getActualEndTime(getEndTime),
                         isCurrent = false,
                         isNext = false,
+                        colorIndex = colorIndexMap[course.id] ?: course.colorIndex,
                         onClick = { detailCourse = course }
                     )
                 }
@@ -254,6 +272,7 @@ private fun CourseCard(
     isPast: Boolean = false,
     animDelay: Long = 0L,
     skipAnim: Boolean = false,
+    colorIndex: Int = course.colorIndex,
     onClick: () -> Unit
 ) {
     // Progress calculation
@@ -311,7 +330,7 @@ private fun CourseCard(
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
             if (animatedProgress > 0f) {
-                val fillColor = CourseColors.getBackground(course.colorIndex, colors)
+                val fillColor = CourseColors.getBackground(colorIndex, colors)
                     .copy(alpha = if (isPast) 0.15f else 0.3f)
                 androidx.compose.foundation.Canvas(modifier = Modifier.matchParentSize()) {
                     val w = size.width
@@ -349,7 +368,7 @@ private fun CourseCard(
                         .width(4.dp)
                         .height(48.dp)
                         .clip(RoundedCornerShape(2.dp))
-                        .background(CourseColors.getTextColor(course.colorIndex, colors))
+                        .background(CourseColors.getTextColor(colorIndex, colors))
                 )
                 Spacer(modifier = Modifier.width(16.dp))
                 Column(modifier = Modifier.weight(1f)) {
