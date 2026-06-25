@@ -368,8 +368,8 @@ fun WeeklyScheduleScreen(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .size(56.dp)
-                    .shadow(6.dp, RoundedCornerShape(16.dp))
-                    .clip(RoundedCornerShape(16.dp))
+                    .shadow(6.dp, RoundedCornerShape(12.dp))
+                    .clip(RoundedCornerShape(12.dp))
                     .background(MaterialTheme.colorScheme.surfaceVariant)
                     .clickable {
                         com.classapp.schedule.util.HapticFeedback.light(hapticView)
@@ -388,7 +388,7 @@ fun WeeklyScheduleScreen(
             }
             // Expanded FABs — stacked above the toggle button
             Column(
-                modifier = Modifier.align(Alignment.BottomEnd).padding(bottom = 52.dp),
+                modifier = Modifier.align(Alignment.BottomEnd).padding(bottom = 80.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
