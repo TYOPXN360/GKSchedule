@@ -62,6 +62,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     val autoSyncOnStart: Flow<Boolean> = settings.autoSyncOnStart
     val autoSyncIntervalValue: Flow<Int> = settings.autoSyncIntervalValue
     val autoSyncIntervalUnit: Flow<String> = settings.autoSyncIntervalUnit
+    val tokenHeartbeat: Flow<Boolean> = settings.tokenHeartbeat
     val courseNames: Flow<List<String>> = courseDao.getAllCourseNames()
 
     private val _selectedWeek = MutableStateFlow(0)
@@ -125,6 +126,13 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
             val value = settings.autoSyncIntervalValue.first()
             val unit = settings.autoSyncIntervalUnit.first()
             com.classapp.schedule.sync.AutoSyncWorker.schedule(app, value, unit)
+        }
+        // Schedule token heartbeat if enabled
+        viewModelScope.launch {
+            val heartbeatEnabled = settings.tokenHeartbeat.first()
+            if (heartbeatEnabled) {
+                com.classapp.schedule.sync.HeartbeatWorker.schedule(app)
+            }
         }
     }
 
@@ -194,6 +202,17 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
         viewModelScope.launch {
             settings.setAutoSyncIntervalUnit(unit)
             rescheduleSync()
+        }
+    }
+
+    fun setTokenHeartbeat(enabled: Boolean) {
+        viewModelScope.launch {
+            settings.setTokenHeartbeat(enabled)
+            if (enabled) {
+                com.classapp.schedule.sync.HeartbeatWorker.schedule(app)
+            } else {
+                com.classapp.schedule.sync.HeartbeatWorker.cancel(app)
+            }
         }
     }
 

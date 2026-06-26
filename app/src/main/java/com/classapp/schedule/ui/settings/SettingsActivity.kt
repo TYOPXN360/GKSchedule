@@ -82,6 +82,7 @@ class SettingsActivity : AppCompatActivity() {
                     val autoSyncOnStart by vm.autoSyncOnStart.collectAsState(initial = true)
                     val autoSyncIntervalValue by vm.autoSyncIntervalValue.collectAsState(initial = 1)
                     val autoSyncIntervalUnit by vm.autoSyncIntervalUnit.collectAsState(initial = "d")
+                    val tokenHeartbeat by vm.tokenHeartbeat.collectAsState(initial = true)
 
                     SettingsScreen(
                         semesterStart = semesterStart,
@@ -106,6 +107,7 @@ class SettingsActivity : AppCompatActivity() {
                         autoSyncOnStart = autoSyncOnStart,
                         autoSyncIntervalValue = autoSyncIntervalValue,
                         autoSyncIntervalUnit = autoSyncIntervalUnit,
+                        tokenHeartbeat = tokenHeartbeat,
                         onSemesterStartChange = { vm.setSemesterStart(it) },
                         onTotalWeeksChange = { vm.setTotalWeeks(it) },
                         onPeriodsPerDayChange = { vm.setPeriodsPerDay(it) },
@@ -128,6 +130,7 @@ class SettingsActivity : AppCompatActivity() {
                         onAutoSyncOnStartChange = { vm.setAutoSyncOnStart(it) },
                         onAutoSyncIntervalValueChange = { vm.setAutoSyncIntervalValue(it) },
                         onAutoSyncIntervalUnitChange = { vm.setAutoSyncIntervalUnit(it) },
+                        onTokenHeartbeatChange = { vm.setTokenHeartbeat(it) },
                         onExportJson = {
                             scope.launch {
                                 val json = vm.exportJson()

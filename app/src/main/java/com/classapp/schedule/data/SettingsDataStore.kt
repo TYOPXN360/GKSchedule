@@ -40,6 +40,7 @@ class SettingsDataStore(private val context: Context) {
         private val AUTO_SYNC_ON_START = booleanPreferencesKey("auto_sync_on_start")
         private val AUTO_SYNC_INTERVAL_VALUE = intPreferencesKey("auto_sync_interval_value")
         private val AUTO_SYNC_INTERVAL_UNIT = stringPreferencesKey("auto_sync_interval_unit") // "min", "h", "d"
+        private val TOKEN_HEARTBEAT = booleanPreferencesKey("token_heartbeat")
 
         private val DEFAULT_START_TIMES = listOf(
             "08:30", "09:20", "10:25", "11:15",  // Morning 1-4
@@ -82,6 +83,7 @@ class SettingsDataStore(private val context: Context) {
     val autoSyncOnStart: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[AUTO_SYNC_ON_START] ?: true }
     val autoSyncIntervalValue: Flow<Int> = context.dataStore.data.map { prefs -> prefs[AUTO_SYNC_INTERVAL_VALUE] ?: 1 }
     val autoSyncIntervalUnit: Flow<String> = context.dataStore.data.map { prefs -> prefs[AUTO_SYNC_INTERVAL_UNIT] ?: "d" }
+    val tokenHeartbeat: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[TOKEN_HEARTBEAT] ?: true }
 
     fun getCurrentWeek(): Flow<Int> = context.dataStore.data.map { prefs ->
         val start = prefs[SEMESTER_START]?.let { LocalDate.parse(it) } ?: LocalDate.now()
@@ -139,4 +141,5 @@ class SettingsDataStore(private val context: Context) {
     suspend fun setAutoSyncOnStart(enabled: Boolean) { context.dataStore.edit { it[AUTO_SYNC_ON_START] = enabled } }
     suspend fun setAutoSyncIntervalValue(value: Int) { context.dataStore.edit { it[AUTO_SYNC_INTERVAL_VALUE] = value } }
     suspend fun setAutoSyncIntervalUnit(unit: String) { context.dataStore.edit { it[AUTO_SYNC_INTERVAL_UNIT] = unit } }
+    suspend fun setTokenHeartbeat(enabled: Boolean) { context.dataStore.edit { it[TOKEN_HEARTBEAT] = enabled } }
 }

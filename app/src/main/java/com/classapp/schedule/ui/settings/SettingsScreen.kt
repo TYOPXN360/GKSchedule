@@ -48,6 +48,7 @@ fun SettingsScreen(
     autoSyncOnStart: Boolean,
     autoSyncIntervalValue: Int,
     autoSyncIntervalUnit: String,
+    tokenHeartbeat: Boolean,
     onSemesterStartChange: (LocalDate) -> Unit,
     onTotalWeeksChange: (Int) -> Unit,
     onPeriodsPerDayChange: (Int) -> Unit,
@@ -70,6 +71,7 @@ fun SettingsScreen(
     onAutoSyncOnStartChange: (Boolean) -> Unit,
     onAutoSyncIntervalValueChange: (Int) -> Unit,
     onAutoSyncIntervalUnitChange: (String) -> Unit,
+    onTokenHeartbeatChange: (Boolean) -> Unit,
     onExportJson: () -> Unit,
     onImportJson: () -> Unit,
     onExportIcs: () -> Unit,
@@ -164,9 +166,11 @@ fun SettingsScreen(
                     autoSyncOnStart = autoSyncOnStart,
                     autoSyncIntervalValue = autoSyncIntervalValue,
                     autoSyncIntervalUnit = autoSyncIntervalUnit,
+                    tokenHeartbeat = tokenHeartbeat,
                     onAutoSyncOnStartChange = onAutoSyncOnStartChange,
                     onAutoSyncIntervalValueChange = onAutoSyncIntervalValueChange,
                     onAutoSyncIntervalUnitChange = onAutoSyncIntervalUnitChange,
+                    onTokenHeartbeatChange = onTokenHeartbeatChange,
                     onBack = { navController.popBackStack() }
                 )
             }
@@ -350,9 +354,11 @@ private fun SyncPage(
     autoSyncOnStart: Boolean,
     autoSyncIntervalValue: Int,
     autoSyncIntervalUnit: String,
+    tokenHeartbeat: Boolean,
     onAutoSyncOnStartChange: (Boolean) -> Unit,
     onAutoSyncIntervalValueChange: (Int) -> Unit,
     onAutoSyncIntervalUnitChange: (String) -> Unit,
+    onTokenHeartbeatChange: (Boolean) -> Unit,
     onBack: () -> Unit
 ) {
     val unitLabel = when (autoSyncIntervalUnit) {
@@ -447,6 +453,15 @@ private fun SyncPage(
                 }
             },
             leadingContent = { Icon(Icons.Default.Tune, null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = syncAlpha)) }
+        )
+
+        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+
+        // Token heartbeat
+        SwitchItem(Icons.Default.Favorite, stringResource(R.string.token_heartbeat), tokenHeartbeat, onTokenHeartbeatChange)
+        ListItem(
+            headlineContent = { Text(stringResource(R.string.token_heartbeat_desc)) },
+            leadingContent = { Icon(Icons.Default.Info, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
         )
     }
 }
