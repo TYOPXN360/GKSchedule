@@ -588,7 +588,7 @@ fun CourseDetailSheet(course: Course, getStartTime: (Int) -> String, getEndTime:
             if (course.remark.isNotEmpty()) DetailRow("备注", course.remark)
             Spacer(modifier = Modifier.height(24.dp))
             val detailView = androidx.compose.ui.platform.LocalView.current
-            OutlinedButton(onClick = {
+            Button(onClick = {
                 com.classapp.schedule.util.HapticFeedback.heavy(detailView)
                 onEdit()
             }, modifier = Modifier.fillMaxWidth()) { Text("编辑课程") }

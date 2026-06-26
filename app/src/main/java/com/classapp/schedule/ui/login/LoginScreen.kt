@@ -171,7 +171,7 @@ fun LoginScreen(
 
             // WebView login option
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-            OutlinedButton(
+            Button(
                 onClick = onWebViewLogin,
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !isLoading
