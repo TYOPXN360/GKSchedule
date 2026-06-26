@@ -44,6 +44,8 @@ fun TodayScreen(
     currentWeek: Int,
     colorEngine: Int = 0,
     colorGroupMode: Int = 2,
+    exams: List<com.classapp.schedule.api.ExamInfo> = emptyList(),
+    showExamSchedule: Boolean = false,
     getStartTime: (Int) -> String,
     getEndTime: (Int) -> String,
     onCourseLongPress: (Course) -> Unit
@@ -219,6 +221,42 @@ fun TodayScreen(
                         colorIndex = colorIndexMap[course.id] ?: course.colorIndex,
                         onClick = { detailCourse = course }
                     )
+                }
+            }
+        }
+
+        // Upcoming exams section
+        if (showExamSchedule && exams.isNotEmpty()) {
+            val todayDate = LocalDate.now()
+            val upcomingExams = exams.filter { exam ->
+                try {
+                    val examDate = java.time.LocalDate.parse(exam.getExamDate())
+                    !examDate.isBefore(todayDate)
+                } catch (_: Exception) { false }
+            }.sortedBy { it.getExamDate() }.take(5)
+
+            if (upcomingExams.isNotEmpty()) {
+                item {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    HorizontalDivider()
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            Icons.Default.School, contentDescription = null,
+                            modifier = Modifier.size(20.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "近期考试",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                }
+                items(upcomingExams) { exam ->
+                    ExamCard(exam = exam)
                 }
             }
         }
@@ -456,4 +494,61 @@ private fun findCurrentPeriod(
 private fun parseTime(time: String): Int {
     val parts = time.split(":")
     return (parts.getOrNull(0)?.toIntOrNull() ?: 0) * 60 + (parts.getOrNull(1)?.toIntOrNull() ?: 0)
+}
+
+@Composable
+private fun ExamCard(exam: com.classapp.schedule.api.ExamInfo) {
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Color indicator
+            Box(
+                modifier = Modifier
+                    .width(4.dp)
+                    .height(48.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(MaterialTheme.colorScheme.error)
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = exam.kcmc,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (exam.kssj.isNotEmpty()) {
+                        Text(
+                            text = exam.kssj,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    if (exam.cdmc.isNotEmpty()) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = exam.cdmc,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                if (exam.ksfs.isNotEmpty()) {
+                    Text(
+                        text = exam.ksfs,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                    )
+                }
+            }
+        }
+    }
 }

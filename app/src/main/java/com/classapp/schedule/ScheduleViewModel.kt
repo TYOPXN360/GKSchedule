@@ -106,6 +106,15 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                 val ticket = settings.casTicket.first()
                 if (ticket.isNotEmpty()) api.setCasTicket(ticket)
                 android.util.Log.d("GdustApi", "restore: login restored, hasToken=${api.hasToken()}, hasTicket=${ticket.isNotEmpty()}")
+                // Load cached exams
+                val cachedJson = settings.cachedExams.first()
+                if (cachedJson.isNotEmpty()) {
+                    try {
+                        _examList.value = kotlinx.serialization.json.Json.decodeFromString(cachedJson)
+                        _examYear.value = settings.cachedExamYear.first()
+                        _examSemester.value = settings.cachedExamSemester.first()
+                    } catch (_: Exception) {}
+                }
                 // Auto-refresh on app start if enabled
                 val syncOnStart = settings.autoSyncOnStart.first()
                 if (syncOnStart) refreshFromSchool()
@@ -587,6 +596,11 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                 val result = api.getExamSchedule(year, semester)
                 result.onSuccess { exams ->
                     _examList.value = exams
+                    // Cache exams
+                    val json = kotlinx.serialization.json.Json.encodeToString(
+                        kotlinx.serialization.builtins.ListSerializer(com.classapp.schedule.api.ExamInfo.serializer()), exams
+                    )
+                    settings.saveCachedExams(json, yearStr, semester)
                     _messages.emit("已获取 ${exams.size} 条考试信息")
                 }.onFailure { e ->
                     _messages.emit("获取考试信息失败: ${e.message}")

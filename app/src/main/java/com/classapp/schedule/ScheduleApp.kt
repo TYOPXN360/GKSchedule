@@ -186,9 +186,13 @@ fun ScheduleApp(
             }
         ) {
             composable(Screen.Today.route) {
+                val examList by viewModel.examList.collectAsState()
+                val showExamSchedule by viewModel.showExamSchedule.collectAsState(initial = false)
                 TodayScreen(
                     courses = courses, currentWeek = realCurrentWeek,
                     colorEngine = colorEngine, colorGroupMode = colorGroupMode,
+                    exams = examList,
+                    showExamSchedule = showExamSchedule,
                     getStartTime = { viewModel.getStartTime(it) },
                     getEndTime = { viewModel.getEndTime(it) },
                     onCourseLongPress = { navController.navigate(Screen.CourseEdit.createRoute(it.id)) }

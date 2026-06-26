@@ -43,6 +43,9 @@ class SettingsDataStore(private val context: Context) {
         private val TOKEN_HEARTBEAT = booleanPreferencesKey("token_heartbeat")
         private val SHOW_EXAM_SCHEDULE = booleanPreferencesKey("show_exam_schedule")
         private val CAS_TICKET = stringPreferencesKey("cas_ticket")
+        private val CACHED_EXAMS = stringPreferencesKey("cached_exams")
+        private val CACHED_EXAM_YEAR = stringPreferencesKey("cached_exam_year")
+        private val CACHED_EXAM_SEMESTER = stringPreferencesKey("cached_exam_semester")
 
         private val DEFAULT_START_TIMES = listOf(
             "08:30", "09:20", "10:25", "11:15",  // Morning 1-4
@@ -88,6 +91,9 @@ class SettingsDataStore(private val context: Context) {
     val tokenHeartbeat: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[TOKEN_HEARTBEAT] ?: true }
     val showExamSchedule: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[SHOW_EXAM_SCHEDULE] ?: false }
     val casTicket: Flow<String> = context.dataStore.data.map { prefs -> prefs[CAS_TICKET] ?: "" }
+    val cachedExams: Flow<String> = context.dataStore.data.map { prefs -> prefs[CACHED_EXAMS] ?: "" }
+    val cachedExamYear: Flow<String> = context.dataStore.data.map { prefs -> prefs[CACHED_EXAM_YEAR] ?: "" }
+    val cachedExamSemester: Flow<String> = context.dataStore.data.map { prefs -> prefs[CACHED_EXAM_SEMESTER] ?: "" }
 
     fun getCurrentWeek(): Flow<Int> = context.dataStore.data.map { prefs ->
         val start = prefs[SEMESTER_START]?.let { LocalDate.parse(it) } ?: LocalDate.now()
@@ -148,4 +154,11 @@ class SettingsDataStore(private val context: Context) {
     suspend fun setTokenHeartbeat(enabled: Boolean) { context.dataStore.edit { it[TOKEN_HEARTBEAT] = enabled } }
     suspend fun setShowExamSchedule(show: Boolean) { context.dataStore.edit { it[SHOW_EXAM_SCHEDULE] = show } }
     suspend fun saveCasTicket(ticket: String) { context.dataStore.edit { it[CAS_TICKET] = ticket } }
+    suspend fun saveCachedExams(json: String, year: String, semester: String) {
+        context.dataStore.edit {
+            it[CACHED_EXAMS] = json
+            it[CACHED_EXAM_YEAR] = year
+            it[CACHED_EXAM_SEMESTER] = semester
+        }
+    }
 }
