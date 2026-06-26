@@ -313,10 +313,16 @@ fun ScheduleApp(
             composable(Screen.Exam.route) {
                 val examList by viewModel.examList.collectAsState()
                 val examLoading by viewModel.examLoading.collectAsState()
+                val examYear by viewModel.examYear.collectAsState()
+                val examSemester by viewModel.examSemester.collectAsState()
                 ExamScreen(
                     exams = examList,
                     isLoading = examLoading,
                     semesterStart = semesterStart,
+                    examYear = examYear,
+                    examSemester = examSemester,
+                    onYearChange = { viewModel.setExamYear(it) },
+                    onSemesterChange = { viewModel.setExamSemester(it) },
                     onRefresh = { viewModel.refreshExamSchedule() },
                     onBack = { navController.popBackStack() }
                 )

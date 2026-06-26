@@ -555,14 +555,33 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     val examList: StateFlow<List<com.classapp.schedule.api.ExamInfo>> = _examList
     private val _examLoading = MutableStateFlow(false)
     val examLoading: StateFlow<Boolean> = _examLoading
+    private val _examYear = MutableStateFlow("")
+    val examYear: StateFlow<String> = _examYear
+    private val _examSemester = MutableStateFlow("")
+    val examSemester: StateFlow<String> = _examSemester
+
+    fun setExamYear(year: String) { _examYear.value = year }
+    fun setExamSemester(semester: String) { _examSemester.value = semester }
 
     fun refreshExamSchedule() {
         viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
             _examLoading.value = true
             try {
-                val year = settings.semesterStart.first().year.toString()
-                val currentMonth = java.time.LocalDate.now().monthValue
-                val semester = if (currentMonth in 2..8) "2" else "1"
+                // Auto-detect academic year if not set
+                val year = _examYear.value.ifEmpty {
+                    val now = java.time.LocalDate.now()
+                    val month = now.monthValue
+                    // Academic year: Sep~Jan = current year, Feb~Aug = previous year
+                    if (month >= 9) now.year.toString() else (now.year - 1).toString()
+                }
+                val semester = _examSemester.value.ifEmpty {
+                    val month = java.time.LocalDate.now().monthValue
+                    if (month in 2..7) "2" else "1"
+                }
+                if (_examYear.value.isEmpty()) _examYear.value = year
+                if (_examSemester.value.isEmpty()) _examSemester.value = semester
+
+                android.util.Log.d("GdustApi", "refreshExamSchedule: year=$year, semester=$semester")
                 val result = api.getExamSchedule(year, semester)
                 result.onSuccess { exams ->
                     _examList.value = exams

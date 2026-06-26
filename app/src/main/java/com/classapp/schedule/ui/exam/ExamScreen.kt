@@ -9,6 +9,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.School
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -31,6 +32,10 @@ fun ExamScreen(
     exams: List<ExamInfo>,
     isLoading: Boolean,
     semesterStart: LocalDate,
+    examYear: String,
+    examSemester: String,
+    onYearChange: (String) -> Unit,
+    onSemesterChange: (String) -> Unit,
     onRefresh: () -> Unit,
     onBack: () -> Unit
 ) {
@@ -48,34 +53,95 @@ fun ExamScreen(
         }
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-            // Hint + fetch button
+            // Year + Semester selector + fetch button
             Card(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Icon(Icons.Default.Info, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text(
-                        text = "请在校园网下获取",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.weight(1f)
-                    )
-                    Button(
-                        onClick = onRefresh,
-                        enabled = !isLoading
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        if (isLoading) {
-                            CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp,
-                                color = MaterialTheme.colorScheme.onPrimary)
-                        } else {
-                            Icon(Icons.Default.Refresh, null, modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("获取")
+                        // Year selector
+                        var yearExpanded by remember { mutableStateOf(false) }
+                        val currentYear = java.time.LocalDate.now().year
+                        val years = ((currentYear - 3)..currentYear).map { it.toString() }.reversed()
+                        OutlinedCard(
+                            onClick = { yearExpanded = true },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(12.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(examYear.ifEmpty { "学年" }, style = MaterialTheme.typography.bodyMedium)
+                                Icon(Icons.Default.ArrowDropDown, null, modifier = Modifier.size(18.dp))
+                            }
+                        }
+                        // Dropdown in a separate Box overlay
+                        Box {
+                            DropdownMenu(expanded = yearExpanded, onDismissRequest = { yearExpanded = false }) {
+                                years.forEach { y ->
+                                    DropdownMenuItem(text = { Text(y) }, onClick = { onYearChange(y); yearExpanded = false })
+                                }
+                            }
+                        }
+
+                        // Semester selector
+                        var semExpanded by remember { mutableStateOf(false) }
+                        OutlinedCard(
+                            onClick = { semExpanded = true },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(12.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    if (examSemester == "1") "第一学期" else "第二学期",
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                                Icon(Icons.Default.ArrowDropDown, null, modifier = Modifier.size(18.dp))
+                            }
+                        }
+                        Box {
+                            DropdownMenu(expanded = semExpanded, onDismissRequest = { semExpanded = false }) {
+                                DropdownMenuItem(text = { Text("第一学期") }, onClick = { onSemesterChange("1"); semExpanded = false })
+                                DropdownMenuItem(text = { Text("第二学期") }, onClick = { onSemesterChange("2"); semExpanded = false })
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Icon(Icons.Default.Info, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
+                        Text(
+                            text = "请在校园网下获取",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Button(
+                            onClick = onRefresh,
+                            enabled = !isLoading && examYear.isNotEmpty()
+                        ) {
+                            if (isLoading) {
+                                CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp,
+                                    color = MaterialTheme.colorScheme.onPrimary)
+                            } else {
+                                Icon(Icons.Default.Refresh, null, modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("获取")
+                            }
                         }
                     }
                 }
