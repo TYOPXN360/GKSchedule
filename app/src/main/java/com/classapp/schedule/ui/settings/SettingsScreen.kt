@@ -13,6 +13,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -458,11 +459,26 @@ private fun SyncPage(
         HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
 
         // Token heartbeat
-        SwitchItem(Icons.Default.Favorite, stringResource(R.string.token_heartbeat), tokenHeartbeat, onTokenHeartbeatChange)
+        var showHeartbeatInfo by remember { mutableStateOf(false) }
         ListItem(
-            headlineContent = { Text(stringResource(R.string.token_heartbeat_desc)) },
-            leadingContent = { Icon(Icons.Default.Info, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
+            headlineContent = { Text(stringResource(R.string.token_heartbeat)) },
+            leadingContent = { Icon(Icons.Default.Favorite, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+            trailingContent = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = { showHeartbeatInfo = true }) {
+                        Icon(Icons.Default.Info, "Info", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Switch(checked = tokenHeartbeat, onCheckedChange = onTokenHeartbeatChange)
+                }
+            }
         )
+        if (showHeartbeatInfo) {
+            AlertDialog(
+                onDismissRequest = { showHeartbeatInfo = false },
+                text = { Text(stringResource(R.string.token_heartbeat_desc)) },
+                confirmButton = { TextButton(onClick = { showHeartbeatInfo = false }) { Text("OK") } }
+            )
+        }
     }
 }
 
