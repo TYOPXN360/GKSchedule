@@ -470,10 +470,9 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
 
     private suspend fun handleTokenExpired() {
         _isRefreshing.value = false
-        // Keep savedStudentId and user info visible
+        // Only clear the API token, keep saved studentId for re-login
         api.setToken("")
-        settings.clearLoginInfo()
-        // Set a specific token-expired state instead of clearing everything
+        // Don't clear settings - we need savedStudentId for the UI and quick re-login
         _loginState.value = LoginState.TokenExpired
         _messages.emit("登录已过期，请重新登录")
     }
