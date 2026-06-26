@@ -2,7 +2,8 @@ package com.classapp.schedule.ui.exam
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -10,6 +11,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -39,6 +41,19 @@ fun ExamScreen(
     onRefresh: () -> Unit,
     onBack: () -> Unit
 ) {
+    // Auto-detect current academic year and semester on first display
+    LaunchedEffect(Unit) {
+        if (examYear.isEmpty()) {
+            val now = LocalDate.now()
+            val month = now.monthValue
+            val startYear = if (month >= 9) now.year else now.year - 1
+            onYearChange("$startYear-${startYear + 1}")
+        }
+        if (examSemester.isEmpty()) {
+            val month = LocalDate.now().monthValue
+            onSemesterChange(if (month in 2..7) "2" else "1")
+        }
+    }
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
@@ -176,143 +191,88 @@ fun ExamScreen(
                     }
                 }
             } else {
-                ExamScheduleGrid(
-                    exams = exams,
-                    semesterStart = semesterStart,
-                    modifier = Modifier.fillMaxSize()
-                )
+                // Card list sorted by date
+                val sortedExams = exams.sortedBy { it.getExamDate() }
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(sortedExams) { exam ->
+                        ExamCard(exam = exam)
+                    }
+                }
             }
         }
     }
 }
 
 @Composable
-private fun ExamScheduleGrid(
-    exams: List<ExamInfo>,
-    semesterStart: LocalDate,
-    modifier: Modifier = Modifier
-) {
-    val dayNames = listOf("周一", "周二", "周三", "周四", "周五", "周六", "周日")
-    val examColors = listOf(
-        Color(0xFFE3F2FD), Color(0xFFF3E5F5), Color(0xFFE8F5E9),
-        Color(0xFFFFF3E0), Color(0xFFE0F7FA), Color(0xFFFCE4EC),
-        Color(0xFFF1F8E9)
-    )
+private fun ExamCard(exam: ExamInfo) {
+    val examDate = try { LocalDate.parse(exam.getExamDate()) } catch (_: Exception) { null }
+    val isPast = examDate?.isBefore(LocalDate.now()) == true
+    val alpha = if (isPast) 0.5f else 1f
 
-    // Group exams by week and day
-    val examsByWeek = remember(exams) {
-        val result = mutableMapOf<Int, MutableList<Pair<Int, ExamInfo>>>()
-        exams.forEach { exam ->
-            try {
-                val dateStr = exam.getExamDate()
-                if (dateStr.isNotEmpty()) {
-                    val date = LocalDate.parse(dateStr)
-                    val daysDiff = ChronoUnit.DAYS.between(semesterStart, date).toInt()
-                    val week = (daysDiff / 7) + 1
-                    val dayOfWeek = date.dayOfWeek.value // 1=Mon, 7=Sun
-                    result.getOrPut(week) { mutableListOf() }.add(dayOfWeek to exam)
-                }
-            } catch (_: Exception) {}
-        }
-        result.toSortedMap()
-    }
-
-    Column(
-        modifier = modifier.verticalScroll(rememberScrollState()).padding(horizontal = 4.dp)
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = if (isPast) 0.dp else 1.dp),
+        shape = RoundedCornerShape(12.dp)
     ) {
-        if (examsByWeek.isEmpty()) {
-            Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
-                Text("无法解析考试日期", style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            return@Column
-        }
-
-        examsByWeek.forEach { (week, examList) ->
-            // Week header
-            Card(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp, horizontal = 4.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
-            ) {
-                Text(
-                    text = "第${week}周",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                )
-            }
-
-            // Day headers
-            Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
-                dayNames.forEach { day ->
-                    Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Color indicator
+            Box(
+                modifier = Modifier
+                    .width(4.dp)
+                    .height(48.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(if (isPast) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
+                        else MaterialTheme.colorScheme.error)
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = exam.kcmc,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha)
+                    )
+                    if (isPast) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Icon(Icons.Default.CheckCircle, null, modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
+                    }
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (exam.kssj.isNotEmpty()) {
                         Text(
-                            text = day,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            text = exam.kssj,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha)
+                        )
+                    }
+                    if (exam.cdmc.isNotEmpty()) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = exam.cdmc,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha)
                         )
                     }
                 }
-            }
-
-            // Exam grid for this week
-            val examsByDay = examList.groupBy { it.first }
-            val maxExamsInDay = examsByDay.values.maxOfOrNull { it.size } ?: 1
-
-            repeat(maxExamsInDay) { row ->
-                Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp)) {
-                    for (day in 1..7) {
-                        val dayExams = examsByDay[day] ?: emptyList()
-                        val exam = dayExams.getOrNull(row)
-                        Box(
-                            modifier = Modifier.weight(1f).padding(2.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            if (exam != null) {
-                                val colorIdx = examList.indexOf(exam) % examColors.size
-                                Card(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    colors = CardDefaults.cardColors(containerColor = examColors[colorIdx]),
-                                    shape = RoundedCornerShape(6.dp)
-                                ) {
-                                    Column(
-                                        modifier = Modifier.padding(4.dp),
-                                        horizontalAlignment = Alignment.CenterHorizontally
-                                    ) {
-                                        Text(
-                                            text = exam.second.kcmc,
-                                            style = MaterialTheme.typography.labelSmall,
-                                            fontWeight = FontWeight.Bold,
-                                            maxLines = 2,
-                                            overflow = TextOverflow.Ellipsis,
-                                            textAlign = TextAlign.Center
-                                        )
-                                        Text(
-                                            text = exam.second.getExamTimeRange(),
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            textAlign = TextAlign.Center
-                                        )
-                                        if (exam.second.cdmc.isNotEmpty()) {
-                                            Text(
-                                                text = exam.second.cdmc,
-                                                style = MaterialTheme.typography.labelSmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis,
-                                                textAlign = TextAlign.Center
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
+                if (exam.ksfs.isNotEmpty()) {
+                    Text(
+                        text = exam.ksfs,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha * 0.7f)
+                    )
                 }
             }
-
-            Spacer(modifier = Modifier.height(8.dp))
         }
     }
 }
