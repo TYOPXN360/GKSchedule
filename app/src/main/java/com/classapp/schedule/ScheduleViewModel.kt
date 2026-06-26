@@ -540,6 +540,34 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
+    // Exam schedule
+    private val _examList = MutableStateFlow<List<com.classapp.schedule.api.ExamInfo>>(emptyList())
+    val examList: StateFlow<List<com.classapp.schedule.api.ExamInfo>> = _examList
+    private val _examLoading = MutableStateFlow(false)
+    val examLoading: StateFlow<Boolean> = _examLoading
+
+    fun refreshExamSchedule() {
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            _examLoading.value = true
+            try {
+                val year = settings.semesterStart.first().year.toString()
+                val currentMonth = java.time.LocalDate.now().monthValue
+                val semester = if (currentMonth in 2..8) "2" else "1"
+                val result = api.getExamSchedule(year, semester)
+                result.onSuccess { exams ->
+                    _examList.value = exams
+                    _messages.emit("已获取 ${exams.size} 条考试信息")
+                }.onFailure { e ->
+                    _messages.emit("获取考试信息失败: ${e.message}")
+                }
+            } catch (e: Exception) {
+                _messages.emit("获取考试信息失败: ${e.message}")
+            } finally {
+                _examLoading.value = false
+            }
+        }
+    }
+
     fun logout() {
         _loginState.value = LoginState.LoggedOut
         _captchaImage.value = null

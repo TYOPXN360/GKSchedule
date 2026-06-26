@@ -37,7 +37,8 @@ fun AboutScreen(
     onQuickRelogin: (String) -> Unit = {},
     onRefreshCaptcha: () -> Unit = {},
     onOpenSettings: () -> Unit,
-    onOpenAbout: () -> Unit
+    onOpenAbout: () -> Unit,
+    onOpenExam: () -> Unit = {}
 ) {
     var showAboutDialog by remember { mutableStateOf(false) }
     var showReloginDialog by remember { mutableStateOf(false) }
@@ -196,6 +197,19 @@ fun AboutScreen(
                     leadingContent = { Icon(Icons.Default.AccessTime, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
                 )
             }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Exam schedule
+        Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) {
+            ListItem(
+                headlineContent = { Text("考试安排") },
+                supportingContent = { Text("查看考试时间和考场") },
+                leadingContent = { Icon(Icons.Default.School, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+                trailingContent = { Icon(Icons.Default.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+                modifier = Modifier.clickable(onClick = onOpenExam)
+            )
         }
 
         Spacer(modifier = Modifier.height(8.dp))

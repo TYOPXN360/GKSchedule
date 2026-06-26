@@ -145,6 +145,8 @@ class GdustApi {
         private const val PORTAL_BASE = "https://portal.gdust.edu.cn"
         private const val CAS_API = "$CAS_BASE/cas-api"
         private const val SMART_API = "$PORTAL_BASE/smart-admin-api"
+        private const val JWXT_BASE = "http://172.16.254.1"
+        private const val JWXT_EXAM_SERVICE = "$JWXT_BASE/sso/lyiotlogin"
     }
 
     private val json = Json { ignoreUnknownKeys = true; isLenient = true }
@@ -415,6 +417,57 @@ class GdustApi {
             throw Exception(parsed.msg.ifEmpty { "获取用户信息失败" })
         }
     }
+
+    /**
+     * Get exam schedule from JWXT (教务系统)
+     * First login to exam system via CAS, then query
+     */
+    fun getExamSchedule(year: String, semester: String): Result<List<ExamInfo>> = runCatching {
+        // Step 1: Get CAS ticket for exam service
+        val transferRequest = Request.Builder()
+            .url("$CAS_BASE/cas/transferPage?service=$JWXT_EXAM_SERVICE")
+            .get()
+            .build()
+        val transferResp = client.newCall(transferRequest).execute()
+        // Follow redirects to get the ticket and login
+        // The cookie jar will capture session cookies
+
+        // Step 2: Query exam schedule
+        val xqm = when (semester) {
+            "1" -> "3"
+            "2" -> "12"
+            else -> "12"
+        }
+        val requestBody = FormBody.Builder()
+            .add("xnm", year)
+            .add("xqm", xqm)
+            .add("ksmcdmb_id", "")
+            .add("kch", "")
+            .add("kc", "")
+            .add("ksrq", "")
+            .add("kkbm_id", "")
+            .add("_search", "false")
+            .add("nd", System.currentTimeMillis().toString())
+            .add("queryModel.showCount", "50")
+            .add("queryModel.currentPage", "1")
+            .add("queryModel.sortName", " ")
+            .add("queryModel.sortOrder", "asc")
+            .add("time", "0")
+            .build()
+
+        val request = Request.Builder()
+            .url("$JWXT_BASE/kwgl/kscx_cxXsksxxIndex.html?doType=query&gnmkdm=N358105")
+            .post(requestBody)
+            .header("Content-Type", "application/x-www-form-urlencoded;charset=UTF-8")
+            .header("X-Requested-With", "XMLHttpRequest")
+            .header("Referer", "$JWXT_BASE/kwgl/kscx_cxXsksxxIndex.html?gnmkdm=N358105&layout=default")
+            .build()
+
+        val response = client.newCall(request).execute()
+        val body = response.body?.string() ?: throw Exception("Empty response")
+        val parsed = json.decodeFromString<ExamResponse>(body)
+        parsed.items ?: emptyList()
+    }
 }
 
 @Serializable
@@ -434,6 +487,41 @@ data class UserInfo(
     val userIcon: String = "",
     val idCardNum: String = ""
 )
+
+@Serializable
+data class ExamResponse(
+    val currentPage: Int = 0,
+    val totalCount: Int = 0,
+    val totalPage: Int = 0,
+    val items: List<ExamInfo>? = null
+)
+
+@Serializable
+data class ExamInfo(
+    val kcmc: String = "",      // 课程名称
+    val kssj: String = "",      // 考试时间 "2026-07-07(14:20-15:50)"
+    val cdmc: String = "",      // 考场名称
+    val cdxqmc: String = "",    // 考场校区
+    val ksfs: String = "",      // 考试方式 "笔试（闭卷）"
+    val khfs: String = "",      // 考核方式
+    val kch: String = "",       // 课程号
+    val xf: String = "",        // 学分
+    val xnmc: String = "",      // 学年名称
+    val xqmmc: String = "",     // 学期名称
+    val sksj: String = "",      // 上课时间
+    val kkxy: String = "",      // 开课学院
+    val jsxx: String = ""       // 教师信息
+) {
+    fun getExamDate(): String {
+        val match = Regex("""(\d{4}-\d{2}-\d{2})""").find(kssj)
+        return match?.groupValues?.get(1) ?: ""
+    }
+
+    fun getExamTimeRange(): String {
+        val match = Regex("""\((\d{2}:\d{2})-(\d{2}:\d{2})\)""").find(kssj)
+        return if (match != null) "${match.groupValues[1]}-${match.groupValues[2]}" else ""
+    }
+}
 
 /**
  * Simple in-memory cookie jar for OkHttp

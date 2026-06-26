@@ -36,6 +36,7 @@ import androidx.navigation.navArgument
 import com.classapp.schedule.data.Course
 import com.classapp.schedule.ui.about.AboutScreen
 import com.classapp.schedule.ui.course.CourseEditScreen
+import com.classapp.schedule.ui.exam.ExamScreen
 import com.classapp.schedule.ui.login.LoginScreen
 import com.classapp.schedule.ui.login.WebViewLoginScreen
 import com.classapp.schedule.ui.manage.CourseManageScreen
@@ -51,6 +52,7 @@ sealed class Screen(val route: String) {
     data object About : Screen("about")
     data object Login : Screen("login")
     data object WebViewLogin : Screen("webview_login")
+    data object Exam : Screen("exam")
     data object CourseEdit : Screen("course_edit?courseId={courseId}") {
         fun createRoute(courseId: Long? = null): String =
             if (courseId != null) "course_edit?courseId=$courseId" else "course_edit"
@@ -256,7 +258,8 @@ fun ScheduleApp(
                     onOpenSettings = {
                         context.startActivity(android.content.Intent(context, com.classapp.schedule.ui.settings.SettingsActivity::class.java))
                     },
-                    onOpenAbout = { }
+                    onOpenAbout = { },
+                    onOpenExam = { navController.navigate(Screen.Exam.route) }
                 )
             }
 
@@ -305,6 +308,17 @@ fun ScheduleApp(
                         navController.popBackStack()
                     }
                 }
+            }
+
+            composable(Screen.Exam.route) {
+                val examList by viewModel.examList.collectAsState()
+                val examLoading by viewModel.examLoading.collectAsState()
+                ExamScreen(
+                    exams = examList,
+                    isLoading = examLoading,
+                    onRefresh = { viewModel.refreshExamSchedule() },
+                    onBack = { navController.popBackStack() }
+                )
             }
 
             composable(
