@@ -451,11 +451,11 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
 
     private suspend fun handleTokenExpired() {
         _isRefreshing.value = false
-        savedStudentId = ""
-        _savedStudentIdFlow.value = ""
+        // Keep savedStudentId and user info visible
         api.setToken("")
         settings.clearLoginInfo()
-        _loginState.value = LoginState.Error("登录已过期，请重新登录")
+        // Set a specific token-expired state instead of clearing everything
+        _loginState.value = LoginState.TokenExpired
         _messages.emit("登录已过期，请重新登录")
     }
 
@@ -543,4 +543,5 @@ sealed class LoginState {
     data class Success(val name: String, val studentId: String) : LoginState()
     data class Error(val message: String) : LoginState()
     data class ImportResult(val count: Int) : LoginState()
+    data object TokenExpired : LoginState()
 }

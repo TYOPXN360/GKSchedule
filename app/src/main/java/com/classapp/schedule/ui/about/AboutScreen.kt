@@ -1,6 +1,7 @@
 package com.classapp.schedule.ui.about
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -12,6 +13,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -28,12 +31,16 @@ fun AboutScreen(
     semesterStart: java.time.LocalDate,
     totalWeeks: Int,
     periodsPerDay: Int,
+    captchaImageBase64: String? = null,
     onLogin: () -> Unit,
     onLogout: () -> Unit,
+    onQuickRelogin: (String) -> Unit = {},
+    onRefreshCaptcha: () -> Unit = {},
     onOpenSettings: () -> Unit,
     onOpenAbout: () -> Unit
 ) {
     var showAboutDialog by remember { mutableStateOf(false) }
+    var showReloginDialog by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -45,14 +52,17 @@ fun AboutScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         // Account card
-        val isLoggedIn = loginState is LoginState.Success || loginState is LoginState.ImportResult
+        val isLoggedIn = loginState is LoginState.Success || loginState is LoginState.ImportResult || loginState is LoginState.TokenExpired
+        val isTokenExpired = loginState is LoginState.TokenExpired
 
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(
-                containerColor = if (isLoggedIn) MaterialTheme.colorScheme.primaryContainer
-                else MaterialTheme.colorScheme.surfaceVariant
+                containerColor = if (isLoggedIn) {
+                    if (isTokenExpired) MaterialTheme.colorScheme.errorContainer
+                    else MaterialTheme.colorScheme.primaryContainer
+                } else MaterialTheme.colorScheme.surfaceVariant
             )
         ) {
             if (isLoggedIn) {
@@ -97,13 +107,34 @@ fun AboutScreen(
                         )
                     }
                     Spacer(modifier = Modifier.height(16.dp))
-                    OutlinedButton(
-                        onClick = onLogout,
-                        modifier = Modifier.fillMaxWidth(0.6f)
-                    ) {
-                        Icon(Icons.Default.Logout, null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(R.string.logout))
+                    if (isTokenExpired) {
+                        Text(
+                            text = "登录已过期",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.error,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(
+                            onClick = {
+                                onRefreshCaptcha()
+                                showReloginDialog = true
+                            },
+                            modifier = Modifier.fillMaxWidth(0.6f)
+                        ) {
+                            Icon(Icons.Default.Login, null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("重新登录")
+                        }
+                    } else {
+                        OutlinedButton(
+                            onClick = onLogout,
+                            modifier = Modifier.fillMaxWidth(0.6f)
+                        ) {
+                            Icon(Icons.Default.Logout, null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(stringResource(R.string.logout))
+                        }
                     }
                 }
             } else {
@@ -243,6 +274,61 @@ fun AboutScreen(
             },
             confirmButton = {
                 TextButton(onClick = { showAboutDialog = false }) { Text("OK") }
+            }
+        )
+    }
+
+    // Re-login dialog (captcha only)
+    if (showReloginDialog) {
+        var captcha by remember { mutableStateOf("") }
+        AlertDialog(
+            onDismissRequest = { showReloginDialog = false },
+            title = { Text("重新登录") },
+            text = {
+                Column {
+                    Text("请输入验证码", style = MaterialTheme.typography.bodyMedium)
+                    Spacer(modifier = Modifier.height(12.dp))
+                    if (captchaImageBase64 != null && captchaImageBase64.isNotEmpty()) {
+                        val bitmap = remember(captchaImageBase64) {
+                            try {
+                                val bytes = android.util.Base64.decode(captchaImageBase64, android.util.Base64.DEFAULT)
+                                android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                            } catch (_: Exception) { null }
+                        }
+                        if (bitmap != null) {
+                            Card(
+                                modifier = Modifier.size(width = 120.dp, height = 56.dp)
+                                    .clickable { onRefreshCaptcha() },
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                Image(bitmap = bitmap.asImageBitmap(), contentDescription = "Captcha",
+                                    modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Fit)
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = captcha,
+                        onValueChange = { captcha = it },
+                        label = { Text(stringResource(R.string.login_captcha)) },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        if (captcha.isNotBlank()) {
+                            onQuickRelogin(captcha)
+                            showReloginDialog = false
+                        }
+                    },
+                    enabled = captcha.isNotBlank()
+                ) { Text("登录") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showReloginDialog = false }) { Text(stringResource(R.string.cancel)) }
             }
         )
     }

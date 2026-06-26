@@ -112,13 +112,6 @@ fun ScheduleApp(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    // Navigate to login on token expiration
-    LaunchedEffect(loginState) {
-        if (loginState is LoginState.Error && currentRoute != Screen.Login.route) {
-            navController.navigate(Screen.Login.route)
-        }
-    }
-
     val bottomBarScreens = listOf(Screen.Today, Screen.Weekly, Screen.Courses, Screen.About)
     val showBottomBar = currentRoute in bottomBarScreens.map { it.route } && currentRoute != Screen.Login.route
 
@@ -255,8 +248,11 @@ fun ScheduleApp(
                     semesterStart = semesterStart,
                     totalWeeks = displayWeeks,
                     periodsPerDay = periodsPerDayVal,
+                    captchaImageBase64 = captchaImage,
                     onLogin = { navController.navigate(Screen.Login.route) },
                     onLogout = { viewModel.logout() },
+                    onQuickRelogin = { cap -> viewModel.quickRelogin(cap) },
+                    onRefreshCaptcha = { viewModel.refreshCaptcha() },
                     onOpenSettings = {
                         context.startActivity(android.content.Intent(context, com.classapp.schedule.ui.settings.SettingsActivity::class.java))
                     },

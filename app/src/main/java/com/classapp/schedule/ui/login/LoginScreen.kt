@@ -164,36 +164,6 @@ fun LoginScreen(
                 Text(stringResource(R.string.login_button))
             }
 
-            // Quick re-login (when credentials saved)
-            if (hasSavedCredentials) {
-                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                Text(
-                    text = stringResource(R.string.quick_relogin_hint),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    OutlinedTextField(
-                        value = captcha,
-                        onValueChange = { captcha = it },
-                        label = { Text(stringResource(R.string.login_captcha)) },
-                        modifier = Modifier.weight(1f),
-                        singleLine = true,
-                        enabled = !isLoading
-                    )
-                    Button(
-                        onClick = { onQuickRelogin(captcha) },
-                        enabled = !isLoading && captcha.isNotBlank()
-                    ) {
-                        Text(stringResource(R.string.quick_relogin))
-                    }
-                }
-            }
-
             // WebView login option
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
             OutlinedButton(
