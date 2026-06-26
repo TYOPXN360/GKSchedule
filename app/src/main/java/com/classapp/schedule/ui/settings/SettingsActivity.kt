@@ -83,6 +83,7 @@ class SettingsActivity : AppCompatActivity() {
                     val autoSyncIntervalValue by vm.autoSyncIntervalValue.collectAsState(initial = 1)
                     val autoSyncIntervalUnit by vm.autoSyncIntervalUnit.collectAsState(initial = "d")
                     val tokenHeartbeat by vm.tokenHeartbeat.collectAsState(initial = true)
+                    val showExamSchedule by vm.showExamSchedule.collectAsState(initial = false)
 
                     SettingsScreen(
                         semesterStart = semesterStart,
@@ -108,6 +109,7 @@ class SettingsActivity : AppCompatActivity() {
                         autoSyncIntervalValue = autoSyncIntervalValue,
                         autoSyncIntervalUnit = autoSyncIntervalUnit,
                         tokenHeartbeat = tokenHeartbeat,
+                        showExamSchedule = showExamSchedule,
                         onSemesterStartChange = { vm.setSemesterStart(it) },
                         onTotalWeeksChange = { vm.setTotalWeeks(it) },
                         onPeriodsPerDayChange = { vm.setPeriodsPerDay(it) },
@@ -131,6 +133,16 @@ class SettingsActivity : AppCompatActivity() {
                         onAutoSyncIntervalValueChange = { vm.setAutoSyncIntervalValue(it) },
                         onAutoSyncIntervalUnitChange = { vm.setAutoSyncIntervalUnit(it) },
                         onTokenHeartbeatChange = { vm.setTokenHeartbeat(it) },
+                        onShowExamScheduleChange = { vm.setShowExamSchedule(it) },
+                        onFetchExam = {
+                            vm.refreshExamSchedule()
+                            scope.launch {
+                                vm.messages.collect { msg ->
+                                    android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()
+                                    return@collect
+                                }
+                            }
+                        },
                         onExportJson = {
                             scope.launch {
                                 val json = vm.exportJson()

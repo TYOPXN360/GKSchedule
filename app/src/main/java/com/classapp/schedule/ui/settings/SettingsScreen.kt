@@ -50,6 +50,7 @@ fun SettingsScreen(
     autoSyncIntervalValue: Int,
     autoSyncIntervalUnit: String,
     tokenHeartbeat: Boolean,
+    showExamSchedule: Boolean,
     onSemesterStartChange: (LocalDate) -> Unit,
     onTotalWeeksChange: (Int) -> Unit,
     onPeriodsPerDayChange: (Int) -> Unit,
@@ -73,6 +74,8 @@ fun SettingsScreen(
     onAutoSyncIntervalValueChange: (Int) -> Unit,
     onAutoSyncIntervalUnitChange: (String) -> Unit,
     onTokenHeartbeatChange: (Boolean) -> Unit,
+    onShowExamScheduleChange: (Boolean) -> Unit,
+    onFetchExam: () -> Unit,
     onExportJson: () -> Unit,
     onImportJson: () -> Unit,
     onExportIcs: () -> Unit
@@ -167,10 +170,13 @@ fun SettingsScreen(
                     autoSyncIntervalValue = autoSyncIntervalValue,
                     autoSyncIntervalUnit = autoSyncIntervalUnit,
                     tokenHeartbeat = tokenHeartbeat,
+                    showExamSchedule = showExamSchedule,
                     onAutoSyncOnStartChange = onAutoSyncOnStartChange,
                     onAutoSyncIntervalValueChange = onAutoSyncIntervalValueChange,
                     onAutoSyncIntervalUnitChange = onAutoSyncIntervalUnitChange,
                     onTokenHeartbeatChange = onTokenHeartbeatChange,
+                    onShowExamScheduleChange = onShowExamScheduleChange,
+                    onFetchExam = onFetchExam,
                     onBack = { navController.popBackStack() }
                 )
             }
@@ -354,10 +360,13 @@ private fun SyncPage(
     autoSyncIntervalValue: Int,
     autoSyncIntervalUnit: String,
     tokenHeartbeat: Boolean,
+    showExamSchedule: Boolean,
     onAutoSyncOnStartChange: (Boolean) -> Unit,
     onAutoSyncIntervalValueChange: (Int) -> Unit,
     onAutoSyncIntervalUnitChange: (String) -> Unit,
     onTokenHeartbeatChange: (Boolean) -> Unit,
+    onShowExamScheduleChange: (Boolean) -> Unit,
+    onFetchExam: () -> Unit,
     onBack: () -> Unit
 ) {
     val unitLabel = when (autoSyncIntervalUnit) {
@@ -476,6 +485,25 @@ private fun SyncPage(
                 text = { Text(stringResource(R.string.token_heartbeat_desc)) },
                 confirmButton = { TextButton(onClick = { showHeartbeatInfo = false }) { Text("OK") } }
             )
+        }
+
+        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+
+        // Exam schedule
+        SwitchItem(Icons.Default.School, stringResource(R.string.show_exam_schedule), showExamSchedule, onShowExamScheduleChange)
+        if (showExamSchedule) {
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.show_exam_schedule_hint)) },
+                leadingContent = { Icon(Icons.Default.Info, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
+            )
+            Button(
+                onClick = onFetchExam,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
+            ) {
+                Icon(Icons.Default.Refresh, null, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(stringResource(R.string.fetch_exam_now))
+            }
         }
     }
 }

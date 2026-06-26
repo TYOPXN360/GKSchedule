@@ -133,6 +133,9 @@
     <string name="auto_sync_unit_d">days</string>
     <string name="token_heartbeat">Token Heartbeat</string>
     <string name="token_heartbeat_desc">Auto-refresh token every 15 minutes to prevent expiration. Low power, runs only when network available and battery not low.</string>
+    <string name="show_exam_schedule">Show Exam Schedule</string>
+    <string name="show_exam_schedule_hint">Please fetch under campus network</string>
+    <string name="fetch_exam_now">Fetch Now</string>
     <string name="data_management">Data</string>
     <string name="export_json">Export JSON</string>
     <string name="import_json">Import JSON</string>

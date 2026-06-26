@@ -316,6 +316,7 @@ fun ScheduleApp(
                 ExamScreen(
                     exams = examList,
                     isLoading = examLoading,
+                    semesterStart = semesterStart,
                     onRefresh = { viewModel.refreshExamSchedule() },
                     onBack = { navController.popBackStack() }
                 )

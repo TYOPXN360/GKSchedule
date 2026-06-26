@@ -1,9 +1,10 @@
 package com.classapp.schedule.ui.exam
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Refresh
@@ -12,17 +13,23 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.classapp.schedule.R
 import com.classapp.schedule.api.ExamInfo
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExamScreen(
     exams: List<ExamInfo>,
     isLoading: Boolean,
+    semesterStart: LocalDate,
     onRefresh: () -> Unit,
     onBack: () -> Unit
 ) {
@@ -71,122 +78,149 @@ fun ExamScreen(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "请确保连接校园网络后点击刷新",
+                        text = "请在校园网下获取",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
                     )
                 }
             }
         } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(padding),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(exams) { exam ->
-                    ExamCard(exam = exam)
-                }
-            }
+            ExamScheduleGrid(
+                exams = exams,
+                semesterStart = semesterStart,
+                modifier = Modifier.fillMaxSize().padding(padding)
+            )
         }
     }
 }
 
 @Composable
-private fun ExamCard(exam: ExamInfo) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+private fun ExamScheduleGrid(
+    exams: List<ExamInfo>,
+    semesterStart: LocalDate,
+    modifier: Modifier = Modifier
+) {
+    val dayNames = listOf("周一", "周二", "周三", "周四", "周五", "周六", "周日")
+    val examColors = listOf(
+        Color(0xFFE3F2FD), Color(0xFFF3E5F5), Color(0xFFE8F5E9),
+        Color(0xFFFFF3E0), Color(0xFFE0F7FA), Color(0xFFFCE4EC),
+        Color(0xFFF1F8E9)
+    )
+
+    // Group exams by week and day
+    val examsByWeek = remember(exams) {
+        val result = mutableMapOf<Int, MutableList<Pair<Int, ExamInfo>>>()
+        exams.forEach { exam ->
+            try {
+                val dateStr = exam.getExamDate()
+                if (dateStr.isNotEmpty()) {
+                    val date = LocalDate.parse(dateStr)
+                    val daysDiff = ChronoUnit.DAYS.between(semesterStart, date).toInt()
+                    val week = (daysDiff / 7) + 1
+                    val dayOfWeek = date.dayOfWeek.value // 1=Mon, 7=Sun
+                    result.getOrPut(week) { mutableListOf() }.add(dayOfWeek to exam)
+                }
+            } catch (_: Exception) {}
+        }
+        result.toSortedMap()
+    }
+
+    Column(
+        modifier = modifier.verticalScroll(rememberScrollState()).padding(horizontal = 4.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            // Course name
-            Text(
-                text = exam.kcmc,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
+        if (examsByWeek.isEmpty()) {
+            Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+                Text("无法解析考试日期", style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            return@Column
+        }
+
+        examsByWeek.forEach { (week, examList) ->
+            // Week header
+            Card(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp, horizontal = 4.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+            ) {
+                Text(
+                    text = "第${week}周",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                )
+            }
+
+            // Day headers
+            Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
+                dayNames.forEach { day ->
+                    Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                        Text(
+                            text = day,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+
+            // Exam grid for this week
+            val examsByDay = examList.groupBy { it.first }
+            val maxExamsInDay = examsByDay.values.maxOfOrNull { it.size } ?: 1
+
+            repeat(maxExamsInDay) { row ->
+                Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp)) {
+                    for (day in 1..7) {
+                        val dayExams = examsByDay[day] ?: emptyList()
+                        val exam = dayExams.getOrNull(row)
+                        Box(
+                            modifier = Modifier.weight(1f).padding(2.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (exam != null) {
+                                val colorIdx = examList.indexOf(exam) % examColors.size
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = CardDefaults.cardColors(containerColor = examColors[colorIdx]),
+                                    shape = RoundedCornerShape(6.dp)
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(4.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        Text(
+                                            text = exam.second.kcmc,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontWeight = FontWeight.Bold,
+                                            maxLines = 2,
+                                            overflow = TextOverflow.Ellipsis,
+                                            textAlign = TextAlign.Center
+                                        )
+                                        Text(
+                                            text = exam.second.getExamTimeRange(),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            textAlign = TextAlign.Center
+                                        )
+                                        if (exam.second.cdmc.isNotEmpty()) {
+                                            Text(
+                                                text = exam.second.cdmc,
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                                textAlign = TextAlign.Center
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             Spacer(modifier = Modifier.height(8.dp))
-
-            // Exam time
-            if (exam.kssj.isNotEmpty()) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "时间: ",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.width(60.dp)
-                    )
-                    Text(
-                        text = exam.kssj,
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-            }
-
-            // Exam room
-            if (exam.cdmc.isNotEmpty()) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "考场: ",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.width(60.dp)
-                    )
-                    Text(
-                        text = "${exam.cdmc} (${exam.cdxqmc})",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
-            }
-
-            // Exam method
-            if (exam.ksfs.isNotEmpty()) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "方式: ",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.width(60.dp)
-                    )
-                    Text(
-                        text = exam.ksfs,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
-            }
-
-            // Credits
-            if (exam.xf.isNotEmpty()) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "学分: ",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.width(60.dp)
-                    )
-                    Text(
-                        text = exam.xf,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
-            }
-
-            // Teacher
-            if (exam.jsxx.isNotEmpty()) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "教师: ",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.width(60.dp)
-                    )
-                    Text(
-                        text = exam.jsxx,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
-            }
         }
     }
 }

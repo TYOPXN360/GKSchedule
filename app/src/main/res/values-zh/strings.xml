@@ -129,6 +129,9 @@
     <string name="auto_sync_unit_d">天</string>
     <string name="token_heartbeat">Token心跳保活</string>
     <string name="token_heartbeat_desc">每15分钟自动刷新Token，防止登录过期。低功耗，仅在有网络且电量充足时运行。</string>
+    <string name="show_exam_schedule">显示考试安排</string>
+    <string name="show_exam_schedule_hint">请在校园网下获取</string>
+    <string name="fetch_exam_now">立即获取</string>
     <!-- Settings - Data -->
     <string name="import_from_school">从教务导入</string>
     <string name="export_json">导出 JSON</string>
