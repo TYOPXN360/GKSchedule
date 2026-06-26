@@ -71,6 +71,8 @@ fun WeeklyScheduleScreen(
     showDateInHeader: Boolean,
     semesterStart: java.time.LocalDate,
     isRefreshing: Boolean,
+    exams: List<com.classapp.schedule.api.ExamInfo> = emptyList(),
+    showExamSchedule: Boolean = false,
     onWeekChange: (Int) -> Unit,
     onCourseClick: (Course) -> Unit,
     onCourseLongPress: (Course) -> Unit,
@@ -121,16 +123,25 @@ fun WeeklyScheduleScreen(
     }
 
     // Compute visible weeks (skip empty weeks if hideEmptyWeeks is on)
-    val visibleWeeks = remember(courses, totalWeeks, hideEmptyWeeks) {
+    val visibleWeeks = remember(courses, totalWeeks, hideEmptyWeeks, exams, showExamSchedule) {
         if (!hideEmptyWeeks) (1..totalWeeks).toList()
         else {
-            val weeksWithCourses = courses.mapNotNull { course ->
-                (1..totalWeeks).filter { course.isInWeek(it) }
-            }.flatten().toSet()
             val nonEmpty = (1..totalWeeks).filter { week ->
                 courses.any { it.isInWeek(week) }
             }
-            if (nonEmpty.isEmpty()) listOf(1) else nonEmpty
+            // Include weeks with exams if exam display is enabled
+            val examWeeks = if (showExamSchedule && exams.isNotEmpty()) {
+                exams.mapNotNull { exam ->
+                    try {
+                        val date = java.time.LocalDate.parse(exam.getExamDate())
+                        val daysDiff = java.time.temporal.ChronoUnit.DAYS.between(semesterStart, date).toInt()
+                        val week = (daysDiff / 7) + 1
+                        if (week in 1..totalWeeks) week else null
+                    } catch (_: Exception) { null }
+                }.toSet()
+            } else emptySet()
+            val allNonEmpty = (nonEmpty + examWeeks).distinct().sorted()
+            if (allNonEmpty.isEmpty()) listOf(1) else allNonEmpty
         }
     }
 
@@ -244,6 +255,45 @@ fun WeeklyScheduleScreen(
                                 text = "${date.monthValue}/${date.dayOfMonth}",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Exam badges for current week
+            if (showExamSchedule && exams.isNotEmpty()) {
+                val weekExams = remember(currentWeek, exams, semesterStart) {
+                    exams.filter { exam ->
+                        try {
+                            val date = java.time.LocalDate.parse(exam.getExamDate())
+                            val daysDiff = java.time.temporal.ChronoUnit.DAYS.between(semesterStart, date).toInt()
+                            (daysDiff / 7) + 1 == currentWeek
+                        } catch (_: Exception) { false }
+                    }
+                }
+                if (weekExams.isNotEmpty()) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        weekExams.forEach { exam ->
+                            val dayOfWeek = try {
+                                java.time.LocalDate.parse(exam.getExamDate()).dayOfWeek.value
+                            } catch (_: Exception) { 0 }
+                            val dayName = when (dayOfWeek) {
+                                1 -> "周一"; 2 -> "周二"; 3 -> "周三"; 4 -> "周四"
+                                5 -> "周五"; 6 -> "周六"; 7 -> "周日"; else -> ""
+                            }
+                            SuggestionChip(
+                                onClick = {},
+                                label = {
+                                    Text(
+                                        "$dayName ${exam.kcmc} ${exam.getExamTimeRange()}",
+                                        style = MaterialTheme.typography.labelSmall
+                                    )
+                                },
+                                modifier = Modifier.weight(1f, fill = false)
                             )
                         }
                     }

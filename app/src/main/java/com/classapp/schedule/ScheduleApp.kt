@@ -200,6 +200,8 @@ fun ScheduleApp(
             }
 
             composable(Screen.Weekly.route) {
+                val examList by viewModel.examList.collectAsState()
+                val showExamSchedule by viewModel.showExamSchedule.collectAsState(initial = false)
                 WeeklyScheduleScreen(
                     courses = courses, currentWeek = selectedWeek,
                     totalWeeks = totalWeeks, periodsPerDay = periodsPerDay,
@@ -214,6 +216,8 @@ fun ScheduleApp(
                     showDateInHeader = showDateInHeader,
                     hideEmptyWeeks = hideEmptyWeeks,
                     semesterStart = semesterStart,
+                    exams = examList,
+                    showExamSchedule = showExamSchedule,
                     realCurrentWeek = realCurrentWeek,
                     isRefreshing = isRefreshing,
                     onWeekChange = { viewModel.setWeek(it.coerceIn(1, totalWeeks)) },
