@@ -260,6 +260,7 @@ class GdustApi {
     fun login(studentId: String, password: String, captcha: String, captchaUuid: String): Result<UserBase> = runCatching {
         // Step 2: Login
         val ticket = loginByAccount(studentId, password, captcha, captchaUuid).getOrThrow()
+        casTicket = ticket // Save CAS ticket for JWXT SSO
 
         // Step 3: Check ticket
         checkTicket(ticket).getOrThrow()
@@ -422,50 +423,83 @@ class GdustApi {
      * Get exam schedule from JWXT (教务系统)
      * First login to exam system via CAS, then query
      */
+    private var casTicket: String = ""
+
+    fun setCasTicket(ticket: String) { casTicket = ticket }
+    fun getCasTicket(): String = casTicket
+
     fun getExamSchedule(year: String, semester: String): Result<List<ExamInfo>> = runCatching {
-        // Step 1: Get CAS ticket for exam service
-        val transferRequest = Request.Builder()
-            .url("$CAS_BASE/cas/transferPage?service=$JWXT_EXAM_SERVICE")
-            .get()
-            .build()
-        val transferResp = client.newCall(transferRequest).execute()
-        // Follow redirects to get the ticket and login
-        // The cookie jar will capture session cookies
+        android.util.Log.d("GdustApi", "=== getExamSchedule START ===")
 
-        // Step 2: Query exam schedule
-        val xqm = when (semester) {
-            "1" -> "3"
-            "2" -> "12"
-            else -> "12"
+        val jwxtClient = client.newBuilder()
+            .connectTimeout(5, TimeUnit.SECONDS)
+            .readTimeout(10, TimeUnit.SECONDS)
+            .followRedirects(false)
+            .build()
+
+        // Try using saved CAS ticket directly with JWXT SSO
+        if (casTicket.isNotEmpty()) {
+            android.util.Log.d("GdustApi", "Trying saved casTicket with JWXT SSO")
+            val ssoUrl = "$JWXT_BASE/sso/lyiotlogin?ticket=$casTicket"
+            val ssoResp = jwxtClient.newCall(Request.Builder().url(ssoUrl).build()).execute()
+            android.util.Log.d("GdustApi", "SSO: status=${ssoResp.code}, Location=${ssoResp.header("Location")}")
+
+            // Follow redirects to establish session
+            var next = ssoResp.header("Location")
+            var step = 1
+            while (next != null && step <= 6) {
+                val url = if (next.startsWith("http")) next else "$JWXT_BASE$next"
+                val r = jwxtClient.newCall(Request.Builder().url(url).build()).execute()
+                android.util.Log.d("GdustApi", "Redir[$step]: $url -> ${r.code}, Location=${r.header("Location")}")
+                next = r.header("Location")
+                step++
+            }
         }
+
+        // Also try transferPage which might use CAS cookies
+        android.util.Log.d("GdustApi", "Trying transferPage")
+        val tpResp = jwxtClient.newCall(Request.Builder()
+            .url("$CAS_BASE/cas/transferPage?service=$JWXT_EXAM_SERVICE")
+            .build()).execute()
+        android.util.Log.d("GdustApi", "transferPage: status=${tpResp.code}, Location=${tpResp.header("Location")}")
+        val tpTicket = tpResp.header("Location")?.substringAfter("ticket=", "")
+        if (!tpTicket.isNullOrEmpty()) {
+            android.util.Log.d("GdustApi", "transferPage gave ticket: ${tpTicket.take(30)}...")
+            val ssoUrl = "$JWXT_BASE/sso/lyiotlogin?ticket=$tpTicket"
+            val ssoResp = jwxtClient.newCall(Request.Builder().url(ssoUrl).build()).execute()
+            android.util.Log.d("GdustApi", "SSO with tpTicket: status=${ssoResp.code}, Location=${ssoResp.header("Location")}")
+            var next = ssoResp.header("Location")
+            var step = 1
+            while (next != null && step <= 6) {
+                val url = if (next.startsWith("http")) next else "$JWXT_BASE$next"
+                val r = jwxtClient.newCall(Request.Builder().url(url).build()).execute()
+                android.util.Log.d("GdustApi", "Redir[$step]: $url -> ${r.code}")
+                next = r.header("Location")
+                step++
+            }
+        }
+
+        // Query
+        val xqm = when (semester) { "1" -> "3"; "2" -> "12"; else -> "12" }
+        val queryUrl = "$JWXT_BASE/kwgl/kscx_cxXsksxxIndex.html?doType=query&gnmkdm=N358105"
         val requestBody = FormBody.Builder()
-            .add("xnm", year)
-            .add("xqm", xqm)
-            .add("ksmcdmb_id", "")
-            .add("kch", "")
-            .add("kc", "")
-            .add("ksrq", "")
-            .add("kkbm_id", "")
-            .add("_search", "false")
-            .add("nd", System.currentTimeMillis().toString())
-            .add("queryModel.showCount", "50")
-            .add("queryModel.currentPage", "1")
-            .add("queryModel.sortName", " ")
-            .add("queryModel.sortOrder", "asc")
-            .add("time", "0")
+            .add("xnm", year).add("xqm", xqm)
+            .add("ksmcdmb_id", "").add("kch", "").add("kc", "").add("ksrq", "").add("kkbm_id", "")
+            .add("_search", "false").add("nd", System.currentTimeMillis().toString())
+            .add("queryModel.showCount", "50").add("queryModel.currentPage", "1")
+            .add("queryModel.sortName", " ").add("queryModel.sortOrder", "asc").add("time", "0")
             .build()
-
-        val request = Request.Builder()
-            .url("$JWXT_BASE/kwgl/kscx_cxXsksxxIndex.html?doType=query&gnmkdm=N358105")
-            .post(requestBody)
+        val qResp = jwxtClient.newCall(Request.Builder().url(queryUrl).post(requestBody)
             .header("Content-Type", "application/x-www-form-urlencoded;charset=UTF-8")
-            .header("X-Requested-With", "XMLHttpRequest")
-            .header("Referer", "$JWXT_BASE/kwgl/kscx_cxXsksxxIndex.html?gnmkdm=N358105&layout=default")
-            .build()
+            .header("X-Requested-With", "XMLHttpRequest").build()).execute()
+        val body = qResp.body?.string() ?: throw Exception("Empty response")
+        android.util.Log.d("GdustApi", "Query: status=${qResp.code}, body=${body.take(300)}")
 
-        val response = client.newCall(request).execute()
-        val body = response.body?.string() ?: throw Exception("Empty response")
+        if (qResp.code != 200 || body.contains("<!DOCTYPE") || body.isEmpty()) {
+            throw Exception("教务系统认证失败，请在校园网浏览器中先登录教务系统后再试")
+        }
         val parsed = json.decodeFromString<ExamResponse>(body)
+        android.util.Log.d("GdustApi", "=== DONE: ${parsed.items?.size ?: 0} exams ===")
         parsed.items ?: emptyList()
     }
 }

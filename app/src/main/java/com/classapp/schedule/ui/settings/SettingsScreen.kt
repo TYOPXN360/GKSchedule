@@ -491,20 +491,6 @@ private fun SyncPage(
 
         // Exam schedule
         SwitchItem(Icons.Default.School, stringResource(R.string.show_exam_schedule), showExamSchedule, onShowExamScheduleChange)
-        if (showExamSchedule) {
-            ListItem(
-                headlineContent = { Text(stringResource(R.string.show_exam_schedule_hint)) },
-                leadingContent = { Icon(Icons.Default.Info, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
-            )
-            Button(
-                onClick = onFetchExam,
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
-            ) {
-                Icon(Icons.Default.Refresh, null, modifier = Modifier.size(18.dp))
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(stringResource(R.string.fetch_exam_now))
-            }
-        }
     }
 }
 

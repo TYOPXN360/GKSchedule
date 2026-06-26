@@ -102,7 +102,10 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                 savedStudentId = sid
                 _savedStudentIdFlow.value = sid
                 _loginState.value = LoginState.Success(name.ifEmpty { sid }, sid)
-                android.util.Log.d("GdustApi", "restore: login restored, hasToken=${api.hasToken()}")
+                // Restore CAS ticket for exam schedule
+                val ticket = settings.casTicket.first()
+                if (ticket.isNotEmpty()) api.setCasTicket(ticket)
+                android.util.Log.d("GdustApi", "restore: login restored, hasToken=${api.hasToken()}, hasTicket=${ticket.isNotEmpty()}")
                 // Auto-refresh on app start if enabled
                 val syncOnStart = settings.autoSyncOnStart.first()
                 if (syncOnStart) refreshFromSchool()
@@ -336,6 +339,8 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                     }
                     // Save encrypted credentials for auto-relogin
                     CredentialStore.save(app, studentId, password)
+                    // Save CAS ticket for exam schedule access
+                    settings.saveCasTicket(api.getCasTicket())
                     importFromSchool(studentId)
                 }
                 .onFailure { e ->
