@@ -568,20 +568,22 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
             _examLoading.value = true
             try {
                 // Auto-detect academic year if not set
-                val year = _examYear.value.ifEmpty {
+                val yearStr = _examYear.value.ifEmpty {
                     val now = java.time.LocalDate.now()
                     val month = now.monthValue
-                    // Academic year: Sep~Jan = current year, Feb~Aug = previous year
-                    if (month >= 9) now.year.toString() else (now.year - 1).toString()
+                    val startYear = if (month >= 9) now.year else now.year - 1
+                    "$startYear-${startYear + 1}"
                 }
                 val semester = _examSemester.value.ifEmpty {
                     val month = java.time.LocalDate.now().monthValue
                     if (month in 2..7) "2" else "1"
                 }
-                if (_examYear.value.isEmpty()) _examYear.value = year
+                if (_examYear.value.isEmpty()) _examYear.value = yearStr
                 if (_examSemester.value.isEmpty()) _examSemester.value = semester
 
-                android.util.Log.d("GdustApi", "refreshExamSchedule: year=$year, semester=$semester")
+                // Extract start year from "2025-2026" format
+                val year = yearStr.substringBefore("-")
+                android.util.Log.d("GdustApi", "refreshExamSchedule: yearStr=$yearStr, year=$year, semester=$semester")
                 val result = api.getExamSchedule(year, semester)
                 result.onSuccess { exams ->
                     _examList.value = exams

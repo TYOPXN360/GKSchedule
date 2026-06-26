@@ -67,7 +67,7 @@ fun ExamScreen(
                         // Year selector
                         var yearExpanded by remember { mutableStateOf(false) }
                         val currentYear = java.time.LocalDate.now().year
-                        val years = ((currentYear - 3)..currentYear).map { it.toString() }.reversed()
+                        val years = ((currentYear - 3)..currentYear).map { "$it-${it + 1}" }.reversed()
                         OutlinedCard(
                             onClick = { yearExpanded = true },
                             modifier = Modifier.weight(1f)
