@@ -158,8 +158,7 @@ class SettingsActivity : AppCompatActivity() {
                                     }
                                 }
                             }
-                        },
-                        onExportImage = {}
+                        }
                     )
                 }
             }

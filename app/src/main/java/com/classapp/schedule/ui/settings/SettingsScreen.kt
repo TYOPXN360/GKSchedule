@@ -75,8 +75,7 @@ fun SettingsScreen(
     onTokenHeartbeatChange: (Boolean) -> Unit,
     onExportJson: () -> Unit,
     onImportJson: () -> Unit,
-    onExportIcs: () -> Unit,
-    onExportImage: () -> Unit
+    onExportIcs: () -> Unit
 ) {
     val context = LocalContext.current
     val navController = androidx.navigation.compose.rememberNavController()
@@ -180,7 +179,6 @@ fun SettingsScreen(
                     onExportJson = onExportJson,
                     onImportJson = onImportJson,
                     onExportIcs = onExportIcs,
-                    onExportImage = onExportImage,
                     onBack = { navController.popBackStack() }
                 )
             }
@@ -485,12 +483,11 @@ private fun SyncPage(
 // === Data ===
 
 @Composable
-private fun DataPage(onExportJson: () -> Unit, onImportJson: () -> Unit, onExportIcs: () -> Unit, onExportImage: () -> Unit, onBack: () -> Unit) {
+private fun DataPage(onExportJson: () -> Unit, onImportJson: () -> Unit, onExportIcs: () -> Unit, onBack: () -> Unit) {
     SubPage(stringResource(R.string.settings_category_data), onBack) {
         SettingsItem(Icons.Default.FileUpload, stringResource(R.string.import_json), onClick = onImportJson)
         SettingsItem(Icons.Default.FileDownload, stringResource(R.string.export_json), onClick = onExportJson)
         SettingsItem(Icons.Default.CalendarMonth, stringResource(R.string.export_ics), onClick = onExportIcs)
-        SettingsItem(Icons.Default.Image, stringResource(R.string.export_image), onClick = onExportImage)
     }
 }
 
