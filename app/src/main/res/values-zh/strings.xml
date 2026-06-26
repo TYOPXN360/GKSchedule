@@ -120,7 +120,7 @@
     <string name="settings_category_sync">自动同步</string>
     <string name="settings_category_sync_desc">启动时同步、定时同步</string>
     <string name="auto_sync_on_start">启动时自动同步</string>
-    <string name="auto_sync_on_start_desc">每次打开App自动从教务系统更新课程</string>
+    <string name="auto_sync_on_start_desc">每次打开App自动从广科统一身份认证更新课程</string>
     <string name="auto_sync_schedule">定时同步</string>
     <string name="auto_sync_schedule_desc">按设定间隔自动更新课程</string>
     <string name="auto_sync_interval">同步间隔</string>
@@ -142,7 +142,7 @@
     <string name="about">关于</string>
     <string name="about_title">关于</string>
     <string name="about_desc">专为广科学生设计的课程表应用</string>
-    <string name="about_school">广科教务系统</string>
+    <string name="about_school">广科统一身份认证</string>
     <string name="about_copyright">© 2026 ClassApp</string>
     <string name="about_login_desc">使用校园账号登录，同步课程表</string>
     <string name="about_settings_desc">学期、外观、课表样式</string>
@@ -153,8 +153,8 @@
     <string name="credits_design">设计规范</string>
     <string name="credits_projects">参考项目</string>
     <!-- Login -->
-    <string name="login_title">教务登录</string>
-    <string name="login_school_title">广科教务系统登录</string>
+    <string name="login_title">统一身份认证</string>
+    <string name="login_school_title">广科统一身份认证登录</string>
     <string name="login_school_desc">使用校园账号登录，自动导入课程表。</string>
     <string name="login_student_id">学号/工号</string>
     <string name="login_student_id_hint"></string>
@@ -171,7 +171,7 @@
     <string name="quick_relogin">快速登录</string>
     <string name="quick_relogin_hint">已保存凭据，只需输入验证码即可重新登录。</string>
     <string name="webview_login">扫码登录</string>
-    <string name="webview_login_title">教务登录</string>
+    <string name="webview_login_title">统一身份认证</string>
     <string name="scan_login_title">扫码登录</string>
     <string name="scan_login_desc">打开钉钉扫描下方二维码登录</string>
     <string name="scan_login_tip">二维码2分钟过期，可点上方按钮保存</string>

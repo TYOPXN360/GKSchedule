@@ -150,8 +150,8 @@
     <string name="evening">Evening</string>
     <string name="time_format">%1$02d:%2$02d</string>
     <!-- Login -->
-    <string name="login_title">School Login</string>
-    <string name="login_school_title">GDUST Portal Login</string>
+    <string name="login_title">Unified Auth</string>
+    <string name="login_school_title">GDUST Unified Identity Authentication</string>
     <string name="login_school_desc">Login with your campus account to import courses automatically.</string>
     <string name="login_student_id">Student/Staff ID</string>
     <string name="login_student_id_hint"></string>
@@ -162,7 +162,7 @@
     <string name="quick_relogin">Quick Login</string>
     <string name="quick_relogin_hint">Credentials saved. Just enter the captcha to re-login.</string>
     <string name="webview_login">Scan QR Login</string>
-    <string name="webview_login_title">School Login</string>
+    <string name="webview_login_title">Unified Auth</string>
     <string name="scan_login_title">Scan to Login</string>
     <string name="scan_login_desc">Open DingTalk and scan the QR code below to login</string>
     <string name="scan_login_tip">QR code expires in 2 minutes. Save button below to save.</string>
@@ -185,7 +185,7 @@
     <string name="nav_about">Me</string>
     <string name="about_desc">A course schedule app designed for GDUST students.</string>
     <string name="about_settings_desc">Semester, appearance, schedule style</string>
-    <string name="about_school">GDUST Portal</string>
+    <string name="about_school">GDUST Unified Identity Authentication</string>
     <string name="about_copyright">© 2026 ClassApp</string>
     <string name="about_login_desc">Login with your campus account to sync courses</string>
     <string name="about_title">About</string>
