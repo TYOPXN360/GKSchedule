@@ -128,7 +128,7 @@ fun AboutScreen(
                             Text("重新登录")
                         }
                     } else {
-                        OutlinedButton(
+                        Button(
                             onClick = onLogout,
                             modifier = Modifier.fillMaxWidth(0.6f)
                         ) {
