@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -91,7 +92,9 @@ fun LoginScreen(
                 value = studentId,
                 onValueChange = { studentId = it },
                 label = { Text(stringResource(R.string.login_student_id)) },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().semantics {
+                    this[androidx.compose.ui.semantics.SemanticsProperties.ContentType] = androidx.compose.ui.autofill.ContentType.Username
+                },
                 singleLine = true,
                 enabled = !isLoading
             )
@@ -101,7 +104,9 @@ fun LoginScreen(
                 value = password,
                 onValueChange = { password = it },
                 label = { Text(stringResource(R.string.login_password)) },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().semantics {
+                    this[androidx.compose.ui.semantics.SemanticsProperties.ContentType] = androidx.compose.ui.autofill.ContentType.Password
+                },
                 singleLine = true,
                 enabled = !isLoading,
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
