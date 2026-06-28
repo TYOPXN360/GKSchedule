@@ -2,6 +2,7 @@ package com.classapp.schedule.ui.weekly
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -504,16 +505,12 @@ fun WeeklyScheduleScreen(
             // Expanded FABs — stacked above the toggle button
             Column(
                 modifier = Modifier.align(Alignment.BottomEnd).padding(bottom = 68.dp)
-                    .animateContentSize(animationSpec = tween(300)),
+                    .animateContentSize(animationSpec = spring(dampingRatio = 0.8f, stiffness = 400f)),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-            // Back to current week — at top of Column, pushed up when other FABs appear
-            AnimatedVisibility(
-                visible = currentWeek != realCurrentWeek,
-                enter = if (currentWeek > realCurrentWeek) slideInHorizontally(initialOffsetX = { -it }) + fadeIn() else slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
-                exit = if (currentWeek > realCurrentWeek) slideOutHorizontally(targetOffsetX = { -it }) + fadeOut() else slideOutHorizontally(targetOffsetX = { it }) + fadeOut()
-            ) {
+            // Back to current week — always in layout, animates visibility
+            if (currentWeek != realCurrentWeek) {
                 FloatingActionButton(
                     onClick = {
                         com.classapp.schedule.util.HapticFeedback.medium(hapticView)
@@ -529,7 +526,7 @@ fun WeeklyScheduleScreen(
                 }
             }
             // Refresh button
-            if (fabExpanded) {
+            AnimatedVisibility(visible = fabExpanded) {
                 FloatingActionButton(
                     onClick = {
                         com.classapp.schedule.util.HapticFeedback.medium(hapticView)
@@ -546,7 +543,7 @@ fun WeeklyScheduleScreen(
                 }
             }
             // Add course button
-            if (fabExpanded) {
+            AnimatedVisibility(visible = fabExpanded) {
                 FloatingActionButton(
                     onClick = {
                         com.classapp.schedule.util.HapticFeedback.medium(hapticView)
@@ -558,7 +555,7 @@ fun WeeklyScheduleScreen(
                 }
             }
             // Screenshot button
-            if (fabExpanded) {
+            AnimatedVisibility(visible = fabExpanded) {
                 FloatingActionButton(
                     onClick = {
                         com.classapp.schedule.util.HapticFeedback.medium(hapticView)
