@@ -486,7 +486,7 @@ fun WeeklyScheduleScreen(
                 .align(Alignment.BottomEnd)
                 .padding(16.dp)
         ) {
-            // Collapse/Expand toggle
+            // Collapse/Expand toggle — fixed at bottom
             FloatingActionButton(
                 onClick = {
                     com.classapp.schedule.util.HapticFeedback.light(hapticView)
@@ -504,36 +504,40 @@ fun WeeklyScheduleScreen(
                     modifier = Modifier.width(20.dp)
                 )
             }
-            // Column: animateContentSize for smooth height transitions
+            // Back to current week — fixed position above toggle
+            val backAlpha by animateFloatAsState(
+                targetValue = if (currentWeek != realCurrentWeek) 1f else 0f,
+                animationSpec = tween(200), label = "ba"
+            )
+            FloatingActionButton(
+                onClick = {
+                    if (currentWeek != realCurrentWeek) {
+                        com.classapp.schedule.util.HapticFeedback.medium(hapticView)
+                        onWeekChange(realCurrentWeek)
+                    }
+                },
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .offset(y = (-68).dp)
+                    .graphicsLayer { alpha = backAlpha },
+                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+            ) {
+                Icon(
+                    if (currentWeek > realCurrentWeek) Icons.Default.ChevronLeft else Icons.Default.ChevronRight,
+                    stringResource(R.string.back_to_current_week)
+                )
+            }
+            // Expandable FABs — slide in/out between back-to-week and toggle
             Column(
-                modifier = Modifier.align(Alignment.BottomEnd).padding(bottom = 68.dp)
-                    .animateContentSize(spring(dampingRatio = 1f, stiffness = 200f)),
+                modifier = Modifier.align(Alignment.BottomEnd).padding(bottom = 68.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Back to current week — fixed height, alpha controls visibility
-                val backAlpha by animateFloatAsState(
-                    targetValue = if (currentWeek != realCurrentWeek) 1f else 0f,
-                    animationSpec = tween(200), label = "ba"
-                )
-                FloatingActionButton(
-                    onClick = {
-                        if (currentWeek != realCurrentWeek) {
-                            com.classapp.schedule.util.HapticFeedback.medium(hapticView)
-                            onWeekChange(realCurrentWeek)
-                        }
-                    },
-                    modifier = Modifier.graphicsLayer { alpha = backAlpha },
-                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer
-                ) {
-                    Icon(
-                        if (currentWeek > realCurrentWeek) Icons.Default.ChevronLeft else Icons.Default.ChevronRight,
-                        stringResource(R.string.back_to_current_week)
-                    )
-                }
-                // Refresh button
-                Box(modifier = Modifier.height(if (fabExpanded) 56.dp else 0.dp).clipToBounds()) {
+                // Refresh
+                AnimatedVisibility(visible = fabExpanded,
+                    enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+                    exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()) {
                     FloatingActionButton(
                         onClick = {
                             com.classapp.schedule.util.HapticFeedback.medium(hapticView)
@@ -546,8 +550,10 @@ fun WeeklyScheduleScreen(
                         else Icon(Icons.Default.Refresh, "Refresh")
                     }
                 }
-                // Add course button
-                Box(modifier = Modifier.height(if (fabExpanded) 56.dp else 0.dp).clipToBounds()) {
+                // Add
+                AnimatedVisibility(visible = fabExpanded,
+                    enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+                    exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()) {
                     FloatingActionButton(
                         onClick = {
                             com.classapp.schedule.util.HapticFeedback.medium(hapticView)
@@ -558,8 +564,10 @@ fun WeeklyScheduleScreen(
                         Icon(Icons.Default.Add, stringResource(R.string.add_course))
                     }
                 }
-                // Screenshot button
-                Box(modifier = Modifier.height(if (fabExpanded) 56.dp else 0.dp).clipToBounds()) {
+                // Screenshot
+                AnimatedVisibility(visible = fabExpanded,
+                    enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+                    exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()) {
                     FloatingActionButton(
                         onClick = {
                             com.classapp.schedule.util.HapticFeedback.medium(hapticView)
