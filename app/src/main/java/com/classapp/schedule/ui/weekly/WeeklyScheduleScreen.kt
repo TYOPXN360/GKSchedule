@@ -492,7 +492,8 @@ fun WeeklyScheduleScreen(
 
             // Column: back-to-week on top, expandable below
             Column(
-                modifier = Modifier.align(Alignment.BottomEnd).padding(bottom = 68.dp),
+                modifier = Modifier.align(Alignment.BottomEnd).padding(bottom = 68.dp)
+                    .animateContentSize(),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
