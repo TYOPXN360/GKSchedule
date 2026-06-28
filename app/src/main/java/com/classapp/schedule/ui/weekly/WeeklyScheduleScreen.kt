@@ -502,7 +502,7 @@ fun WeeklyScheduleScreen(
                     // translationY starts at +offset (compensate instant move) then animates to 0.
                     val expandOffset = (3 * 56 + 3 * 12).toFloat() // 3 buttons + 3 spacings in dp
                     val backTy by animateFloatAsState(
-                        targetValue = if (fabExpanded) 0f else expandOffset,
+                        targetValue = if (fabExpanded) 0f else -expandOffset,
                         animationSpec = spring(dampingRatio = 1f, stiffness = 200f),
                         label = "backTy"
                     )
