@@ -485,6 +485,7 @@ fun WeeklyScheduleScreen(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(16.dp)
+                .clipToBounds()
         ) {
             // Collapse/Expand toggle
             FloatingActionButton(
@@ -510,25 +511,28 @@ fun WeeklyScheduleScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-            // Back to current week — original AnimatedVisibility, always in Column
-            AnimatedVisibility(
-                visible = currentWeek != realCurrentWeek,
-                enter = if (currentWeek > realCurrentWeek) slideInHorizontally(initialOffsetX = { -it }) + fadeIn() else slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
-                exit = if (currentWeek > realCurrentWeek) slideOutHorizontally(targetOffsetX = { -it }) + fadeOut() else slideOutHorizontally(targetOffsetX = { it }) + fadeOut()
-            ) {
-                FloatingActionButton(
-                    onClick = {
+            // Back to current week — always in Column, pure alpha fade
+            val backVisible = currentWeek != realCurrentWeek
+            val backAlpha by animateFloatAsState(
+                targetValue = if (backVisible) 1f else 0f,
+                animationSpec = tween(200),
+                label = "backAlpha"
+            )
+            FloatingActionButton(
+                onClick = {
+                    if (backVisible) {
                         com.classapp.schedule.util.HapticFeedback.medium(hapticView)
                         onWeekChange(realCurrentWeek)
-                    },
-                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer
-                ) {
-                    Icon(
-                        if (currentWeek > realCurrentWeek) Icons.Default.ChevronLeft else Icons.Default.ChevronRight,
-                        stringResource(R.string.back_to_current_week)
-                    )
-                }
+                    }
+                },
+                modifier = Modifier.graphicsLayer { alpha = backAlpha },
+                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+            ) {
+                Icon(
+                    if (currentWeek > realCurrentWeek) Icons.Default.ChevronLeft else Icons.Default.ChevronRight,
+                    stringResource(R.string.back_to_current_week)
+                )
             }
             // Refresh button
             if (fabExpanded) {
