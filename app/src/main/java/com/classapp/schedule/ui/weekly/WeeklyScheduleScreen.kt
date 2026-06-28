@@ -485,7 +485,6 @@ fun WeeklyScheduleScreen(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(16.dp)
-                .clipToBounds()
         ) {
             // Collapse/Expand toggle
             FloatingActionButton(
@@ -505,106 +504,98 @@ fun WeeklyScheduleScreen(
                     modifier = Modifier.width(20.dp)
                 )
             }
-            // All other FABs in Column
+            // Column: animateContentSize for smooth height transitions
             Column(
-                modifier = Modifier.align(Alignment.BottomEnd).padding(bottom = 68.dp),
+                modifier = Modifier.align(Alignment.BottomEnd).padding(bottom = 68.dp)
+                    .animateContentSize(spring(dampingRatio = 1f, stiffness = 200f)),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-            // Back to current week — always in Column, pure alpha fade
-            val backVisible = currentWeek != realCurrentWeek
-            val backAlpha by animateFloatAsState(
-                targetValue = if (backVisible) 1f else 0f,
-                animationSpec = tween(200),
-                label = "backAlpha"
-            )
-            FloatingActionButton(
-                onClick = {
-                    if (backVisible) {
-                        com.classapp.schedule.util.HapticFeedback.medium(hapticView)
-                        onWeekChange(realCurrentWeek)
-                    }
-                },
-                modifier = Modifier.graphicsLayer { alpha = backAlpha },
-                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                contentColor = MaterialTheme.colorScheme.onTertiaryContainer
-            ) {
-                Icon(
-                    if (currentWeek > realCurrentWeek) Icons.Default.ChevronLeft else Icons.Default.ChevronRight,
-                    stringResource(R.string.back_to_current_week)
-                )
-            }
-            // Refresh button
-            AnimatedVisibility(visible = fabExpanded,
-                enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
-                exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()) {
-                FloatingActionButton(
-                    onClick = {
-                        com.classapp.schedule.util.HapticFeedback.medium(hapticView)
-                        onRefresh()
-                    },
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                ) {
-                    if (isRefreshing) {
-                        CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
-                    } else {
-                        Icon(Icons.Default.Refresh, "Refresh")
-                    }
-                }
-            }
-            // Add course button
-            AnimatedVisibility(visible = fabExpanded,
-                enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
-                exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()) {
-                FloatingActionButton(
-                    onClick = {
-                        com.classapp.schedule.util.HapticFeedback.medium(hapticView)
-                        onAddCourse()
-                    },
-                    containerColor = MaterialTheme.colorScheme.primary
-                ) {
-                    Icon(Icons.Default.Add, stringResource(R.string.add_course))
-                }
-            }
-            // Screenshot button
-            AnimatedVisibility(visible = fabExpanded,
-                enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
-                exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()) {
-                FloatingActionButton(
-                    onClick = {
-                        com.classapp.schedule.util.HapticFeedback.medium(hapticView)
-                        coroutineScope.launch {
-                            try {
-                                hideFabs = true
-                                kotlinx.coroutines.delay(100) // wait for recomposition
-                                val fullBitmap = android.graphics.Bitmap.createBitmap(rootView.width, rootView.height, android.graphics.Bitmap.Config.ARGB_8888)
-                                rootView.draw(android.graphics.Canvas(fullBitmap))
-                                hideFabs = false
-                                val left = 0
-                                val top = cropTopPx.coerceIn(0, fullBitmap.height)
-                                val right = fullBitmap.width
-                                val bottom = cropBottomPx.coerceIn(top, fullBitmap.height)
-                                val cropped = android.graphics.Bitmap.createBitmap(fullBitmap, left, top, right - left, bottom - top)
-                                val saved = com.classapp.schedule.util.ImageExport.saveBitmapToGallery(
-                                    context, cropped, "Pictures/Screenshots/schedule_${System.currentTimeMillis()}.png"
-                                )
-                                android.widget.Toast.makeText(
-                                    context,
-                                    if (saved) "已保存到 Pictures/Screenshots" else "保存失败",
-                                    android.widget.Toast.LENGTH_SHORT
-                                ).show()
-                            } catch (e: Exception) {
-                                android.widget.Toast.makeText(context, "截图失败: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
+                // Back to current week
+                Box(modifier = Modifier.height(if (currentWeek != realCurrentWeek) 56.dp else 0.dp).clipToBounds()) {
+                    val backAlpha by animateFloatAsState(
+                        targetValue = if (currentWeek != realCurrentWeek) 1f else 0f,
+                        animationSpec = tween(200), label = "ba"
+                    )
+                    FloatingActionButton(
+                        onClick = {
+                            if (currentWeek != realCurrentWeek) {
+                                com.classapp.schedule.util.HapticFeedback.medium(hapticView)
+                                onWeekChange(realCurrentWeek)
                             }
-                        }
-                    },
-                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer
-                ) {
-                    Icon(Icons.Default.CameraAlt, "Screenshot")
+                        },
+                        modifier = Modifier.graphicsLayer { alpha = backAlpha },
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                    ) {
+                        Icon(
+                            if (currentWeek > realCurrentWeek) Icons.Default.ChevronLeft else Icons.Default.ChevronRight,
+                            stringResource(R.string.back_to_current_week)
+                        )
+                    }
                 }
-            }
+                // Refresh button
+                Box(modifier = Modifier.height(if (fabExpanded) 56.dp else 0.dp).clipToBounds()) {
+                    FloatingActionButton(
+                        onClick = {
+                            com.classapp.schedule.util.HapticFeedback.medium(hapticView)
+                            onRefresh()
+                        },
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                    ) {
+                        if (isRefreshing) CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                        else Icon(Icons.Default.Refresh, "Refresh")
+                    }
+                }
+                // Add course button
+                Box(modifier = Modifier.height(if (fabExpanded) 56.dp else 0.dp).clipToBounds()) {
+                    FloatingActionButton(
+                        onClick = {
+                            com.classapp.schedule.util.HapticFeedback.medium(hapticView)
+                            onAddCourse()
+                        },
+                        containerColor = MaterialTheme.colorScheme.primary
+                    ) {
+                        Icon(Icons.Default.Add, stringResource(R.string.add_course))
+                    }
+                }
+                // Screenshot button
+                Box(modifier = Modifier.height(if (fabExpanded) 56.dp else 0.dp).clipToBounds()) {
+                    FloatingActionButton(
+                        onClick = {
+                            com.classapp.schedule.util.HapticFeedback.medium(hapticView)
+                            coroutineScope.launch {
+                                try {
+                                    hideFabs = true
+                                    kotlinx.coroutines.delay(100)
+                                    val fullBitmap = android.graphics.Bitmap.createBitmap(rootView.width, rootView.height, android.graphics.Bitmap.Config.ARGB_8888)
+                                    rootView.draw(android.graphics.Canvas(fullBitmap))
+                                    hideFabs = false
+                                    val left = 0
+                                    val top = cropTopPx.coerceIn(0, fullBitmap.height)
+                                    val right = fullBitmap.width
+                                    val bottom = cropBottomPx.coerceIn(top, fullBitmap.height)
+                                    val cropped = android.graphics.Bitmap.createBitmap(fullBitmap, left, top, right - left, bottom - top)
+                                    val saved = com.classapp.schedule.util.ImageExport.saveBitmapToGallery(
+                                        context, cropped, "Pictures/Screenshots/schedule_${System.currentTimeMillis()}.png"
+                                    )
+                                    android.widget.Toast.makeText(
+                                        context,
+                                        if (saved) "已保存到 Pictures/Screenshots" else "保存失败",
+                                        android.widget.Toast.LENGTH_SHORT
+                                    ).show()
+                                } catch (e: Exception) {
+                                    android.widget.Toast.makeText(context, "截图失败: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        },
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                    ) {
+                        Icon(Icons.Default.CameraAlt, "Screenshot")
+                    }
+                }
             } // Column
         } // Box
         } // if (!hideFabs)
