@@ -535,7 +535,9 @@ fun WeeklyScheduleScreen(
                 )
             }
             // Refresh button
-            if (fabExpanded) {
+            AnimatedVisibility(visible = fabExpanded,
+                enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+                exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()) {
                 FloatingActionButton(
                     onClick = {
                         com.classapp.schedule.util.HapticFeedback.medium(hapticView)
@@ -552,7 +554,9 @@ fun WeeklyScheduleScreen(
                 }
             }
             // Add course button
-            if (fabExpanded) {
+            AnimatedVisibility(visible = fabExpanded,
+                enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+                exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()) {
                 FloatingActionButton(
                     onClick = {
                         com.classapp.schedule.util.HapticFeedback.medium(hapticView)
@@ -564,7 +568,9 @@ fun WeeklyScheduleScreen(
                 }
             }
             // Screenshot button
-            if (fabExpanded) {
+            AnimatedVisibility(visible = fabExpanded,
+                enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+                exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()) {
                 FloatingActionButton(
                     onClick = {
                         com.classapp.schedule.util.HapticFeedback.medium(hapticView)
