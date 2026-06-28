@@ -502,14 +502,14 @@ fun WeeklyScheduleScreen(
                     modifier = Modifier.width(20.dp)
                 )
             }
-            // Expanded FABs — stacked above the toggle button
+            // Expanded FABs — no AnimatedVisibility to avoid bounce
             Column(
                 modifier = Modifier.align(Alignment.BottomEnd).padding(bottom = 68.dp)
-                    .animateContentSize(animationSpec = spring(dampingRatio = 0.8f, stiffness = 400f)),
+                    .animateContentSize(spring(dampingRatio = 0.9f, stiffness = 500f)),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-            // Back to current week — always in layout, animates visibility
+            // Back to current week — top of stack, pushed up when FABs expand
             if (currentWeek != realCurrentWeek) {
                 FloatingActionButton(
                     onClick = {
@@ -525,8 +525,8 @@ fun WeeklyScheduleScreen(
                     )
                 }
             }
-            // Refresh button
-            AnimatedVisibility(visible = fabExpanded) {
+            // Refresh button — instant show/hide, animateContentSize handles layout
+            if (fabExpanded) {
                 FloatingActionButton(
                     onClick = {
                         com.classapp.schedule.util.HapticFeedback.medium(hapticView)
@@ -543,7 +543,7 @@ fun WeeklyScheduleScreen(
                 }
             }
             // Add course button
-            AnimatedVisibility(visible = fabExpanded) {
+            if (fabExpanded) {
                 FloatingActionButton(
                     onClick = {
                         com.classapp.schedule.util.HapticFeedback.medium(hapticView)
@@ -555,7 +555,7 @@ fun WeeklyScheduleScreen(
                 }
             }
             // Screenshot button
-            AnimatedVisibility(visible = fabExpanded) {
+            if (fabExpanded) {
                 FloatingActionButton(
                     onClick = {
                         com.classapp.schedule.util.HapticFeedback.medium(hapticView)
