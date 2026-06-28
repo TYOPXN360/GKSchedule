@@ -564,35 +564,6 @@ fun WeeklyScheduleScreen(
                 FloatingActionButton(
                     onClick = {
                         com.classapp.schedule.util.HapticFeedback.medium(hapticView)
-                        onRefresh()
-                    },
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                ) {
-                    if (isRefreshing) {
-                        CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
-                    } else {
-                        Icon(Icons.Default.Refresh, "Refresh")
-                    }
-                }
-            }
-            // Add course button
-            if (fabExpanded) {
-                FloatingActionButton(
-                    onClick = {
-                        com.classapp.schedule.util.HapticFeedback.medium(hapticView)
-                        onAddCourse()
-                    },
-                    containerColor = MaterialTheme.colorScheme.primary
-                ) {
-                    Icon(Icons.Default.Add, stringResource(R.string.add_course))
-                }
-            }
-            // Screenshot button
-            if (fabExpanded) {
-                FloatingActionButton(
-                    onClick = {
-                        com.classapp.schedule.util.HapticFeedback.medium(hapticView)
                         coroutineScope.launch {
                             try {
                                 hideFabs = true
