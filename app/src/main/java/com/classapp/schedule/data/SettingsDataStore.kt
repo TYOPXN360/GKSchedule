@@ -31,6 +31,7 @@ class SettingsDataStore(private val context: Context) {
         private val SAVED_STUDENT_ID = stringPreferencesKey("saved_student_id")
         private val SAVED_REAL_NAME = stringPreferencesKey("saved_real_name")
         private val SAVED_DEPT_NAME = stringPreferencesKey("saved_dept_name")
+        private val TOKEN_EXPIRED = booleanPreferencesKey("token_expired")
         private val DETAILED_SPLIT = booleanPreferencesKey("detailed_split")
         private val COLOR_ENGINE = intPreferencesKey("color_engine") // 0=Monet 1=Container 2=Classic 3=HSL
         private val COLOR_GROUP_MODE = intPreferencesKey("color_group_mode") // 0=same 1=same+sat 2=different
@@ -79,6 +80,7 @@ class SettingsDataStore(private val context: Context) {
     val savedStudentId: Flow<String> = context.dataStore.data.map { prefs -> prefs[SAVED_STUDENT_ID] ?: "" }
     val savedRealName: Flow<String> = context.dataStore.data.map { prefs -> prefs[SAVED_REAL_NAME] ?: "" }
     val savedDeptName: Flow<String> = context.dataStore.data.map { prefs -> prefs[SAVED_DEPT_NAME] ?: "" }
+    val tokenExpired: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[TOKEN_EXPIRED] ?: false }
     val detailedSplit: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[DETAILED_SPLIT] ?: false }
     val colorEngine: Flow<Int> = context.dataStore.data.map { prefs -> prefs[COLOR_ENGINE] ?: 0 }
     val colorGroupMode: Flow<Int> = context.dataStore.data.map { prefs -> prefs[COLOR_GROUP_MODE] ?: 2 }
@@ -132,6 +134,7 @@ class SettingsDataStore(private val context: Context) {
             it[SAVED_STUDENT_ID] = studentId
             it[SAVED_REAL_NAME] = realName
             it[SAVED_DEPT_NAME] = deptName
+            it[TOKEN_EXPIRED] = false
         }
     }
     suspend fun clearLoginInfo() {
@@ -140,8 +143,16 @@ class SettingsDataStore(private val context: Context) {
             it.remove(SAVED_STUDENT_ID)
             it.remove(SAVED_REAL_NAME)
             it.remove(SAVED_DEPT_NAME)
+            it[TOKEN_EXPIRED] = false
         }
     }
+    suspend fun markTokenExpired() {
+        context.dataStore.edit {
+            it.remove(SAVED_TOKEN)
+            it[TOKEN_EXPIRED] = true
+        }
+    }
+    suspend fun clearTokenExpired() { context.dataStore.edit { it[TOKEN_EXPIRED] = false } }
     suspend fun setDetailedSplit(split: Boolean) { context.dataStore.edit { it[DETAILED_SPLIT] = split } }
     suspend fun setColorEngine(engine: Int) { context.dataStore.edit { it[COLOR_ENGINE] = engine } }
     suspend fun setColorGroupMode(mode: Int) { context.dataStore.edit { it[COLOR_GROUP_MODE] = mode } }

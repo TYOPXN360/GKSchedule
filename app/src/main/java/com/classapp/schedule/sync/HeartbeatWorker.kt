@@ -35,9 +35,9 @@ class HeartbeatWorker(
             } else {
                 val msg = result.exceptionOrNull()?.message ?: ""
                 if (msg.contains("离线") || msg.contains("重新登录") || msg.contains("token", ignoreCase = true)) {
-                    // Token expired - clear login state
-                    settings.clearLoginInfo()
-                    android.util.Log.w("Heartbeat", "Token expired, cleared login info")
+                    // Token expired - keep identity/credentials for quick re-login.
+                    settings.markTokenExpired()
+                    android.util.Log.w("Heartbeat", "Token expired, marked for re-login")
                     Result.failure()
                 } else {
                     android.util.Log.w("Heartbeat", "API error: $msg")
@@ -47,8 +47,8 @@ class HeartbeatWorker(
         } catch (e: Exception) {
             val msg = e.message ?: ""
             if (msg.contains("离线") || msg.contains("重新登录") || msg.contains("token", ignoreCase = true)) {
-                settings.clearLoginInfo()
-                android.util.Log.w("Heartbeat", "Token expired, cleared login info")
+                settings.markTokenExpired()
+                android.util.Log.w("Heartbeat", "Token expired, marked for re-login")
                 Result.failure()
             } else {
                 android.util.Log.e("Heartbeat", "Heartbeat failed: $msg")

@@ -96,8 +96,14 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
             val token = settings.savedToken.first()
             val sid = settings.savedStudentId.first()
             val name = settings.savedRealName.first()
-            android.util.Log.d("GdustApi", "restore: token=${token.take(20)}..., sid=$sid, name=$name")
-            if (token.isNotEmpty() && sid.isNotEmpty()) {
+            val expired = settings.tokenExpired.first()
+            android.util.Log.d("GdustApi", "restore: token=${token.take(20)}..., sid=$sid, name=$name, expired=$expired")
+            if (expired && sid.isNotEmpty()) {
+                savedStudentId = sid
+                _savedStudentIdFlow.value = sid
+                _loginState.value = LoginState.TokenExpired
+                _messages.emit("登录已过期，请快速登录")
+            } else if (token.isNotEmpty() && sid.isNotEmpty()) {
                 api.setToken(token)
                 savedStudentId = sid
                 _savedStudentIdFlow.value = sid
@@ -120,6 +126,21 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                 if (syncOnStart) refreshFromSchool()
             } else {
                 android.util.Log.d("GdustApi", "restore: no saved login found")
+            }
+        }
+        // Mirror token-expired changes written by background workers into UI state.
+        viewModelScope.launch {
+            settings.tokenExpired.collect { expired ->
+                if (expired && _loginState.value !is LoginState.TokenExpired) {
+                    val sid = settings.savedStudentId.first()
+                    if (sid.isNotEmpty()) {
+                        savedStudentId = sid
+                        _savedStudentIdFlow.value = sid
+                    }
+                    api.setToken("")
+                    _loginState.value = LoginState.TokenExpired
+                    _messages.emit("登录已过期，请快速登录")
+                }
             }
         }
         // Schedule reminders when courses or settings change
@@ -491,9 +512,9 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
         _isRefreshing.value = false
         // Only clear the API token, keep saved studentId for re-login
         api.setToken("")
-        // Don't clear settings - we need savedStudentId for the UI and quick re-login
+        settings.markTokenExpired()
         _loginState.value = LoginState.TokenExpired
-        _messages.emit("登录已过期，请重新登录")
+        _messages.emit("登录已过期，请快速登录")
     }
 
     /**
@@ -518,6 +539,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                 } catch (_: Exception) {
                     settings.saveLoginInfo(user.token, user.id, user.realName)
                 }
+                settings.clearTokenExpired()
                 importFromSchool(user.id)
             } catch (e: Exception) {
                 _loginState.value = LoginState.Error("登录失败: ${e.message}")
@@ -546,6 +568,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                     } catch (_: Exception) {
                         settings.saveLoginInfo(user.token, sid, user.realName)
                     }
+                    settings.clearTokenExpired()
                     importFromSchool(sid)
                 }
                 .onFailure { e ->
@@ -624,7 +647,9 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     }
 
     fun clearLoginError() {
-        _loginState.value = LoginState.LoggedOut
+        if (_loginState.value is LoginState.Error) {
+            _loginState.value = LoginState.LoggedOut
+        }
     }
 }
 
