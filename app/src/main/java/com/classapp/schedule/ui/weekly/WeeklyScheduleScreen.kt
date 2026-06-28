@@ -503,7 +503,8 @@ fun WeeklyScheduleScreen(
             }
             // Expanded FABs — stacked above the toggle button
             Column(
-                modifier = Modifier.align(Alignment.BottomEnd).padding(bottom = 68.dp),
+                modifier = Modifier.align(Alignment.BottomEnd).padding(bottom = 68.dp)
+                    .animateContentSize(animationSpec = tween(300)),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
@@ -528,11 +529,7 @@ fun WeeklyScheduleScreen(
                 }
             }
             // Refresh button
-            AnimatedVisibility(
-                visible = fabExpanded,
-                enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
-                exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
-            ) {
+            if (fabExpanded) {
                 FloatingActionButton(
                     onClick = {
                         com.classapp.schedule.util.HapticFeedback.medium(hapticView)
@@ -549,11 +546,7 @@ fun WeeklyScheduleScreen(
                 }
             }
             // Add course button
-            AnimatedVisibility(
-                visible = fabExpanded,
-                enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
-                exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
-            ) {
+            if (fabExpanded) {
                 FloatingActionButton(
                     onClick = {
                         com.classapp.schedule.util.HapticFeedback.medium(hapticView)
@@ -565,11 +558,7 @@ fun WeeklyScheduleScreen(
                 }
             }
             // Screenshot button
-            AnimatedVisibility(
-                visible = fabExpanded,
-                enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
-                exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
-            ) {
+            if (fabExpanded) {
                 FloatingActionButton(
                     onClick = {
                         com.classapp.schedule.util.HapticFeedback.medium(hapticView)
@@ -606,7 +595,6 @@ fun WeeklyScheduleScreen(
             }
             } // Column
         } // Box
-            // Expanded FABs — stacked above the toggle button
         } // if (!hideFabs)
     } // PullToRefreshBox
 
