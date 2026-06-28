@@ -504,14 +504,9 @@ fun WeeklyScheduleScreen(
                         animationSpec = tween(300),
                         label = "backTy"
                     )
-                    val backAlpha by animateFloatAsState(
-                        targetValue = if (fabExpanded) 1f else 0.5f,
-                        animationSpec = tween(300),
-                        label = "backAlpha"
-                    )
                     FloatingActionButton(
                         onClick = { com.classapp.schedule.util.HapticFeedback.medium(hapticView); onWeekChange(realCurrentWeek) },
-                        modifier = Modifier.graphicsLayer { translationY = backTy; alpha = backAlpha },
+                        modifier = Modifier.graphicsLayer { translationY = backTy },
                         containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                         contentColor = MaterialTheme.colorScheme.onTertiaryContainer
                     ) { Icon(if (currentWeek > realCurrentWeek) Icons.Default.ChevronLeft else Icons.Default.ChevronRight, stringResource(R.string.back_to_current_week)) }
