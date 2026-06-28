@@ -509,21 +509,24 @@ fun WeeklyScheduleScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-            // Back to current week — top of stack, pushed up when FABs expand
-            if (currentWeek != realCurrentWeek) {
-                FloatingActionButton(
-                    onClick = {
+            // Back to current week — always in layout, alpha-hides, never triggers Column rebuild
+            FloatingActionButton(
+                onClick = {
+                    if (currentWeek != realCurrentWeek) {
                         com.classapp.schedule.util.HapticFeedback.medium(hapticView)
                         onWeekChange(realCurrentWeek)
-                    },
-                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer
-                ) {
-                    Icon(
-                        if (currentWeek > realCurrentWeek) Icons.Default.ChevronLeft else Icons.Default.ChevronRight,
-                        stringResource(R.string.back_to_current_week)
-                    )
-                }
+                    }
+                },
+                modifier = Modifier.graphicsLayer {
+                    alpha = if (currentWeek != realCurrentWeek) 1f else 0f
+                },
+                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+            ) {
+                Icon(
+                    if (currentWeek > realCurrentWeek) Icons.Default.ChevronLeft else Icons.Default.ChevronRight,
+                    stringResource(R.string.back_to_current_week)
+                )
             }
             // Refresh button — instant show/hide, animateContentSize handles layout
             if (fabExpanded) {
