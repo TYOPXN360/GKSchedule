@@ -585,12 +585,12 @@ fun WeeklyScheduleScreen(
                 }
             }
             } // Column
-            // Back to current week — fixed position, does not move when FABs expand/collapse
+            // Back to current week — fixed position directly above toggle button
             AnimatedVisibility(
                 visible = currentWeek != realCurrentWeek,
-                modifier = Modifier.align(Alignment.BottomEnd).padding(bottom = 68.dp),
-                enter = if (currentWeek > realCurrentWeek) slideInHorizontally(initialOffsetX = { -it }) + fadeIn() else slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
-                exit = if (currentWeek > realCurrentWeek) slideOutHorizontally(targetOffsetX = { -it }) + fadeOut() else slideOutHorizontally(targetOffsetX = { it }) + fadeOut()
+                modifier = Modifier.align(Alignment.BottomEnd).padding(bottom = 80.dp),
+                enter = fadeIn(tween(250)),
+                exit = fadeOut(tween(250))
             ) {
                 FloatingActionButton(
                     onClick = {
@@ -607,6 +607,7 @@ fun WeeklyScheduleScreen(
                 }
             }
         } // Box
+            // Expanded FABs — stacked above the toggle button
         } // if (!hideFabs)
     } // PullToRefreshBox
 
