@@ -482,7 +482,7 @@ fun WeeklyScheduleScreen(
         if (!hideFabs) {
         var fabExpanded by remember { mutableStateOf(true) }
         Box(modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp)) {
-            // Toggle
+            // Toggle — bottom right
             FloatingActionButton(
                 onClick = { com.classapp.schedule.util.HapticFeedback.light(hapticView); fabExpanded = !fabExpanded },
                 modifier = Modifier.align(Alignment.BottomEnd),
@@ -490,40 +490,40 @@ fun WeeklyScheduleScreen(
                 contentColor = MaterialTheme.colorScheme.onSurfaceVariant
             ) { Text(if (fabExpanded) "—" else "+", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, modifier = Modifier.width(20.dp)) }
 
-            // Column: back-to-week at top + expandable below
+            // Column: back-to-week on top, expandable below
             Column(
                 modifier = Modifier.align(Alignment.BottomEnd).padding(bottom = 68.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Back to current week — alpha + translationY, pushed up when expandable appears
-                val backAlpha by animateFloatAsState(targetValue = if (currentWeek != realCurrentWeek) 1f else 0f, animationSpec = tween(200), label = "ba")
-                val backTy by animateFloatAsState(targetValue = if (fabExpanded) -(3 * 56f + 2 * 12f) else 0f, animationSpec = spring(dampingRatio = 1f, stiffness = 200f), label = "btY")
-                FloatingActionButton(
-                    onClick = { if (currentWeek != realCurrentWeek) { com.classapp.schedule.util.HapticFeedback.medium(hapticView); onWeekChange(realCurrentWeek) } },
-                    modifier = Modifier.graphicsLayer { alpha = backAlpha; translationY = backTy },
-                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer
-                ) { Icon(if (currentWeek > realCurrentWeek) Icons.Default.ChevronLeft else Icons.Default.ChevronRight, stringResource(R.string.back_to_current_week)) }
-
-                // Expandable FABs — AnimatedVisibility for smooth slide
+                // Back to current week — shows/hides with `if`, Column adjusts height naturally
+                if (currentWeek != realCurrentWeek) {
+                    FloatingActionButton(
+                        onClick = { com.classapp.schedule.util.HapticFeedback.medium(hapticView); onWeekChange(realCurrentWeek) },
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                    ) { Icon(if (currentWeek > realCurrentWeek) Icons.Default.ChevronLeft else Icons.Default.ChevronRight, stringResource(R.string.back_to_current_week)) }
+                }
+                // Refresh
                 AnimatedVisibility(visible = fabExpanded, enter = slideInVertically(initialOffsetY = { it }) + fadeIn(), exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()) {
                     FloatingActionButton(onClick = { com.classapp.schedule.util.HapticFeedback.medium(hapticView); onRefresh() }, containerColor = MaterialTheme.colorScheme.secondaryContainer, contentColor = MaterialTheme.colorScheme.onSecondaryContainer) {
                         if (isRefreshing) CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp) else Icon(Icons.Default.Refresh, "Refresh")
                     }
                 }
+                // Add course
                 AnimatedVisibility(visible = fabExpanded, enter = slideInVertically(initialOffsetY = { it }) + fadeIn(), exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()) {
                     FloatingActionButton(onClick = { com.classapp.schedule.util.HapticFeedback.medium(hapticView); onAddCourse() }, containerColor = MaterialTheme.colorScheme.primary) {
                         Icon(Icons.Default.Add, stringResource(R.string.add_course))
                     }
                 }
+                // Screenshot
                 AnimatedVisibility(visible = fabExpanded, enter = slideInVertically(initialOffsetY = { it }) + fadeIn(), exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()) {
                     FloatingActionButton(onClick = { com.classapp.schedule.util.HapticFeedback.medium(hapticView); coroutineScope.launch { try { hideFabs = true; kotlinx.coroutines.delay(100); val fb = android.graphics.Bitmap.createBitmap(rootView.width, rootView.height, android.graphics.Bitmap.Config.ARGB_8888); rootView.draw(android.graphics.Canvas(fb)); hideFabs = false; val c = android.graphics.Bitmap.createBitmap(fb, 0, cropTopPx.coerceIn(0, fb.height), fb.width, cropBottomPx.coerceIn(cropTopPx.coerceIn(0, fb.height), fb.height) - cropTopPx.coerceIn(0, fb.height)); val s = com.classapp.schedule.util.ImageExport.saveBitmapToGallery(context, c, "Pictures/Screenshots/schedule_${System.currentTimeMillis()}.png"); android.widget.Toast.makeText(context, if (s) "已保存到 Pictures/Screenshots" else "保存失败", android.widget.Toast.LENGTH_SHORT).show() } catch (e: Exception) { android.widget.Toast.makeText(context, "截图失败: ${e.message}", android.widget.Toast.LENGTH_SHORT).show() } }
                     }, containerColor = MaterialTheme.colorScheme.tertiaryContainer, contentColor = MaterialTheme.colorScheme.onTertiaryContainer) { Icon(Icons.Default.CameraAlt, "Screenshot") }
-                }
-            }
-        }
-        }
+                    }
+            } // Column
+        } // Box
+        } // if (!hideFabs)
     } // PullToRefreshBox
 
     // Detail sheet
