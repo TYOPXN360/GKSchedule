@@ -269,7 +269,15 @@ fun WeeklyScheduleScreen(
                 val week = visibleWeeks.getOrElse(page) { currentWeek }
                 val weekBlocks = remember(week, colorGroupMode, scheduleCourses, mergeConsecutive, detailedSplit) {
                     val weekCourses = scheduleCourses.filter { it.isInWeek(week) }
-                    data class B(val course: Course, val day: Int, val start: Int, val span: Int, val colorIdx: Int)
+                    data class B(
+                        val course: Course,
+                        val day: Int,
+                        val start: Int,
+                        val span: Int,
+                        val colorIdx: Int,
+                        val startLine: Float,
+                        val endLine: Float
+                    )
                     val nameToIdx = mutableMapOf<String, Int>()
                     val keyToIdx = mutableMapOf<String, Int>()
                     var nextColor = 0
@@ -286,15 +294,29 @@ fun WeeklyScheduleScreen(
                             }
                             else -> keyToIdx.getOrPut("${c.name}|${c.classroom}") { nextColor++ }
                         }
-                        if (mergeConsecutive) {
-                            blocks.add(B(c, c.dayOfWeek, c.startPeriod, c.periods, ci))
+                        fun addBlock(course: Course, start: Int, span: Int, colorIdx: Int) {
+                            val startLine = if (course.isExamCourse()) {
+                                timeToGridLine(course.customStartTime, getStartTime, getEndTime, periodsPerDay)
+                            } else {
+                                (start - 1).toFloat()
+                            }
+                            val endLine = if (course.isExamCourse()) {
+                                timeToGridLine(course.customEndTime, getStartTime, getEndTime, periodsPerDay)
+                                    .coerceAtLeast(startLine + 0.25f)
+                            } else {
+                                startLine + span
+                            }
+                            blocks.add(B(course, course.dayOfWeek, start, span, colorIdx, startLine, endLine))
+                        }
+                        if (c.isExamCourse() || mergeConsecutive) {
+                            addBlock(c, c.startPeriod, c.periods, ci)
                         } else if (detailedSplit) {
-                            for (p in c.startPeriod..c.endPeriod()) blocks.add(B(c, c.dayOfWeek, p, 1, ci))
+                            for (p in c.startPeriod..c.endPeriod()) addBlock(c, p, 1, ci)
                         } else {
                             var p = c.startPeriod
                             while (p <= c.endPeriod()) {
                                 val pairEnd = minOf(p + 1, c.endPeriod())
-                                blocks.add(B(c, c.dayOfWeek, p, pairEnd - p + 1, ci))
+                                addBlock(c, p, pairEnd - p + 1, ci)
                                 p = pairEnd + 1
                             }
                         }
@@ -357,9 +379,9 @@ fun WeeklyScheduleScreen(
                         // Draw all blocks with original colors
                         weekBlocks.forEachIndexed { idx, block ->
                             val x = labelWidthDp.toPx() + cellW2 * (block.day - 1) + spacing
-                            val y = rowH2 * (block.start - 1) + spacing
+                            val y = rowH2 * block.startLine + spacing
                             val bw = cellW2 - spacing * 2
-                            val bh = rowH2 * block.span - spacing * 2
+                            val bh = rowH2 * (block.endLine - block.startLine) - spacing * 2
                             drawRoundRect(
                                 color = blockBaseColors[idx],
                                 topLeft = Offset(x, y),
@@ -372,11 +394,11 @@ fun WeeklyScheduleScreen(
                         for (i in weekBlocks.indices) {
                             for (j in i + 1 until weekBlocks.size) {
                                 val a = weekBlocks[i]; val b = weekBlocks[j]
-                                if (a.day == b.day && a.start < b.start + b.span && a.start + a.span > b.start) {
-                                    val overlapStart = maxOf(a.start, b.start)
-                                    val overlapEnd = minOf(a.start + a.span, b.start + b.span)
+                                if (a.day == b.day && a.startLine < b.endLine && a.endLine > b.startLine) {
+                                    val overlapStart = maxOf(a.startLine, b.startLine)
+                                    val overlapEnd = minOf(a.endLine, b.endLine)
                                     val ox = labelWidthDp.toPx() + cellW2 * (a.day - 1) + spacing
-                                    val oy = rowH2 * (overlapStart - 1) + spacing
+                                    val oy = rowH2 * overlapStart + spacing
                                     val ow = cellW2 - spacing * 2
                                     val oh = rowH2 * (overlapEnd - overlapStart) - spacing * 2
                                     val blend = Color(
@@ -399,9 +421,9 @@ fun WeeklyScheduleScreen(
                     // Overlay: course text
                     weekBlocks.forEach { block ->
                         val x = labelWidthDp + cellW * (block.day - 1) + gridSpacing.dp
-                        val y = rowH * (block.start - 1) + gridSpacing.dp
+                        val y = rowH * block.startLine + gridSpacing.dp
                         val w = cellW - gridSpacing.dp * 2
-                        val h = rowH * block.span - gridSpacing.dp * 2
+                        val h = rowH * (block.endLine - block.startLine) - gridSpacing.dp * 2
                         val satOffset = if (colorGroupMode == 1) block.colorIdx % 10 else 0
 
                         Box(
@@ -692,26 +714,58 @@ private fun com.classapp.schedule.api.ExamInfo.toScheduleCourse(
             startPeriod = startPeriod,
             periods = endPeriod - startPeriod + 1,
             weekRange = week.toString(),
-            remark = listOf(kssj, ksfs, khfs).filter { it.isNotEmpty() }.joinToString("\n")
+            remark = listOf(kssj, ksfs, khfs).filter { it.isNotEmpty() }.joinToString("\n"),
+            isCustomTime = true,
+            customStartTime = timeParts[0].trim(),
+            customEndTime = timeParts[1].trim()
         )
     } catch (_: Exception) {
         null
     }
 }
 
+private fun timeToGridLine(
+    time: String,
+    getStartTime: (Int) -> String,
+    getEndTime: (Int) -> String,
+    periodsPerDay: Int
+): Float {
+    val target = parseMinutes(time) ?: return 0f
+    for (period in 1..periodsPerDay) {
+        val start = parseMinutes(getStartTime(period)) ?: continue
+        val end = parseMinutes(getEndTime(period)) ?: continue
+        if (target in start..end) {
+            val duration = (end - start).coerceAtLeast(1)
+            return (period - 1) + (target - start).toFloat() / duration.toFloat()
+        }
+        val nextStart = parseMinutes(getStartTime(period + 1))
+        if (nextStart != null && target > end && target < nextStart) {
+            return period.toFloat()
+        }
+    }
+    val firstStart = parseMinutes(getStartTime(1)) ?: return 0f
+    val lastEnd = parseMinutes(getEndTime(periodsPerDay)) ?: return periodsPerDay.toFloat()
+    return when {
+        target <= firstStart -> 0f
+        target >= lastEnd -> periodsPerDay.toFloat()
+        else -> timeToPeriod(time, getStartTime).let { if (it > 0) (it - 1).toFloat() else 0f }
+    }
+}
+
+private fun parseMinutes(time: String): Int? {
+    val parts = time.split(":")
+    val hour = parts.getOrNull(0)?.toIntOrNull() ?: return null
+    val minute = parts.getOrNull(1)?.toIntOrNull() ?: return null
+    return hour * 60 + minute
+}
+
 /** Map a time string like "14:20" to the closest period number. */
 private fun timeToPeriod(time: String, timeProvider: (Int) -> String): Int {
-    val parts = time.split(":")
-    val targetMins = (parts.getOrNull(0)?.toIntOrNull() ?: return 0) * 60 +
-        (parts.getOrNull(1)?.toIntOrNull() ?: return 0)
+    val targetMins = parseMinutes(time) ?: return 0
     var bestPeriod = 0
     var bestDiff = Int.MAX_VALUE
     for (p in 1..14) {
-        val pTime = timeProvider(p)
-        if (pTime.isEmpty()) continue
-        val pParts = pTime.split(":")
-        val pMins = (pParts.getOrNull(0)?.toIntOrNull() ?: continue) * 60 +
-            (pParts.getOrNull(1)?.toIntOrNull() ?: continue)
+        val pMins = parseMinutes(timeProvider(p)) ?: continue
         val diff = kotlin.math.abs(targetMins - pMins)
         if (diff < bestDiff) {
             bestDiff = diff
