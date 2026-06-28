@@ -511,8 +511,8 @@ fun WeeklyScheduleScreen(
             // Back to current week — always visible when needed, pushed up when other FABs expand
             AnimatedVisibility(
                 visible = currentWeek != realCurrentWeek,
-                enter = if (currentWeek > realCurrentWeek) slideInHorizontally(initialOffsetX = { -it }) + fadeIn() else slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
-                exit = if (currentWeek > realCurrentWeek) slideOutHorizontally(targetOffsetX = { -it }) + fadeOut() else slideOutHorizontally(targetOffsetX = { it }) + fadeOut()
+                enter = fadeIn(tween(200)) + slideInVertically(tween(300)) { -it / 2 },
+                exit = fadeOut(tween(200))
             ) {
                 FloatingActionButton(
                     onClick = {
