@@ -208,10 +208,14 @@ fun ExamScreen(
 }
 
 @Composable
-private fun ExamCard(exam: ExamInfo) {
+private fun ExamCard(exam: ExamInfo, index: Int = 0) {
     val examDate = try { LocalDate.parse(exam.getExamDate()) } catch (_: Exception) { null }
     val isPast = examDate?.isBefore(LocalDate.now()) == true
     val alpha = if (isPast) 0.5f else 1f
+
+    // Per-exam color based on course name hash — consistent across screens
+    val examColors = com.classapp.schedule.util.CourseColors.getColors(0, count = 16)
+    val colorIdx = exam.kcmc.hashCode().and(0x7fffffff) % examColors.size
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -223,14 +227,16 @@ private fun ExamCard(exam: ExamInfo) {
             modifier = Modifier.fillMaxWidth().padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Color indicator
+            // Color indicator — per exam color
             Box(
                 modifier = Modifier
                     .width(4.dp)
                     .height(48.dp)
                     .clip(RoundedCornerShape(2.dp))
-                    .background(if (isPast) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
-                        else MaterialTheme.colorScheme.error)
+                    .background(
+                        if (isPast) com.classapp.schedule.util.CourseColors.getBackground(colorIdx, examColors).copy(alpha = 0.3f)
+                        else com.classapp.schedule.util.CourseColors.getBackground(colorIdx, examColors)
+                    )
             )
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {

@@ -500,6 +500,10 @@ private fun parseTime(time: String): Int {
 
 @Composable
 private fun ExamCard(exam: com.classapp.schedule.api.ExamInfo) {
+    // Per-exam color based on course name hash — consistent across screens
+    val examColors = com.classapp.schedule.util.CourseColors.getColors(0, count = 16)
+    val colorIdx = exam.kcmc.hashCode().and(0x7fffffff) % examColors.size
+
     Card(
         modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -510,13 +514,13 @@ private fun ExamCard(exam: com.classapp.schedule.api.ExamInfo) {
             modifier = Modifier.fillMaxWidth().padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Color indicator
+            // Color indicator — per exam color
             Box(
                 modifier = Modifier
                     .width(4.dp)
                     .height(48.dp)
                     .clip(RoundedCornerShape(2.dp))
-                    .background(MaterialTheme.colorScheme.error)
+                    .background(com.classapp.schedule.util.CourseColors.getBackground(colorIdx, examColors))
             )
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
