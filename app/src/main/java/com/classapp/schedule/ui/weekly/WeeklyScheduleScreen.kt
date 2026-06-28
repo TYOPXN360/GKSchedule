@@ -510,27 +510,39 @@ fun WeeklyScheduleScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-            // Back to current week — AnimatedVisibility with directional slide
-            AnimatedVisibility(
-                visible = currentWeek != realCurrentWeek,
-                enter = if (currentWeek > realCurrentWeek) slideInHorizontally(initialOffsetX = { it }) + fadeIn()
-                        else slideInHorizontally(initialOffsetX = { -it }) + fadeIn(),
-                exit = if (currentWeek > realCurrentWeek) slideOutHorizontally(targetOffsetX = { it }) + fadeOut()
-                       else slideOutHorizontally(targetOffsetX = { -it }) + fadeOut()
-            ) {
-                FloatingActionButton(
-                    onClick = {
+            // Back to current week — always in Column, smooth alpha + horizontal slide via graphicsLayer
+            val isBackVisible = currentWeek != realCurrentWeek
+            val backToWeekAlpha by animateFloatAsState(
+                targetValue = if (isBackVisible) 1f else 0f,
+                animationSpec = tween(200),
+                label = "backAlpha"
+            )
+            val backToWeekX by animateFloatAsState(
+                // When visible: 0 (in place). When hidden: slide towards where the user was
+                targetValue = if (isBackVisible) 0f
+                    else if (currentWeek > realCurrentWeek) 150f  // user was on future week → slide right
+                    else -150f,                                      // user was on past week → slide left
+                animationSpec = tween(250),
+                label = "backX"
+            )
+            FloatingActionButton(
+                onClick = {
+                    if (isBackVisible) {
                         com.classapp.schedule.util.HapticFeedback.medium(hapticView)
                         onWeekChange(realCurrentWeek)
-                    },
-                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer
-                ) {
-                    Icon(
-                        if (currentWeek > realCurrentWeek) Icons.Default.ChevronLeft else Icons.Default.ChevronRight,
-                        stringResource(R.string.back_to_current_week)
-                    )
-                }
+                    }
+                },
+                modifier = Modifier.graphicsLayer {
+                    alpha = backToWeekAlpha
+                    translationX = backToWeekX
+                },
+                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+            ) {
+                Icon(
+                    if (currentWeek > realCurrentWeek) Icons.Default.ChevronLeft else Icons.Default.ChevronRight,
+                    stringResource(R.string.back_to_current_week)
+                )
             }
             // Refresh button — instant show/hide, animateContentSize handles layout
             if (fabExpanded) {
