@@ -506,6 +506,26 @@ fun WeeklyScheduleScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+            // Back to current week — always visible when needed, pushed up when other FABs expand
+            AnimatedVisibility(
+                visible = currentWeek != realCurrentWeek,
+                enter = if (currentWeek > realCurrentWeek) slideInHorizontally(initialOffsetX = { -it }) + fadeIn() else slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
+                exit = if (currentWeek > realCurrentWeek) slideOutHorizontally(targetOffsetX = { -it }) + fadeOut() else slideOutHorizontally(targetOffsetX = { it }) + fadeOut()
+            ) {
+                FloatingActionButton(
+                    onClick = {
+                        com.classapp.schedule.util.HapticFeedback.medium(hapticView)
+                        onWeekChange(realCurrentWeek)
+                    },
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                ) {
+                    Icon(
+                        if (currentWeek > realCurrentWeek) Icons.Default.ChevronLeft else Icons.Default.ChevronRight,
+                        stringResource(R.string.back_to_current_week)
+                    )
+                }
+            }
             // Refresh button
             AnimatedVisibility(
                 visible = fabExpanded,
@@ -584,27 +604,8 @@ fun WeeklyScheduleScreen(
                 }
             }
             } // Column
-            // Back to current week — fixed position, outside Column
-            AnimatedVisibility(
-                visible = currentWeek != realCurrentWeek,
-                enter = if (currentWeek > realCurrentWeek) slideInHorizontally(initialOffsetX = { -it }) + fadeIn() else slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
-                exit = if (currentWeek > realCurrentWeek) slideOutHorizontally(targetOffsetX = { -it }) + fadeOut() else slideOutHorizontally(targetOffsetX = { it }) + fadeOut(),
-                modifier = Modifier.align(Alignment.BottomEnd).padding(bottom = 68.dp)
-            ) {
-                FloatingActionButton(
-                    onClick = {
-                        com.classapp.schedule.util.HapticFeedback.medium(hapticView)
-                        onWeekChange(realCurrentWeek)
-                    },
-                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer
-                ) {
-                    Icon(
-                        if (currentWeek > realCurrentWeek) Icons.Default.ChevronLeft else Icons.Default.ChevronRight,
-                        stringResource(R.string.back_to_current_week)
-                    )
-                }
-            }
+            // Back to current week — inside Column at top, always visible when needed
+            // (gets pushed up when other FABs expand, falls back when collapsed)
         } // Box
         } // if (!hideFabs)
     } // PullToRefreshBox
