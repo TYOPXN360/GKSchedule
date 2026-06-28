@@ -92,18 +92,6 @@ fun WeeklyScheduleScreen(
     val hapticView = androidx.compose.ui.platform.LocalView.current
     val labelWidthDp = if (showPeriodLabel) { if (showTimeLabel) 64.dp else 36.dp } else 0.dp
 
-    // Track direction of week change for back-to-week animation
-    var prevWeek by remember { mutableIntStateOf(currentWeek) }
-    var lastWeekDirection by remember { mutableIntStateOf(0) }
-    LaunchedEffect(currentWeek) {
-        lastWeekDirection = when {
-            currentWeek > prevWeek -> 1
-            currentWeek < prevWeek -> -1
-            else -> lastWeekDirection
-        }
-        prevWeek = currentWeek
-    }
-
     val examCourses = remember(exams, showExamSchedule, semesterStart, getStartTime, getEndTime) {
         if (!showExamSchedule) emptyList() else exams.mapNotNull { exam ->
             exam.toScheduleCourse(semesterStart, getStartTime, getEndTime)
@@ -522,16 +510,16 @@ fun WeeklyScheduleScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-            // Back to current week — animated alpha + translationX fade
+            // Back to current week — fade + vertical slide, no horizontal shift
             val backToWeekAlpha by animateFloatAsState(
                 targetValue = if (currentWeek != realCurrentWeek) 1f else 0f,
-                animationSpec = tween(250),
+                animationSpec = tween(200),
                 label = "backToWeekAlpha"
             )
-            val backToWeekOffsetX by animateFloatAsState(
-                targetValue = if (currentWeek != realCurrentWeek) 0f else lastWeekDirection * 120f,
-                animationSpec = tween(300),
-                label = "backToWeekOffsetX"
+            val backToWeekOffsetY by animateFloatAsState(
+                targetValue = if (currentWeek != realCurrentWeek) 0f else 60f,
+                animationSpec = tween(250),
+                label = "backToWeekOffsetY"
             )
             FloatingActionButton(
                 onClick = {
@@ -542,7 +530,7 @@ fun WeeklyScheduleScreen(
                 },
                 modifier = Modifier.graphicsLayer {
                     alpha = backToWeekAlpha
-                    translationX = backToWeekOffsetX
+                    translationY = backToWeekOffsetY
                 },
                 containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                 contentColor = MaterialTheme.colorScheme.onTertiaryContainer
