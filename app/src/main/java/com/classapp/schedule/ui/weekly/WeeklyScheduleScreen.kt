@@ -2,6 +2,7 @@ package com.classapp.schedule.ui.weekly
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -502,7 +503,8 @@ fun WeeklyScheduleScreen(
             }
             // Expanded FABs — stacked above the toggle button
             Column(
-                modifier = Modifier.align(Alignment.BottomEnd).padding(bottom = 68.dp),
+                modifier = Modifier.align(Alignment.BottomEnd).padding(bottom = 68.dp)
+                    .animateContentSize(animationSpec = tween(300)),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
