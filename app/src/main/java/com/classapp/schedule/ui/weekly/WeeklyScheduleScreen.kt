@@ -89,10 +89,17 @@ fun WeeklyScheduleScreen(
     val hapticView = androidx.compose.ui.platform.LocalView.current
     val labelWidthDp = if (showPeriodLabel) { if (showTimeLabel) 64.dp else 36.dp } else 0.dp
 
+    val examCourses = remember(exams, showExamSchedule, semesterStart, getStartTime, getEndTime) {
+        if (!showExamSchedule) emptyList() else exams.mapNotNull { exam ->
+            exam.toScheduleCourse(semesterStart, getStartTime, getEndTime)
+        }
+    }
+    val scheduleCourses = remember(courses, examCourses) { courses + examCourses }
+
     // Build render blocks
     // Build render blocks with dynamic color assignment
     val renderBlocks = remember(courses, currentWeek, mergeConsecutive, detailedSplit, colorGroupMode) {
-        val weekCourses = courses.filter { it.isInWeek(currentWeek) }
+        val weekCourses = scheduleCourses.filter { it.isInWeek(currentWeek) }
         data class Block(val course: Course, val day: Int, val start: Int, val span: Int, val colorIdx: Int)
         val nameToIdx = mutableMapOf<String, Int>()
         val keyToIdx = mutableMapOf<String, Int>()
@@ -123,24 +130,13 @@ fun WeeklyScheduleScreen(
     }
 
     // Compute visible weeks (skip empty weeks if hideEmptyWeeks is on)
-    val visibleWeeks = remember(courses, totalWeeks, hideEmptyWeeks, exams, showExamSchedule) {
+    val visibleWeeks = remember(scheduleCourses, totalWeeks, hideEmptyWeeks) {
         if (!hideEmptyWeeks) (1..totalWeeks).toList()
         else {
             val nonEmpty = (1..totalWeeks).filter { week ->
-                courses.any { it.isInWeek(week) }
+                scheduleCourses.any { it.isInWeek(week) }
             }
-            // Include weeks with exams if exam display is enabled
-            val examWeeks = if (showExamSchedule && exams.isNotEmpty()) {
-                exams.mapNotNull { exam ->
-                    try {
-                        val date = java.time.LocalDate.parse(exam.getExamDate())
-                        val daysDiff = java.time.temporal.ChronoUnit.DAYS.between(semesterStart, date).toInt()
-                        val week = (daysDiff / 7) + 1
-                        if (week in 1..totalWeeks) week else null
-                    } catch (_: Exception) { null }
-                }.toSet()
-            } else emptySet()
-            val allNonEmpty = (nonEmpty + examWeeks).distinct().sorted()
+            val allNonEmpty = nonEmpty.distinct().sorted()
             if (allNonEmpty.isEmpty()) listOf(1) else allNonEmpty
         }
     }
@@ -261,47 +257,8 @@ fun WeeklyScheduleScreen(
                 }
             }
 
-            // Exam badges for current week
-            if (showExamSchedule && exams.isNotEmpty()) {
-                val weekExams = remember(currentWeek, exams, semesterStart) {
-                    exams.filter { exam ->
-                        try {
-                            val date = java.time.LocalDate.parse(exam.getExamDate())
-                            val daysDiff = java.time.temporal.ChronoUnit.DAYS.between(semesterStart, date).toInt()
-                            (daysDiff / 7) + 1 == currentWeek
-                        } catch (_: Exception) { false }
-                    }
-                }
-                if (weekExams.isNotEmpty()) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        weekExams.forEach { exam ->
-                            val dayOfWeek = try {
-                                java.time.LocalDate.parse(exam.getExamDate()).dayOfWeek.value
-                            } catch (_: Exception) { 0 }
-                            val dayName = when (dayOfWeek) {
-                                1 -> "周一"; 2 -> "周二"; 3 -> "周三"; 4 -> "周四"
-                                5 -> "周五"; 6 -> "周六"; 7 -> "周日"; else -> ""
-                            }
-                            SuggestionChip(
-                                onClick = {},
-                                label = {
-                                    Text(
-                                        "$dayName ${exam.kcmc} ${exam.getExamTimeRange()}",
-                                        style = MaterialTheme.typography.labelSmall
-                                    )
-                                },
-                                modifier = Modifier.weight(1f, fill = false)
-                            )
-                        }
-                    }
-                }
-            }
-
             // Grid — HorizontalPager for native swipe
-            val uniqueCourseCount = remember(courses) { courses.map { it.name }.distinct().size }
+            val uniqueCourseCount = remember(scheduleCourses) { scheduleCourses.map { it.name }.distinct().size }
             val monetColors = CourseColors.getColors(colorEngine, count = uniqueCourseCount.coerceAtLeast(8))
             val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
             HorizontalPager(
@@ -309,9 +266,9 @@ fun WeeklyScheduleScreen(
                 modifier = Modifier.fillMaxSize()
                     .onGloballyPositioned { cropBottomPx = it.positionInRoot().y.toInt() + it.size.height }
             ) { page ->
-                val week = page + 1
-                val weekBlocks = remember(week, colorGroupMode) {
-                    val weekCourses = courses.filter { it.isInWeek(week) }
+                val week = visibleWeeks.getOrElse(page) { currentWeek }
+                val weekBlocks = remember(week, colorGroupMode, scheduleCourses, mergeConsecutive, detailedSplit) {
+                    val weekCourses = scheduleCourses.filter { it.isInWeek(week) }
                     data class B(val course: Course, val day: Int, val start: Int, val span: Int, val colorIdx: Int)
                     val nameToIdx = mutableMapOf<String, Int>()
                     val keyToIdx = mutableMapOf<String, Int>()
@@ -367,10 +324,11 @@ fun WeeklyScheduleScreen(
                                                     style = MaterialTheme.typography.labelSmall,
                                                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                                                     textAlign = TextAlign.Center)
-                                            }
-                                        }
-                                    }
                                 }
+                            }
+                        }
+                    }
+
                                 for (day in 1..7) {
                                     Box(modifier = Modifier.weight(1f).fillMaxHeight().padding(gridSpacing.dp)
                                         .clip(RoundedCornerShape(gridCorner.dp))
@@ -638,10 +596,12 @@ fun CourseDetailSheet(course: Course, getStartTime: (Int) -> String, getEndTime:
             if (course.remark.isNotEmpty()) DetailRow("备注", course.remark)
             Spacer(modifier = Modifier.height(24.dp))
             val detailView = androidx.compose.ui.platform.LocalView.current
-            Button(onClick = {
-                com.classapp.schedule.util.HapticFeedback.heavy(detailView)
-                onEdit()
-            }, modifier = Modifier.fillMaxWidth()) { Text("编辑课程") }
+            if (course.id >= 0) {
+                Button(onClick = {
+                    com.classapp.schedule.util.HapticFeedback.heavy(detailView)
+                    onEdit()
+                }, modifier = Modifier.fillMaxWidth()) { Text("编辑课程") }
+            }
         }
     }
 }
@@ -676,7 +636,62 @@ private fun WeekPickerSheet(totalWeeks: Int, currentWeek: Int, onWeekSelected: (
                         } else Spacer(modifier = Modifier.weight(1f))
                     }
                 }
-            }
         }
     }
+}
+}
+
+private fun com.classapp.schedule.api.ExamInfo.toScheduleCourse(
+    semesterStart: java.time.LocalDate,
+    getStartTime: (Int) -> String,
+    getEndTime: (Int) -> String
+): Course? {
+    return try {
+        val examDate = java.time.LocalDate.parse(getExamDate())
+        val daysDiff = java.time.temporal.ChronoUnit.DAYS.between(semesterStart, examDate).toInt()
+        val week = (daysDiff / 7) + 1
+        if (week <= 0) return null
+
+        val timeParts = getExamTimeRange().split("-")
+        if (timeParts.size != 2) return null
+        val startPeriod = timeToPeriod(timeParts[0].trim(), getStartTime)
+        val endPeriod = timeToPeriod(timeParts[1].trim(), getEndTime)
+        if (startPeriod <= 0 || endPeriod < startPeriod) return null
+
+        Course(
+            id = -((kch.ifEmpty { "$kcmc|$kssj|$cdmc" }).hashCode().toLong().let { kotlin.math.abs(it) } + 1L),
+            name = kcmc,
+            teacher = jsxx,
+            classroom = cdmc,
+            dayOfWeek = examDate.dayOfWeek.value,
+            startPeriod = startPeriod,
+            periods = endPeriod - startPeriod + 1,
+            weekRange = week.toString(),
+            remark = listOf(kssj, ksfs, khfs).filter { it.isNotEmpty() }.joinToString("\n")
+        )
+    } catch (_: Exception) {
+        null
+    }
+}
+
+/** Map a time string like "14:20" to the closest period number. */
+private fun timeToPeriod(time: String, timeProvider: (Int) -> String): Int {
+    val parts = time.split(":")
+    val targetMins = (parts.getOrNull(0)?.toIntOrNull() ?: return 0) * 60 +
+        (parts.getOrNull(1)?.toIntOrNull() ?: return 0)
+    var bestPeriod = 0
+    var bestDiff = Int.MAX_VALUE
+    for (p in 1..14) {
+        val pTime = timeProvider(p)
+        if (pTime.isEmpty()) continue
+        val pParts = pTime.split(":")
+        val pMins = (pParts.getOrNull(0)?.toIntOrNull() ?: continue) * 60 +
+            (pParts.getOrNull(1)?.toIntOrNull() ?: continue)
+        val diff = kotlin.math.abs(targetMins - pMins)
+        if (diff < bestDiff) {
+            bestDiff = diff
+            bestPeriod = p
+        }
+    }
+    return bestPeriod
 }
