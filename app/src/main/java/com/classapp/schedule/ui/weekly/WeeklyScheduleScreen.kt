@@ -496,14 +496,14 @@ fun WeeklyScheduleScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Back to current week — ALWAYS in Column, alpha hides (no composition change)
-                val backAlpha by animateFloatAsState(targetValue = if (currentWeek != realCurrentWeek) 1f else 0f, animationSpec = tween(200), label = "ba")
-                FloatingActionButton(
-                    onClick = { if (currentWeek != realCurrentWeek) { com.classapp.schedule.util.HapticFeedback.medium(hapticView); onWeekChange(realCurrentWeek) } },
-                    modifier = Modifier.graphicsLayer { alpha = backAlpha },
-                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer
-                ) { Icon(if (currentWeek > realCurrentWeek) Icons.Default.ChevronLeft else Icons.Default.ChevronRight, stringResource(R.string.back_to_current_week)) }
+                // Back to current week — ALWAYS 56dp in Column, alpha hides, never triggers Column rebuild
+            val backAlpha by animateFloatAsState(targetValue = if (currentWeek != realCurrentWeek) 1f else 0f, animationSpec = tween(200), label = "ba")
+            FloatingActionButton(
+                onClick = { if (currentWeek != realCurrentWeek) { com.classapp.schedule.util.HapticFeedback.medium(hapticView); onWeekChange(realCurrentWeek) } },
+                modifier = Modifier.graphicsLayer { alpha = backAlpha },
+                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+            ) { Icon(if (currentWeek > realCurrentWeek) Icons.Default.ChevronLeft else Icons.Default.ChevronRight, stringResource(R.string.back_to_current_week)) }
 
                 // Expandable FABs — AnimatedVisibility for smooth slide
                 AnimatedVisibility(visible = fabExpanded, enter = slideInVertically(initialOffsetY = { it }) + fadeIn(), exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()) {
