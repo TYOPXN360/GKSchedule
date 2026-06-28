@@ -507,6 +507,26 @@ fun WeeklyScheduleScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+            // Back to current week — at top of Column, pushed up when other FABs appear
+            AnimatedVisibility(
+                visible = currentWeek != realCurrentWeek,
+                enter = if (currentWeek > realCurrentWeek) slideInHorizontally(initialOffsetX = { -it }) + fadeIn() else slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
+                exit = if (currentWeek > realCurrentWeek) slideOutHorizontally(targetOffsetX = { -it }) + fadeOut() else slideOutHorizontally(targetOffsetX = { it }) + fadeOut()
+            ) {
+                FloatingActionButton(
+                    onClick = {
+                        com.classapp.schedule.util.HapticFeedback.medium(hapticView)
+                        onWeekChange(realCurrentWeek)
+                    },
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                ) {
+                    Icon(
+                        if (currentWeek > realCurrentWeek) Icons.Default.ChevronLeft else Icons.Default.ChevronRight,
+                        stringResource(R.string.back_to_current_week)
+                    )
+                }
+            }
             // Refresh button
             AnimatedVisibility(
                 visible = fabExpanded,
@@ -585,27 +605,6 @@ fun WeeklyScheduleScreen(
                 }
             }
             } // Column
-            // Back to current week — fixed position directly above toggle button
-            AnimatedVisibility(
-                visible = currentWeek != realCurrentWeek,
-                modifier = Modifier.align(Alignment.BottomEnd).padding(bottom = 80.dp),
-                enter = fadeIn(tween(250)),
-                exit = fadeOut(tween(250))
-            ) {
-                FloatingActionButton(
-                    onClick = {
-                        com.classapp.schedule.util.HapticFeedback.medium(hapticView)
-                        onWeekChange(realCurrentWeek)
-                    },
-                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer
-                ) {
-                    Icon(
-                        if (currentWeek > realCurrentWeek) Icons.Default.ChevronLeft else Icons.Default.ChevronRight,
-                        stringResource(R.string.back_to_current_week)
-                    )
-                }
-            }
         } // Box
             // Expanded FABs — stacked above the toggle button
         } // if (!hideFabs)
