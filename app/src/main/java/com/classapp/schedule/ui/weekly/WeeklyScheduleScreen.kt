@@ -496,10 +496,19 @@ fun WeeklyScheduleScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Back to current week — shows/hides with `if`, Column adjusts height naturally
+                // Back to current week — always in Column, translationY compensates Column instant resize
                 if (currentWeek != realCurrentWeek) {
+                    // When fabExpanded changes, Column resizes instantly.
+                    // translationY starts at +offset (compensate instant move) then animates to 0.
+                    val expandOffset = (3 * 56 + 3 * 12).toFloat() // 3 buttons + 3 spacings in dp
+                    val backTy by animateFloatAsState(
+                        targetValue = if (fabExpanded) 0f else expandOffset,
+                        animationSpec = spring(dampingRatio = 1f, stiffness = 200f),
+                        label = "backTy"
+                    )
                     FloatingActionButton(
                         onClick = { com.classapp.schedule.util.HapticFeedback.medium(hapticView); onWeekChange(realCurrentWeek) },
+                        modifier = Modifier.graphicsLayer { translationY = backTy },
                         containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                         contentColor = MaterialTheme.colorScheme.onTertiaryContainer
                     ) { Icon(if (currentWeek > realCurrentWeek) Icons.Default.ChevronLeft else Icons.Default.ChevronRight, stringResource(R.string.back_to_current_week)) }
