@@ -511,28 +511,26 @@ fun WeeklyScheduleScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Back to current week
-                Box(modifier = Modifier.height(if (currentWeek != realCurrentWeek) 56.dp else 0.dp).clipToBounds()) {
-                    val backAlpha by animateFloatAsState(
-                        targetValue = if (currentWeek != realCurrentWeek) 1f else 0f,
-                        animationSpec = tween(200), label = "ba"
+                // Back to current week — fixed height, alpha controls visibility
+                val backAlpha by animateFloatAsState(
+                    targetValue = if (currentWeek != realCurrentWeek) 1f else 0f,
+                    animationSpec = tween(200), label = "ba"
+                )
+                FloatingActionButton(
+                    onClick = {
+                        if (currentWeek != realCurrentWeek) {
+                            com.classapp.schedule.util.HapticFeedback.medium(hapticView)
+                            onWeekChange(realCurrentWeek)
+                        }
+                    },
+                    modifier = Modifier.graphicsLayer { alpha = backAlpha },
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                ) {
+                    Icon(
+                        if (currentWeek > realCurrentWeek) Icons.Default.ChevronLeft else Icons.Default.ChevronRight,
+                        stringResource(R.string.back_to_current_week)
                     )
-                    FloatingActionButton(
-                        onClick = {
-                            if (currentWeek != realCurrentWeek) {
-                                com.classapp.schedule.util.HapticFeedback.medium(hapticView)
-                                onWeekChange(realCurrentWeek)
-                            }
-                        },
-                        modifier = Modifier.graphicsLayer { alpha = backAlpha },
-                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer
-                    ) {
-                        Icon(
-                            if (currentWeek > realCurrentWeek) Icons.Default.ChevronLeft else Icons.Default.ChevronRight,
-                            stringResource(R.string.back_to_current_week)
-                        )
-                    }
                 }
                 // Refresh button
                 Box(modifier = Modifier.height(if (fabExpanded) 56.dp else 0.dp).clipToBounds()) {
