@@ -413,13 +413,40 @@ fun WeeklyScheduleScreen(
                             }
                                 .padding(4.dp)
                         ) {
+                            val textColor = CourseColors.getTextColor(block.colorIdx, monetColors, satOffset)
                             Column {
-                                Text(block.course.name, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold,
-                                    color = CourseColors.getTextColor(block.colorIdx, monetColors, satOffset),
-                                    overflow = TextOverflow.Ellipsis)
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    if (block.course.isExamCourse()) {
+                                        Box(
+                                            modifier = Modifier
+                                                .padding(end = 3.dp)
+                                                .clip(RoundedCornerShape(3.dp))
+                                                .background(textColor.copy(alpha = 0.92f))
+                                                .padding(horizontal = 3.dp, vertical = 1.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(
+                                                text = "考试",
+                                                style = MaterialTheme.typography.labelSmall,
+                                                fontWeight = FontWeight.Bold,
+                                                color = CourseColors.getBackgroundStatic(block.colorIdx, monetColors, satOffset),
+                                                maxLines = 1
+                                            )
+                                        }
+                                    }
+                                    Text(
+                                        block.course.name,
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = textColor,
+                                        overflow = TextOverflow.Ellipsis,
+                                        maxLines = 1,
+                                        modifier = Modifier.weight(1f, fill = false)
+                                    )
+                                }
                                 if (block.course.classroom.isNotEmpty()) {
                                     Text(block.course.classroom, style = MaterialTheme.typography.labelSmall,
-                                        color = CourseColors.getTextColor(block.colorIdx, monetColors, satOffset).copy(alpha = 0.7f),
+                                        color = textColor.copy(alpha = 0.7f),
                                         overflow = TextOverflow.Ellipsis)
                                 }
                             }
@@ -640,6 +667,8 @@ private fun WeekPickerSheet(totalWeeks: Int, currentWeek: Int, onWeekSelected: (
     }
 }
 }
+
+private fun Course.isExamCourse(): Boolean = id < 0
 
 private fun com.classapp.schedule.api.ExamInfo.toScheduleCourse(
     semesterStart: java.time.LocalDate,
