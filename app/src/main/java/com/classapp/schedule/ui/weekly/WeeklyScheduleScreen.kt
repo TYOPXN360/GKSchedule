@@ -496,19 +496,22 @@ fun WeeklyScheduleScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Back to current week — always in Column, translationY compensates Column instant resize
+                // Back to current week — same slide animation as expandable buttons, but never hides
                 if (currentWeek != realCurrentWeek) {
-                    // When fabExpanded changes, Column resizes instantly.
-                    // translationY starts at +offset (compensate instant move) then animates to 0.
-                    val expandOffset = (3 * 56 + 3 * 12).toFloat() // 3 buttons + 3 spacings in dp
+                    val expandPx = with(LocalDensity.current) { (3 * 56 + 3 * 12).dp.toPx() }
                     val backTy by animateFloatAsState(
-                        targetValue = if (fabExpanded) 0f else -expandOffset,
-                        animationSpec = spring(dampingRatio = 1f, stiffness = 200f),
+                        targetValue = if (fabExpanded) 0f else expandPx,
+                        animationSpec = tween(300),
                         label = "backTy"
+                    )
+                    val backAlpha by animateFloatAsState(
+                        targetValue = if (fabExpanded) 1f else 0.5f,
+                        animationSpec = tween(300),
+                        label = "backAlpha"
                     )
                     FloatingActionButton(
                         onClick = { com.classapp.schedule.util.HapticFeedback.medium(hapticView); onWeekChange(realCurrentWeek) },
-                        modifier = Modifier.graphicsLayer { translationY = backTy },
+                        modifier = Modifier.graphicsLayer { translationY = backTy; alpha = backAlpha },
                         containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                         contentColor = MaterialTheme.colorScheme.onTertiaryContainer
                     ) { Icon(if (currentWeek > realCurrentWeek) Icons.Default.ChevronLeft else Icons.Default.ChevronRight, stringResource(R.string.back_to_current_week)) }
