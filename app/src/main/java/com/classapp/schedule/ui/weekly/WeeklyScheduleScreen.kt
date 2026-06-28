@@ -2,6 +2,7 @@ package com.classapp.schedule.ui.weekly
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -509,7 +510,12 @@ fun WeeklyScheduleScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-            // Back to current week — always in layout, alpha-hides, never triggers Column rebuild
+            // Back to current week — animated alpha fade, no layout rebuild
+            val backToWeekAlpha by animateFloatAsState(
+                targetValue = if (currentWeek != realCurrentWeek) 1f else 0f,
+                animationSpec = tween(250),
+                label = "backToWeekAlpha"
+            )
             FloatingActionButton(
                 onClick = {
                     if (currentWeek != realCurrentWeek) {
@@ -517,9 +523,7 @@ fun WeeklyScheduleScreen(
                         onWeekChange(realCurrentWeek)
                     }
                 },
-                modifier = Modifier.graphicsLayer {
-                    alpha = if (currentWeek != realCurrentWeek) 1f else 0f
-                },
+                modifier = Modifier.graphicsLayer { alpha = backToWeekAlpha },
                 containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                 contentColor = MaterialTheme.colorScheme.onTertiaryContainer
             ) {
