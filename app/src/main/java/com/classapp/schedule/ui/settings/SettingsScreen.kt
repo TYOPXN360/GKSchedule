@@ -51,6 +51,7 @@ fun SettingsScreen(
     autoSyncIntervalUnit: String,
     tokenHeartbeat: Boolean,
     showExamSchedule: Boolean,
+    examLookaheadWeeks: Int,
     onSemesterStartChange: (LocalDate) -> Unit,
     onTotalWeeksChange: (Int) -> Unit,
     onPeriodsPerDayChange: (Int) -> Unit,
@@ -75,6 +76,7 @@ fun SettingsScreen(
     onAutoSyncIntervalUnitChange: (String) -> Unit,
     onTokenHeartbeatChange: (Boolean) -> Unit,
     onShowExamScheduleChange: (Boolean) -> Unit,
+    onExamLookaheadWeeksChange: (Int) -> Unit,
     onFetchExam: () -> Unit,
     onExportJson: () -> Unit,
     onImportJson: () -> Unit,
@@ -171,11 +173,13 @@ fun SettingsScreen(
                     autoSyncIntervalUnit = autoSyncIntervalUnit,
                     tokenHeartbeat = tokenHeartbeat,
                     showExamSchedule = showExamSchedule,
+                    examLookaheadWeeks = examLookaheadWeeks,
                     onAutoSyncOnStartChange = onAutoSyncOnStartChange,
                     onAutoSyncIntervalValueChange = onAutoSyncIntervalValueChange,
                     onAutoSyncIntervalUnitChange = onAutoSyncIntervalUnitChange,
                     onTokenHeartbeatChange = onTokenHeartbeatChange,
                     onShowExamScheduleChange = onShowExamScheduleChange,
+                    onExamLookaheadWeeksChange = onExamLookaheadWeeksChange,
                     onFetchExam = onFetchExam,
                     onBack = { navController.popBackStack() }
                 )
@@ -361,11 +365,13 @@ private fun SyncPage(
     autoSyncIntervalUnit: String,
     tokenHeartbeat: Boolean,
     showExamSchedule: Boolean,
+    examLookaheadWeeks: Int,
     onAutoSyncOnStartChange: (Boolean) -> Unit,
     onAutoSyncIntervalValueChange: (Int) -> Unit,
     onAutoSyncIntervalUnitChange: (String) -> Unit,
     onTokenHeartbeatChange: (Boolean) -> Unit,
     onShowExamScheduleChange: (Boolean) -> Unit,
+    onExamLookaheadWeeksChange: (Int) -> Unit,
     onFetchExam: () -> Unit,
     onBack: () -> Unit
 ) {
@@ -491,6 +497,14 @@ private fun SyncPage(
 
         // Exam schedule
         SwitchItem(Icons.Default.School, stringResource(R.string.show_exam_schedule), showExamSchedule, onShowExamScheduleChange)
+        StepperItem(
+            Icons.Default.Event,
+            stringResource(R.string.exam_lookahead_weeks),
+            examLookaheadWeeks,
+            0,
+            20,
+            onExamLookaheadWeeksChange
+        )
     }
 }
 

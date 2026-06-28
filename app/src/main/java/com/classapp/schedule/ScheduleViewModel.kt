@@ -64,6 +64,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     val autoSyncIntervalUnit: Flow<String> = settings.autoSyncIntervalUnit
     val tokenHeartbeat: Flow<Boolean> = settings.tokenHeartbeat
     val showExamSchedule: Flow<Boolean> = settings.showExamSchedule
+    val examLookaheadWeeks: Flow<Int> = settings.examLookaheadWeeks
     val courseNames: Flow<List<String>> = courseDao.getAllCourseNames()
 
     private val _selectedWeek = MutableStateFlow(0)
@@ -252,6 +253,10 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
 
     fun setShowExamSchedule(show: Boolean) {
         viewModelScope.launch { settings.setShowExamSchedule(show) }
+    }
+
+    fun setExamLookaheadWeeks(weeks: Int) {
+        viewModelScope.launch { settings.setExamLookaheadWeeks(weeks) }
     }
 
     private suspend fun rescheduleSync() {
@@ -443,6 +448,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                 val weeks = calendar?.allWeek ?: totalWeeks.first()
 
                 val remoteCourses = mutableListOf<com.classapp.schedule.api.RemoteCourse>()
+                var failedWeeks = 0
                 for (week in 1..weeks) {
                     try {
                         val result = api.getStudentCourse(savedStudentId, week = "$week", year = year, semester = semester)
@@ -453,13 +459,21 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                                 handleTokenExpired()
                                 return@launch
                             }
+                            failedWeeks++
+                            android.util.Log.w("GdustApi", "refreshFromSchool: week $week failed: ${e.message}")
                         }
                     } catch (e: Exception) {
                         if (isTokenExpired(e.message)) {
                             handleTokenExpired()
                             return@launch
                         }
+                        failedWeeks++
+                        android.util.Log.w("GdustApi", "refreshFromSchool: week $week failed: ${e.message}")
                     }
+                }
+                if (failedWeeks > 0) {
+                    _messages.emit("同步未完成，已保留原课表")
+                    return@launch
                 }
                 if (remoteCourses.isNotEmpty()) {
                     val newCourses = CourseImporter.convertRemoteCourses(remoteCourses)

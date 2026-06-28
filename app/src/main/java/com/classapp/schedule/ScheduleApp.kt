@@ -93,6 +93,7 @@ fun ScheduleApp(
     val language by viewModel.language.collectAsState(initial = "system")
     val loginState by viewModel.loginState.collectAsState()
     val captchaImage by viewModel.captchaImage.collectAsState()
+    val examLookaheadWeeks by viewModel.examLookaheadWeeks.collectAsState(initial = 2)
 
     // Show snackbar messages
     LaunchedEffect(Unit) {
@@ -193,6 +194,7 @@ fun ScheduleApp(
                     colorEngine = colorEngine, colorGroupMode = colorGroupMode,
                     exams = examList,
                     showExamSchedule = showExamSchedule,
+                    examLookaheadWeeks = examLookaheadWeeks,
                     getStartTime = { viewModel.getStartTime(it) },
                     getEndTime = { viewModel.getEndTime(it) },
                     onCourseLongPress = { navController.navigate(Screen.CourseEdit.createRoute(it.id)) }

@@ -84,6 +84,7 @@ class SettingsActivity : AppCompatActivity() {
                     val autoSyncIntervalUnit by vm.autoSyncIntervalUnit.collectAsState(initial = "d")
                     val tokenHeartbeat by vm.tokenHeartbeat.collectAsState(initial = true)
                     val showExamSchedule by vm.showExamSchedule.collectAsState(initial = false)
+                    val examLookaheadWeeks by vm.examLookaheadWeeks.collectAsState(initial = 2)
 
                     SettingsScreen(
                         semesterStart = semesterStart,
@@ -110,6 +111,7 @@ class SettingsActivity : AppCompatActivity() {
                         autoSyncIntervalUnit = autoSyncIntervalUnit,
                         tokenHeartbeat = tokenHeartbeat,
                         showExamSchedule = showExamSchedule,
+                        examLookaheadWeeks = examLookaheadWeeks,
                         onSemesterStartChange = { vm.setSemesterStart(it) },
                         onTotalWeeksChange = { vm.setTotalWeeks(it) },
                         onPeriodsPerDayChange = { vm.setPeriodsPerDay(it) },
@@ -134,6 +136,7 @@ class SettingsActivity : AppCompatActivity() {
                         onAutoSyncIntervalUnitChange = { vm.setAutoSyncIntervalUnit(it) },
                         onTokenHeartbeatChange = { vm.setTokenHeartbeat(it) },
                         onShowExamScheduleChange = { vm.setShowExamSchedule(it) },
+                        onExamLookaheadWeeksChange = { vm.setExamLookaheadWeeks(it) },
                         onFetchExam = {
                             vm.refreshExamSchedule()
                             scope.launch {

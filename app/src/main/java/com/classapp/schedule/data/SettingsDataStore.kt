@@ -43,6 +43,7 @@ class SettingsDataStore(private val context: Context) {
         private val AUTO_SYNC_INTERVAL_UNIT = stringPreferencesKey("auto_sync_interval_unit") // "min", "h", "d"
         private val TOKEN_HEARTBEAT = booleanPreferencesKey("token_heartbeat")
         private val SHOW_EXAM_SCHEDULE = booleanPreferencesKey("show_exam_schedule")
+        private val EXAM_LOOKAHEAD_WEEKS = intPreferencesKey("exam_lookahead_weeks")
         private val CAS_TICKET = stringPreferencesKey("cas_ticket")
         private val CACHED_EXAMS = stringPreferencesKey("cached_exams")
         private val CACHED_EXAM_YEAR = stringPreferencesKey("cached_exam_year")
@@ -92,6 +93,7 @@ class SettingsDataStore(private val context: Context) {
     val autoSyncIntervalUnit: Flow<String> = context.dataStore.data.map { prefs -> prefs[AUTO_SYNC_INTERVAL_UNIT] ?: "d" }
     val tokenHeartbeat: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[TOKEN_HEARTBEAT] ?: true }
     val showExamSchedule: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[SHOW_EXAM_SCHEDULE] ?: false }
+    val examLookaheadWeeks: Flow<Int> = context.dataStore.data.map { prefs -> prefs[EXAM_LOOKAHEAD_WEEKS] ?: 2 }
     val casTicket: Flow<String> = context.dataStore.data.map { prefs -> prefs[CAS_TICKET] ?: "" }
     val cachedExams: Flow<String> = context.dataStore.data.map { prefs -> prefs[CACHED_EXAMS] ?: "" }
     val cachedExamYear: Flow<String> = context.dataStore.data.map { prefs -> prefs[CACHED_EXAM_YEAR] ?: "" }
@@ -164,6 +166,7 @@ class SettingsDataStore(private val context: Context) {
     suspend fun setAutoSyncIntervalUnit(unit: String) { context.dataStore.edit { it[AUTO_SYNC_INTERVAL_UNIT] = unit } }
     suspend fun setTokenHeartbeat(enabled: Boolean) { context.dataStore.edit { it[TOKEN_HEARTBEAT] = enabled } }
     suspend fun setShowExamSchedule(show: Boolean) { context.dataStore.edit { it[SHOW_EXAM_SCHEDULE] = show } }
+    suspend fun setExamLookaheadWeeks(weeks: Int) { context.dataStore.edit { it[EXAM_LOOKAHEAD_WEEKS] = weeks.coerceIn(0, 20) } }
     suspend fun saveCasTicket(ticket: String) { context.dataStore.edit { it[CAS_TICKET] = ticket } }
     suspend fun saveCachedExams(json: String, year: String, semester: String) {
         context.dataStore.edit {

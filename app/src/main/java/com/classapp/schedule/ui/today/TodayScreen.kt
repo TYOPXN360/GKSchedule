@@ -46,6 +46,7 @@ fun TodayScreen(
     colorGroupMode: Int = 2,
     exams: List<com.classapp.schedule.api.ExamInfo> = emptyList(),
     showExamSchedule: Boolean = false,
+    examLookaheadWeeks: Int = 2,
     getStartTime: (Int) -> String,
     getEndTime: (Int) -> String,
     onCourseLongPress: (Course) -> Unit
@@ -228,10 +229,11 @@ fun TodayScreen(
         // Upcoming exams section
         if (showExamSchedule && exams.isNotEmpty()) {
             val todayDate = LocalDate.now()
+            val latestExamDate = todayDate.plusWeeks(examLookaheadWeeks.toLong())
             val upcomingExams = exams.filter { exam ->
                 try {
                     val examDate = java.time.LocalDate.parse(exam.getExamDate())
-                    !examDate.isBefore(todayDate)
+                    !examDate.isBefore(todayDate) && !examDate.isAfter(latestExamDate)
                 } catch (_: Exception) { false }
             }.sortedBy { it.getExamDate() }.take(5)
 

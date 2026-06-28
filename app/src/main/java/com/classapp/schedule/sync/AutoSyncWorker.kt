@@ -32,18 +32,24 @@ class AutoSyncWorker(
 
             val allCourses = mutableListOf<com.classapp.schedule.api.RemoteCourse>()
             for (week in 1..weeks) {
-                try {
-                    val result = api.getStudentCourse(studentId, week = "$week", year = year, semester = semester)
-                    result.onSuccess { allCourses.addAll(it) }
-                } catch (_: Exception) {}
+                val result = api.getStudentCourse(studentId, week = "$week", year = year, semester = semester)
+                result.onSuccess { allCourses.addAll(it) }
+                    .onFailure { e ->
+                        val msg = e.message ?: ""
+                        if (msg.contains("离线") || msg.contains("重新登录") || msg.contains("token", ignoreCase = true)) {
+                            settings.markTokenExpired()
+                            return Result.failure()
+                        }
+                        return if (runAttemptCount < 3) Result.retry() else Result.failure()
+                    }
             }
 
-            if (allCourses.isNotEmpty()) {
-                val courses = CourseImporter.convertRemoteCourses(allCourses)
-                val dao = CourseDatabase.getDatabase(applicationContext).courseDao()
-                dao.deleteAllCourses()
-                courses.forEach { dao.insertCourse(it) }
-            }
+            if (allCourses.isEmpty()) return Result.success()
+
+            val courses = CourseImporter.convertRemoteCourses(allCourses)
+            val dao = CourseDatabase.getDatabase(applicationContext).courseDao()
+            dao.deleteAllCourses()
+            courses.forEach { dao.insertCourse(it) }
             Result.success()
         } catch (e: Exception) {
             if (runAttemptCount < 3) Result.retry() else Result.failure()
