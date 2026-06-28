@@ -415,35 +415,31 @@ fun WeeklyScheduleScreen(
                         ) {
                             val textColor = CourseColors.getTextColor(block.colorIdx, monetColors, satOffset)
                             Column {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    if (block.course.isExamCourse()) {
-                                        Box(
-                                            modifier = Modifier
-                                                .padding(end = 3.dp)
-                                                .clip(RoundedCornerShape(3.dp))
-                                                .background(textColor.copy(alpha = 0.92f))
-                                                .padding(horizontal = 3.dp, vertical = 1.dp),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Text(
-                                                text = "考试",
-                                                style = MaterialTheme.typography.labelSmall,
-                                                fontWeight = FontWeight.Bold,
-                                                color = CourseColors.getBackgroundStatic(block.colorIdx, monetColors, satOffset),
-                                                maxLines = 1
-                                            )
-                                        }
+                                if (block.course.isExamCourse()) {
+                                    Box(
+                                        modifier = Modifier
+                                            .padding(bottom = 2.dp)
+                                            .clip(RoundedCornerShape(3.dp))
+                                            .background(textColor.copy(alpha = 0.92f))
+                                            .padding(horizontal = 3.dp, vertical = 1.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = "考试",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontWeight = FontWeight.Bold,
+                                            color = CourseColors.getBackgroundStatic(block.colorIdx, monetColors, satOffset),
+                                            maxLines = 1
+                                        )
                                     }
-                                    Text(
-                                        block.course.name,
-                                        style = MaterialTheme.typography.labelMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        color = textColor,
-                                        overflow = TextOverflow.Ellipsis,
-                                        maxLines = 1,
-                                        modifier = Modifier.weight(1f, fill = false)
-                                    )
                                 }
+                                Text(
+                                    block.course.name,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = textColor,
+                                    overflow = TextOverflow.Ellipsis
+                                )
                                 if (block.course.classroom.isNotEmpty()) {
                                     Text(block.course.classroom, style = MaterialTheme.typography.labelSmall,
                                         color = textColor.copy(alpha = 0.7f),
