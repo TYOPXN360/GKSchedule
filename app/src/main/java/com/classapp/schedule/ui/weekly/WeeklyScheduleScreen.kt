@@ -510,7 +510,7 @@ fun WeeklyScheduleScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-            // Back to current week — always in Column, smooth alpha + horizontal slide via graphicsLayer
+            // Back to current week — always in Column, smooth fade with translationX
             val isBackVisible = currentWeek != realCurrentWeek
             val backToWeekAlpha by animateFloatAsState(
                 targetValue = if (isBackVisible) 1f else 0f,
@@ -518,31 +518,35 @@ fun WeeklyScheduleScreen(
                 label = "backAlpha"
             )
             val backToWeekX by animateFloatAsState(
-                // When visible: 0 (in place). When hidden: slide towards where the user was
                 targetValue = if (isBackVisible) 0f
-                    else if (currentWeek > realCurrentWeek) 150f  // user was on future week → slide right
-                    else -150f,                                      // user was on past week → slide left
+                    else if (currentWeek > realCurrentWeek) 150f
+                    else -150f,
                 animationSpec = tween(250),
                 label = "backX"
             )
-            FloatingActionButton(
-                onClick = {
-                    if (isBackVisible) {
-                        com.classapp.schedule.util.HapticFeedback.medium(hapticView)
-                        onWeekChange(realCurrentWeek)
-                    }
-                },
+            // Wrap FAB in Box so graphicsLayer applies to entire visual group
+            Box(
                 modifier = Modifier.graphicsLayer {
                     alpha = backToWeekAlpha
                     translationX = backToWeekX
-                },
-                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                    compositingStrategy = androidx.compose.ui.graphics.CompositingStrategy.Offscreen
+                }
             ) {
-                Icon(
-                    if (currentWeek > realCurrentWeek) Icons.Default.ChevronLeft else Icons.Default.ChevronRight,
-                    stringResource(R.string.back_to_current_week)
-                )
+                FloatingActionButton(
+                    onClick = {
+                        if (isBackVisible) {
+                            com.classapp.schedule.util.HapticFeedback.medium(hapticView)
+                            onWeekChange(realCurrentWeek)
+                        }
+                    },
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                ) {
+                    Icon(
+                        if (currentWeek > realCurrentWeek) Icons.Default.ChevronLeft else Icons.Default.ChevronRight,
+                        stringResource(R.string.back_to_current_week)
+                    )
+                }
             }
             // Refresh button — instant show/hide, animateContentSize handles layout
             if (fabExpanded) {
