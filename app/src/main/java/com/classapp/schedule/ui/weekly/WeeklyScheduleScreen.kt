@@ -485,9 +485,8 @@ fun WeeklyScheduleScreen(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(16.dp)
-                .clipToBounds()
         ) {
-            // Collapse/Expand toggle — use FloatingActionButton for identical shape
+            // Collapse/Expand toggle
             FloatingActionButton(
                 onClick = {
                     com.classapp.schedule.util.HapticFeedback.light(hapticView)
@@ -505,41 +504,22 @@ fun WeeklyScheduleScreen(
                     modifier = Modifier.width(20.dp)
                 )
             }
-            // Expanded FABs — no AnimatedVisibility to avoid bounce
+            // All other FABs in Column
             Column(
-                modifier = Modifier.align(Alignment.BottomEnd).padding(bottom = 68.dp)
-                    .animateContentSize(spring(dampingRatio = 0.9f, stiffness = 500f)),
+                modifier = Modifier.align(Alignment.BottomEnd).padding(bottom = 68.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-            // Back to current week — always in Column, smooth fade with translationX
-            val isBackVisible = currentWeek != realCurrentWeek
-            val backToWeekAlpha by animateFloatAsState(
-                targetValue = if (isBackVisible) 1f else 0f,
-                animationSpec = tween(200),
-                label = "backAlpha"
-            )
-            val backToWeekX by animateFloatAsState(
-                targetValue = if (isBackVisible) 0f
-                    else if (currentWeek > realCurrentWeek) 150f
-                    else -150f,
-                animationSpec = tween(250),
-                label = "backX"
-            )
-            // Wrap FAB in Box so graphicsLayer applies to entire visual group
-            Box(
-                modifier = Modifier.graphicsLayer {
-                    alpha = backToWeekAlpha
-                    translationX = backToWeekX
-                    compositingStrategy = androidx.compose.ui.graphics.CompositingStrategy.Offscreen
-                }
+            // Back to current week — original AnimatedVisibility, always in Column
+            AnimatedVisibility(
+                visible = currentWeek != realCurrentWeek,
+                enter = if (currentWeek > realCurrentWeek) slideInHorizontally(initialOffsetX = { -it }) + fadeIn() else slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
+                exit = if (currentWeek > realCurrentWeek) slideOutHorizontally(targetOffsetX = { -it }) + fadeOut() else slideOutHorizontally(targetOffsetX = { it }) + fadeOut()
             ) {
                 FloatingActionButton(
                     onClick = {
-                        if (isBackVisible) {
-                            com.classapp.schedule.util.HapticFeedback.medium(hapticView)
-                            onWeekChange(realCurrentWeek)
-                        }
+                        com.classapp.schedule.util.HapticFeedback.medium(hapticView)
+                        onWeekChange(realCurrentWeek)
                     },
                     containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                     contentColor = MaterialTheme.colorScheme.onTertiaryContainer
@@ -550,7 +530,36 @@ fun WeeklyScheduleScreen(
                     )
                 }
             }
-            // Refresh button — instant show/hide, animateContentSize handles layout
+            // Refresh button
+            if (fabExpanded) {
+                FloatingActionButton(
+                    onClick = {
+                        com.classapp.schedule.util.HapticFeedback.medium(hapticView)
+                        onRefresh()
+                    },
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                ) {
+                    if (isRefreshing) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                    } else {
+                        Icon(Icons.Default.Refresh, "Refresh")
+                    }
+                }
+            }
+            // Add course button
+            if (fabExpanded) {
+                FloatingActionButton(
+                    onClick = {
+                        com.classapp.schedule.util.HapticFeedback.medium(hapticView)
+                        onAddCourse()
+                    },
+                    containerColor = MaterialTheme.colorScheme.primary
+                ) {
+                    Icon(Icons.Default.Add, stringResource(R.string.add_course))
+                }
+            }
+            // Screenshot button
             if (fabExpanded) {
                 FloatingActionButton(
                     onClick = {
