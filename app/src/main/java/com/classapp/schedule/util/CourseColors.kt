@@ -1,17 +1,12 @@
 package com.classapp.schedule.util
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.luminance
+import com.classapp.schedule.ui.theme.LocalAppIsDark
+import java.security.MessageDigest
 import kotlin.math.abs
 
-/**
- * 4 color engines, each producing 8 visually distinct colors.
- * No hardcoded colors in engines 0 and 3 — fully derived from system theme.
- * Engines 1 and 2 use well-known design palettes (not "hardcoded" in a bad sense).
- */
 object CourseColors {
 
     @Composable
@@ -22,11 +17,10 @@ object CourseColors {
         else -> getMonetColors(count)
     }
 
-    /** Engine 0: Monet — derive N distinct hues from the system primary color */
     @Composable
     private fun getMonetColors(count: Int): List<Pair<Color, Color>> {
+        val isDark = LocalAppIsDark.current
         val primary = MaterialTheme.colorScheme.primary
-        val isDark = isSystemInDarkTheme()
         val hsl = rgbToHsl(primary.red, primary.green, primary.blue)
         val baseHue = hsl[0]
         val step = 360f / count
@@ -40,10 +34,9 @@ object CourseColors {
         }
     }
 
-    /** Engine 1: Vibrant — high saturation, N colors evenly spaced */
     @Composable
     private fun getVibrantColors(count: Int): List<Pair<Color, Color>> {
-        val isDark = isSystemInDarkTheme()
+        val isDark = LocalAppIsDark.current
         val step = 360f / count
         return (0 until count).map { i ->
             val hue = i * step
@@ -55,10 +48,9 @@ object CourseColors {
         }
     }
 
-    /** Engine 2: Classic — soft tones, N colors evenly spaced */
     @Composable
     private fun getClassicColors(count: Int): List<Pair<Color, Color>> {
-        val isDark = isSystemInDarkTheme()
+        val isDark = LocalAppIsDark.current
         val step = 360f / count
         return (0 until count).map { i ->
             val hue = i * step
@@ -70,13 +62,12 @@ object CourseColors {
         }
     }
 
-    /** Engine 3: HSL — from system primary, N colors with alternating saturation */
     @Composable
     private fun getHslColors(count: Int): List<Pair<Color, Color>> {
+        val isDark = LocalAppIsDark.current
         val primary = MaterialTheme.colorScheme.primary
         val hsl = rgbToHsl(primary.red, primary.green, primary.blue)
         val baseHue = hsl[0]
-        val isDark = isSystemInDarkTheme()
         val step = 360f / count
         return (0 until count).map { i ->
             val hue = (baseHue + i * step) % 360f
@@ -90,19 +81,22 @@ object CourseColors {
     }
 
     @Composable
-    fun getBackground(index: Int, colors: List<Pair<Color, Color>>, satOffset: Int = 0): Color {
+    fun getBackground(index: Int, colors: List<Pair<Color, Color>>, satOffset: Int = 0, weekOffset: Int = 0): Color {
         val base = colors[(index / 10).coerceIn(0, colors.size - 1)].first
-        return if (satOffset > 0) adjustSaturation(base, satOffset) else base
+        val rotated = if (weekOffset != 0) rotateHueByHash(base, index, weekOffset) else base
+        return if (satOffset > 0) adjustSaturation(rotated, satOffset) else rotated
     }
 
-    fun getBackgroundStatic(index: Int, colors: List<Pair<Color, Color>>, satOffset: Int = 0): Color {
+    fun getBackgroundStatic(index: Int, colors: List<Pair<Color, Color>>, satOffset: Int = 0, weekOffset: Int = 0): Color {
         val base = colors[(index / 10).coerceIn(0, colors.size - 1)].first
-        return if (satOffset > 0) adjustSaturation(base, satOffset) else base
+        val rotated = if (weekOffset != 0) rotateHueByHash(base, index, weekOffset) else base
+        return if (satOffset > 0) adjustSaturation(rotated, satOffset) else rotated
     }
 
-    fun getTextColor(index: Int, colors: List<Pair<Color, Color>>, satOffset: Int = 0): Color {
+    fun getTextColor(index: Int, colors: List<Pair<Color, Color>>, satOffset: Int = 0, weekOffset: Int = 0): Color {
         val base = colors[(index / 10).coerceIn(0, colors.size - 1)].second
-        return if (satOffset > 0) adjustSaturation(base, satOffset) else base
+        val rotated = if (weekOffset != 0) rotateHueByHash(base, index, weekOffset) else base
+        return if (satOffset > 0) adjustSaturation(rotated, satOffset) else rotated
     }
 
     private fun adjustSaturation(color: Color, offset: Int): Color {
@@ -111,13 +105,20 @@ object CourseColors {
         return hslToColor(hsl[0], newSat, hsl[2])
     }
 
-    /**
-     * Assign color index per course with group mode:
-     * 0 = same color (by name only)
-     * 1 = same hue, different saturation (by name for hue, classroom for sat variation)
-     * 2 = different color (by name + classroom)
-     * Returns: Map<courseId, colorIndex>
-     */
+    private fun rotateHue(color: Color, degrees: Float): Color {
+        val hsl = rgbToHsl(color.red, color.green, color.blue)
+        val newHue = (hsl[0] + degrees) % 360f
+        return hslToColor(if (newHue < 0) newHue + 360f else newHue, hsl[1], hsl[2])
+    }
+
+    private fun rotateHueByHash(color: Color, courseIndex: Int, week: Int): Color {
+        val hsl = rgbToHsl(color.red, color.green, color.blue)
+        val md5 = MessageDigest.getInstance("MD5").digest("$courseIndex:$week".toByteArray())
+        val hashDeg = ((md5[0].toInt() and 0xFF) * 360f / 256f)
+        val newHue = (hsl[0] + hashDeg) % 360f
+        return hslToColor(if (newHue < 0) newHue + 360f else newHue, hsl[1], hsl[2])
+    }
+
     fun assignColorIndices(
         courses: List<com.classapp.schedule.data.Course>,
         groupMode: Int = 2
@@ -125,31 +126,18 @@ object CourseColors {
         val nameToIndex = mutableMapOf<String, Int>()
         val keyToIndex = mutableMapOf<String, Int>()
         var nextColor = 0
-
         return courses.associate { course ->
             val idx = when (groupMode) {
-                0 -> {
-                    // Same color by name
-                    nameToIndex.getOrPut(course.name) { nextColor++ }
-                }
+                0 -> nameToIndex.getOrPut(course.name) { nextColor++ }
                 1 -> {
-                    // Same hue base by name, but offset by classroom
                     val baseIdx = nameToIndex.getOrPut(course.name) { nextColor++ }
-                    val classroomVariants = keyToIndex.getOrPut("${course.name}|${course.classroom}") {
-                        baseIdx // same base, but we'll handle saturation in rendering
-                    }
-                    classroomVariants
+                    keyToIndex.getOrPut("${course.name}|${course.classroom}") { baseIdx }
                 }
-                else -> {
-                    // Different color by name + classroom
-                    keyToIndex.getOrPut("${course.name}|${course.classroom}") { nextColor++ }
-                }
+                else -> keyToIndex.getOrPut("${course.name}|${course.classroom}") { nextColor++ }
             }
             course.id to idx
         }
     }
-
-    // --- HSL color math ---
 
     private fun rgbToHsl(r: Float, g: Float, b: Float): FloatArray {
         val max = maxOf(r, g, b); val min = minOf(r, g, b)

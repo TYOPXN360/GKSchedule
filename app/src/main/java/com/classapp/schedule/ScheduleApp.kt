@@ -120,7 +120,7 @@ fun ScheduleApp(
                 else -> keyToIdx.getOrPut("${c.name}|${c.classroom}") { nextColor++ }
             }
             val satOffset = if (colorGroupMode == 1) ci % 10 else 0
-            result[c.id] = com.classapp.schedule.util.CourseColors.getBackgroundStatic(ci, courseColorPalette, satOffset)
+            result[c.id] = com.classapp.schedule.util.CourseColors.getBackgroundStatic(ci, courseColorPalette, satOffset, realCurrentWeek)
         }
         result
     }
@@ -180,7 +180,7 @@ fun ScheduleApp(
                     }
                     val satOffset = if (colorGroupMode == 1) ci % 10 else 0
                     result["${exam.kcmc}|${exam.cdmc}"] =
-                        com.classapp.schedule.util.CourseColors.getBackgroundStatic(ci, courseColorPalette, satOffset)
+                        com.classapp.schedule.util.CourseColors.getBackgroundStatic(ci, courseColorPalette, satOffset, week)
                 }
             }
             result

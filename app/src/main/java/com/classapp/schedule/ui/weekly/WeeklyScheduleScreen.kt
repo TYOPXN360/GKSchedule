@@ -3,6 +3,7 @@ package com.classapp.schedule.ui.weekly
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -83,6 +84,10 @@ fun WeeklyScheduleScreen(
     onAddCourse: () -> Unit,
     onRefresh: () -> Unit,
     realCurrentWeek: Int = currentWeek,
+    courseColorIndexMap: Map<Long, Int> = emptyMap(),
+    courseColorPalette: List<Pair<Color, Color>> = emptyList(),
+    courseColorMap: Map<Long, Color> = emptyMap(),
+    examColorMap: Map<String, Color> = emptyMap(),
     getStartTime: (Int) -> String = { "" },
     getEndTime: (Int) -> String = { "" }
 ) {
@@ -262,8 +267,7 @@ fun WeeklyScheduleScreen(
             }
 
             // Grid — HorizontalPager for native swipe
-            val uniqueCourseCount = remember(scheduleCourses) { scheduleCourses.map { it.name }.distinct().size }
-            val monetColors = CourseColors.getColors(colorEngine, count = uniqueCourseCount.coerceAtLeast(8))
+            val monetColors = if (courseColorPalette.isNotEmpty()) courseColorPalette else CourseColors.getColors(colorEngine, count = courses.map { it.name }.distinct().size.coerceAtLeast(8))
             val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
             HorizontalPager(
                 state = pagerState,
@@ -364,11 +368,13 @@ fun WeeklyScheduleScreen(
                         }
                     }
 
-                    // Pre-compute base colors
-                    val blockBaseColors = remember(weekBlocks, monetColors, colorGroupMode) {
+                    // Pre-compute base colors — prefer shared courseColorMap for consistency
+                    val blockBaseColors = remember(weekBlocks, monetColors, colorGroupMode, courseColorMap) {
                         weekBlocks.map { block ->
-                            val satOffset = if (colorGroupMode == 1) block.colorIdx % 10 else 0
-                            CourseColors.getBackgroundStatic(block.colorIdx, monetColors, satOffset)
+                            courseColorMap[block.course.id] ?: run {
+                                val satOffset = if (colorGroupMode == 1) block.colorIdx % 10 else 0
+                                CourseColors.getBackgroundStatic(block.colorIdx, monetColors, satOffset, week)
+                            }
                         }
                     }
 
@@ -439,7 +445,7 @@ fun WeeklyScheduleScreen(
                             }
                                 .padding(4.dp)
                         ) {
-                            val textColor = CourseColors.getTextColor(block.colorIdx, monetColors, satOffset)
+                            val textColor = CourseColors.getTextColor(block.colorIdx, monetColors, satOffset, week)
                             Column {
                                 if (block.course.isExamCourse()) {
                                     Box(
@@ -454,7 +460,7 @@ fun WeeklyScheduleScreen(
                                             text = "考试",
                                             style = MaterialTheme.typography.labelSmall,
                                             fontWeight = FontWeight.Bold,
-                                            color = CourseColors.getBackgroundStatic(block.colorIdx, monetColors, satOffset),
+                                            color = CourseColors.getBackgroundStatic(block.colorIdx, monetColors, satOffset, week),
                                             maxLines = 1
                                         )
                                     }
@@ -478,168 +484,73 @@ fun WeeklyScheduleScreen(
             } // HorizontalPager
         }
 
-        // FABs — hidden during screenshot capture
+        // FABs
         if (!hideFabs) {
         var fabExpanded by remember { mutableStateOf(true) }
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp)
-        ) {
-            // Collapse/Expand toggle
+        val expandHeight by animateDpAsState(
+            targetValue = if (fabExpanded) (3 * 56 + 3 * 12).dp else 0.dp,
+            animationSpec = spring(dampingRatio = 0.85f, stiffness = 300f),
+            label = "expandHeight"
+        )
+        Box(modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp)) {
+            // Toggle — bottom right
             FloatingActionButton(
-                onClick = {
-                    com.classapp.schedule.util.HapticFeedback.light(hapticView)
-                    fabExpanded = !fabExpanded
-                },
+                onClick = { com.classapp.schedule.util.HapticFeedback.light(hapticView); fabExpanded = !fabExpanded },
                 modifier = Modifier.align(Alignment.BottomEnd),
                 containerColor = MaterialTheme.colorScheme.surfaceVariant,
                 contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-            ) {
-                Text(
-                    if (fabExpanded) "—" else "+",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.width(20.dp)
-                )
-            }
-            // Column with animateContentSize — all items always in layout
+            ) { Text(if (fabExpanded) "—" else "+", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, modifier = Modifier.width(20.dp)) }
+
+            // Column: expandable buttons only (declared first so back-to-week draws on top)
             Column(
-                modifier = Modifier.align(Alignment.BottomEnd).padding(bottom = 68.dp)
-                    .animateContentSize(spring(dampingRatio = 1f, stiffness = 300f)),
+                modifier = Modifier.align(Alignment.BottomEnd).padding(bottom = 68.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Back to current week — always in Column, alpha controls visibility
-                val backAlpha by animateFloatAsState(
-                    targetValue = if (currentWeek != realCurrentWeek) 1f else 0f,
-                    animationSpec = tween(200), label = "ba"
-                )
-                Box(modifier = Modifier.height(if (backAlpha > 0f) 56.dp else 0.dp).fillMaxWidth()) {
-                    FloatingActionButton(
-                        onClick = {
-                            if (currentWeek != realCurrentWeek) {
-                                com.classapp.schedule.util.HapticFeedback.medium(hapticView)
-                                onWeekChange(realCurrentWeek)
-                            }
-                        },
-                        modifier = Modifier.graphicsLayer { alpha = backAlpha },
-                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer
-                    ) {
-                        Icon(
-                            if (currentWeek > realCurrentWeek) Icons.Default.ChevronLeft else Icons.Default.ChevronRight,
-                            stringResource(R.string.back_to_current_week)
-                        )
+                AnimatedVisibility(visible = fabExpanded, enter = slideInVertically(initialOffsetY = { it }) + fadeIn(), exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()) {
+                    FloatingActionButton(onClick = { com.classapp.schedule.util.HapticFeedback.medium(hapticView); onRefresh() }, containerColor = MaterialTheme.colorScheme.secondaryContainer, contentColor = MaterialTheme.colorScheme.onSecondaryContainer) {
+                        if (isRefreshing) CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp) else Icon(Icons.Default.Refresh, "Refresh")
                     }
                 }
-                // Refresh button
-                Box(modifier = Modifier.height(if (fabExpanded) 56.dp else 0.dp).fillMaxWidth()) {
-                    AnimatedVisibility(visible = fabExpanded) {
-                        FloatingActionButton(
-                            onClick = {
-                                com.classapp.schedule.util.HapticFeedback.medium(hapticView)
-                                onRefresh()
-                            },
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                        ) {
-                            if (isRefreshing) {
-                                CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
-                            } else {
-                                Icon(Icons.Default.Refresh, "Refresh")
-                            }
-                        }
+                AnimatedVisibility(visible = fabExpanded, enter = slideInVertically(initialOffsetY = { it }) + fadeIn(), exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()) {
+                    FloatingActionButton(onClick = { com.classapp.schedule.util.HapticFeedback.medium(hapticView); onAddCourse() }, containerColor = MaterialTheme.colorScheme.primary) {
+                        Icon(Icons.Default.Add, stringResource(R.string.add_course))
                     }
                 }
-                // Add course button
-                Box(modifier = Modifier.height(if (fabExpanded) 56.dp else 0.dp).fillMaxWidth()) {
-                    AnimatedVisibility(visible = fabExpanded) {
-                        FloatingActionButton(
-                            onClick = {
-                                com.classapp.schedule.util.HapticFeedback.medium(hapticView)
-                                onAddCourse()
-                            },
-                            containerColor = MaterialTheme.colorScheme.primary
-                        ) {
-                            Icon(Icons.Default.Add, stringResource(R.string.add_course))
-                        }
+                AnimatedVisibility(visible = fabExpanded, enter = slideInVertically(initialOffsetY = { it }) + fadeIn(), exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()) {
+                    FloatingActionButton(onClick = { com.classapp.schedule.util.HapticFeedback.medium(hapticView); coroutineScope.launch { try { hideFabs = true; kotlinx.coroutines.delay(100); val fb = android.graphics.Bitmap.createBitmap(rootView.width, rootView.height, android.graphics.Bitmap.Config.ARGB_8888); rootView.draw(android.graphics.Canvas(fb)); hideFabs = false; val c = android.graphics.Bitmap.createBitmap(fb, 0, cropTopPx.coerceIn(0, fb.height), fb.width, cropBottomPx.coerceIn(cropTopPx.coerceIn(0, fb.height), fb.height) - cropTopPx.coerceIn(0, fb.height)); val s = com.classapp.schedule.util.ImageExport.saveBitmapToGallery(context, c, "Pictures/Screenshots/schedule_${System.currentTimeMillis()}.png"); android.widget.Toast.makeText(context, if (s) "已保存到 Pictures/Screenshots" else "保存失败", android.widget.Toast.LENGTH_SHORT).show() } catch (e: Exception) { android.widget.Toast.makeText(context, "截图失败: ${e.message}", android.widget.Toast.LENGTH_SHORT).show() } }
+                    }, containerColor = MaterialTheme.colorScheme.tertiaryContainer, contentColor = MaterialTheme.colorScheme.onTertiaryContainer) { Icon(Icons.Default.CameraAlt, "Screenshot") }
                     }
-                }
-                // Screenshot button
-                Box(modifier = Modifier.height(if (fabExpanded) 56.dp else 0.dp).fillMaxWidth()) {
-                    AnimatedVisibility(visible = fabExpanded) {
-                FloatingActionButton(
-                    onClick = {
-                        com.classapp.schedule.util.HapticFeedback.medium(hapticView)
-                        coroutineScope.launch {
-                            try {
-                                hideFabs = true
-                                kotlinx.coroutines.delay(100) // wait for recomposition
-                                val fullBitmap = android.graphics.Bitmap.createBitmap(rootView.width, rootView.height, android.graphics.Bitmap.Config.ARGB_8888)
-                                rootView.draw(android.graphics.Canvas(fullBitmap))
-                                hideFabs = false
-                                val left = 0
-                                val top = cropTopPx.coerceIn(0, fullBitmap.height)
-                                val right = fullBitmap.width
-                                val bottom = cropBottomPx.coerceIn(top, fullBitmap.height)
-                                val cropped = android.graphics.Bitmap.createBitmap(fullBitmap, left, top, right - left, bottom - top)
-                                val saved = com.classapp.schedule.util.ImageExport.saveBitmapToGallery(
-                                    context, cropped, "Pictures/Screenshots/schedule_${System.currentTimeMillis()}.png"
-                                )
-                                android.widget.Toast.makeText(
-                                    context,
-                                    if (saved) "已保存到 Pictures/Screenshots" else "保存失败",
-                                    android.widget.Toast.LENGTH_SHORT
-                                ).show()
-                            } catch (e: Exception) {
-                                android.widget.Toast.makeText(context, "截图失败: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
-                            }
-                        }
-                    },
-                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer
-                ) {
-                    Icon(Icons.Default.CameraAlt, "Screenshot")
-                }
-            }
             } // Column
-            // Back to current week — fixed outside Column, above toggle
-            val backAlpha2 by animateFloatAsState(
-                targetValue = if (currentWeek != realCurrentWeek) 1f else 0f,
-                animationSpec = tween(200), label = "ba2"
-            )
-            if (backAlpha2 > 0f) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(bottom = 80.dp)
-                        .graphicsLayer { alpha = backAlpha2 }
-                ) {
-                    FloatingActionButton(
-                        onClick = {
-                            com.classapp.schedule.util.HapticFeedback.medium(hapticView)
-                            onWeekChange(realCurrentWeek)
-                        },
-                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer
-                    ) {
-                        Icon(
-                            if (currentWeek > realCurrentWeek) Icons.Default.ChevronLeft else Icons.Default.ChevronRight,
-                            stringResource(R.string.back_to_current_week)
-                        )
-                    }
-                }
+
+            // Back to current week — horizontal slide + fade, no clip bounds
+            AnimatedVisibility(
+                visible = currentWeek != realCurrentWeek,
+                enter = slideInHorizontally(initialOffsetX = { it / 2 }) + fadeIn(),
+                exit = slideOutHorizontally(targetOffsetX = { it / 2 }) + fadeOut(),
+                modifier = Modifier.align(Alignment.BottomEnd).padding(bottom = 68.dp).offset(y = -expandHeight)
+            ) {
+                FloatingActionButton(
+                    onClick = { com.classapp.schedule.util.HapticFeedback.medium(hapticView); onWeekChange(realCurrentWeek) },
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                ) { Icon(if (currentWeek > realCurrentWeek) Icons.Default.ChevronLeft else Icons.Default.ChevronRight, stringResource(R.string.back_to_current_week)) }
             }
         } // Box
         } // if (!hideFabs)
     } // PullToRefreshBox
 
-    // Detail sheet
+    // Detail sheet — pass dotColor from courseColorMap (or examColorMap for exam courses)
     detailCourse?.let { course ->
+        val detailDotColor = if (course.isExamCourse()) {
+            examColorMap["${course.name}|${course.classroom}"]
+        } else courseColorMap[course.id]
         CourseDetailSheet(course = course, getStartTime = getStartTime, getEndTime = getEndTime,
-            onDismiss = { detailCourse = null }, onEdit = { detailCourse = null; onCourseLongPress(course) })
+            onDismiss = { detailCourse = null }, onEdit = { detailCourse = null; onCourseLongPress(course) },
+            courseColors = CourseColors.getColors(colorEngine, count = scheduleCourses.map { it.name }.distinct().size.coerceAtLeast(8)),
+            colorGroupMode = colorGroupMode,
+            colorIndex = courseColorIndexMap[course.id] ?: course.colorIndex,
+            dotColor = detailDotColor)
     }
 
     if (showWeekPicker) {
@@ -649,12 +560,15 @@ fun WeeklyScheduleScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CourseDetailSheet(course: Course, getStartTime: (Int) -> String, getEndTime: (Int) -> String, onDismiss: () -> Unit, onEdit: () -> Unit) {
+fun CourseDetailSheet(course: Course, getStartTime: (Int) -> String, getEndTime: (Int) -> String, onDismiss: () -> Unit, onEdit: () -> Unit, courseColors: List<Pair<Color, Color>> = CourseColors.getColors(0, count = 32), colorGroupMode: Int = 0, colorIndex: Int = course.colorIndex, dotColor: Color? = null) {
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState()) {
         Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp).padding(bottom = 32.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                val detailColors = CourseColors.getColors(0, count = 32)
-                Box(modifier = Modifier.size(12.dp).clip(RoundedCornerShape(50)).background(CourseColors.getTextColor(course.colorIndex, detailColors)))
+                val detailDotColor = dotColor ?: run {
+                    val satOffset = if (colorGroupMode == 1) colorIndex % 10 else 0
+                    CourseColors.getBackgroundStatic(colorIndex, courseColors, satOffset)
+                }
+                Box(modifier = Modifier.size(12.dp).clip(RoundedCornerShape(50)).background(detailDotColor))
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(course.name, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             }
