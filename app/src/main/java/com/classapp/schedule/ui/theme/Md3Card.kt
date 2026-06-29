@@ -1,31 +1,22 @@
 package com.classapp.schedule.ui.theme
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 
 @Composable
 fun Md3Card(
     modifier: Modifier = Modifier,
-    shape: Shape = MaterialTheme.shapes.extraLarge,
-    containerColor: Color = MaterialTheme.colorScheme.surfaceContainerHigh,
+    shape: Shape = MaterialTheme.shapes.large,
     content: @Composable ColumnScope.() -> Unit
 ) {
     Card(
         modifier = modifier,
         shape = shape,
-        colors = CardDefaults.cardColors(containerColor = containerColor),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
         content = content
     )
 }
@@ -35,41 +26,16 @@ fun Md3Card(
 fun Md3Card(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    shape: Shape = MaterialTheme.shapes.extraLarge,
-    containerColor: Color = MaterialTheme.colorScheme.surfaceContainerHigh,
+    shape: Shape = MaterialTheme.shapes.large,
     content: @Composable ColumnScope.() -> Unit
 ) {
     Card(
         onClick = onClick,
         modifier = modifier,
         shape = shape,
-        colors = CardDefaults.cardColors(containerColor = containerColor),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
         content = content
     )
-}
-
-@Composable
-fun SettingsIconBadge(
-    icon: ImageVector,
-    containerColor: Color,
-    iconColor: Color,
-    modifier: Modifier = Modifier,
-    size: Dp = 42.dp,
-    iconSize: Dp = 22.dp
-) {
-    Box(
-        modifier = modifier
-            .size(size)
-            .background(containerColor, RoundedCornerShape(12.dp)),
-        contentAlignment = Alignment.Center
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            modifier = Modifier.size(iconSize),
-            tint = iconColor
-        )
-    }
 }
 
 @Composable

@@ -218,10 +218,8 @@ private fun SettingsMainPage(onOpenPage: (String) -> Unit, onExit: () -> Unit) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .verticalScroll(rememberScrollState())
         ) {
-            Spacer(modifier = Modifier.height(4.dp))
             val catColors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.tertiary, MaterialTheme.colorScheme.error, MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.tertiary)
             CategoryItem(Icons.Default.CalendarMonth, stringResource(R.string.settings_category_semester), stringResource(R.string.settings_category_semester_desc), catColors[0]) { onOpenPage("semester") }
             CategoryItem(Icons.Default.Palette, stringResource(R.string.settings_category_appearance), stringResource(R.string.settings_category_appearance_desc), catColors[1]) { onOpenPage("appearance") }
@@ -236,23 +234,11 @@ private fun SettingsMainPage(onOpenPage: (String) -> Unit, onExit: () -> Unit) {
 
 @Composable
 private fun CategoryItem(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, subtitle: String, seedColor: androidx.compose.ui.graphics.Color, onClick: () -> Unit) {
-    val containerColor = when (seedColor) {
-        MaterialTheme.colorScheme.primary -> MaterialTheme.colorScheme.primaryContainer
-        MaterialTheme.colorScheme.tertiary -> MaterialTheme.colorScheme.tertiaryContainer
-        MaterialTheme.colorScheme.error -> MaterialTheme.colorScheme.errorContainer
-        else -> MaterialTheme.colorScheme.secondaryContainer
-    }
-    val iconColor = when (seedColor) {
-        MaterialTheme.colorScheme.primary -> MaterialTheme.colorScheme.onPrimaryContainer
-        MaterialTheme.colorScheme.tertiary -> MaterialTheme.colorScheme.onTertiaryContainer
-        MaterialTheme.colorScheme.error -> MaterialTheme.colorScheme.onErrorContainer
-        else -> MaterialTheme.colorScheme.onSecondaryContainer
-    }
-    com.classapp.schedule.ui.theme.Md3Card(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+    com.classapp.schedule.ui.theme.Md3Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) {
         ListItem(
-            headlineContent = { Text(title, style = MaterialTheme.typography.titleMedium) },
-            supportingContent = { Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) },
-            leadingContent = { com.classapp.schedule.ui.theme.SettingsIconBadge(icon = icon, containerColor = containerColor, iconColor = iconColor) },
+            headlineContent = { Text(title, fontWeight = FontWeight.Medium) },
+            supportingContent = { Text(subtitle) },
+            leadingContent = { com.classapp.schedule.ui.theme.MonetIconBadge(icon = icon, contentDescription = null, seedColor = seedColor) },
             trailingContent = { Icon(Icons.Default.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
             modifier = Modifier.clickable(onClick = onClick)
         )
