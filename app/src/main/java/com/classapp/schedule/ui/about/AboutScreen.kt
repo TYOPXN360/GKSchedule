@@ -178,62 +178,50 @@ fun AboutScreen(
 
         // All items in one big card
         Md3Card(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-            Column(modifier = Modifier.padding(vertical = 8.dp)) {
+            Column(modifier = Modifier.padding(vertical = 4.dp)) {
                 // Group 1: semester info
-                SettingsListItem(
-                    icon = Icons.Default.CalendarMonth,
-                    title = stringResource(R.string.semester_start),
-                    subtitle = semesterStart.toString(),
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    iconColor = MaterialTheme.colorScheme.onPrimaryContainer
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.semester_start)) },
+                    supportingContent = { Text(semesterStart.toString()) },
+                    leadingContent = { SettingsIconBadge(icon = Icons.Default.CalendarMonth, containerColor = MaterialTheme.colorScheme.primaryContainer, iconColor = MaterialTheme.colorScheme.onPrimaryContainer) }
                 )
-                SettingsListItem(
-                    icon = Icons.Default.DateRange,
-                    title = stringResource(R.string.total_weeks),
-                    subtitle = "$totalWeeks",
-                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                    iconColor = MaterialTheme.colorScheme.onTertiaryContainer
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.total_weeks)) },
+                    supportingContent = { Text("$totalWeeks") },
+                    leadingContent = { SettingsIconBadge(icon = Icons.Default.DateRange, containerColor = MaterialTheme.colorScheme.tertiaryContainer, iconColor = MaterialTheme.colorScheme.onTertiaryContainer) }
                 )
-                SettingsListItem(
-                    icon = Icons.Default.AccessTime,
-                    title = stringResource(R.string.periods_per_day),
-                    subtitle = "$periodsPerDay",
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                    iconColor = MaterialTheme.colorScheme.onSecondaryContainer
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.periods_per_day)) },
+                    supportingContent = { Text("$periodsPerDay") },
+                    leadingContent = { SettingsIconBadge(icon = Icons.Default.AccessTime, containerColor = MaterialTheme.colorScheme.secondaryContainer, iconColor = MaterialTheme.colorScheme.onSecondaryContainer) }
                 )
 
                 HorizontalDivider(
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
                     color = MaterialTheme.colorScheme.surfaceVariant
                 )
 
                 // Group 2: actions
-                SettingsListItem(
-                    icon = Icons.Default.School,
-                    title = "考试安排",
-                    subtitle = "查看考试时间和考场",
-                    containerColor = MaterialTheme.colorScheme.errorContainer,
-                    iconColor = MaterialTheme.colorScheme.onErrorContainer,
-                    hasArrow = true,
-                    onClick = onOpenExam
+                ListItem(
+                    headlineContent = { Text("考试安排") },
+                    supportingContent = { Text("查看考试时间和考场") },
+                    leadingContent = { SettingsIconBadge(icon = Icons.Default.School, containerColor = MaterialTheme.colorScheme.errorContainer, iconColor = MaterialTheme.colorScheme.onErrorContainer) },
+                    trailingContent = { Icon(Icons.Default.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+                    modifier = Modifier.clickable(onClick = onOpenExam)
                 )
-                SettingsListItem(
-                    icon = Icons.Default.Settings,
-                    title = stringResource(R.string.settings_title),
-                    subtitle = stringResource(R.string.about_settings_desc),
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    iconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    hasArrow = true,
-                    onClick = onOpenSettings
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.settings_title)) },
+                    supportingContent = { Text(stringResource(R.string.about_settings_desc)) },
+                    leadingContent = { SettingsIconBadge(icon = Icons.Default.Settings, containerColor = MaterialTheme.colorScheme.primaryContainer, iconColor = MaterialTheme.colorScheme.onPrimaryContainer) },
+                    trailingContent = { Icon(Icons.Default.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+                    modifier = Modifier.clickable(onClick = onOpenSettings)
                 )
-                SettingsListItem(
-                    icon = Icons.AutoMirrored.Filled.Article,
-                    title = stringResource(R.string.about_title),
-                    subtitle = stringResource(R.string.about_school),
-                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                    iconColor = MaterialTheme.colorScheme.onTertiaryContainer,
-                    hasArrow = true,
-                    onClick = { showAboutDialog = true }
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.about_title)) },
+                    supportingContent = { Text(stringResource(R.string.about_school)) },
+                    leadingContent = { SettingsIconBadge(icon = Icons.AutoMirrored.Filled.Article, containerColor = MaterialTheme.colorScheme.tertiaryContainer, iconColor = MaterialTheme.colorScheme.onTertiaryContainer) },
+                    trailingContent = { Icon(Icons.Default.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+                    modifier = Modifier.clickable { showAboutDialog = true }
                 )
             }
         }
