@@ -54,6 +54,17 @@ fun MonetIconBadge(
     }
 }
 
+@Composable
+fun MonetIconBadgeTextColor(seedColor: Color): Color {
+    val isDark = LocalAppIsDark.current
+    val hsl = rgbToHsl(seedColor.red, seedColor.green, seedColor.blue)
+    return if (isDark) {
+        Color.White.copy(alpha = 0.95f)
+    } else {
+        hslToColor(hsl[0], 0.50f, 0.25f)
+    }
+}
+
 internal fun rgbToHsl(r: Float, g: Float, b: Float): FloatArray {
     val max = maxOf(r, g, b); val min = minOf(r, g, b)
     val l = (max + min) / 2f

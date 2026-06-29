@@ -398,15 +398,17 @@ private fun CourseCard(
                 Column(modifier = Modifier.weight(1f)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         if (isNext) {
+                            val tagBg = com.classapp.schedule.ui.theme.monetCardColor(barColor)
+                            val tagText = com.classapp.schedule.ui.theme.MonetIconBadgeTextColor(barColor)
                             Box(
                                 modifier = Modifier
-                                    .background(barColor.copy(alpha = 0.15f), RoundedCornerShape(4.dp))
+                                    .background(tagBg, RoundedCornerShape(4.dp))
                                     .padding(horizontal = 6.dp, vertical = 1.dp)
                             ) {
                                 Text(
                                     text = stringResource(R.string.next_course),
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = barColor
+                                    color = tagText
                                 )
                             }
                             Spacer(modifier = Modifier.width(6.dp))
