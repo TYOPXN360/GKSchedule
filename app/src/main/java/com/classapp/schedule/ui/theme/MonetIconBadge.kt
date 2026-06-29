@@ -21,9 +21,9 @@ fun MonetIconBadge(
     contentDescription: String?,
     seedColor: Color,
     modifier: Modifier = Modifier,
-    size: Dp = 40.dp,
-    iconSize: Dp = 22.dp,
-    cornerRadius: Dp = 12.dp
+    size: Dp = 48.dp,
+    iconSize: Dp = 24.dp,
+    cornerRadius: Dp = 14.dp
 ) {
     val isDark = LocalAppIsDark.current
 

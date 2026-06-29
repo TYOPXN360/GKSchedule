@@ -218,8 +218,10 @@ private fun SettingsMainPage(onOpenPage: (String) -> Unit, onExit: () -> Unit) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            Spacer(modifier = Modifier.height(4.dp))
             val catColors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.tertiary, MaterialTheme.colorScheme.error, MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.tertiary)
             CategoryItem(Icons.Default.CalendarMonth, stringResource(R.string.settings_category_semester), stringResource(R.string.settings_category_semester_desc), catColors[0]) { onOpenPage("semester") }
             CategoryItem(Icons.Default.Palette, stringResource(R.string.settings_category_appearance), stringResource(R.string.settings_category_appearance_desc), catColors[1]) { onOpenPage("appearance") }
@@ -234,7 +236,7 @@ private fun SettingsMainPage(onOpenPage: (String) -> Unit, onExit: () -> Unit) {
 
 @Composable
 private fun CategoryItem(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, subtitle: String, seedColor: androidx.compose.ui.graphics.Color, onClick: () -> Unit) {
-    com.classapp.schedule.ui.theme.Md3Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), containerColor = com.classapp.schedule.ui.theme.monetCardColor(seedColor)) {
+    com.classapp.schedule.ui.theme.Md3Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
         ListItem(
             headlineContent = { Text(title, fontWeight = FontWeight.Medium) },
             supportingContent = { Text(subtitle) },
