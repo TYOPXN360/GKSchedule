@@ -125,52 +125,65 @@ fun ScheduleApp(
         result
     }
 
-    // Exam kcmc|cdmc → Color, using EXACT same nameToIdx as courses (shared map, not separate)
-    // CRITICAL: only iterate exams in the current week, otherwise non-current-week exams
-    // would consume nameToIdx/keyToIdx slots and shift the colors of in-week exams.
-    val examColorMap = remember(courses, realCurrentWeek, colorGroupMode, courseColorPalette, examList, showExamSchedule, semesterStart) {
+    // Exam kcmc|cdmc → Color. Each exam's color must be computed using the nameToIdx
+    // of THE WEEK THAT EXAM IS IN, not the current week. Otherwise the today page's bar
+    // (which can show exams from any lookahead week) would use the wrong nameToIdx and
+    // mismatch the schedule block.
+    val examColorMap = remember(courses, colorGroupMode, courseColorPalette, examList, showExamSchedule, semesterStart) {
         if (!showExamSchedule || examList.isEmpty()) emptyMap<String, Color>()
         else {
-            val weekStart = semesterStart.plusDays(((realCurrentWeek - 1) * 7).toLong())
-            val weekEnd = weekStart.plusDays(7)
-            val weekExams = examList.filter { exam ->
-                try {
-                    val d = java.time.LocalDate.parse(exam.getExamDate())
-                    !d.isBefore(weekStart) && d.isBefore(weekEnd)
-                } catch (_: Exception) { false }
-            }
-            val weekCourses = courses.filter { it.isInWeek(realCurrentWeek) }
-            val nameToIdx = mutableMapOf<String, Int>()
-            val keyToIdx = mutableMapOf<String, Int>()
-            val classroomSatMap = mutableMapOf<String, MutableMap<String, Int>>()
-            var nextColor = 0
-            // Build index from regular courses first (same order as scheduleCourses)
-            weekCourses.forEach { c ->
-                when (colorGroupMode) {
-                    0 -> nameToIdx.getOrPut(c.name) { nextColor++ }
-                    1 -> {
-                        val baseIdx = nameToIdx.getOrPut(c.name) { nextColor++ }
-                        val satMap = classroomSatMap.getOrPut(c.name) { mutableMapOf() }
-                        satMap.getOrPut(c.classroom) { satMap.size }
+            // Find all weeks that contain at least one exam
+            val examWeeks = examList.mapNotNull { exam ->
+                val d = try { java.time.LocalDate.parse(exam.getExamDate()) } catch (_: Exception) { null }
+                if (d == null) null else {
+                    val daysDiff = java.time.temporal.ChronoUnit.DAYS.between(semesterStart, d).toInt()
+                    if (daysDiff < 0) null else (daysDiff / 7) + 1
+                }
+            }.distinct().sorted()
+
+            val result = mutableMapOf<String, Color>()
+            for (week in examWeeks) {
+                val weekStart = semesterStart.plusDays(((week - 1) * 7).toLong())
+                val weekEnd = weekStart.plusDays(7)
+                val weekExams = examList.filter { exam ->
+                    val d = try { java.time.LocalDate.parse(exam.getExamDate()) } catch (_: Exception) { null }
+                    d != null && !d.isBefore(weekStart) && d.isBefore(weekEnd)
+                }
+                val weekCourses = courses.filter { it.isInWeek(week) }
+                val nameToIdx = mutableMapOf<String, Int>()
+                val keyToIdx = mutableMapOf<String, Int>()
+                val classroomSatMap = mutableMapOf<String, MutableMap<String, Int>>()
+                var nextColor = 0
+                // Build index from regular courses first (same order as scheduleCourses)
+                weekCourses.forEach { c ->
+                    when (colorGroupMode) {
+                        0 -> nameToIdx.getOrPut(c.name) { nextColor++ }
+                        1 -> {
+                            val baseIdx = nameToIdx.getOrPut(c.name) { nextColor++ }
+                            val satMap = classroomSatMap.getOrPut(c.name) { mutableMapOf() }
+                            satMap.getOrPut(c.classroom) { satMap.size }
+                        }
+                        else -> keyToIdx.getOrPut("${c.name}|${c.classroom}") { nextColor++ }
                     }
-                    else -> keyToIdx.getOrPut("${c.name}|${c.classroom}") { nextColor++ }
+                }
+                // Assign exam indices for exams in this week
+                weekExams.forEach { exam ->
+                    val ci = when (colorGroupMode) {
+                        0 -> nameToIdx.getOrPut(exam.kcmc) { nextColor++ }
+                        1 -> {
+                            val baseIdx = nameToIdx.getOrPut(exam.kcmc) { nextColor++ }
+                            val satMap = classroomSatMap.getOrPut(exam.kcmc) { mutableMapOf() }
+                            val satOffset = satMap.getOrPut(exam.cdmc) { satMap.size }
+                            baseIdx * 10 + satOffset
+                        }
+                        else -> keyToIdx.getOrPut("${exam.kcmc}|${exam.cdmc}") { nextColor++ }
+                    }
+                    val satOffset = if (colorGroupMode == 1) ci % 10 else 0
+                    result["${exam.kcmc}|${exam.cdmc}"] =
+                        com.classapp.schedule.util.CourseColors.getBackgroundStatic(ci, courseColorPalette, satOffset)
                 }
             }
-            // Now assign exam indices for exams in the current week only
-            weekExams.associate { exam ->
-                val ci = when (colorGroupMode) {
-                    0 -> nameToIdx.getOrPut(exam.kcmc) { nextColor++ }
-                    1 -> {
-                        val baseIdx = nameToIdx.getOrPut(exam.kcmc) { nextColor++ }
-                        val satMap = classroomSatMap.getOrPut(exam.kcmc) { mutableMapOf() }
-                        val satOffset = satMap.getOrPut(exam.cdmc) { satMap.size }
-                        baseIdx * 10 + satOffset
-                    }
-                    else -> keyToIdx.getOrPut("${exam.kcmc}|${exam.cdmc}") { nextColor++ }
-                }
-                val satOffset = if (colorGroupMode == 1) ci % 10 else 0
-                "${exam.kcmc}|${exam.cdmc}" to com.classapp.schedule.util.CourseColors.getBackgroundStatic(ci, courseColorPalette, satOffset)
-            }
+            result
         }
     }
 
