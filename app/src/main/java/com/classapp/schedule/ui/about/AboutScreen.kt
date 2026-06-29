@@ -21,6 +21,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.classapp.schedule.LoginState
 import com.classapp.schedule.R
+import com.classapp.schedule.ui.theme.Md3Card
+import com.classapp.schedule.ui.theme.MonetIconBadge
 
 @Composable
 fun AboutScreen(
@@ -177,24 +179,25 @@ fun AboutScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         // Semester info (read-only)
-        Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) {
+        val badgeColors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.tertiary, MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.error, MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.tertiary)
+        Md3Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) {
             Column {
                 ListItem(
                     headlineContent = { Text(stringResource(R.string.semester_start)) },
                     supportingContent = { Text(semesterStart.toString()) },
-                    leadingContent = { Icon(Icons.Default.CalendarMonth, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
+                    leadingContent = { MonetIconBadge(icon = Icons.Default.CalendarMonth, contentDescription = null, seedColor = badgeColors[0]) }
                 )
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                 ListItem(
                     headlineContent = { Text(stringResource(R.string.total_weeks)) },
                     supportingContent = { Text("$totalWeeks") },
-                    leadingContent = { Icon(Icons.Default.DateRange, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
+                    leadingContent = { MonetIconBadge(icon = Icons.Default.DateRange, contentDescription = null, seedColor = badgeColors[1]) }
                 )
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                 ListItem(
                     headlineContent = { Text(stringResource(R.string.periods_per_day)) },
                     supportingContent = { Text("$periodsPerDay") },
-                    leadingContent = { Icon(Icons.Default.AccessTime, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
+                    leadingContent = { MonetIconBadge(icon = Icons.Default.AccessTime, contentDescription = null, seedColor = badgeColors[2]) }
                 )
             }
         }
@@ -202,11 +205,11 @@ fun AboutScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         // Exam schedule
-        Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) {
+        Md3Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) {
             ListItem(
                 headlineContent = { Text("考试安排") },
                 supportingContent = { Text("查看考试时间和考场") },
-                leadingContent = { Icon(Icons.Default.School, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+                leadingContent = { MonetIconBadge(icon = Icons.Default.School, contentDescription = null, seedColor = badgeColors[3]) },
                 trailingContent = { Icon(Icons.Default.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
                 modifier = Modifier.clickable(onClick = onOpenExam)
             )
@@ -215,11 +218,11 @@ fun AboutScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         // Settings
-        Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) {
+        Md3Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) {
             ListItem(
                 headlineContent = { Text(stringResource(R.string.settings_title)) },
                 supportingContent = { Text(stringResource(R.string.about_settings_desc)) },
-                leadingContent = { Icon(Icons.Default.Settings, null) },
+                leadingContent = { MonetIconBadge(icon = Icons.Default.Settings, contentDescription = null, seedColor = badgeColors[4]) },
                 modifier = Modifier.clickable(onClick = onOpenSettings)
             )
         }
@@ -227,11 +230,11 @@ fun AboutScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         // About
-        Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) {
+        Md3Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) {
             ListItem(
                 headlineContent = { Text(stringResource(R.string.about_title)) },
                 supportingContent = { Text(stringResource(R.string.about_school)) },
-                leadingContent = { Icon(Icons.AutoMirrored.Filled.Article, null) },
+                leadingContent = { MonetIconBadge(icon = Icons.AutoMirrored.Filled.Article, contentDescription = null, seedColor = badgeColors[5]) },
                 modifier = Modifier.clickable { showAboutDialog = true }
             )
         }

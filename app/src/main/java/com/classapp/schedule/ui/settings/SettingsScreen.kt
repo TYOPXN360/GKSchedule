@@ -220,26 +220,29 @@ private fun SettingsMainPage(onOpenPage: (String) -> Unit, onExit: () -> Unit) {
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
         ) {
-            CategoryItem(Icons.Default.CalendarMonth, stringResource(R.string.settings_category_semester), stringResource(R.string.settings_category_semester_desc)) { onOpenPage("semester") }
-            CategoryItem(Icons.Default.Palette, stringResource(R.string.settings_category_appearance), stringResource(R.string.settings_category_appearance_desc)) { onOpenPage("appearance") }
-            CategoryItem(Icons.Default.GridOn, stringResource(R.string.settings_category_schedule), stringResource(R.string.settings_category_schedule_desc)) { onOpenPage("schedule_style") }
-            CategoryItem(Icons.Default.Notifications, stringResource(R.string.settings_category_notification), stringResource(R.string.settings_category_notification_desc)) { onOpenPage("notification") }
-            CategoryItem(Icons.Default.Sync, stringResource(R.string.settings_category_sync), stringResource(R.string.settings_category_sync_desc)) { onOpenPage("sync") }
-            CategoryItem(Icons.Default.Storage, stringResource(R.string.settings_category_data), stringResource(R.string.settings_category_data_desc)) { onOpenPage("data") }
+            val catColors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.tertiary, MaterialTheme.colorScheme.error, MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.tertiary)
+            CategoryItem(Icons.Default.CalendarMonth, stringResource(R.string.settings_category_semester), stringResource(R.string.settings_category_semester_desc), catColors[0]) { onOpenPage("semester") }
+            CategoryItem(Icons.Default.Palette, stringResource(R.string.settings_category_appearance), stringResource(R.string.settings_category_appearance_desc), catColors[1]) { onOpenPage("appearance") }
+            CategoryItem(Icons.Default.GridOn, stringResource(R.string.settings_category_schedule), stringResource(R.string.settings_category_schedule_desc), catColors[2]) { onOpenPage("schedule_style") }
+            CategoryItem(Icons.Default.Notifications, stringResource(R.string.settings_category_notification), stringResource(R.string.settings_category_notification_desc), catColors[3]) { onOpenPage("notification") }
+            CategoryItem(Icons.Default.Sync, stringResource(R.string.settings_category_sync), stringResource(R.string.settings_category_sync_desc), catColors[4]) { onOpenPage("sync") }
+            CategoryItem(Icons.Default.Storage, stringResource(R.string.settings_category_data), stringResource(R.string.settings_category_data_desc), catColors[5]) { onOpenPage("data") }
             Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }
 
 @Composable
-private fun CategoryItem(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, subtitle: String, onClick: () -> Unit) {
-    ListItem(
-        headlineContent = { Text(title, fontWeight = FontWeight.Medium) },
-        supportingContent = { Text(subtitle) },
-        leadingContent = { Icon(icon, null, tint = MaterialTheme.colorScheme.primary) },
-        trailingContent = { Icon(Icons.Default.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
-        modifier = Modifier.clickable(onClick = onClick)
-    )
+private fun CategoryItem(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, subtitle: String, seedColor: androidx.compose.ui.graphics.Color, onClick: () -> Unit) {
+    com.classapp.schedule.ui.theme.Md3Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) {
+        ListItem(
+            headlineContent = { Text(title, fontWeight = FontWeight.Medium) },
+            supportingContent = { Text(subtitle) },
+            leadingContent = { com.classapp.schedule.ui.theme.MonetIconBadge(icon = icon, contentDescription = null, seedColor = seedColor) },
+            trailingContent = { Icon(Icons.Default.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+            modifier = Modifier.clickable(onClick = onClick)
+        )
+    }
 }
 
 // === Sub-page wrapper ===
