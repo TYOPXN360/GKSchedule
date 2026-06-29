@@ -397,6 +397,20 @@ private fun CourseCard(
                 Spacer(modifier = Modifier.width(16.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (isNext) {
+                            Box(
+                                modifier = Modifier
+                                    .background(barColor.copy(alpha = 0.15f), RoundedCornerShape(4.dp))
+                                    .padding(horizontal = 6.dp, vertical = 1.dp)
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.next_course),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = barColor
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(6.dp))
+                        }
                         Text(
                             text = course.name,
                             style = MaterialTheme.typography.titleMedium
@@ -406,12 +420,6 @@ private fun CourseCard(
                             SuggestionChip(
                                 onClick = {},
                                 label = { Text("${(progress * 100).toInt()}%", style = MaterialTheme.typography.labelSmall) }
-                            )
-                        } else if (isNext) {
-                            Spacer(modifier = Modifier.width(8.dp))
-                            SuggestionChip(
-                                onClick = {},
-                                label = { Text(stringResource(R.string.next_course), style = MaterialTheme.typography.labelSmall) }
                             )
                         }
                         if (isPast) {
