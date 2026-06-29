@@ -87,6 +87,7 @@ fun WeeklyScheduleScreen(
     courseColorIndexMap: Map<Long, Int> = emptyMap(),
     courseColorPalette: List<Pair<Color, Color>> = emptyList(),
     courseColorMap: Map<Long, Color> = emptyMap(),
+    examColorMap: Map<String, Color> = emptyMap(),
     getStartTime: (Int) -> String = { "" },
     getEndTime: (Int) -> String = { "" }
 ) {
@@ -539,14 +540,17 @@ fun WeeklyScheduleScreen(
         } // if (!hideFabs)
     } // PullToRefreshBox
 
-    // Detail sheet — pass dotColor from courseColorMap so the dot matches the actual rendered block color
+    // Detail sheet — pass dotColor from courseColorMap (or examColorMap for exam courses)
     detailCourse?.let { course ->
+        val detailDotColor = if (course.isExamCourse()) {
+            examColorMap["${course.name}|${course.classroom}"]
+        } else courseColorMap[course.id]
         CourseDetailSheet(course = course, getStartTime = getStartTime, getEndTime = getEndTime,
             onDismiss = { detailCourse = null }, onEdit = { detailCourse = null; onCourseLongPress(course) },
             courseColors = CourseColors.getColors(colorEngine, count = scheduleCourses.map { it.name }.distinct().size.coerceAtLeast(8)),
             colorGroupMode = colorGroupMode,
             colorIndex = courseColorIndexMap[course.id] ?: course.colorIndex,
-            dotColor = courseColorMap[course.id])
+            dotColor = detailDotColor)
     }
 
     if (showWeekPicker) {

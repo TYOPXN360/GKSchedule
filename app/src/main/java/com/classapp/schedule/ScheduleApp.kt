@@ -126,9 +126,19 @@ fun ScheduleApp(
     }
 
     // Exam kcmc|cdmc → Color, using EXACT same nameToIdx as courses (shared map, not separate)
-    val examColorMap = remember(courses, realCurrentWeek, colorGroupMode, courseColorPalette, examList, showExamSchedule) {
+    // CRITICAL: only iterate exams in the current week, otherwise non-current-week exams
+    // would consume nameToIdx/keyToIdx slots and shift the colors of in-week exams.
+    val examColorMap = remember(courses, realCurrentWeek, colorGroupMode, courseColorPalette, examList, showExamSchedule, semesterStart) {
         if (!showExamSchedule || examList.isEmpty()) emptyMap<String, Color>()
         else {
+            val weekStart = semesterStart.plusDays(((realCurrentWeek - 1) * 7).toLong())
+            val weekEnd = weekStart.plusDays(7)
+            val weekExams = examList.filter { exam ->
+                try {
+                    val d = java.time.LocalDate.parse(exam.getExamDate())
+                    !d.isBefore(weekStart) && d.isBefore(weekEnd)
+                } catch (_: Exception) { false }
+            }
             val weekCourses = courses.filter { it.isInWeek(realCurrentWeek) }
             val nameToIdx = mutableMapOf<String, Int>()
             val keyToIdx = mutableMapOf<String, Int>()
@@ -146,8 +156,8 @@ fun ScheduleApp(
                     else -> keyToIdx.getOrPut("${c.name}|${c.classroom}") { nextColor++ }
                 }
             }
-            // Now assign exam indices (exams append after courses in scheduleCourses)
-            examList.associate { exam ->
+            // Now assign exam indices for exams in the current week only
+            weekExams.associate { exam ->
                 val ci = when (colorGroupMode) {
                     0 -> nameToIdx.getOrPut(exam.kcmc) { nextColor++ }
                     1 -> {
@@ -298,7 +308,8 @@ fun ScheduleApp(
                     getStartTime = { viewModel.getStartTime(it) },
                     getEndTime = { viewModel.getEndTime(it) },
                     courseColorPalette = courseColorPalette,
-                    courseColorMap = courseColorMap
+                    courseColorMap = courseColorMap,
+                    examColorMap = examColorMap
                 )
             }
 
