@@ -1,5 +1,6 @@
 package com.classapp.schedule.ui.theme
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -12,14 +13,13 @@ import androidx.compose.ui.unit.dp
 fun Md3Card(
     modifier: Modifier = Modifier,
     shape: Shape = MaterialTheme.shapes.large,
-    containerColor: Color = MaterialTheme.colorScheme.surfaceBright,
+    containerColor: Color = MaterialTheme.colorScheme.surfaceContainerLow,
     content: @Composable ColumnScope.() -> Unit
 ) {
     Card(
-        modifier = modifier,
+        modifier = modifier.border(1.dp, MaterialTheme.colorScheme.outlineVariant, shape),
         shape = shape,
         colors = CardDefaults.cardColors(containerColor = containerColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         content = content
     )
 }
@@ -30,15 +30,14 @@ fun Md3Card(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     shape: Shape = MaterialTheme.shapes.large,
-    containerColor: Color = MaterialTheme.colorScheme.surfaceBright,
+    containerColor: Color = MaterialTheme.colorScheme.surfaceContainerLow,
     content: @Composable ColumnScope.() -> Unit
 ) {
     Card(
         onClick = onClick,
-        modifier = modifier,
+        modifier = modifier.border(1.dp, MaterialTheme.colorScheme.outlineVariant, shape),
         shape = shape,
         colors = CardDefaults.cardColors(containerColor = containerColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         content = content
     )
 }
