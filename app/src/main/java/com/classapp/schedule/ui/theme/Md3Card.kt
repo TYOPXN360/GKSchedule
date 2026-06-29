@@ -6,18 +6,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.unit.dp
 
 @Composable
 fun Md3Card(
     modifier: Modifier = Modifier,
     shape: Shape = MaterialTheme.shapes.large,
-    containerColor: Color = MaterialTheme.colorScheme.surfaceContainerHighest,
+    containerColor: Color = MaterialTheme.colorScheme.surfaceBright,
     content: @Composable ColumnScope.() -> Unit
 ) {
     Card(
         modifier = modifier,
         shape = shape,
         colors = CardDefaults.cardColors(containerColor = containerColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         content = content
     )
 }
@@ -28,7 +30,7 @@ fun Md3Card(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     shape: Shape = MaterialTheme.shapes.large,
-    containerColor: Color = MaterialTheme.colorScheme.surfaceContainerHighest,
+    containerColor: Color = MaterialTheme.colorScheme.surfaceBright,
     content: @Composable ColumnScope.() -> Unit
 ) {
     Card(
@@ -36,6 +38,7 @@ fun Md3Card(
         modifier = modifier,
         shape = shape,
         colors = CardDefaults.cardColors(containerColor = containerColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         content = content
     )
 }
