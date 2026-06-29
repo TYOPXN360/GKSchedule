@@ -368,13 +368,12 @@ fun WeeklyScheduleScreen(
                         }
                     }
 
-                    // Pre-compute base colors — prefer shared courseColorMap for consistency
-                    val blockBaseColors = remember(weekBlocks, monetColors, colorGroupMode, courseColorMap) {
+                    // Pre-compute base colors — always use weekBlocks' own colorIdx + monetColors
+                    // so background and text colors are always paired from the same palette
+                    val blockBaseColors = remember(weekBlocks, monetColors, colorGroupMode) {
                         weekBlocks.map { block ->
-                            courseColorMap[block.course.id] ?: run {
-                                val satOffset = if (colorGroupMode == 1) block.colorIdx % 10 else 0
-                                CourseColors.getBackgroundStatic(block.colorIdx, monetColors, satOffset, week)
-                            }
+                            val satOffset = if (colorGroupMode == 1) block.colorIdx % 10 else 0
+                            CourseColors.getBackgroundStatic(block.colorIdx, monetColors, satOffset, week)
                         }
                     }
 
