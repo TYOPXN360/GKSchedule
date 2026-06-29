@@ -54,7 +54,7 @@ fun MonetIconBadge(
     }
 }
 
-private fun rgbToHsl(r: Float, g: Float, b: Float): FloatArray {
+internal fun rgbToHsl(r: Float, g: Float, b: Float): FloatArray {
     val max = maxOf(r, g, b); val min = minOf(r, g, b)
     val l = (max + min) / 2f
     if (max == min) return floatArrayOf(0f, 0f, l)
@@ -68,7 +68,7 @@ private fun rgbToHsl(r: Float, g: Float, b: Float): FloatArray {
     return floatArrayOf(h, s, l)
 }
 
-private fun hslToColor(h: Float, s: Float, l: Float): Color {
+internal fun hslToColor(h: Float, s: Float, l: Float): Color {
     val c = (1f - abs(2f * l - 1f)) * s
     val x = c * (1f - abs((h / 60f) % 2f - 1f))
     val m = l - c / 2f
