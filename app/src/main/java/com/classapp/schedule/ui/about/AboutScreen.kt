@@ -13,6 +13,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
@@ -175,52 +176,64 @@ fun AboutScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Semester info card
+        // All items in one big card
         Md3Card(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-            Column {
-                ListItem(
-                    headlineContent = { Text(stringResource(R.string.semester_start), style = MaterialTheme.typography.titleMedium) },
-                    supportingContent = { Text(semesterStart.toString(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) },
-                    leadingContent = { SettingsIconBadge(icon = Icons.Default.CalendarMonth, containerColor = MaterialTheme.colorScheme.primaryContainer, iconColor = MaterialTheme.colorScheme.onPrimaryContainer) }
+            Column(modifier = Modifier.padding(vertical = 8.dp)) {
+                // Group 1: semester info
+                SettingsListItem(
+                    icon = Icons.Default.CalendarMonth,
+                    title = stringResource(R.string.semester_start),
+                    subtitle = semesterStart.toString(),
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    iconColor = MaterialTheme.colorScheme.onPrimaryContainer
                 )
-                ListItem(
-                    headlineContent = { Text(stringResource(R.string.total_weeks), style = MaterialTheme.typography.titleMedium) },
-                    supportingContent = { Text("$totalWeeks", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) },
-                    leadingContent = { SettingsIconBadge(icon = Icons.Default.DateRange, containerColor = MaterialTheme.colorScheme.tertiaryContainer, iconColor = MaterialTheme.colorScheme.onTertiaryContainer) }
+                SettingsListItem(
+                    icon = Icons.Default.DateRange,
+                    title = stringResource(R.string.total_weeks),
+                    subtitle = "$totalWeeks",
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                    iconColor = MaterialTheme.colorScheme.onTertiaryContainer
                 )
-                ListItem(
-                    headlineContent = { Text(stringResource(R.string.periods_per_day), style = MaterialTheme.typography.titleMedium) },
-                    supportingContent = { Text("$periodsPerDay", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) },
-                    leadingContent = { SettingsIconBadge(icon = Icons.Default.AccessTime, containerColor = MaterialTheme.colorScheme.secondaryContainer, iconColor = MaterialTheme.colorScheme.onSecondaryContainer) }
+                SettingsListItem(
+                    icon = Icons.Default.AccessTime,
+                    title = stringResource(R.string.periods_per_day),
+                    subtitle = "$periodsPerDay",
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    iconColor = MaterialTheme.colorScheme.onSecondaryContainer
                 )
-            }
-        }
 
-        Spacer(modifier = Modifier.height(16.dp))
+                HorizontalDivider(
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant
+                )
 
-        // Actions card
-        Md3Card(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-            Column {
-                ListItem(
-                    headlineContent = { Text("考试安排", style = MaterialTheme.typography.titleMedium) },
-                    supportingContent = { Text("查看考试时间和考场", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) },
-                    leadingContent = { SettingsIconBadge(icon = Icons.Default.School, containerColor = MaterialTheme.colorScheme.errorContainer, iconColor = MaterialTheme.colorScheme.onErrorContainer) },
-                    trailingContent = { Icon(Icons.Default.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
-                    modifier = Modifier.clickable(onClick = onOpenExam)
+                // Group 2: actions
+                SettingsListItem(
+                    icon = Icons.Default.School,
+                    title = "考试安排",
+                    subtitle = "查看考试时间和考场",
+                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                    iconColor = MaterialTheme.colorScheme.onErrorContainer,
+                    hasArrow = true,
+                    onClick = onOpenExam
                 )
-                ListItem(
-                    headlineContent = { Text(stringResource(R.string.settings_title), style = MaterialTheme.typography.titleMedium) },
-                    supportingContent = { Text(stringResource(R.string.about_settings_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) },
-                    leadingContent = { SettingsIconBadge(icon = Icons.Default.Settings, containerColor = MaterialTheme.colorScheme.primaryContainer, iconColor = MaterialTheme.colorScheme.onPrimaryContainer) },
-                    trailingContent = { Icon(Icons.Default.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
-                    modifier = Modifier.clickable(onClick = onOpenSettings)
+                SettingsListItem(
+                    icon = Icons.Default.Settings,
+                    title = stringResource(R.string.settings_title),
+                    subtitle = stringResource(R.string.about_settings_desc),
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    iconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    hasArrow = true,
+                    onClick = onOpenSettings
                 )
-                ListItem(
-                    headlineContent = { Text(stringResource(R.string.about_title), style = MaterialTheme.typography.titleMedium) },
-                    supportingContent = { Text(stringResource(R.string.about_school), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) },
-                    leadingContent = { SettingsIconBadge(icon = Icons.AutoMirrored.Filled.Article, containerColor = MaterialTheme.colorScheme.tertiaryContainer, iconColor = MaterialTheme.colorScheme.onTertiaryContainer) },
-                    trailingContent = { Icon(Icons.Default.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
-                    modifier = Modifier.clickable { showAboutDialog = true }
+                SettingsListItem(
+                    icon = Icons.AutoMirrored.Filled.Article,
+                    title = stringResource(R.string.about_title),
+                    subtitle = stringResource(R.string.about_school),
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                    iconColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                    hasArrow = true,
+                    onClick = { showAboutDialog = true }
                 )
             }
         }
@@ -342,5 +355,35 @@ private fun CreditItem(label: String, value: String) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text("$label: ", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
         Text(value, style = MaterialTheme.typography.bodyMedium)
+    }
+}
+
+@Composable
+private fun SettingsListItem(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    title: String,
+    subtitle: String,
+    containerColor: Color,
+    iconColor: Color,
+    hasArrow: Boolean = false,
+    onClick: (() -> Unit)? = null
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        SettingsIconBadge(icon = icon, containerColor = containerColor, iconColor = iconColor)
+        Spacer(modifier = Modifier.width(16.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(text = subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        if (hasArrow) {
+            Text(text = "›", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
     }
 }

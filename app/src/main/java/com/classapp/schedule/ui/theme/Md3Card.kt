@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.dp
 fun Md3Card(
     modifier: Modifier = Modifier,
     shape: Shape = MaterialTheme.shapes.extraLarge,
-    containerColor: Color = MaterialTheme.colorScheme.surfaceContainer,
+    containerColor: Color = MaterialTheme.colorScheme.surfaceContainerHigh,
     content: @Composable ColumnScope.() -> Unit
 ) {
     Card(
@@ -36,7 +36,7 @@ fun Md3Card(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     shape: Shape = MaterialTheme.shapes.extraLarge,
-    containerColor: Color = MaterialTheme.colorScheme.surfaceContainer,
+    containerColor: Color = MaterialTheme.colorScheme.surfaceContainerHigh,
     content: @Composable ColumnScope.() -> Unit
 ) {
     Card(
@@ -54,7 +54,7 @@ fun SettingsIconBadge(
     containerColor: Color,
     iconColor: Color,
     modifier: Modifier = Modifier,
-    size: Dp = 40.dp,
+    size: Dp = 42.dp,
     iconSize: Dp = 22.dp
 ) {
     Box(
