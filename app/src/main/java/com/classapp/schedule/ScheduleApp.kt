@@ -94,6 +94,75 @@ fun ScheduleApp(
     val loginState by viewModel.loginState.collectAsState()
     val captchaImage by viewModel.captchaImage.collectAsState()
     val examLookaheadWeeks by viewModel.examLookaheadWeeks.collectAsState(initial = 2)
+    val examList by viewModel.examList.collectAsState()
+    val showExamSchedule by viewModel.showExamSchedule.collectAsState(initial = false)
+
+    // Shared color palette — computed once
+    val courseColorPalette = com.classapp.schedule.util.CourseColors.getColors(colorEngine, count = courses.map { it.name }.distinct().size.coerceAtLeast(8))
+
+    // Course name|classroom → Color, same iteration logic as WeeklyScheduleScreen's weekBlocks
+    val courseColorMap = remember(courses, realCurrentWeek, colorGroupMode, courseColorPalette) {
+        val weekCourses = courses.filter { it.isInWeek(realCurrentWeek) }
+        val nameToIdx = mutableMapOf<String, Int>()
+        val keyToIdx = mutableMapOf<String, Int>()
+        val classroomSatMap = mutableMapOf<String, MutableMap<String, Int>>()
+        var nextColor = 0
+        val result = mutableMapOf<Long, Color>()
+        weekCourses.forEach { c ->
+            val ci = when (colorGroupMode) {
+                0 -> nameToIdx.getOrPut(c.name) { nextColor++ }
+                1 -> {
+                    val baseIdx = nameToIdx.getOrPut(c.name) { nextColor++ }
+                    val satMap = classroomSatMap.getOrPut(c.name) { mutableMapOf() }
+                    val satOffset = satMap.getOrPut(c.classroom) { satMap.size }
+                    baseIdx * 10 + satOffset
+                }
+                else -> keyToIdx.getOrPut("${c.name}|${c.classroom}") { nextColor++ }
+            }
+            val satOffset = if (colorGroupMode == 1) ci % 10 else 0
+            result[c.id] = com.classapp.schedule.util.CourseColors.getBackgroundStatic(ci, courseColorPalette, satOffset)
+        }
+        result
+    }
+
+    // Exam kcmc|cdmc → Color, using EXACT same nameToIdx as courses (shared map, not separate)
+    val examColorMap = remember(courses, realCurrentWeek, colorGroupMode, courseColorPalette, examList, showExamSchedule) {
+        if (!showExamSchedule || examList.isEmpty()) emptyMap<String, Color>()
+        else {
+            val weekCourses = courses.filter { it.isInWeek(realCurrentWeek) }
+            val nameToIdx = mutableMapOf<String, Int>()
+            val keyToIdx = mutableMapOf<String, Int>()
+            val classroomSatMap = mutableMapOf<String, MutableMap<String, Int>>()
+            var nextColor = 0
+            // Build index from regular courses first (same order as scheduleCourses)
+            weekCourses.forEach { c ->
+                when (colorGroupMode) {
+                    0 -> nameToIdx.getOrPut(c.name) { nextColor++ }
+                    1 -> {
+                        val baseIdx = nameToIdx.getOrPut(c.name) { nextColor++ }
+                        val satMap = classroomSatMap.getOrPut(c.name) { mutableMapOf() }
+                        satMap.getOrPut(c.classroom) { satMap.size }
+                    }
+                    else -> keyToIdx.getOrPut("${c.name}|${c.classroom}") { nextColor++ }
+                }
+            }
+            // Now assign exam indices (exams append after courses in scheduleCourses)
+            examList.associate { exam ->
+                val ci = when (colorGroupMode) {
+                    0 -> nameToIdx.getOrPut(exam.kcmc) { nextColor++ }
+                    1 -> {
+                        val baseIdx = nameToIdx.getOrPut(exam.kcmc) { nextColor++ }
+                        val satMap = classroomSatMap.getOrPut(exam.kcmc) { mutableMapOf() }
+                        val satOffset = satMap.getOrPut(exam.cdmc) { satMap.size }
+                        baseIdx * 10 + satOffset
+                    }
+                    else -> keyToIdx.getOrPut("${exam.kcmc}|${exam.cdmc}") { nextColor++ }
+                }
+                val satOffset = if (colorGroupMode == 1) ci % 10 else 0
+                "${exam.kcmc}|${exam.cdmc}" to com.classapp.schedule.util.CourseColors.getBackgroundStatic(ci, courseColorPalette, satOffset)
+            }
+        }
+    }
 
     // Show snackbar messages
     LaunchedEffect(Unit) {
@@ -187,8 +256,6 @@ fun ScheduleApp(
             }
         ) {
             composable(Screen.Today.route) {
-                val examList by viewModel.examList.collectAsState()
-                val showExamSchedule by viewModel.showExamSchedule.collectAsState(initial = false)
                 TodayScreen(
                     courses = courses, currentWeek = realCurrentWeek,
                     colorEngine = colorEngine, colorGroupMode = colorGroupMode,
@@ -197,13 +264,14 @@ fun ScheduleApp(
                     examLookaheadWeeks = examLookaheadWeeks,
                     getStartTime = { viewModel.getStartTime(it) },
                     getEndTime = { viewModel.getEndTime(it) },
-                    onCourseLongPress = { navController.navigate(Screen.CourseEdit.createRoute(it.id)) }
+                    onCourseLongPress = { navController.navigate(Screen.CourseEdit.createRoute(it.id)) },
+                    courseColorPalette = courseColorPalette,
+                    courseColorMap = courseColorMap,
+                    examColorMap = examColorMap
                 )
             }
 
             composable(Screen.Weekly.route) {
-                val examList by viewModel.examList.collectAsState()
-                val showExamSchedule by viewModel.showExamSchedule.collectAsState(initial = false)
                 WeeklyScheduleScreen(
                     courses = courses, currentWeek = selectedWeek,
                     totalWeeks = totalWeeks, periodsPerDay = periodsPerDay,
@@ -228,7 +296,9 @@ fun ScheduleApp(
                     onAddCourse = { navController.navigate(Screen.CourseEdit.createRoute()) },
                     onRefresh = { viewModel.refreshFromSchool() },
                     getStartTime = { viewModel.getStartTime(it) },
-                    getEndTime = { viewModel.getEndTime(it) }
+                    getEndTime = { viewModel.getEndTime(it) },
+                    courseColorPalette = courseColorPalette,
+                    courseColorMap = courseColorMap
                 )
             }
 
@@ -321,7 +391,6 @@ fun ScheduleApp(
             }
 
             composable(Screen.Exam.route) {
-                val examList by viewModel.examList.collectAsState()
                 val examLoading by viewModel.examLoading.collectAsState()
                 val examYear by viewModel.examYear.collectAsState()
                 val examSemester by viewModel.examSemester.collectAsState()

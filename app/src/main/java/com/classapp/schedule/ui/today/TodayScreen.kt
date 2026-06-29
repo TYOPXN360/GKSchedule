@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import kotlin.math.sin
 import com.classapp.schedule.R
 import com.classapp.schedule.data.Course
+import androidx.compose.ui.graphics.Color
 import com.classapp.schedule.util.CourseColors
 import kotlinx.coroutines.flow.first
 import java.time.DayOfWeek
@@ -49,7 +50,10 @@ fun TodayScreen(
     examLookaheadWeeks: Int = 2,
     getStartTime: (Int) -> String,
     getEndTime: (Int) -> String,
-    onCourseLongPress: (Course) -> Unit
+    onCourseLongPress: (Course) -> Unit,
+    courseColorPalette: List<Pair<Color, Color>> = CourseColors.getColors(0, count = 8),
+    courseColorMap: Map<Long, Color> = emptyMap(),
+    examColorMap: Map<String, Color> = emptyMap()
 ) {
     val today = LocalDate.now()
     val tomorrow = today.plusDays(1)
@@ -89,22 +93,7 @@ fun TodayScreen(
             animationPlayed = true
         }
     }
-    val uniqueCourseCount = remember(courses) { courses.map { it.name }.distinct().size }
-    val monetColors = com.classapp.schedule.util.CourseColors.getColors(colorEngine, count = uniqueCourseCount.coerceAtLeast(8))
-    // Build color index map matching weekly schedule logic
-    val colorIndexMap = remember(courses, colorGroupMode) {
-        val nameToIdx = mutableMapOf<String, Int>()
-        val keyToIdx = mutableMapOf<String, Int>()
-        var nextColor = 0
-        courses.associate { c ->
-            val ci = when (colorGroupMode) {
-                0 -> nameToIdx.getOrPut(c.name) { nextColor++ }
-                1 -> nameToIdx.getOrPut(c.name) { nextColor++ }
-                else -> keyToIdx.getOrPut("${c.name}|${c.classroom}") { nextColor++ }
-            }
-            c.id to ci
-        }
-    }
+    val monetColors = courseColorPalette
 
     LazyColumn(
         modifier = Modifier
@@ -179,7 +168,7 @@ fun TodayScreen(
                     isPast = isPast,
                     animDelay = if (animationPlayed) 0L else staggerMap[course.id] ?: 0L,
                     skipAnim = animationPlayed,
-                    colorIndex = colorIndexMap[course.id] ?: course.colorIndex,
+                    barColor = courseColorMap[course.id] ?: monetColors.getOrElse(course.colorIndex.coerceIn(0, monetColors.size - 1)) { monetColors.first() }.first,
                     onClick = { detailCourse = course }
                 )
             }
@@ -219,7 +208,7 @@ fun TodayScreen(
                         endTime = course.getActualEndTime(getEndTime),
                         isCurrent = false,
                         isNext = false,
-                        colorIndex = colorIndexMap[course.id] ?: course.colorIndex,
+                        barColor = courseColorMap[course.id] ?: monetColors.getOrElse(course.colorIndex.coerceIn(0, monetColors.size - 1)) { monetColors.first() }.first,
                         onClick = { detailCourse = course }
                     )
                 }
@@ -258,7 +247,7 @@ fun TodayScreen(
                     Spacer(modifier = Modifier.height(4.dp))
                 }
                 items(upcomingExams) { exam ->
-                    ExamCard(exam = exam)
+                    ExamCard(exam = exam, barColor = examColorMap["${exam.kcmc}|${exam.cdmc}"] ?: monetColors.getOrElse((exam.kcmc.hashCode().and(0x7fffffff) % monetColors.size).coerceIn(0, monetColors.size - 1)) { monetColors.first() }.first)
                 }
             }
         }
@@ -273,7 +262,10 @@ fun TodayScreen(
             getStartTime = getStartTime,
             getEndTime = getEndTime,
             onDismiss = { detailCourse = null },
-            onEdit = { detailCourse = null; onCourseLongPress(course) }
+            onEdit = { detailCourse = null; onCourseLongPress(course) },
+            courseColors = monetColors,
+            colorGroupMode = colorGroupMode,
+            dotColor = courseColorMap[course.id]
         )
     }
 }
@@ -312,7 +304,7 @@ private fun CourseCard(
     isPast: Boolean = false,
     animDelay: Long = 0L,
     skipAnim: Boolean = false,
-    colorIndex: Int = course.colorIndex,
+    barColor: Color = Color.Gray,
     onClick: () -> Unit
 ) {
     // Progress calculation
@@ -347,7 +339,6 @@ private fun CourseCard(
     )
     val animDone by remember { derivedStateOf { startAnimation && progress > 0f && (progress - animatedProgress) < 0.01f } }
 
-    val colors = CourseColors.getColors(0, count = 32)
 
     // Wave animation: during loading for all, or always for current courses
     val showWave = isCurrent || !animDone
@@ -370,8 +361,7 @@ private fun CourseCard(
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
             if (animatedProgress > 0f) {
-                val fillColor = CourseColors.getBackground(colorIndex, colors)
-                    .copy(alpha = if (isPast) 0.15f else 0.3f)
+                val fillColor = barColor.copy(alpha = if (isPast) 0.15f else 0.3f)
                 androidx.compose.foundation.Canvas(modifier = Modifier.matchParentSize()) {
                     val w = size.width
                     val h = size.height
@@ -408,7 +398,7 @@ private fun CourseCard(
                         .width(4.dp)
                         .height(48.dp)
                         .clip(RoundedCornerShape(2.dp))
-                        .background(CourseColors.getTextColor(colorIndex, colors))
+                        .background(barColor)
                 )
                 Spacer(modifier = Modifier.width(16.dp))
                 Column(modifier = Modifier.weight(1f)) {
@@ -499,10 +489,7 @@ private fun parseTime(time: String): Int {
 }
 
 @Composable
-private fun ExamCard(exam: com.classapp.schedule.api.ExamInfo) {
-    // Per-exam color based on course name hash — consistent across screens
-    val examColors = com.classapp.schedule.util.CourseColors.getColors(0, count = 16)
-    val colorIdx = exam.kcmc.hashCode().and(0x7fffffff) % examColors.size
+private fun ExamCard(exam: com.classapp.schedule.api.ExamInfo, barColor: Color = Color.Gray) {
 
     Card(
         modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
@@ -514,13 +501,13 @@ private fun ExamCard(exam: com.classapp.schedule.api.ExamInfo) {
             modifier = Modifier.fillMaxWidth().padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Color indicator — per exam color
+            // Color indicator
             Box(
                 modifier = Modifier
                     .width(4.dp)
                     .height(48.dp)
                     .clip(RoundedCornerShape(2.dp))
-                    .background(com.classapp.schedule.util.CourseColors.getBackground(colorIdx, examColors))
+                    .background(barColor)
             )
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
