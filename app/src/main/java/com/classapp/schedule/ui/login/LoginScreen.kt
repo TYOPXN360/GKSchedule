@@ -76,8 +76,7 @@ fun LoginScreen(
         ) {
             Text(
                 text = stringResource(R.string.login_school_title),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
+                style = MaterialTheme.typography.headlineSmall
             )
             Text(
                 text = stringResource(R.string.login_school_desc),
@@ -165,7 +164,6 @@ fun LoginScreen(
                         Text(
                             text = stringResource(R.string.quick_relogin),
                             style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSecondaryContainer
                         )
                         Spacer(modifier = Modifier.height(4.dp))
@@ -221,8 +219,8 @@ fun LoginScreen(
                             Icon(Icons.Default.Error, null, modifier = Modifier.size(18.dp),
                                 tint = MaterialTheme.colorScheme.onErrorContainer)
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("错误", fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onErrorContainer)
+                        Text("错误",
+                            color = MaterialTheme.colorScheme.onErrorContainer)
                         }
                         Text(errorMessage, color = MaterialTheme.colorScheme.onErrorContainer,
                             style = MaterialTheme.typography.bodySmall)
@@ -240,8 +238,8 @@ fun LoginScreen(
                             Icon(Icons.Default.CheckCircle, null, modifier = Modifier.size(18.dp),
                                 tint = MaterialTheme.colorScheme.onPrimaryContainer)
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("成功", fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer)
+                        Text("成功",
+                            color = MaterialTheme.colorScheme.onPrimaryContainer)
                         }
                         Text(successMessage, color = MaterialTheme.colorScheme.onPrimaryContainer,
                             style = MaterialTheme.typography.bodySmall)
@@ -259,8 +257,8 @@ fun LoginScreen(
                             Icon(Icons.Default.School, null, modifier = Modifier.size(18.dp),
                                 tint = MaterialTheme.colorScheme.onTertiaryContainer)
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("导入", fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onTertiaryContainer)
+                        Text("导入",
+                            color = MaterialTheme.colorScheme.onTertiaryContainer)
                         }
                         Text(importResult, color = MaterialTheme.colorScheme.onTertiaryContainer,
                             style = MaterialTheme.typography.bodySmall)

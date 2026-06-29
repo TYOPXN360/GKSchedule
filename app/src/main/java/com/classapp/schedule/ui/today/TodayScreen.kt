@@ -107,8 +107,7 @@ fun TodayScreen(
             Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = stringResource(R.string.today_title),
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold
+                style = MaterialTheme.typography.headlineMedium
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
@@ -181,19 +180,18 @@ fun TodayScreen(
                 Spacer(modifier = Modifier.height(8.dp))
                 HorizontalDivider()
                 Spacer(modifier = Modifier.height(8.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        Icons.Default.WbSunny, contentDescription = null,
-                        modifier = Modifier.size(20.dp),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = stringResource(R.string.tomorrow_title),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            Icons.Default.WbSunny, contentDescription = null,
+                            modifier = Modifier.size(20.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = stringResource(R.string.tomorrow_title),
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                    }
                 Spacer(modifier = Modifier.height(4.dp))
             }
 
@@ -241,8 +239,7 @@ fun TodayScreen(
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "近期考试",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold
+                            style = MaterialTheme.typography.titleMedium
                         )
                     }
                     Spacer(modifier = Modifier.height(4.dp))
@@ -402,8 +399,7 @@ private fun CourseCard(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             text = course.name,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold
+                            style = MaterialTheme.typography.titleMedium
                         )
                         if (isCurrent) {
                             Spacer(modifier = Modifier.width(8.dp))
@@ -510,8 +506,7 @@ private fun ExamCard(exam: com.classapp.schedule.api.ExamInfo, barColor: Color =
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = exam.kcmc,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
+                    style = MaterialTheme.typography.titleMedium
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {

@@ -455,7 +455,6 @@ private fun SyncPage(
                         Text(
                             "$autoSyncIntervalValue $unitLabel",
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = syncAlpha),
                             modifier = Modifier.padding(horizontal = 16.dp)
                         )
@@ -541,7 +540,7 @@ private fun StepperItem(icon: androidx.compose.ui.graphics.vector.ImageVector, t
         supportingContent = {
             Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 IconButton(onClick = { if (value > min) onChange(value - 1) }, enabled = value > min) { Text("−", style = MaterialTheme.typography.titleLarge) }
-                Text("$value", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text("$value", style = MaterialTheme.typography.titleMedium)
                 IconButton(onClick = { if (value < max) onChange(value + 1) }, enabled = value < max) { Text("+", style = MaterialTheme.typography.titleLarge) }
             }
         },

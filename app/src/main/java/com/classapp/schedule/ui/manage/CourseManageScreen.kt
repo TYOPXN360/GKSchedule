@@ -69,8 +69,7 @@ fun CourseManageScreen(
                 Column {
                     Text(
                         text = stringResource(R.string.course_manage_title),
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold
+                        style = MaterialTheme.typography.headlineMedium
                     )
                     Text(
                         text = stringResource(R.string.course_count_format, courses.size),
@@ -118,7 +117,6 @@ fun CourseManageScreen(
                             Text(
                                 text = name,
                                 style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.padding(vertical = 4.dp)
                             )

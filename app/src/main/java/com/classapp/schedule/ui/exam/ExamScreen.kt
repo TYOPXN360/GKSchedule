@@ -244,7 +244,6 @@ private fun ExamCard(exam: ExamInfo, index: Int = 0) {
                     Text(
                         text = exam.kcmc,
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha)
                     )
                     if (isPast) {

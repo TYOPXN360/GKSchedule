@@ -92,7 +92,6 @@ fun AboutScreen(
                     Text(
                         text = savedRealName.ifEmpty { "已登录" },
                         style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                     if (savedStudentId.isNotEmpty()) {
@@ -114,8 +113,7 @@ fun AboutScreen(
                         Text(
                             text = "登录已过期",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.error,
-                            fontWeight = FontWeight.Bold
+                            color = MaterialTheme.colorScheme.error
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Button(
@@ -155,8 +153,7 @@ fun AboutScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = stringResource(R.string.login_title),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
+                        style = MaterialTheme.typography.titleMedium
                     )
                     Text(
                         text = stringResource(R.string.about_login_desc),
@@ -261,7 +258,7 @@ fun AboutScreen(
 
                     HorizontalDivider()
 
-                    Text(stringResource(R.string.credits_title), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.credits_title), style = MaterialTheme.typography.titleSmall)
 
                     // AI
                     CreditItem(stringResource(R.string.credits_ai), "XiaoMi-MiMo-v2.5-pro")
@@ -277,7 +274,7 @@ fun AboutScreen(
 
                     HorizontalDivider()
 
-                    Text(stringResource(R.string.credits_projects), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.credits_projects), style = MaterialTheme.typography.titleSmall)
                     Text("• SchedU (github.com/gnahz77/SchedU)", style = MaterialTheme.typography.bodySmall)
                     Text("• 拾光课程表 (github.com/XingHeYuZhuan/shiguangschedule)", style = MaterialTheme.typography.bodySmall)
                     Text("• TimeFlow (github.com/Lyxot/TimeFlow)", style = MaterialTheme.typography.bodySmall)

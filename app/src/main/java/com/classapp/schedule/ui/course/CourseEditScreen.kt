@@ -116,7 +116,7 @@ fun CourseEditScreen(
             )
 
             // Day of week
-            Text(stringResource(R.string.day_of_week), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+            Text(stringResource(R.string.day_of_week), style = MaterialTheme.typography.labelLarge)
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 dayNames.forEachIndexed { index, dn ->
                     FilterChip(
@@ -134,7 +134,7 @@ fun CourseEditScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(stringResource(R.string.custom_time), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.custom_time), style = MaterialTheme.typography.labelLarge)
                 Switch(checked = isCustomTime, onCheckedChange = { isCustomTime = it })
             }
 
@@ -170,19 +170,19 @@ fun CourseEditScreen(
             } else {
                 // Start period + Duration steppers
                 Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Text(stringResource(R.string.start_period), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.start_period), style = MaterialTheme.typography.labelLarge)
                     Spacer(modifier = Modifier.weight(1f))
                     Stepper(value = startPeriod, min = 1, max = periodsPerDay, onChange = { startPeriod = it })
                 }
                 Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Text(stringResource(R.string.duration), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.duration), style = MaterialTheme.typography.labelLarge)
                     Spacer(modifier = Modifier.weight(1f))
                     Stepper(value = periods, min = 1, max = (periodsPerDay - startPeriod + 1).coerceAtLeast(1), onChange = { periods = it })
                 }
             }
 
             // Color
-            Text(stringResource(R.string.course_color), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+            Text(stringResource(R.string.course_color), style = MaterialTheme.typography.labelLarge)
             val editMonetColors = CourseColors.getColors(0)
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 editMonetColors.forEachIndexed { index, (bg, fg) ->
@@ -198,7 +198,7 @@ fun CourseEditScreen(
             }
 
             // Week range
-            Text(stringResource(R.string.week_range), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+            Text(stringResource(R.string.week_range), style = MaterialTheme.typography.labelLarge)
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 weekRangeOptions.forEach { (key, label) ->
                     FilterChip(
@@ -275,7 +275,7 @@ private fun Stepper(value: Int, min: Int, max: Int, onChange: (Int) -> Unit) {
         IconButton(onClick = { if (value > min) onChange(value - 1) }, enabled = value > min) {
             Text("−", style = MaterialTheme.typography.titleLarge)
         }
-        Text("$value", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        Text("$value", style = MaterialTheme.typography.titleMedium)
         IconButton(onClick = { if (value < max) onChange(value + 1) }, enabled = value < max) {
             Text("+", style = MaterialTheme.typography.titleLarge)
         }

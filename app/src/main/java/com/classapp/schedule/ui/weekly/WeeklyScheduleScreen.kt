@@ -226,7 +226,7 @@ fun WeeklyScheduleScreen(
                             }
                         }
                         Text(stringResource(R.string.week_format, currentWeek),
-                            style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onPrimaryContainer)
                     }
                     IconButton(onClick = {
@@ -347,7 +347,7 @@ fun WeeklyScheduleScreen(
                                 if (showPeriodLabel) {
                                     Box(modifier = Modifier.width(labelWidthDp).fillMaxHeight(), contentAlignment = Alignment.Center) {
                                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                            Text("$period", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold,
+                                            Text("$period", style = MaterialTheme.typography.labelMedium,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant)
                                             if (showTimeLabel) {
                                                 Text("${getStartTime(period)}\n${getEndTime(period)}",
@@ -467,7 +467,6 @@ fun WeeklyScheduleScreen(
                                 Text(
                                     block.course.name,
                                     style = MaterialTheme.typography.labelMedium,
-                                    fontWeight = FontWeight.Bold,
                                     color = textColor,
                                     overflow = TextOverflow.Ellipsis
                                 )
@@ -498,7 +497,7 @@ fun WeeklyScheduleScreen(
                 modifier = Modifier.align(Alignment.BottomEnd),
                 containerColor = MaterialTheme.colorScheme.surfaceVariant,
                 contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-            ) { Text(if (fabExpanded) "—" else "+", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, modifier = Modifier.width(20.dp)) }
+            ) { Text(if (fabExpanded) "—" else "+", style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center, modifier = Modifier.width(20.dp)) }
 
             // Column: expandable buttons only (declared first so back-to-week draws on top)
             Column(
@@ -569,7 +568,7 @@ fun CourseDetailSheet(course: Course, getStartTime: (Int) -> String, getEndTime:
                 }
                 Box(modifier = Modifier.size(12.dp).clip(RoundedCornerShape(50)).background(detailDotColor))
                 Spacer(modifier = Modifier.width(12.dp))
-                Text(course.name, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text(course.name, style = MaterialTheme.typography.titleLarge)
             }
             Spacer(modifier = Modifier.height(16.dp))
             val dayNames = listOf("", "周一", "周二", "周三", "周四", "周五", "周六", "周日")
@@ -605,7 +604,7 @@ private fun DetailRow(label: String, value: String) {
 private fun WeekPickerSheet(totalWeeks: Int, currentWeek: Int, onWeekSelected: (Int) -> Unit, onDismiss: () -> Unit) {
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState()) {
         Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp).padding(bottom = 32.dp)) {
-            Text(stringResource(R.string.select_week), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 16.dp))
+            Text(stringResource(R.string.select_week), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(bottom = 16.dp))
             for (row in 0 until (totalWeeks + 4) / 5) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     for (col in 0 until 5) {
