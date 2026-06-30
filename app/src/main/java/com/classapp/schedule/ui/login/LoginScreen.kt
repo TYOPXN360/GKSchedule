@@ -142,7 +142,7 @@ fun LoginScreen(
                         Card(
                             modifier = Modifier.size(width = 120.dp, height = 56.dp)
                                 .clickable { onRefreshCaptcha() },
-                            shape = RoundedCornerShape(8.dp)
+                            shape = MaterialTheme.shapes.extraSmall
                         ) {
                             Image(bitmap = bitmap.asImageBitmap(), contentDescription = "Captcha",
                                 modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Fit)
@@ -158,7 +158,7 @@ fun LoginScreen(
             if (hasSavedCredentials) {
                 Card(
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = MaterialTheme.shapes.small
                 ) {
                     Column(modifier = Modifier.fillMaxWidth().padding(12.dp)) {
                         Text(
@@ -212,7 +212,7 @@ fun LoginScreen(
             if (errorMessage != null) {
                 Card(
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = MaterialTheme.shapes.small
                 ) {
                     Column(modifier = Modifier.padding(12.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -231,7 +231,7 @@ fun LoginScreen(
             if (successMessage != null) {
                 Card(
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = MaterialTheme.shapes.small
                 ) {
                     Column(modifier = Modifier.padding(12.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -250,7 +250,7 @@ fun LoginScreen(
             if (importResult != null) {
                 Card(
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = MaterialTheme.shapes.small
                 ) {
                     Column(modifier = Modifier.padding(12.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {

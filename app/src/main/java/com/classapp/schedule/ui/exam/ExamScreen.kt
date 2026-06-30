@@ -190,7 +190,7 @@ fun ExamScreen(
                             Card(
                                 modifier = Modifier.size(width = 120.dp, height = 56.dp)
                                     .clickable { onRefreshCaptcha() },
-                                shape = RoundedCornerShape(8.dp)
+                                shape = MaterialTheme.shapes.extraSmall
                             ) {
                                 Image(bitmap = bitmap.asImageBitmap(), contentDescription = "Captcha",
                                     modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Fit)
@@ -285,7 +285,7 @@ private fun ExamCard(exam: ExamInfo, index: Int = 0) {
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = if (isPast) 0.dp else 1.dp),
-        shape = RoundedCornerShape(12.dp)
+        shape = MaterialTheme.shapes.small
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(12.dp),

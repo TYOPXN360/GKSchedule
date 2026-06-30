@@ -380,7 +380,7 @@ private fun CourseCard(
     Md3Card(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
         variant = Md3CardVariant.Elevated,
-        shape = RoundedCornerShape(12.dp)
+        shape = MaterialTheme.shapes.small
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
             if (animatedProgress > 0f) {
@@ -600,7 +600,7 @@ private fun ExamCard(exam: com.classapp.schedule.api.ExamInfo, barColor: Color =
         modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-        shape = RoundedCornerShape(12.dp)
+        shape = MaterialTheme.shapes.small
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(12.dp),

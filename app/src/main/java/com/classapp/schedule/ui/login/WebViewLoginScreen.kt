@@ -155,7 +155,7 @@ fun WebViewLoginScreen(
             // QR code card with expired overlay
             Card(
                 modifier = Modifier.size(280.dp),
-                shape = RoundedCornerShape(24.dp),
+                shape = MaterialTheme.shapes.extraLarge,
                 elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
                 Box(
@@ -196,7 +196,6 @@ fun WebViewLoginScreen(
                                 Text(
                                     text = stringResource(R.string.qr_expired),
                                     style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
                                     color = ComposeColor.White
                                 )
                                 Text(

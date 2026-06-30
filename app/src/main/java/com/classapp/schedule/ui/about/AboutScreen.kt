@@ -61,7 +61,7 @@ fun AboutScreen(
 
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
+            shape = MaterialTheme.shapes.medium,
             colors = CardDefaults.cardColors(
                 containerColor = if (isLoggedIn) {
                     if (isTokenExpired) MaterialTheme.colorScheme.errorContainer

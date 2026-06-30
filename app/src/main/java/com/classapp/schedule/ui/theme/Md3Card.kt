@@ -102,7 +102,7 @@ fun SettingsIconBadge(
     Box(
         modifier = modifier
             .size(size)
-            .background(containerColor, RoundedCornerShape(12.dp)),
+            .background(containerColor, MaterialTheme.shapes.extraSmall),
         contentAlignment = Alignment.Center
     ) {
         Icon(

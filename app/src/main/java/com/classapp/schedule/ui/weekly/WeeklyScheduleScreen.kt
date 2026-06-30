@@ -221,7 +221,6 @@ fun WeeklyScheduleScreen(
                                     .padding(horizontal = 4.dp, vertical = 1.dp)
                             ) {
                                 Text("今", style = MaterialTheme.typography.titleSmall,
-                                    fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onPrimary)
                             }
                         }
@@ -458,7 +457,6 @@ fun WeeklyScheduleScreen(
                                         Text(
                                             text = "考试",
                                             style = MaterialTheme.typography.labelSmall,
-                                            fontWeight = FontWeight.Bold,
                                             color = CourseColors.getBackgroundStatic(block.colorIdx, monetColors, satOffset, week),
                                             maxLines = 1
                                         )
