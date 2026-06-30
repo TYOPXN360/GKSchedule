@@ -24,7 +24,7 @@ fun Md3Card(
     shape: Shape = MaterialTheme.shapes.small,
     containerColor: Color = when (variant) {
         Md3CardVariant.Elevated -> MaterialTheme.colorScheme.surfaceContainerLow
-        Md3CardVariant.Filled -> MaterialTheme.colorScheme.surfaceVariant
+        Md3CardVariant.Filled -> MaterialTheme.colorScheme.surfaceContainerHighest
         Md3CardVariant.Outlined -> MaterialTheme.colorScheme.surface
     },
     content: @Composable ColumnScope.() -> Unit
@@ -60,7 +60,7 @@ fun Md3Card(
     shape: Shape = MaterialTheme.shapes.small,
     containerColor: Color = when (variant) {
         Md3CardVariant.Elevated -> MaterialTheme.colorScheme.surfaceContainerLow
-        Md3CardVariant.Filled -> MaterialTheme.colorScheme.surfaceVariant
+        Md3CardVariant.Filled -> MaterialTheme.colorScheme.surfaceContainerHighest
         Md3CardVariant.Outlined -> MaterialTheme.colorScheme.surface
     },
     content: @Composable ColumnScope.() -> Unit
