@@ -428,11 +428,11 @@ private fun CourseCard(
                             Box(
                                 modifier = Modifier
                                     .background(MaterialTheme.colorScheme.errorContainer, RoundedCornerShape(4.dp))
-                                    .padding(horizontal = 6.dp, vertical = 1.dp)
+                                    .padding(horizontal = 5.dp, vertical = 1.dp)
                             ) {
                                 Text(
                                     text = "考试",
-                                    style = MaterialTheme.typography.titleMedium,
+                                    style = MaterialTheme.typography.labelMedium,
                                     color = MaterialTheme.colorScheme.onErrorContainer
                                 )
                             }
