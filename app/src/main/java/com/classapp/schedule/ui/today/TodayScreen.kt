@@ -355,7 +355,7 @@ private fun CourseCard(
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
             if (animatedProgress > 0f) {
-                val fillColor = barColor.copy(alpha = if (isPast) 0.15f else 0.3f)
+                val fillColor = barColor.copy(alpha = if (isPast) 0.3f else 0.55f)
                 androidx.compose.foundation.Canvas(modifier = Modifier.matchParentSize()) {
                     val w = size.width
                     val h = size.height
@@ -397,6 +397,22 @@ private fun CourseCard(
                 Spacer(modifier = Modifier.width(16.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (isCurrent) {
+                            val pctBg = com.classapp.schedule.ui.theme.monetCardColor(barColor)
+                            val pctText = com.classapp.schedule.ui.theme.MonetIconBadgeTextColor(barColor)
+                            Box(
+                                modifier = Modifier
+                                    .background(pctBg, RoundedCornerShape(4.dp))
+                                    .padding(horizontal = 6.dp, vertical = 1.dp)
+                            ) {
+                                Text(
+                                    text = "${(progress * 100).toInt()}%",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = pctText
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(6.dp))
+                        }
                         if (isNext) {
                             val tagBg = com.classapp.schedule.ui.theme.monetCardColor(barColor)
                             val tagText = com.classapp.schedule.ui.theme.MonetIconBadgeTextColor(barColor)
@@ -417,13 +433,6 @@ private fun CourseCard(
                             text = course.name,
                             style = MaterialTheme.typography.titleMedium
                         )
-                        if (isCurrent) {
-                            Spacer(modifier = Modifier.width(8.dp))
-                            SuggestionChip(
-                                onClick = {},
-                                label = { Text("${(progress * 100).toInt()}%", style = MaterialTheme.typography.labelSmall) }
-                            )
-                        }
                         if (isPast) {
                             androidx.compose.animation.AnimatedVisibility(
                                 visible = animDone,
