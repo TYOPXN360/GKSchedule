@@ -20,6 +20,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.classapp.schedule.R
@@ -200,6 +204,7 @@ fun CourseEditScreen(
                             .background(fg)
                             .then(if (colorIndex == index) Modifier.border(3.dp, MaterialTheme.colorScheme.onSurface, CircleShape) else Modifier)
                             .clickable { colorIndex = index }
+                            .semantics { role = Role.RadioButton; stateDescription = if (colorIndex == index) "已选择" else "未选择" }
                     )
                 }
             }
