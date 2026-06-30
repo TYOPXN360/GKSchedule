@@ -553,6 +553,7 @@ data class ExamInfo(
 
     fun getExamTimeRange(): String {
         val match = Regex("""\((\d{2}:\d{2})-(\d{2}:\d{2})\)""").find(kssj)
+            ?: Regex("""(\d{2}:\d{2})-(\d{2}:\d{2})""").find(kssj)
         return if (match != null) "${match.groupValues[1]}-${match.groupValues[2]}" else ""
     }
 }

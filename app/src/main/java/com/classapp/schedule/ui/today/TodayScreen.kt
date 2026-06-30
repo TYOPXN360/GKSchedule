@@ -550,7 +550,9 @@ private fun com.classapp.schedule.api.ExamInfo.toTodayCourse(
 ): Course? {
     return try {
         val examDate = java.time.LocalDate.parse(getExamDate())
-        val timeParts = getExamTimeRange().split("-")
+        val timeRange = getExamTimeRange()
+        android.util.Log.d("TodayExam", "kssj=$kssj, timeRange=$timeRange")
+        val timeParts = timeRange.split("-")
         if (timeParts.size != 2) return null
         val startPeriod = timeToPeriod(timeParts[0].trim(), getStartTime)
         val endPeriod = timeToPeriod(timeParts[1].trim(), getEndTime)
