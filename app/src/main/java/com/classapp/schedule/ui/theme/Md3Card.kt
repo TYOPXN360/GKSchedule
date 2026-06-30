@@ -23,8 +23,8 @@ fun Md3Card(
     variant: Md3CardVariant = Md3CardVariant.Elevated,
     shape: Shape = MaterialTheme.shapes.small,
     containerColor: Color = when (variant) {
-        Md3CardVariant.Elevated -> MaterialTheme.colorScheme.surfaceContainerHighest
-        Md3CardVariant.Filled -> MaterialTheme.colorScheme.surfaceContainerHighest
+        Md3CardVariant.Elevated -> MaterialTheme.colorScheme.surfaceContainer
+        Md3CardVariant.Filled -> MaterialTheme.colorScheme.surfaceContainer
         Md3CardVariant.Outlined -> MaterialTheme.colorScheme.surface
     },
     content: @Composable ColumnScope.() -> Unit
@@ -60,8 +60,8 @@ fun Md3Card(
     variant: Md3CardVariant = Md3CardVariant.Elevated,
     shape: Shape = MaterialTheme.shapes.small,
     containerColor: Color = when (variant) {
-        Md3CardVariant.Elevated -> MaterialTheme.colorScheme.surfaceContainerHighest
-        Md3CardVariant.Filled -> MaterialTheme.colorScheme.surfaceContainerHighest
+        Md3CardVariant.Elevated -> MaterialTheme.colorScheme.surfaceContainer
+        Md3CardVariant.Filled -> MaterialTheme.colorScheme.surfaceContainer
         Md3CardVariant.Outlined -> MaterialTheme.colorScheme.surface
     },
     content: @Composable ColumnScope.() -> Unit
