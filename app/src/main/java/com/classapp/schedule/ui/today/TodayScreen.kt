@@ -1,5 +1,6 @@
 package com.classapp.schedule.ui.today
 import com.classapp.schedule.ui.theme.Md3Card
+import com.classapp.schedule.ui.theme.Md3CardVariant
 
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -378,6 +379,7 @@ private fun CourseCard(
 
     Md3Card(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        variant = Md3CardVariant.Elevated,
         shape = RoundedCornerShape(12.dp)
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {

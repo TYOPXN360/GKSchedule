@@ -234,7 +234,7 @@ private fun SettingsMainPage(onOpenPage: (String) -> Unit, onExit: () -> Unit) {
 
 @Composable
 private fun CategoryItem(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, subtitle: String, seedColor: androidx.compose.ui.graphics.Color, onClick: () -> Unit) {
-    com.classapp.schedule.ui.theme.Md3Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) {
+    com.classapp.schedule.ui.theme.Md3Card(modifier = Modifier.fillMaxWidth(), variant = com.classapp.schedule.ui.theme.Md3CardVariant.Elevated, shape = RoundedCornerShape(12.dp)) {
         ListItem(
             headlineContent = { Text(title, fontWeight = FontWeight.Medium) },
             supportingContent = { Text(subtitle) },

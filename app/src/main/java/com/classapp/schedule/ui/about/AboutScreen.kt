@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import com.classapp.schedule.LoginState
 import com.classapp.schedule.R
 import com.classapp.schedule.ui.theme.Md3Card
+import com.classapp.schedule.ui.theme.Md3CardVariant
 import com.classapp.schedule.ui.theme.MonetIconBadge
 
 @Composable
@@ -177,7 +178,7 @@ fun AboutScreen(
 
         // Semester info (read-only)
         val badgeColors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.tertiary, MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.error, MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.tertiary)
-        Md3Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) {
+        Md3Card(modifier = Modifier.fillMaxWidth(), variant = Md3CardVariant.Elevated, shape = RoundedCornerShape(12.dp)) {
             Column {
                 ListItem(
                     headlineContent = { Text(stringResource(R.string.semester_start)) },
@@ -202,7 +203,7 @@ fun AboutScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         // Exam schedule
-        Md3Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) {
+        Md3Card(modifier = Modifier.fillMaxWidth(), variant = Md3CardVariant.Elevated, shape = RoundedCornerShape(12.dp)) {
             ListItem(
                 headlineContent = { Text("考试安排") },
                 supportingContent = { Text("查看考试时间和考场") },
@@ -215,7 +216,7 @@ fun AboutScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         // Settings
-        Md3Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) {
+        Md3Card(modifier = Modifier.fillMaxWidth(), variant = Md3CardVariant.Elevated, shape = RoundedCornerShape(12.dp)) {
             ListItem(
                 headlineContent = { Text(stringResource(R.string.settings_title)) },
                 supportingContent = { Text(stringResource(R.string.about_settings_desc)) },
@@ -227,7 +228,7 @@ fun AboutScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         // About
-        Md3Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) {
+        Md3Card(modifier = Modifier.fillMaxWidth(), variant = Md3CardVariant.Elevated, shape = RoundedCornerShape(12.dp)) {
             ListItem(
                 headlineContent = { Text(stringResource(R.string.about_title)) },
                 supportingContent = { Text(stringResource(R.string.about_school)) },
