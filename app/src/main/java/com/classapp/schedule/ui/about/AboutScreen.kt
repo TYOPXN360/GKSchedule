@@ -132,15 +132,23 @@ fun AboutScreen(
                         }
                     }
                     // Logout icon at top right
-                    IconButton(
+                    Surface(
                         onClick = onLogout,
-                        modifier = Modifier.align(Alignment.TopEnd).padding(8.dp)
+                        modifier = Modifier.align(Alignment.TopEnd).padding(12.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.errorContainer
                     ) {
-                        Icon(
-                            Icons.Default.Logout,
-                            contentDescription = stringResource(R.string.logout),
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f)
-                        )
+                        Box(
+                            modifier = Modifier.size(36.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                Icons.Default.Logout,
+                                contentDescription = stringResource(R.string.logout),
+                                modifier = Modifier.size(20.dp),
+                                tint = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                        }
                     }
                 }
             } else {
