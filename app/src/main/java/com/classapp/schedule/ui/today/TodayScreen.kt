@@ -305,6 +305,21 @@ private fun CourseCard(
     barColor: Color = Color.Gray,
     onClick: () -> Unit
 ) {
+    // Real-time isPast check — only for today's courses, updates every 30 seconds
+    var realIsPast by remember { mutableStateOf(isPast) }
+    val isTodayCourse = isCurrent || isPast
+    LaunchedEffect(isTodayCourse) {
+        if (isTodayCourse) {
+            while (true) {
+                val now = LocalTime.now()
+                val endMins = parseTime(endTime)
+                val nowMins = now.hour * 60 + now.minute
+                realIsPast = nowMins > endMins
+                kotlinx.coroutines.delay(30_000)
+            }
+        }
+    }
+
     // Progress calculation
     val progress = when {
         isCurrent -> {
@@ -314,7 +329,7 @@ private fun CourseCard(
             val nowMins = now.hour * 60 + now.minute
             ((nowMins - startMins).toFloat() / (endMins - startMins)).coerceIn(0f, 1f)
         }
-        isPast -> 1f
+        realIsPast -> 1f
         else -> 0f
     }
 
@@ -355,7 +370,7 @@ private fun CourseCard(
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
             if (animatedProgress > 0f) {
-                val fillColor = barColor.copy(alpha = if (isPast) 0.3f else 0.55f)
+                val fillColor = barColor.copy(alpha = if (realIsPast) 0.3f else 0.55f)
                 androidx.compose.foundation.Canvas(modifier = Modifier.matchParentSize()) {
                     val w = size.width
                     val h = size.height
@@ -407,7 +422,7 @@ private fun CourseCard(
                             ) {
                                 Text(
                                     text = "${(progress * 100).toInt()}%",
-                                    style = MaterialTheme.typography.labelSmall,
+                                    style = MaterialTheme.typography.titleMedium,
                                     color = pctText
                                 )
                             }
@@ -423,7 +438,7 @@ private fun CourseCard(
                             ) {
                                 Text(
                                     text = stringResource(R.string.next_course),
-                                    style = MaterialTheme.typography.labelSmall,
+                                    style = MaterialTheme.typography.titleMedium,
                                     color = tagText
                                 )
                             }
@@ -433,7 +448,7 @@ private fun CourseCard(
                             text = course.name,
                             style = MaterialTheme.typography.titleMedium
                         )
-                        if (isPast) {
+                        if (realIsPast) {
                             androidx.compose.animation.AnimatedVisibility(
                                 visible = animDone,
                                 enter = androidx.compose.animation.scaleIn() + androidx.compose.animation.fadeIn()
