@@ -30,10 +30,11 @@ fun Md3Card(
     content: @Composable ColumnScope.() -> Unit
 ) {
     when (variant) {
-        Md3CardVariant.Elevated -> ElevatedCard(
+        Md3CardVariant.Elevated -> Card(
             modifier = modifier,
             shape = shape,
             colors = CardDefaults.cardColors(containerColor = containerColor),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
             content = content
         )
         Md3CardVariant.Filled -> Card(
@@ -66,11 +67,12 @@ fun Md3Card(
     content: @Composable ColumnScope.() -> Unit
 ) {
     when (variant) {
-        Md3CardVariant.Elevated -> ElevatedCard(
+        Md3CardVariant.Elevated -> Card(
             onClick = onClick,
             modifier = modifier,
             shape = shape,
             colors = CardDefaults.cardColors(containerColor = containerColor),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
             content = content
         )
         Md3CardVariant.Filled -> Card(
