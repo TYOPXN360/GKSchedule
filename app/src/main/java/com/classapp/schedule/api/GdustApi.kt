@@ -500,6 +500,9 @@ class GdustApi {
         }
         val parsed = json.decodeFromString<ExamResponse>(body)
         android.util.Log.d("GdustApi", "=== DONE: ${parsed.items?.size ?: 0} exams ===")
+        parsed.items?.forEach { exam ->
+            android.util.Log.d("GdustApi", "EXAM: ${exam.kcmc} | kssj=${exam.kssj} | cdmc=${exam.cdmc} | timeRange=${exam.getExamTimeRange()}")
+        }
         parsed.items ?: emptyList()
     }
 }

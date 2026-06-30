@@ -21,7 +21,7 @@ enum class Md3CardVariant { Elevated, Filled, Outlined }
 fun Md3Card(
     modifier: Modifier = Modifier,
     variant: Md3CardVariant = Md3CardVariant.Elevated,
-    shape: Shape = MaterialTheme.shapes.extraLarge,
+    shape: Shape = MaterialTheme.shapes.small,
     containerColor: Color = when (variant) {
         Md3CardVariant.Elevated -> MaterialTheme.colorScheme.surfaceContainerLow
         Md3CardVariant.Filled -> MaterialTheme.colorScheme.surfaceContainerHighest
@@ -51,7 +51,7 @@ fun Md3Card(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     variant: Md3CardVariant = Md3CardVariant.Elevated,
-    shape: Shape = MaterialTheme.shapes.extraLarge,
+    shape: Shape = MaterialTheme.shapes.small,
     containerColor: Color = when (variant) {
         Md3CardVariant.Elevated -> MaterialTheme.colorScheme.surfaceContainerLow
         Md3CardVariant.Filled -> MaterialTheme.colorScheme.surfaceContainerHighest
