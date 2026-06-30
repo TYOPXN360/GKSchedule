@@ -257,25 +257,25 @@ fun ScheduleApp(
                 val from = tabIndexOf(initialState.destination.route)
                 val to = tabIndexOf(targetState.destination.route)
                 if (to >= from) {
-                    slideInHorizontally(initialOffsetX = { it }, animationSpec = tween(250)) + fadeIn(tween(200))
+                    slideInHorizontally(initialOffsetX = { it }, animationSpec = tween(400, easing = androidx.compose.animation.core.FastOutSlowInEasing)) + fadeIn(tween(300))
                 } else {
-                    slideInHorizontally(initialOffsetX = { -it }, animationSpec = tween(250)) + fadeIn(tween(200))
+                    slideInHorizontally(initialOffsetX = { -it }, animationSpec = tween(400, easing = androidx.compose.animation.core.FastOutSlowInEasing)) + fadeIn(tween(300))
                 }
             },
             exitTransition = {
                 val from = tabIndexOf(initialState.destination.route)
                 val to = tabIndexOf(targetState.destination.route)
                 if (to >= from) {
-                    slideOutHorizontally(targetOffsetX = { -it }, animationSpec = tween(250)) + fadeOut(tween(150))
+                    slideOutHorizontally(targetOffsetX = { -it }, animationSpec = tween(200, easing = androidx.compose.animation.core.FastOutLinearInEasing)) + fadeOut(tween(150))
                 } else {
-                    slideOutHorizontally(targetOffsetX = { it }, animationSpec = tween(250)) + fadeOut(tween(150))
+                    slideOutHorizontally(targetOffsetX = { it }, animationSpec = tween(200, easing = androidx.compose.animation.core.FastOutLinearInEasing)) + fadeOut(tween(150))
                 }
             },
             popEnterTransition = {
-                slideInHorizontally(initialOffsetX = { -it }, animationSpec = tween(250)) + fadeIn(tween(200))
+                slideInHorizontally(initialOffsetX = { -it }, animationSpec = tween(400, easing = androidx.compose.animation.core.FastOutSlowInEasing)) + fadeIn(tween(300))
             },
             popExitTransition = {
-                slideOutHorizontally(targetOffsetX = { it }, animationSpec = tween(250)) + fadeOut(tween(150))
+                slideOutHorizontally(targetOffsetX = { it }, animationSpec = tween(200, easing = androidx.compose.animation.core.FastOutLinearInEasing)) + fadeOut(tween(150))
             }
         ) {
             composable(Screen.Today.route) {

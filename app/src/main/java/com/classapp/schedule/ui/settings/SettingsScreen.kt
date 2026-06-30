@@ -85,21 +85,20 @@ fun SettingsScreen(
     val context = LocalContext.current
     val navController = androidx.navigation.compose.rememberNavController()
 
-    androidx.compose.animation.AnimatedVisibility(visible = true) {
         NavHost(
             navController = navController,
             startDestination = "main",
-            enterTransition = {
-                slideInHorizontally(tween(250)) { it } + fadeIn(tween(200))
-            },
-            exitTransition = {
-                slideOutHorizontally(tween(250)) { -it } + fadeOut(tween(150))
-            },
-            popEnterTransition = {
-                slideInHorizontally(tween(250)) { -it } + fadeIn(tween(200))
-            },
-            popExitTransition = {
-                slideOutHorizontally(tween(250)) { it } + fadeOut(tween(150))
+                enterTransition = {
+                    slideInHorizontally(tween(400, easing = androidx.compose.animation.core.FastOutSlowInEasing)) { it } + fadeIn(tween(300))
+                },
+                exitTransition = {
+                    slideOutHorizontally(tween(200, easing = androidx.compose.animation.core.FastOutLinearInEasing)) { -it } + fadeOut(tween(150))
+                },
+                popEnterTransition = {
+                    slideInHorizontally(tween(400, easing = androidx.compose.animation.core.FastOutSlowInEasing)) { -it } + fadeIn(tween(300))
+                },
+                popExitTransition = {
+                    slideOutHorizontally(tween(200, easing = androidx.compose.animation.core.FastOutLinearInEasing)) { it } + fadeOut(tween(150))
             }
         ) {
             composable("main") {
@@ -194,7 +193,6 @@ fun SettingsScreen(
             }
         }
     }
-}
 
 // === Main page ===
 
