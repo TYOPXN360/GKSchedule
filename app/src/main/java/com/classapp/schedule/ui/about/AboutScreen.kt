@@ -71,72 +71,76 @@ fun AboutScreen(
         ) {
             if (isLoggedIn) {
                 // Logged in — show user info
-                Column(
-                    modifier = Modifier.fillMaxWidth().padding(20.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    // Avatar circle
-                    Surface(
-                        modifier = Modifier.size(72.dp),
-                        shape = RoundedCornerShape(50),
-                        color = MaterialTheme.colorScheme.primary
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(20.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Box(contentAlignment = Alignment.Center) {
+                        // Avatar circle
+                        Surface(
+                            modifier = Modifier.size(72.dp),
+                            shape = RoundedCornerShape(50),
+                            color = MaterialTheme.colorScheme.primary
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Text(
+                                    text = savedRealName.take(1),
+                                    style = MaterialTheme.typography.headlineLarge,
+                                    color = MaterialTheme.colorScheme.onPrimary
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = savedRealName.ifEmpty { "已登录" },
+                            style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        if (savedStudentId.isNotEmpty()) {
                             Text(
-                                text = savedRealName.take(1),
-                                style = MaterialTheme.typography.headlineLarge,
-                                color = MaterialTheme.colorScheme.onPrimary
+                                text = savedStudentId,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                             )
                         }
-                    }
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = savedRealName.ifEmpty { "已登录" },
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                    if (savedStudentId.isNotEmpty()) {
-                        Text(
-                            text = savedStudentId,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                        )
-                    }
-                    if (savedDeptName.isNotEmpty()) {
-                        Text(
-                            text = savedDeptName,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(16.dp))
-                    if (isTokenExpired) {
-                        Text(
-                            text = "登录已过期",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Button(
-                            onClick = {
-                                onRefreshCaptcha()
-                                showReloginDialog = true
-                            },
-                            modifier = Modifier.fillMaxWidth(0.6f)
-                        ) {
-                            Icon(Icons.Default.Login, null, modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("重新登录")
+                        if (savedDeptName.isNotEmpty()) {
+                            Text(
+                                text = savedDeptName,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                            )
                         }
-                    } else {
-                        Button(
-                            onClick = onLogout,
-                            modifier = Modifier.fillMaxWidth(0.6f)
-                        ) {
-                            Icon(Icons.Default.Logout, null, modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(stringResource(R.string.logout))
+                        Spacer(modifier = Modifier.height(16.dp))
+                        if (isTokenExpired) {
+                            Text(
+                                text = "登录已过期",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Button(
+                                onClick = {
+                                    onRefreshCaptcha()
+                                    showReloginDialog = true
+                                },
+                                modifier = Modifier.fillMaxWidth(0.6f)
+                            ) {
+                                Icon(Icons.Default.Login, null, modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("重新登录")
+                            }
                         }
+                    }
+                    // Logout icon at top right
+                    IconButton(
+                        onClick = onLogout,
+                        modifier = Modifier.align(Alignment.TopEnd).padding(8.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Logout,
+                            contentDescription = stringResource(R.string.logout),
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f)
+                        )
                     }
                 }
             } else {
