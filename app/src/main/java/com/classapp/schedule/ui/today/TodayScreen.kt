@@ -378,7 +378,8 @@ private fun CourseCard(
     } else 0f
 
     Md3Card(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
         variant = Md3CardVariant.Elevated,
         shape = MaterialTheme.shapes.small
     ) {

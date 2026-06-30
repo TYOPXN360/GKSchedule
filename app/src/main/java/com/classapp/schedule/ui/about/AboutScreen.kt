@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -79,7 +80,7 @@ fun AboutScreen(
                         // Avatar circle
                         Surface(
                             modifier = Modifier.size(72.dp),
-                            shape = RoundedCornerShape(50),
+                            shape = CircleShape,
                             color = MaterialTheme.colorScheme.primary
                         ) {
                             Box(contentAlignment = Alignment.Center) {
@@ -135,7 +136,7 @@ fun AboutScreen(
                     Surface(
                         onClick = onLogout,
                         modifier = Modifier.align(Alignment.TopEnd).padding(12.dp),
-                        shape = RoundedCornerShape(12.dp),
+                        shape = MaterialTheme.shapes.medium,
                         color = MaterialTheme.colorScheme.surfaceVariant
                     ) {
                         Box(
@@ -190,7 +191,7 @@ fun AboutScreen(
 
         // Semester info (read-only)
         val badgeColors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.tertiary, MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.error, MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.tertiary)
-        Md3Card(modifier = Modifier.fillMaxWidth(), variant = Md3CardVariant.Elevated, shape = RoundedCornerShape(12.dp)) {
+        Md3Card(modifier = Modifier.fillMaxWidth(), variant = Md3CardVariant.Elevated, shape = MaterialTheme.shapes.medium) {
             Column {
                 ListItem(
                     headlineContent = { Text(stringResource(R.string.semester_start)) },
@@ -215,7 +216,7 @@ fun AboutScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         // Exam schedule
-        Md3Card(modifier = Modifier.fillMaxWidth(), variant = Md3CardVariant.Elevated, shape = RoundedCornerShape(12.dp)) {
+        Md3Card(modifier = Modifier.fillMaxWidth(), variant = Md3CardVariant.Elevated, shape = MaterialTheme.shapes.medium) {
             ListItem(
                 headlineContent = { Text("考试安排") },
                 supportingContent = { Text("查看考试时间和考场") },
@@ -228,7 +229,7 @@ fun AboutScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         // Settings
-        Md3Card(modifier = Modifier.fillMaxWidth(), variant = Md3CardVariant.Elevated, shape = RoundedCornerShape(12.dp)) {
+        Md3Card(modifier = Modifier.fillMaxWidth(), variant = Md3CardVariant.Elevated, shape = MaterialTheme.shapes.medium) {
             ListItem(
                 headlineContent = { Text(stringResource(R.string.settings_title)) },
                 supportingContent = { Text(stringResource(R.string.about_settings_desc)) },
@@ -240,7 +241,7 @@ fun AboutScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         // About
-        Md3Card(modifier = Modifier.fillMaxWidth(), variant = Md3CardVariant.Elevated, shape = RoundedCornerShape(12.dp)) {
+        Md3Card(modifier = Modifier.fillMaxWidth(), variant = Md3CardVariant.Elevated, shape = MaterialTheme.shapes.medium) {
             ListItem(
                 headlineContent = { Text(stringResource(R.string.about_title)) },
                 supportingContent = { Text(stringResource(R.string.about_school)) },
@@ -326,7 +327,7 @@ fun AboutScreen(
                             Card(
                                 modifier = Modifier.size(width = 120.dp, height = 56.dp)
                                     .clickable { onRefreshCaptcha() },
-                                shape = RoundedCornerShape(8.dp)
+                                shape = MaterialTheme.shapes.small
                             ) {
                                 Image(bitmap = bitmap.asImageBitmap(), contentDescription = "Captcha",
                                     modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Fit)

@@ -284,7 +284,7 @@ private fun ExamCard(exam: ExamInfo, index: Int = 0) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = if (isPast) 0.dp else 1.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         shape = MaterialTheme.shapes.small
     ) {
         Row(

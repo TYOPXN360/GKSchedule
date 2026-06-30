@@ -156,7 +156,7 @@ fun WebViewLoginScreen(
             Card(
                 modifier = Modifier.size(280.dp),
                 shape = MaterialTheme.shapes.extraLarge,
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
             ) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
