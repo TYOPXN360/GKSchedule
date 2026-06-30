@@ -457,7 +457,7 @@ private fun CourseCard(
                                     Icons.Default.Check,
                                     contentDescription = null,
                                     modifier = Modifier.size(20.dp),
-                                    tint = MaterialTheme.colorScheme.primary
+                                    tint = barColor
                                 )
                             }
                         }
