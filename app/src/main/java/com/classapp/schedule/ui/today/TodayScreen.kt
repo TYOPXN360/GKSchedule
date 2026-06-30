@@ -49,6 +49,7 @@ fun TodayScreen(
     exams: List<com.classapp.schedule.api.ExamInfo> = emptyList(),
     showExamSchedule: Boolean = false,
     examLookaheadWeeks: Int = 2,
+    semesterStart: java.time.LocalDate = java.time.LocalDate.now(),
     getStartTime: (Int) -> String,
     getEndTime: (Int) -> String,
     onCourseLongPress: (Course) -> Unit,
@@ -68,6 +69,17 @@ fun TodayScreen(
         .filter { it.dayOfWeek == todayDow && it.isInWeek(currentWeek) }
         .sortedBy { it.startPeriod }
 
+    // Convert today's exams to Course objects and merge into today's list
+    val todayExamCourses = if (showExamSchedule) {
+        exams.mapNotNull { exam ->
+            try {
+                val examDate = java.time.LocalDate.parse(exam.getExamDate())
+                if (examDate == today) exam.toTodayCourse(semesterStart, getStartTime, getEndTime) else null
+            } catch (_: Exception) { null }
+        }
+    } else emptyList()
+    val allTodayCourses = (todayCourses + todayExamCourses).sortedBy { it.startPeriod }
+
     val tomorrowCourses = courses
         .filter { it.dayOfWeek == tomorrowDow && tomorrowWeek in 1..52 && it.isInWeek(tomorrowWeek) }
         .sortedBy { it.startPeriod }
@@ -81,13 +93,13 @@ fun TodayScreen(
 
     val now = LocalTime.now()
     val currentTimeMinutes = now.hour * 60 + now.minute
-    val currentPeriod = findCurrentPeriod(todayCourses, getStartTime, getEndTime, currentTimeMinutes)
+    val currentPeriod = findCurrentPeriod(allTodayCourses, getStartTime, getEndTime, currentTimeMinutes)
     var detailCourse by remember { mutableStateOf<Course?>(null) }
     // Only trigger animation once per app session, not on course refresh
     var animationPlayed by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
-    val maxStagger = (todayCourses.size - 1) * 200L
+    val maxStagger = (allTodayCourses.size - 1) * 200L
     val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
-    LaunchedEffect(todayCourses.size) {
+    LaunchedEffect(allTodayCourses.size) {
         if (!animationPlayed) {
             lifecycleOwner.lifecycle.currentStateFlow.first { it == androidx.lifecycle.Lifecycle.State.RESUMED }
             kotlinx.coroutines.delay(500 + maxStagger + 700)
@@ -125,13 +137,13 @@ fun TodayScreen(
         }
 
         // Today's courses
-        if (todayCourses.isEmpty()) {
+        if (allTodayCourses.isEmpty()) {
             item {
                 EmptyCard(stringResource(R.string.no_course_today))
             }
         } else {
             // Pre-compute stagger delays for all courses (by progress, highest first)
-            val coursesWithProgress = todayCourses.map { course ->
+            val coursesWithProgress = allTodayCourses.map { course ->
                 val startMins = parseTime(course.getActualStartTime(getStartTime))
                 val endMins = parseTime(course.getActualEndTime(getEndTime))
                 val nowMins = LocalTime.now().hour * 60 + LocalTime.now().minute
@@ -147,14 +159,14 @@ fun TodayScreen(
                 id to index * 200L
             }.toMap()
 
-            items(todayCourses) { course ->
+            items(allTodayCourses) { course ->
                 val isCurrent = currentPeriod in course.startPeriod..course.endPeriod()
                 val currentTimeMinutes = LocalTime.now().hour * 60 + LocalTime.now().minute
                 val courseStartMinutes = parseTime(course.getActualStartTime(getStartTime))
                 val courseEndMinutes = parseTime(course.getActualEndTime(getEndTime))
                 val isPast = currentTimeMinutes > courseEndMinutes
                 val isFuture = currentTimeMinutes < courseStartMinutes
-                val firstFuture = todayCourses.firstOrNull {
+                val firstFuture = allTodayCourses.firstOrNull {
                     parseTime(it.getActualStartTime(getStartTime)) > currentTimeMinutes
                 }
                 val isNext = !isCurrent && !isPast && isFuture && firstFuture?.id == course.id
@@ -221,7 +233,7 @@ fun TodayScreen(
             val upcomingExams = exams.filter { exam ->
                 try {
                     val examDate = java.time.LocalDate.parse(exam.getExamDate())
-                    !examDate.isBefore(todayDate) && !examDate.isAfter(latestExamDate)
+                    !examDate.isBefore(todayDate) && !examDate.isAfter(latestExamDate) && examDate != todayDate
                 } catch (_: Exception) { false }
             }.sortedBy { it.getExamDate() }.take(5)
 
@@ -412,6 +424,20 @@ private fun CourseCard(
                 Spacer(modifier = Modifier.width(16.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (course.id < 0) {
+                            Box(
+                                modifier = Modifier
+                                    .background(MaterialTheme.colorScheme.errorContainer, RoundedCornerShape(4.dp))
+                                    .padding(horizontal = 6.dp, vertical = 1.dp)
+                            ) {
+                                Text(
+                                    text = "考试",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.onErrorContainer
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(6.dp))
+                        }
                         if (isCurrent) {
                             val pctBg = com.classapp.schedule.ui.theme.monetCardColor(barColor)
                             val pctText = com.classapp.schedule.ui.theme.MonetIconBadgeTextColor(barColor)
@@ -513,6 +539,52 @@ private fun findCurrentPeriod(
 private fun parseTime(time: String): Int {
     val parts = time.split(":")
     return (parts.getOrNull(0)?.toIntOrNull() ?: 0) * 60 + (parts.getOrNull(1)?.toIntOrNull() ?: 0)
+}
+
+private fun com.classapp.schedule.api.ExamInfo.toTodayCourse(
+    semesterStart: java.time.LocalDate,
+    getStartTime: (Int) -> String,
+    getEndTime: (Int) -> String
+): Course? {
+    return try {
+        val examDate = java.time.LocalDate.parse(getExamDate())
+        val timeParts = getExamTimeRange().split("-")
+        if (timeParts.size != 2) return null
+        val startPeriod = timeToPeriod(timeParts[0].trim(), getStartTime)
+        val endPeriod = timeToPeriod(timeParts[1].trim(), getEndTime)
+        if (startPeriod <= 0 || endPeriod < startPeriod) return null
+        val daysDiff = java.time.temporal.ChronoUnit.DAYS.between(semesterStart, examDate).toInt()
+        val week = (daysDiff / 7) + 1
+        Course(
+            id = -((kch.ifEmpty { "$kcmc|$kssj|$cdmc" }).hashCode().toLong().let { kotlin.math.abs(it) } + 1L),
+            name = kcmc,
+            teacher = jsxx,
+            classroom = cdmc,
+            dayOfWeek = examDate.dayOfWeek.value,
+            startPeriod = startPeriod,
+            periods = endPeriod - startPeriod + 1,
+            weekRange = week.toString(),
+            remark = listOf(kssj, ksfs, khfs).filter { it.isNotEmpty() }.joinToString("\n"),
+            isCustomTime = true,
+            customStartTime = timeParts[0].trim(),
+            customEndTime = timeParts[1].trim()
+        )
+    } catch (_: Exception) { null }
+}
+
+private fun timeToPeriod(time: String, timeProvider: (Int) -> String): Int {
+    val targetMins = parseTime(time)
+    var bestPeriod = 0
+    var bestDiff = Int.MAX_VALUE
+    for (p in 1..14) {
+        val pMins = parseTime(timeProvider(p)) ?: continue
+        val diff = kotlin.math.abs(targetMins - pMins)
+        if (diff < bestDiff) {
+            bestDiff = diff
+            bestPeriod = p
+        }
+    }
+    return bestPeriod
 }
 
 @Composable

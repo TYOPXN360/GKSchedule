@@ -285,6 +285,7 @@ fun ScheduleApp(
                     exams = examList,
                     showExamSchedule = showExamSchedule,
                     examLookaheadWeeks = examLookaheadWeeks,
+                    semesterStart = semesterStart,
                     getStartTime = { viewModel.getStartTime(it) },
                     getEndTime = { viewModel.getEndTime(it) },
                     onCourseLongPress = { navController.navigate(Screen.CourseEdit.createRoute(it.id)) },
