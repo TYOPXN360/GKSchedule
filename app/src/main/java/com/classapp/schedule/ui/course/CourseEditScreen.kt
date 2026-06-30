@@ -11,6 +11,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -135,7 +136,13 @@ fun CourseEditScreen(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(stringResource(R.string.custom_time), style = MaterialTheme.typography.labelLarge)
-                Switch(checked = isCustomTime, onCheckedChange = { isCustomTime = it })
+                Switch(
+                    checked = isCustomTime,
+                    onCheckedChange = { isCustomTime = it },
+                    thumbContent = if (isCustomTime) {
+                        { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(SwitchDefaults.IconSize)) }
+                    } else null
+                )
             }
 
             if (isCustomTime) {

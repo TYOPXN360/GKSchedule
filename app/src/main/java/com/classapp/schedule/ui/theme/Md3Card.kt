@@ -24,25 +24,31 @@ fun Md3Card(
     shape: Shape = MaterialTheme.shapes.small,
     containerColor: Color = when (variant) {
         Md3CardVariant.Elevated -> MaterialTheme.colorScheme.surfaceContainerLow
-        Md3CardVariant.Filled -> MaterialTheme.colorScheme.surfaceContainerHighest
+        Md3CardVariant.Filled -> MaterialTheme.colorScheme.surfaceVariant
         Md3CardVariant.Outlined -> MaterialTheme.colorScheme.surface
     },
     content: @Composable ColumnScope.() -> Unit
 ) {
-    Card(
-        modifier = modifier,
-        shape = shape,
-        colors = CardDefaults.cardColors(containerColor = containerColor),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = when (variant) {
-                Md3CardVariant.Elevated -> 1.dp
-                Md3CardVariant.Filled -> 0.dp
-                Md3CardVariant.Outlined -> 0.dp
-            }
-        ),
-        border = if (variant == Md3CardVariant.Outlined) CardDefaults.outlinedCardBorder() else null,
-        content = content
-    )
+    when (variant) {
+        Md3CardVariant.Elevated -> ElevatedCard(
+            modifier = modifier,
+            shape = shape,
+            colors = CardDefaults.cardColors(containerColor = containerColor),
+            content = content
+        )
+        Md3CardVariant.Filled -> Card(
+            modifier = modifier,
+            shape = shape,
+            colors = CardDefaults.cardColors(containerColor = containerColor),
+            content = content
+        )
+        Md3CardVariant.Outlined -> OutlinedCard(
+            modifier = modifier,
+            shape = shape,
+            colors = CardDefaults.cardColors(containerColor = containerColor),
+            content = content
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -54,26 +60,34 @@ fun Md3Card(
     shape: Shape = MaterialTheme.shapes.small,
     containerColor: Color = when (variant) {
         Md3CardVariant.Elevated -> MaterialTheme.colorScheme.surfaceContainerLow
-        Md3CardVariant.Filled -> MaterialTheme.colorScheme.surfaceContainerHighest
+        Md3CardVariant.Filled -> MaterialTheme.colorScheme.surfaceVariant
         Md3CardVariant.Outlined -> MaterialTheme.colorScheme.surface
     },
     content: @Composable ColumnScope.() -> Unit
 ) {
-    Card(
-        onClick = onClick,
-        modifier = modifier,
-        shape = shape,
-        colors = CardDefaults.cardColors(containerColor = containerColor),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = when (variant) {
-                Md3CardVariant.Elevated -> 1.dp
-                Md3CardVariant.Filled -> 0.dp
-                Md3CardVariant.Outlined -> 0.dp
-            }
-        ),
-        border = if (variant == Md3CardVariant.Outlined) CardDefaults.outlinedCardBorder() else null,
-        content = content
-    )
+    when (variant) {
+        Md3CardVariant.Elevated -> ElevatedCard(
+            onClick = onClick,
+            modifier = modifier,
+            shape = shape,
+            colors = CardDefaults.cardColors(containerColor = containerColor),
+            content = content
+        )
+        Md3CardVariant.Filled -> Card(
+            onClick = onClick,
+            modifier = modifier,
+            shape = shape,
+            colors = CardDefaults.cardColors(containerColor = containerColor),
+            content = content
+        )
+        Md3CardVariant.Outlined -> OutlinedCard(
+            onClick = onClick,
+            modifier = modifier,
+            shape = shape,
+            colors = CardDefaults.cardColors(containerColor = containerColor),
+            content = content
+        )
+    }
 }
 
 @Composable

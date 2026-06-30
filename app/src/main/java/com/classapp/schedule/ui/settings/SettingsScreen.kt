@@ -483,7 +483,13 @@ private fun SyncPage(
                     IconButton(onClick = { showHeartbeatInfo = true }) {
                         Icon(Icons.Default.Info, "Info", tint = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
-                    Switch(checked = tokenHeartbeat, onCheckedChange = onTokenHeartbeatChange)
+                    Switch(
+                        checked = tokenHeartbeat,
+                        onCheckedChange = onTokenHeartbeatChange,
+                        thumbContent = if (tokenHeartbeat) {
+                            { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(SwitchDefaults.IconSize)) }
+                        } else null
+                    )
                 }
             }
         )
@@ -553,7 +559,15 @@ private fun SwitchItem(icon: androidx.compose.ui.graphics.vector.ImageVector, ti
     ListItem(
         headlineContent = { Text(title) },
         leadingContent = { Icon(icon, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
-        trailingContent = { Switch(checked = checked, onCheckedChange = onChange) }
+            trailingContent = {
+                Switch(
+                    checked = checked,
+                    onCheckedChange = onChange,
+                    thumbContent = if (checked) {
+                        { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(SwitchDefaults.IconSize)) }
+                    } else null
+                )
+            }
     )
 }
 
