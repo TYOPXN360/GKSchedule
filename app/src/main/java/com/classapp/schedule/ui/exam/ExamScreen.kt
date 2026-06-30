@@ -1,6 +1,8 @@
 package com.classapp.schedule.ui.exam
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -19,6 +21,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -36,9 +40,14 @@ fun ExamScreen(
     semesterStart: LocalDate,
     examYear: String,
     examSemester: String,
+    showReloginDialog: Boolean = false,
+    captchaImageBase64: String? = null,
     onYearChange: (String) -> Unit,
     onSemesterChange: (String) -> Unit,
     onRefresh: () -> Unit,
+    onDismissRelogin: () -> Unit = {},
+    onRefreshCaptcha: () -> Unit = {},
+    onQuickRelogin: (String) -> Unit = {},
     onBack: () -> Unit
 ) {
     // Auto-detect current academic year and semester on first display
@@ -156,10 +165,65 @@ fun ExamScreen(
                                 Icon(Icons.Default.Refresh, null, modifier = Modifier.size(18.dp))
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text("获取")
+            }
+        }
+    }
+
+    // Re-login dialog for expired CAS ticket
+    if (showReloginDialog) {
+        var captcha by remember { mutableStateOf("") }
+        AlertDialog(
+            onDismissRequest = onDismissRelogin,
+            title = { Text("教务系统登录过期") },
+            text = {
+                Column {
+                    Text("请输入验证码重新登录", style = MaterialTheme.typography.bodyMedium)
+                    Spacer(modifier = Modifier.height(12.dp))
+                    if (captchaImageBase64 != null && captchaImageBase64.isNotEmpty()) {
+                        val bitmap = remember(captchaImageBase64) {
+                            try {
+                                val bytes = android.util.Base64.decode(captchaImageBase64, android.util.Base64.DEFAULT)
+                                android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                            } catch (_: Exception) { null }
+                        }
+                        if (bitmap != null) {
+                            Card(
+                                modifier = Modifier.size(width = 120.dp, height = 56.dp)
+                                    .clickable { onRefreshCaptcha() },
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                Image(bitmap = bitmap.asImageBitmap(), contentDescription = "Captcha",
+                                    modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Fit)
                             }
                         }
                     }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = captcha,
+                        onValueChange = { captcha = it },
+                        label = { Text("验证码") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
                 }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        if (captcha.isNotBlank()) {
+                            onQuickRelogin(captcha)
+                            onDismissRelogin()
+                        }
+                    },
+                    enabled = captcha.isNotBlank()
+                ) { Text("登录") }
+            },
+            dismissButton = {
+                TextButton(onClick = onDismissRelogin) { Text("取消") }
+            }
+        )
+    }
+}
             }
 
             // Content

@@ -419,15 +419,21 @@ fun ScheduleApp(
                 val examLoading by viewModel.examLoading.collectAsState()
                 val examYear by viewModel.examYear.collectAsState()
                 val examSemester by viewModel.examSemester.collectAsState()
+                val showExamReloginDialog by viewModel.showExamReloginDialog.collectAsState()
                 ExamScreen(
                     exams = examList,
                     isLoading = examLoading,
                     semesterStart = semesterStart,
                     examYear = examYear,
                     examSemester = examSemester,
+                    showReloginDialog = showExamReloginDialog,
+                    captchaImageBase64 = captchaImage,
                     onYearChange = { viewModel.setExamYear(it) },
                     onSemesterChange = { viewModel.setExamSemester(it) },
                     onRefresh = { viewModel.refreshExamSchedule() },
+                    onDismissRelogin = { viewModel.dismissExamReloginDialog() },
+                    onRefreshCaptcha = { viewModel.refreshCaptcha() },
+                    onQuickRelogin = { cap -> viewModel.quickRelogin(cap) },
                     onBack = { navController.popBackStack() }
                 )
             }

@@ -605,6 +605,8 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     val examYear: StateFlow<String> = _examYear
     private val _examSemester = MutableStateFlow("")
     val examSemester: StateFlow<String> = _examSemester
+    private val _showExamReloginDialog = MutableStateFlow(false)
+    val showExamReloginDialog: StateFlow<Boolean> = _showExamReloginDialog
 
     fun setExamYear(year: String) { _examYear.value = year }
     fun setExamSemester(semester: String) { _examSemester.value = semester }
@@ -642,10 +644,9 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                 }.onFailure { e ->
                     val msg = e.message ?: ""
                     if (msg.contains("901") || msg.contains("认证失败") || msg.contains("未登录")) {
-                        // CAS ticket expired, prompt user for quick re-login
-                        android.util.Log.d("GdustApi", "Exam auth failed (901), prompting re-login")
-                        _loginState.value = LoginState.TokenExpired
-                        _messages.emit("教务系统登录已过期，请在「我的」页面快速重新登录后重试考试获取")
+                        android.util.Log.d("GdustApi", "Exam auth failed (901), showing re-login dialog")
+                        refreshCaptcha()
+                        _showExamReloginDialog.value = true
                     } else {
                         _messages.emit("获取考试信息失败: $msg")
                     }
@@ -656,6 +657,10 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                 _examLoading.value = false
             }
         }
+    }
+
+    fun dismissExamReloginDialog() {
+        _showExamReloginDialog.value = false
     }
 
     fun logout() {
