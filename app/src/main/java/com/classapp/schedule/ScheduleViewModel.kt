@@ -584,6 +584,12 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                     }
                     settings.clearTokenExpired()
                     importFromSchool(sid)
+                    // Auto-retry exam query if it was the reason for re-login
+                    if (pendingExamRetry) {
+                        pendingExamRetry = false
+                        kotlinx.coroutines.delay(500)
+                        refreshExamSchedule()
+                    }
                 }
                 .onFailure { e ->
                     if (isTokenExpired(e.message)) {
@@ -607,6 +613,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     val examSemester: StateFlow<String> = _examSemester
     private val _showExamReloginDialog = MutableStateFlow(false)
     val showExamReloginDialog: StateFlow<Boolean> = _showExamReloginDialog
+    private var pendingExamRetry = false
 
     fun setExamYear(year: String) { _examYear.value = year }
     fun setExamSemester(semester: String) { _examSemester.value = semester }
@@ -645,6 +652,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                     val msg = e.message ?: ""
                     if (msg.contains("901") || msg.contains("认证失败") || msg.contains("未登录")) {
                         android.util.Log.d("GdustApi", "Exam auth failed (901), showing re-login dialog")
+                        pendingExamRetry = true
                         refreshCaptcha()
                         _showExamReloginDialog.value = true
                     } else {
