@@ -573,8 +573,12 @@ fun CourseDetailSheet(course: Course, getStartTime: (Int) -> String, getEndTime:
             Spacer(modifier = Modifier.height(16.dp))
             val dayNames = listOf("", "周一", "周二", "周三", "周四", "周五", "周六", "周日")
             DetailRow("星期", dayNames.getOrElse(course.dayOfWeek) { "" })
-            DetailRow("节次", "${course.startPeriod}-${course.endPeriod()}节")
-            DetailRow("时间", "${getStartTime(course.startPeriod)} - ${getEndTime(course.endPeriod())}")
+            if (course.isCustomTime) {
+                DetailRow("时间", "${course.customStartTime} - ${course.customEndTime}")
+            } else {
+                DetailRow("节次", "${course.startPeriod}-${course.endPeriod()}节")
+                DetailRow("时间", "${getStartTime(course.startPeriod)} - ${getEndTime(course.endPeriod())}")
+            }
             if (course.teacher.isNotEmpty()) DetailRow("教师", course.teacher)
             if (course.classroom.isNotEmpty()) DetailRow("教室", course.classroom)
             DetailRow("周次", course.weekRange)
@@ -679,7 +683,7 @@ private fun timeToGridLine(
             return (period - 1) + (target - start).toFloat() / duration.toFloat()
         }
         val nextStart = parseMinutes(getStartTime(period + 1))
-        if (nextStart != null && target > end && target < nextStart) {
+        if (nextStart != null && target >= end && target <= nextStart) {
             return period.toFloat()
         }
     }
