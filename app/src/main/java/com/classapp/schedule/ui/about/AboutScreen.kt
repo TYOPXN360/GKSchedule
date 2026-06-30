@@ -136,7 +136,7 @@ fun AboutScreen(
                         onClick = onLogout,
                         modifier = Modifier.align(Alignment.TopEnd).padding(12.dp),
                         shape = RoundedCornerShape(12.dp),
-                        color = MaterialTheme.colorScheme.errorContainer
+                        color = MaterialTheme.colorScheme.surfaceVariant
                     ) {
                         Box(
                             modifier = Modifier.size(36.dp),
@@ -146,7 +146,7 @@ fun AboutScreen(
                                 Icons.Default.Logout,
                                 contentDescription = stringResource(R.string.logout),
                                 modifier = Modifier.size(20.dp),
-                                tint = MaterialTheme.colorScheme.onErrorContainer
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }

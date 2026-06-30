@@ -434,7 +434,7 @@ private fun CourseCard(
                             ) {
                                 Text(
                                     text = "考试",
-                                    style = MaterialTheme.typography.labelMedium,
+                                    style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onErrorContainer
                                 )
                             }
@@ -451,7 +451,7 @@ private fun CourseCard(
                             ) {
                                 Text(
                                     text = "${(progress * 100).toInt()}%",
-                                    style = MaterialTheme.typography.labelMedium,
+                                    style = MaterialTheme.typography.labelSmall,
                                     color = pctText
                                 )
                             }
@@ -468,7 +468,7 @@ private fun CourseCard(
                             ) {
                                 Text(
                                     text = stringResource(R.string.next_course),
-                                    style = MaterialTheme.typography.labelMedium,
+                                    style = MaterialTheme.typography.labelSmall,
                                     color = tagText
                                 )
                             }
