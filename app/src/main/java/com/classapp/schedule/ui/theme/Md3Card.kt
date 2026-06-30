@@ -24,14 +24,14 @@ enum class Md3CardVariant { Elevated, Filled, Outlined }
 fun Md3Card(
     modifier: Modifier = Modifier,
     variant: Md3CardVariant = Md3CardVariant.Elevated,
-    shape: Shape = MaterialTheme.shapes.small,
+    shape: Shape = MaterialTheme.shapes.medium,
     content: @Composable ColumnScope.() -> Unit
 ) {
     when (variant) {
         Md3CardVariant.Elevated -> Surface(
-            modifier = modifier.background(Color(0xFF3A3A3A)),
+            modifier = modifier,
             shape = shape,
-            color = Color.Transparent,
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
             tonalElevation = 6.dp,
             shadowElevation = 1.dp
         ) {
@@ -57,15 +57,15 @@ fun Md3Card(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     variant: Md3CardVariant = Md3CardVariant.Elevated,
-    shape: Shape = MaterialTheme.shapes.small,
+    shape: Shape = MaterialTheme.shapes.medium,
     content: @Composable ColumnScope.() -> Unit
 ) {
     when (variant) {
         Md3CardVariant.Elevated -> Surface(
             onClick = onClick,
-            modifier = modifier.background(Color(0xFF3A3A3A)),
+            modifier = modifier,
             shape = shape,
-            color = Color.Transparent,
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
             tonalElevation = 6.dp,
             shadowElevation = 1.dp
         ) {
