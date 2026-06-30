@@ -178,7 +178,7 @@ fun WebViewLoginScreen(
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .background(ComposeColor.Black.copy(alpha = 0.6f))
+                                .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.6f))
                                 .clickable {
                                     HapticFeedback.light(context)
                                     generateQr()
@@ -190,18 +190,18 @@ fun WebViewLoginScreen(
                                     Icons.Default.Refresh,
                                     contentDescription = null,
                                     modifier = Modifier.size(40.dp),
-                                    tint = ComposeColor.White
+                                    tint = MaterialTheme.colorScheme.inverseOnSurface
                                 )
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
                                     text = stringResource(R.string.qr_expired),
                                     style = MaterialTheme.typography.titleMedium,
-                                    color = ComposeColor.White
+                                    color = MaterialTheme.colorScheme.inverseOnSurface
                                 )
                                 Text(
                                     text = stringResource(R.string.qr_tap_to_refresh),
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = ComposeColor.White.copy(alpha = 0.7f)
+                                    color = MaterialTheme.colorScheme.inverseOnSurface.copy(alpha = 0.7f)
                                 )
                             }
                         }

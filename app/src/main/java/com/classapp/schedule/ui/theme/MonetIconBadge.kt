@@ -34,7 +34,7 @@ fun MonetIconBadge(
         hslToColor(hsl[0], 0.65f, 0.88f)
     }
     val iconColor = if (isDark) {
-        Color.White.copy(alpha = 0.95f)
+        MaterialTheme.colorScheme.onSurface
     } else {
         hslToColor(hsl[0], 0.50f, 0.25f)
     }
@@ -59,7 +59,7 @@ fun MonetIconBadgeTextColor(seedColor: Color): Color {
     val isDark = LocalAppIsDark.current
     val hsl = rgbToHsl(seedColor.red, seedColor.green, seedColor.blue)
     return if (isDark) {
-        Color.White.copy(alpha = 0.95f)
+        MaterialTheme.colorScheme.onSurface
     } else {
         hslToColor(hsl[0], 0.50f, 0.25f)
     }

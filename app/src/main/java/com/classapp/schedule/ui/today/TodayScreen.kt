@@ -315,7 +315,7 @@ private fun CourseCard(
     isPast: Boolean = false,
     animDelay: Long = 0L,
     skipAnim: Boolean = false,
-    barColor: Color = Color.Gray,
+    barColor: Color = MaterialTheme.colorScheme.outline,
     onClick: () -> Unit
 ) {
     // Real-time isPast check — only for today's courses, updates every 30 seconds
@@ -594,7 +594,7 @@ private fun timeToPeriod(time: String, timeProvider: (Int) -> String): Int {
 }
 
 @Composable
-private fun ExamCard(exam: com.classapp.schedule.api.ExamInfo, barColor: Color = Color.Gray) {
+private fun ExamCard(exam: com.classapp.schedule.api.ExamInfo, barColor: Color = MaterialTheme.colorScheme.outline) {
 
     Card(
         modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
