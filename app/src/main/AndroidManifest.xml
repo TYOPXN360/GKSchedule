@@ -44,7 +44,7 @@
 
         <activity
             android:name=".ui.settings.SettingsActivity"
-            android:exported="false"
+            android:exported="true"
             android:windowSoftInputMode="adjustResize" />
 
         <!-- Disable emoji2 auto-init (avoids ClassNotFoundException) -->

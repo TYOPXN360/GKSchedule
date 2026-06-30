@@ -15,6 +15,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -199,6 +200,12 @@ fun SettingsScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SettingsMainPage(onOpenPage: (String) -> Unit, onExit: () -> Unit) {
+    val surf = MaterialTheme.colorScheme.surface
+    val surfLow = MaterialTheme.colorScheme.surfaceContainerLow
+    val surfCont = MaterialTheme.colorScheme.surfaceContainer
+    val surfHigh = MaterialTheme.colorScheme.surfaceContainerHigh
+    val surfHighest = MaterialTheme.colorScheme.surfaceContainerHighest
+    android.util.Log.d("SettingsColors", "surface=#${Integer.toHexString(surf.hashCode())}, surfaceContainerLow=#${Integer.toHexString(surfLow.hashCode())}, surfaceContainer=#${Integer.toHexString(surfCont.hashCode())}, surfaceContainerHigh=#${Integer.toHexString(surfHigh.hashCode())}, surfaceContainerHighest=#${Integer.toHexString(surfHighest.hashCode())}")
     Scaffold(
         contentWindowInsets = WindowInsets.systemBars,
         containerColor = MaterialTheme.colorScheme.surface,
@@ -239,6 +246,7 @@ private fun CategoryItem(icon: androidx.compose.ui.graphics.vector.ImageVector, 
             supportingContent = { Text(subtitle) },
             leadingContent = { com.classapp.schedule.ui.theme.MonetIconBadge(icon = icon, contentDescription = null, seedColor = seedColor) },
             trailingContent = { Icon(Icons.Default.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
             modifier = Modifier.clickable(onClick = onClick)
         )
     }
