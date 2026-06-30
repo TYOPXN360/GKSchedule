@@ -227,12 +227,52 @@ private fun SettingsMainPage(onOpenPage: (String) -> Unit, onExit: () -> Unit) {
                 .verticalScroll(rememberScrollState())
         ) {
             val catColors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.tertiary, MaterialTheme.colorScheme.error, MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.tertiary)
-            CategoryItem(Icons.Default.CalendarMonth, stringResource(R.string.settings_category_semester), stringResource(R.string.settings_category_semester_desc), catColors[0]) { onOpenPage("semester") }
-            CategoryItem(Icons.Default.Palette, stringResource(R.string.settings_category_appearance), stringResource(R.string.settings_category_appearance_desc), catColors[1]) { onOpenPage("appearance") }
-            CategoryItem(Icons.Default.GridOn, stringResource(R.string.settings_category_schedule), stringResource(R.string.settings_category_schedule_desc), catColors[2]) { onOpenPage("schedule_style") }
-            CategoryItem(Icons.Default.Notifications, stringResource(R.string.settings_category_notification), stringResource(R.string.settings_category_notification_desc), catColors[3]) { onOpenPage("notification") }
-            CategoryItem(Icons.Default.Sync, stringResource(R.string.settings_category_sync), stringResource(R.string.settings_category_sync_desc), catColors[4]) { onOpenPage("sync") }
-            CategoryItem(Icons.Default.Storage, stringResource(R.string.settings_category_data), stringResource(R.string.settings_category_data_desc), catColors[5]) { onOpenPage("data") }
+            val catIcons = listOf(Icons.Default.CalendarMonth, Icons.Default.Palette, Icons.Default.GridOn, Icons.Default.Notifications, Icons.Default.Sync, Icons.Default.Storage)
+            val catTitles = listOf(
+                stringResource(R.string.settings_category_semester),
+                stringResource(R.string.settings_category_appearance),
+                stringResource(R.string.settings_category_schedule),
+                stringResource(R.string.settings_category_notification),
+                stringResource(R.string.settings_category_sync),
+                stringResource(R.string.settings_category_data)
+            )
+            val catDescs = listOf(
+                stringResource(R.string.settings_category_semester_desc),
+                stringResource(R.string.settings_category_appearance_desc),
+                stringResource(R.string.settings_category_schedule_desc),
+                stringResource(R.string.settings_category_notification_desc),
+                stringResource(R.string.settings_category_sync_desc),
+                stringResource(R.string.settings_category_data_desc)
+            )
+            val catCallbacks = listOf<() -> Unit>(
+                { onOpenPage("semester") },
+                { onOpenPage("appearance") },
+                { onOpenPage("schedule_style") },
+                { onOpenPage("notification") },
+                { onOpenPage("sync") },
+                { onOpenPage("data") }
+            )
+
+            com.classapp.schedule.ui.theme.Md3Card(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                variant = com.classapp.schedule.ui.theme.Md3CardVariant.Elevated
+            ) {
+                Column {
+                    catIcons.forEachIndexed { index, icon ->
+                        ListItem(
+                            headlineContent = { Text(catTitles[index], style = MaterialTheme.typography.titleMedium) },
+                            supportingContent = { Text(catDescs[index], style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                            leadingContent = { com.classapp.schedule.ui.theme.MonetIconBadge(icon = icon, contentDescription = null, seedColor = catColors[index]) },
+                            trailingContent = { Icon(Icons.Default.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+                            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                            modifier = Modifier.clickable(onClick = catCallbacks[index])
+                        )
+                        if (index < catIcons.size - 1) {
+                            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+                        }
+                    }
+                }
+            }
             Spacer(modifier = Modifier.height(32.dp))
         }
     }

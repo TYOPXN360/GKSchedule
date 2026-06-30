@@ -190,9 +190,9 @@ fun AboutScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Semester info (read-only)
+        // All items in one grouped card
         val badgeColors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.tertiary, MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.error, MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.tertiary)
-        Md3Card(modifier = Modifier.fillMaxWidth(), variant = Md3CardVariant.Elevated, shape = MaterialTheme.shapes.medium) {
+        Md3Card(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp), variant = Md3CardVariant.Elevated) {
             Column {
                 ListItem(
                     headlineContent = { Text(stringResource(R.string.semester_start)) },
@@ -214,47 +214,32 @@ fun AboutScreen(
                     leadingContent = { MonetIconBadge(icon = Icons.Default.AccessTime, contentDescription = null, seedColor = badgeColors[2]) },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                 )
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+                ListItem(
+                    headlineContent = { Text("考试安排") },
+                    supportingContent = { Text("查看考试时间和考场") },
+                    leadingContent = { MonetIconBadge(icon = Icons.Default.School, contentDescription = null, seedColor = badgeColors[3]) },
+                    trailingContent = { Icon(Icons.Default.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                    modifier = Modifier.clickable(onClick = onOpenExam)
+                )
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.settings_title)) },
+                    supportingContent = { Text(stringResource(R.string.about_settings_desc)) },
+                    leadingContent = { MonetIconBadge(icon = Icons.Default.Settings, contentDescription = null, seedColor = badgeColors[4]) },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                    modifier = Modifier.clickable(onClick = onOpenSettings)
+                )
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.about_title)) },
+                    supportingContent = { Text(stringResource(R.string.about_school)) },
+                    leadingContent = { MonetIconBadge(icon = Icons.AutoMirrored.Filled.Article, contentDescription = null, seedColor = badgeColors[5]) },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                    modifier = Modifier.clickable { showAboutDialog = true }
+                )
             }
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Exam schedule
-        Md3Card(modifier = Modifier.fillMaxWidth(), variant = Md3CardVariant.Elevated, shape = MaterialTheme.shapes.medium) {
-            ListItem(
-                headlineContent = { Text("考试安排") },
-                supportingContent = { Text("查看考试时间和考场") },
-                leadingContent = { MonetIconBadge(icon = Icons.Default.School, contentDescription = null, seedColor = badgeColors[3]) },
-                trailingContent = { Icon(Icons.Default.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
-                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                modifier = Modifier.clickable(onClick = onOpenExam)
-            )
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Settings
-        Md3Card(modifier = Modifier.fillMaxWidth(), variant = Md3CardVariant.Elevated, shape = MaterialTheme.shapes.medium) {
-            ListItem(
-                headlineContent = { Text(stringResource(R.string.settings_title)) },
-                supportingContent = { Text(stringResource(R.string.about_settings_desc)) },
-                leadingContent = { MonetIconBadge(icon = Icons.Default.Settings, contentDescription = null, seedColor = badgeColors[4]) },
-                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                modifier = Modifier.clickable(onClick = onOpenSettings)
-            )
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // About
-        Md3Card(modifier = Modifier.fillMaxWidth(), variant = Md3CardVariant.Elevated, shape = MaterialTheme.shapes.medium) {
-            ListItem(
-                headlineContent = { Text(stringResource(R.string.about_title)) },
-                supportingContent = { Text(stringResource(R.string.about_school)) },
-                leadingContent = { MonetIconBadge(icon = Icons.AutoMirrored.Filled.Article, contentDescription = null, seedColor = badgeColors[5]) },
-                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                modifier = Modifier.clickable { showAboutDialog = true }
-            )
         }
 
         Spacer(modifier = Modifier.weight(1f))
