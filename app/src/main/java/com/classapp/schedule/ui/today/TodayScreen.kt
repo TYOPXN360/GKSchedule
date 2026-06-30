@@ -444,11 +444,12 @@ private fun CourseCard(
                             Box(
                                 modifier = Modifier
                                     .background(pctBg, RoundedCornerShape(4.dp))
-                                    .padding(horizontal = 6.dp, vertical = 1.dp)
+                                    .padding(horizontal = 5.dp, vertical = 2.dp),
+                                contentAlignment = Alignment.Center
                             ) {
                                 Text(
                                     text = "${(progress * 100).toInt()}%",
-                                    style = MaterialTheme.typography.titleMedium,
+                                    style = MaterialTheme.typography.labelMedium,
                                     color = pctText
                                 )
                             }
@@ -460,11 +461,12 @@ private fun CourseCard(
                             Box(
                                 modifier = Modifier
                                     .background(tagBg, RoundedCornerShape(4.dp))
-                                    .padding(horizontal = 6.dp, vertical = 1.dp)
+                                    .padding(horizontal = 5.dp, vertical = 2.dp),
+                                contentAlignment = Alignment.Center
                             ) {
                                 Text(
                                     text = stringResource(R.string.next_course),
-                                    style = MaterialTheme.typography.titleMedium,
+                                    style = MaterialTheme.typography.labelMedium,
                                     color = tagText
                                 )
                             }
