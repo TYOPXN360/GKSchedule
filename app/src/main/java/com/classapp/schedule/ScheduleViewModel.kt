@@ -640,7 +640,15 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                     settings.saveCachedExams(json, yearStr, semester)
                     _messages.emit("已获取 ${exams.size} 条考试信息")
                 }.onFailure { e ->
-                    _messages.emit("获取考试信息失败: ${e.message}")
+                    val msg = e.message ?: ""
+                    if (msg.contains("901") || msg.contains("认证失败") || msg.contains("未登录")) {
+                        // CAS ticket expired, prompt user for quick re-login
+                        android.util.Log.d("GdustApi", "Exam auth failed (901), prompting re-login")
+                        _loginState.value = LoginState.TokenExpired
+                        _messages.emit("教务系统登录已过期，请在「我的」页面快速重新登录后重试考试获取")
+                    } else {
+                        _messages.emit("获取考试信息失败: $msg")
+                    }
                 }
             } catch (e: Exception) {
                 _messages.emit("获取考试信息失败: ${e.message}")
