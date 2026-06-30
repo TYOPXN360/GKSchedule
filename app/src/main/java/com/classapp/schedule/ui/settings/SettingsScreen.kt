@@ -226,7 +226,7 @@ private fun SettingsMainPage(onOpenPage: (String) -> Unit, onExit: () -> Unit) {
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
         ) {
-            val catColors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.tertiary, MaterialTheme.colorScheme.error, MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.tertiary)
+            val catColors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.tertiary, MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.tertiary)
             val catIcons = listOf(Icons.Default.CalendarMonth, Icons.Default.Palette, Icons.Default.GridOn, Icons.Default.Notifications, Icons.Default.Sync, Icons.Default.Storage)
             val catTitles = listOf(
                 stringResource(R.string.settings_category_semester),
@@ -315,8 +315,10 @@ private fun SubPage(title: String, onBack: () -> Unit, content: @Composable Colu
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                .padding(horizontal = 16.dp)
                 .verticalScroll(rememberScrollState())
         ) {
+            Spacer(modifier = Modifier.height(16.dp))
             content()
             Spacer(modifier = Modifier.height(32.dp))
         }
@@ -334,12 +336,13 @@ private fun SemesterPage(
     onHideEmptyWeeksChange: (Boolean) -> Unit, onBack: () -> Unit
 ) {
     SubPage(stringResource(R.string.settings_category_semester), onBack) {
-        // Semester info is read-only, shown in "我的" page
-        // These settings are kept for internal use but not editable here
-        DropdownItem(Icons.Default.FirstPage, stringResource(R.string.first_day_of_week),
-            listOf("1" to stringResource(R.string.first_day_monday), "7" to stringResource(R.string.first_day_sunday)),
-            firstDayOfWeek.toString(), onSelect = { onFirstDayOfWeekChange(it.toInt()) })
-        SwitchItem(Icons.Default.Visibility, stringResource(R.string.hide_empty_weeks), hideEmptyWeeks, onHideEmptyWeeksChange)
+        SettingsCard {
+            DropdownItem(Icons.Default.FirstPage, stringResource(R.string.first_day_of_week),
+                listOf("1" to stringResource(R.string.first_day_monday), "7" to stringResource(R.string.first_day_sunday)),
+                firstDayOfWeek.toString(), onSelect = { onFirstDayOfWeekChange(it.toInt()) })
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            SwitchItem(Icons.Default.Visibility, stringResource(R.string.hide_empty_weeks), hideEmptyWeeks, onHideEmptyWeeksChange)
+        }
     }
 }
 
@@ -351,12 +354,15 @@ private fun AppearancePage(
     onDarkModeChange: (String) -> Unit, onLanguageChange: (String) -> Unit, onBack: () -> Unit
 ) {
     SubPage(stringResource(R.string.settings_category_appearance), onBack) {
-        DropdownItem(Icons.Default.DarkMode, stringResource(R.string.dark_mode),
-            listOf("system" to stringResource(R.string.dark_mode_system), "light" to stringResource(R.string.dark_mode_light), "dark" to stringResource(R.string.dark_mode_dark)),
-            darkMode, onSelect = onDarkModeChange)
-        DropdownItem(Icons.Default.Language, stringResource(R.string.language),
-            listOf("system" to stringResource(R.string.language_system), "en" to stringResource(R.string.language_en), "zh" to stringResource(R.string.language_zh)),
-            language, onSelect = onLanguageChange)
+        SettingsCard {
+            DropdownItem(Icons.Default.DarkMode, stringResource(R.string.dark_mode),
+                listOf("system" to stringResource(R.string.dark_mode_system), "light" to stringResource(R.string.dark_mode_light), "dark" to stringResource(R.string.dark_mode_dark)),
+                darkMode, onSelect = onDarkModeChange)
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            DropdownItem(Icons.Default.Language, stringResource(R.string.language),
+                listOf("system" to stringResource(R.string.language_system), "en" to stringResource(R.string.language_en), "zh" to stringResource(R.string.language_zh)),
+                language, onSelect = onLanguageChange)
+        }
     }
 }
 
@@ -375,24 +381,39 @@ private fun ScheduleStylePage(
     onShowDateInHeaderChange: (Boolean) -> Unit, onBack: () -> Unit
 ) {
     SubPage(stringResource(R.string.settings_category_schedule), onBack) {
-        SwitchItem(Icons.Default.AutoAwesome, stringResource(R.string.auto_grid_height), autoGridHeight, onAutoGridHeightChange)
-        if (!autoGridHeight) StepperItem(Icons.Default.Height, stringResource(R.string.grid_height), gridHeight, 36, 80, onGridHeightChange)
-        StepperItem(Icons.Default.RoundedCorner, stringResource(R.string.grid_corner), gridCorner, 0, 20, onGridCornerChange)
-        StepperItem(Icons.Default.SpaceBar, stringResource(R.string.grid_spacing), gridSpacing, 0, 8, onGridSpacingChange)
-        SwitchItem(Icons.Default.ViewColumn, stringResource(R.string.merge_consecutive), mergeConsecutive, onMergeConsecutiveChange)
-        if (!mergeConsecutive) SwitchItem(Icons.Default.ViewDay, stringResource(R.string.detailed_split), detailedSplit, onDetailedSplitChange)
-        SwitchItem(Icons.Default.AccessTime, stringResource(R.string.show_time_label), showTimeLabel, onShowTimeLabelChange)
-        SwitchItem(Icons.Default.CalendarMonth, stringResource(R.string.show_date_in_header), showDateInHeader, onShowDateInHeaderChange)
-        SwitchItem(Icons.Default.Pin, stringResource(R.string.show_period_label), showPeriodLabel, onShowPeriodLabelChange)
-
-        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
-
-        DropdownItem(Icons.Default.Palette, stringResource(R.string.color_engine),
-            listOf("0" to stringResource(R.string.color_engine_monet), "1" to stringResource(R.string.color_engine_vibrant), "2" to stringResource(R.string.color_engine_classic), "3" to stringResource(R.string.color_engine_hsl)),
-            colorEngine.toString(), onSelect = { onColorEngineChange(it.toInt()) })
-        DropdownItem(Icons.Default.FormatColorFill, stringResource(R.string.color_group_mode),
-            listOf("0" to stringResource(R.string.color_group_same), "1" to stringResource(R.string.color_group_same_sat), "2" to stringResource(R.string.color_group_diff)),
-            colorGroupMode.toString(), onSelect = { onColorGroupModeChange(it.toInt()) })
+        SettingsCard {
+            SwitchItem(Icons.Default.AutoAwesome, stringResource(R.string.auto_grid_height), autoGridHeight, onAutoGridHeightChange)
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            if (!autoGridHeight) {
+                StepperItem(Icons.Default.Height, stringResource(R.string.grid_height), gridHeight, 36, 80, onGridHeightChange)
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            }
+            StepperItem(Icons.Default.RoundedCorner, stringResource(R.string.grid_corner), gridCorner, 0, 20, onGridCornerChange)
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            StepperItem(Icons.Default.SpaceBar, stringResource(R.string.grid_spacing), gridSpacing, 0, 8, onGridSpacingChange)
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            SwitchItem(Icons.Default.ViewColumn, stringResource(R.string.merge_consecutive), mergeConsecutive, onMergeConsecutiveChange)
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            if (!mergeConsecutive) {
+                SwitchItem(Icons.Default.ViewDay, stringResource(R.string.detailed_split), detailedSplit, onDetailedSplitChange)
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            }
+            SwitchItem(Icons.Default.AccessTime, stringResource(R.string.show_time_label), showTimeLabel, onShowTimeLabelChange)
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            SwitchItem(Icons.Default.CalendarMonth, stringResource(R.string.show_date_in_header), showDateInHeader, onShowDateInHeaderChange)
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            SwitchItem(Icons.Default.Pin, stringResource(R.string.show_period_label), showPeriodLabel, onShowPeriodLabelChange)
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        SettingsCard {
+            DropdownItem(Icons.Default.Palette, stringResource(R.string.color_engine),
+                listOf("0" to stringResource(R.string.color_engine_monet), "1" to stringResource(R.string.color_engine_vibrant), "2" to stringResource(R.string.color_engine_classic), "3" to stringResource(R.string.color_engine_hsl)),
+                colorEngine.toString(), onSelect = { onColorEngineChange(it.toInt()) })
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            DropdownItem(Icons.Default.FormatColorFill, stringResource(R.string.color_group_mode),
+                listOf("0" to stringResource(R.string.color_group_same), "1" to stringResource(R.string.color_group_same_sat), "2" to stringResource(R.string.color_group_diff)),
+                colorGroupMode.toString(), onSelect = { onColorGroupModeChange(it.toInt()) })
+        }
     }
 }
 
@@ -401,9 +422,11 @@ private fun ScheduleStylePage(
 @Composable
 private fun NotificationPage(reminderMinutes: Int, onReminderMinutesChange: (Int) -> Unit, onBack: () -> Unit) {
     SubPage(stringResource(R.string.settings_category_notification), onBack) {
-        DropdownItem(Icons.Default.Notifications, stringResource(R.string.reminder),
-            listOf("0" to stringResource(R.string.reminder_off), "5" to stringResource(R.string.reminder_format, 5), "10" to stringResource(R.string.reminder_format, 10), "15" to stringResource(R.string.reminder_format, 15), "30" to stringResource(R.string.reminder_format, 30)),
-            reminderMinutes.toString(), onSelect = { onReminderMinutesChange(it.toInt()) })
+        SettingsCard {
+            DropdownItem(Icons.Default.Notifications, stringResource(R.string.reminder),
+                listOf("0" to stringResource(R.string.reminder_off), "5" to stringResource(R.string.reminder_format, 5), "10" to stringResource(R.string.reminder_format, 10), "15" to stringResource(R.string.reminder_format, 15), "30" to stringResource(R.string.reminder_format, 30)),
+                reminderMinutes.toString(), onSelect = { onReminderMinutesChange(it.toInt()) })
+        }
     }
 }
 
@@ -440,127 +463,131 @@ private fun SyncPage(
     }
 
     SubPage(stringResource(R.string.settings_category_sync), onBack) {
-        // Mode: startup sync OR scheduled sync (mutually exclusive)
-        SwitchItem(Icons.Default.PowerSettingsNew, stringResource(R.string.auto_sync_on_start), autoSyncOnStart) {
-            onAutoSyncOnStartChange(it)
-        }
-
-        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
-
-        val syncAlpha = if (autoSyncOnStart) 0.38f else 1f
-
-        ListItem(
-            headlineContent = {
-                Text(stringResource(R.string.auto_sync_schedule),
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = syncAlpha))
-            },
-            supportingContent = {
-                Text(stringResource(R.string.auto_sync_schedule_desc),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = syncAlpha))
-            },
-            leadingContent = {
-                Icon(Icons.Default.Schedule, null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = syncAlpha))
+        SettingsCard {
+            SwitchItem(Icons.Default.PowerSettingsNew, stringResource(R.string.auto_sync_on_start), autoSyncOnStart) {
+                onAutoSyncOnStartChange(it)
             }
-        )
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
 
-        // Unit selector
-        DropdownItem(Icons.Default.Tune, stringResource(R.string.auto_sync_interval),
-            listOf(
-                "min" to stringResource(R.string.auto_sync_unit_min),
-                "h" to stringResource(R.string.auto_sync_unit_h),
-                "d" to stringResource(R.string.auto_sync_unit_d)
-            ),
-            autoSyncIntervalUnit, enabled = !autoSyncOnStart, onSelect = onAutoSyncIntervalUnitChange)
+            val syncAlpha = if (autoSyncOnStart) 0.38f else 1f
 
-        // Value slider with +/- buttons
-        ListItem(
-            headlineContent = {
-                Text("$autoSyncIntervalValue $unitLabel",
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = syncAlpha))
-            },
-            supportingContent = {
-                Column {
-                    Slider(
-                        value = autoSyncIntervalValue.toFloat(),
-                        onValueChange = { onAutoSyncIntervalValueChange(it.toInt()) },
-                        valueRange = minVal.toFloat()..maxVal.toFloat(),
-                        steps = maxVal - minVal - 1,
-                        enabled = !autoSyncOnStart
-                    )
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
-                    ) {
-                        IconButton(
-                            onClick = { onAutoSyncIntervalValueChange((autoSyncIntervalValue - 1).coerceIn(minVal, maxVal)) },
-                            enabled = !autoSyncOnStart && autoSyncIntervalValue > minVal
-                        ) {
-                            Icon(Icons.Default.Remove, null,
-                                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = syncAlpha))
-                        }
-                        Text(
-                            "$autoSyncIntervalValue $unitLabel",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = syncAlpha),
-                            modifier = Modifier.padding(horizontal = 16.dp)
+            ListItem(
+                headlineContent = {
+                    Text(stringResource(R.string.auto_sync_schedule),
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = syncAlpha))
+                },
+                supportingContent = {
+                    Text(stringResource(R.string.auto_sync_schedule_desc),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = syncAlpha))
+                },
+                leadingContent = {
+                    Icon(Icons.Default.Schedule, null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = syncAlpha))
+                },
+                colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+            )
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+
+            // Unit selector
+            DropdownItem(Icons.Default.Tune, stringResource(R.string.auto_sync_interval),
+                listOf(
+                    "min" to stringResource(R.string.auto_sync_unit_min),
+                    "h" to stringResource(R.string.auto_sync_unit_h),
+                    "d" to stringResource(R.string.auto_sync_unit_d)
+                ),
+                autoSyncIntervalUnit, enabled = !autoSyncOnStart, onSelect = onAutoSyncIntervalUnitChange)
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+
+            // Value slider with +/- buttons
+            ListItem(
+                headlineContent = {
+                    Text("$autoSyncIntervalValue $unitLabel",
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = syncAlpha))
+                },
+                supportingContent = {
+                    Column {
+                        Slider(
+                            value = autoSyncIntervalValue.toFloat(),
+                            onValueChange = { onAutoSyncIntervalValueChange(it.toInt()) },
+                            valueRange = minVal.toFloat()..maxVal.toFloat(),
+                            steps = maxVal - minVal - 1,
+                            enabled = !autoSyncOnStart
                         )
-                        IconButton(
-                            onClick = { onAutoSyncIntervalValueChange((autoSyncIntervalValue + 1).coerceIn(minVal, maxVal)) },
-                            enabled = !autoSyncOnStart && autoSyncIntervalValue < maxVal
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
                         ) {
-                            Icon(Icons.Default.Add, null,
-                                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = syncAlpha))
+                            IconButton(
+                                onClick = { onAutoSyncIntervalValueChange((autoSyncIntervalValue - 1).coerceIn(minVal, maxVal)) },
+                                enabled = !autoSyncOnStart && autoSyncIntervalValue > minVal
+                            ) {
+                                Icon(Icons.Default.Remove, null,
+                                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = syncAlpha))
+                            }
+                            Text(
+                                "$autoSyncIntervalValue $unitLabel",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = syncAlpha),
+                                modifier = Modifier.padding(horizontal = 16.dp)
+                            )
+                            IconButton(
+                                onClick = { onAutoSyncIntervalValueChange((autoSyncIntervalValue + 1).coerceIn(minVal, maxVal)) },
+                                enabled = !autoSyncOnStart && autoSyncIntervalValue < maxVal
+                            ) {
+                                Icon(Icons.Default.Add, null,
+                                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = syncAlpha))
+                            }
                         }
                     }
-                }
-            },
-            leadingContent = { Icon(Icons.Default.Tune, null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = syncAlpha)) }
-        )
-
-        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
-
-        // Token heartbeat
-        var showHeartbeatInfo by remember { mutableStateOf(false) }
-        ListItem(
-            headlineContent = { Text(stringResource(R.string.token_heartbeat)) },
-            leadingContent = { Icon(Icons.Default.Favorite, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
-            trailingContent = {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = { showHeartbeatInfo = true }) {
-                        Icon(Icons.Default.Info, "Info", tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    Switch(
-                        checked = tokenHeartbeat,
-                        onCheckedChange = onTokenHeartbeatChange,
-                        thumbContent = if (tokenHeartbeat) {
-                            { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(SwitchDefaults.IconSize)) }
-                        } else null
-                    )
-                }
-            }
-        )
-        if (showHeartbeatInfo) {
-            AlertDialog(
-                onDismissRequest = { showHeartbeatInfo = false },
-                text = { Text(stringResource(R.string.token_heartbeat_desc)) },
-                confirmButton = { TextButton(onClick = { showHeartbeatInfo = false }) { Text("OK") } }
+                },
+                leadingContent = { Icon(Icons.Default.Tune, null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = syncAlpha)) },
+                colors = ListItemDefaults.colors(containerColor = Color.Transparent)
             )
         }
 
-        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-        // Exam schedule
-        SwitchItem(Icons.Default.School, stringResource(R.string.show_exam_schedule), showExamSchedule, onShowExamScheduleChange)
-        StepperItem(
-            Icons.Default.Event,
-            stringResource(R.string.exam_lookahead_weeks),
-            examLookaheadWeeks,
-            0,
-            20,
-            onExamLookaheadWeeksChange
-        )
+        SettingsCard {
+            var showHeartbeatInfo by remember { mutableStateOf(false) }
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.token_heartbeat)) },
+                leadingContent = { Icon(Icons.Default.Favorite, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+                trailingContent = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(onClick = { showHeartbeatInfo = true }) {
+                            Icon(Icons.Default.Info, "Info", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Switch(
+                            checked = tokenHeartbeat,
+                            onCheckedChange = onTokenHeartbeatChange,
+                            thumbContent = if (tokenHeartbeat) {
+                                { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(SwitchDefaults.IconSize)) }
+                            } else null
+                        )
+                    }
+                },
+                colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+            )
+            if (showHeartbeatInfo) {
+                AlertDialog(
+                    onDismissRequest = { showHeartbeatInfo = false },
+                    text = { Text(stringResource(R.string.token_heartbeat_desc)) },
+                    confirmButton = { TextButton(onClick = { showHeartbeatInfo = false }) { Text("OK") } }
+                )
+            }
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            SwitchItem(Icons.Default.School, stringResource(R.string.show_exam_schedule), showExamSchedule, onShowExamScheduleChange)
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            StepperItem(
+                Icons.Default.Event,
+                stringResource(R.string.exam_lookahead_weeks),
+                examLookaheadWeeks,
+                0,
+                20,
+                onExamLookaheadWeeksChange
+            )
+        }
     }
 }
 
@@ -569,13 +596,27 @@ private fun SyncPage(
 @Composable
 private fun DataPage(onExportJson: () -> Unit, onImportJson: () -> Unit, onExportIcs: () -> Unit, onBack: () -> Unit) {
     SubPage(stringResource(R.string.settings_category_data), onBack) {
-        SettingsItem(Icons.Default.FileUpload, stringResource(R.string.import_json), onClick = onImportJson)
-        SettingsItem(Icons.Default.FileDownload, stringResource(R.string.export_json), onClick = onExportJson)
-        SettingsItem(Icons.Default.CalendarMonth, stringResource(R.string.export_ics), onClick = onExportIcs)
+        SettingsCard {
+            SettingsItem(Icons.Default.FileUpload, stringResource(R.string.import_json), onClick = onImportJson)
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            SettingsItem(Icons.Default.FileDownload, stringResource(R.string.export_json), onClick = onExportJson)
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            SettingsItem(Icons.Default.CalendarMonth, stringResource(R.string.export_ics), onClick = onExportIcs)
+        }
     }
 }
 
 // === Shared components ===
+
+@Composable
+private fun SettingsCard(content: @Composable ColumnScope.() -> Unit) {
+    com.classapp.schedule.ui.theme.Md3Card(
+        modifier = Modifier.fillMaxWidth(),
+        variant = com.classapp.schedule.ui.theme.Md3CardVariant.Elevated
+    ) {
+        Column { content() }
+    }
+}
 
 @Composable
 private fun SettingsItem(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, subtitle: String? = null, onClick: () -> Unit) {
@@ -583,6 +624,7 @@ private fun SettingsItem(icon: androidx.compose.ui.graphics.vector.ImageVector, 
         headlineContent = { Text(title) },
         supportingContent = subtitle?.let { { Text(it) } },
         leadingContent = { Icon(icon, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
         modifier = Modifier.clickable(onClick = onClick)
     )
 }
@@ -598,7 +640,8 @@ private fun StepperItem(icon: androidx.compose.ui.graphics.vector.ImageVector, t
                 IconButton(onClick = { if (value < max) onChange(value + 1) }, enabled = value < max) { Text("+", style = MaterialTheme.typography.titleLarge) }
             }
         },
-        leadingContent = { Icon(icon, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
+        leadingContent = { Icon(icon, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent)
     )
 }
 
@@ -607,15 +650,16 @@ private fun SwitchItem(icon: androidx.compose.ui.graphics.vector.ImageVector, ti
     ListItem(
         headlineContent = { Text(title) },
         leadingContent = { Icon(icon, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
-            trailingContent = {
-                Switch(
-                    checked = checked,
-                    onCheckedChange = onChange,
-                    thumbContent = if (checked) {
-                        { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(SwitchDefaults.IconSize)) }
-                    } else null
-                )
-            }
+        trailingContent = {
+            Switch(
+                checked = checked,
+                onCheckedChange = onChange,
+                thumbContent = if (checked) {
+                    { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(SwitchDefaults.IconSize)) }
+                } else null
+            )
+        },
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent)
     )
 }
 
@@ -642,6 +686,7 @@ private fun DropdownItem(icon: androidx.compose.ui.graphics.vector.ImageVector, 
                     }
                 }
             },
+            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
             modifier = if (enabled) Modifier.clickable { expanded = true } else Modifier
         )
     }

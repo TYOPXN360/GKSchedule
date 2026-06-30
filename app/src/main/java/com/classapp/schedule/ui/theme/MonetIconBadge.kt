@@ -13,7 +13,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import kotlin.math.abs
+
+enum class BadgeColorPalette {
+    Primary, Secondary, Tertiary, Error, Neutral
+}
 
 @Composable
 fun MonetIconBadge(
@@ -25,44 +28,62 @@ fun MonetIconBadge(
     iconSize: Dp = 24.dp,
     cornerRadius: Dp = 14.dp
 ) {
-    val isDark = LocalAppIsDark.current
-
-    val hsl = rgbToHsl(seedColor.red, seedColor.green, seedColor.blue)
-    val bgColor = if (isDark) {
-        hslToColor(hsl[0], 0.55f, 0.30f)
-    } else {
-        hslToColor(hsl[0], 0.65f, 0.88f)
-    }
-    val iconColor = if (isDark) {
-        MaterialTheme.colorScheme.onSurface
-    } else {
-        hslToColor(hsl[0], 0.50f, 0.25f)
+    val palette = seedColorToPalette(seedColor)
+    val (containerColor, contentColor) = when (palette) {
+        BadgeColorPalette.Primary -> MaterialTheme.colorScheme.primaryContainer to MaterialTheme.colorScheme.onPrimaryContainer
+        BadgeColorPalette.Secondary -> MaterialTheme.colorScheme.secondaryContainer to MaterialTheme.colorScheme.onSecondaryContainer
+        BadgeColorPalette.Tertiary -> MaterialTheme.colorScheme.tertiaryContainer to MaterialTheme.colorScheme.onTertiaryContainer
+        BadgeColorPalette.Error -> MaterialTheme.colorScheme.errorContainer to MaterialTheme.colorScheme.onErrorContainer
+        BadgeColorPalette.Neutral -> MaterialTheme.colorScheme.surfaceVariant to MaterialTheme.colorScheme.onSurfaceVariant
     }
 
     Box(
         modifier = modifier
             .size(size)
-            .background(color = bgColor, shape = RoundedCornerShape(cornerRadius)),
+            .background(color = containerColor, shape = RoundedCornerShape(cornerRadius)),
         contentAlignment = Alignment.Center
     ) {
         Icon(
             imageVector = icon,
             contentDescription = contentDescription,
             modifier = Modifier.size(iconSize),
-            tint = iconColor
+            tint = contentColor
         )
     }
 }
 
 @Composable
 fun MonetIconBadgeTextColor(seedColor: Color): Color {
-    val isDark = LocalAppIsDark.current
-    val hsl = rgbToHsl(seedColor.red, seedColor.green, seedColor.blue)
-    return if (isDark) {
-        MaterialTheme.colorScheme.onSurface
-    } else {
-        hslToColor(hsl[0], 0.50f, 0.25f)
+    val palette = seedColorToPalette(seedColor)
+    return when (palette) {
+        BadgeColorPalette.Primary -> MaterialTheme.colorScheme.onPrimaryContainer
+        BadgeColorPalette.Secondary -> MaterialTheme.colorScheme.onSecondaryContainer
+        BadgeColorPalette.Tertiary -> MaterialTheme.colorScheme.onTertiaryContainer
+        BadgeColorPalette.Error -> MaterialTheme.colorScheme.onErrorContainer
+        BadgeColorPalette.Neutral -> MaterialTheme.colorScheme.onSurfaceVariant
     }
+}
+
+@Composable
+private fun seedColorToPalette(seedColor: Color): BadgeColorPalette {
+    val primary = MaterialTheme.colorScheme.primary
+    val secondary = MaterialTheme.colorScheme.secondary
+    val tertiary = MaterialTheme.colorScheme.tertiary
+    val error = MaterialTheme.colorScheme.error
+
+    return when {
+        colorsClose(seedColor, primary) -> BadgeColorPalette.Primary
+        colorsClose(seedColor, secondary) -> BadgeColorPalette.Secondary
+        colorsClose(seedColor, tertiary) -> BadgeColorPalette.Tertiary
+        colorsClose(seedColor, error) -> BadgeColorPalette.Error
+        else -> BadgeColorPalette.Neutral
+    }
+}
+
+private fun colorsClose(a: Color, b: Color, threshold: Float = 0.15f): Boolean {
+    return kotlin.math.abs(a.red - b.red) < threshold &&
+            kotlin.math.abs(a.green - b.green) < threshold &&
+            kotlin.math.abs(a.blue - b.blue) < threshold
 }
 
 internal fun rgbToHsl(r: Float, g: Float, b: Float): FloatArray {
@@ -80,8 +101,8 @@ internal fun rgbToHsl(r: Float, g: Float, b: Float): FloatArray {
 }
 
 internal fun hslToColor(h: Float, s: Float, l: Float): Color {
-    val c = (1f - abs(2f * l - 1f)) * s
-    val x = c * (1f - abs((h / 60f) % 2f - 1f))
+    val c = (1f - kotlin.math.abs(2f * l - 1f)) * s
+    val x = c * (1f - kotlin.math.abs((h / 60f) % 2f - 1f))
     val m = l - c / 2f
     val (r, g, b) = when {
         h < 60  -> Triple(c, x, 0f)
@@ -93,3 +114,5 @@ internal fun hslToColor(h: Float, s: Float, l: Float): Color {
     }
     return Color((r + m).coerceIn(0f, 1f), (g + m).coerceIn(0f, 1f), (b + m).coerceIn(0f, 1f))
 }
+
+

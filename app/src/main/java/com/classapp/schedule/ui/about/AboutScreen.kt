@@ -191,8 +191,15 @@ fun AboutScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         // All items in one grouped card
-        val badgeColors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.tertiary, MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.error, MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.tertiary)
-        Md3Card(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp), variant = Md3CardVariant.Elevated) {
+        val badgeColors = listOf(
+            MaterialTheme.colorScheme.primary,
+            MaterialTheme.colorScheme.tertiary,
+            MaterialTheme.colorScheme.secondary,
+            MaterialTheme.colorScheme.secondary,
+            MaterialTheme.colorScheme.primary,
+            MaterialTheme.colorScheme.tertiary
+        )
+        Md3Card(modifier = Modifier.fillMaxWidth(), variant = Md3CardVariant.Elevated) {
             Column {
                 ListItem(
                     headlineContent = { Text(stringResource(R.string.semester_start)) },
