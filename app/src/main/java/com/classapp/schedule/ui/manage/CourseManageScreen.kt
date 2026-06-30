@@ -47,7 +47,7 @@ fun CourseManageScreen(
     )
 
     Scaffold(
-        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        contentWindowInsets = WindowInsets.systemBars,
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onAddCourse,

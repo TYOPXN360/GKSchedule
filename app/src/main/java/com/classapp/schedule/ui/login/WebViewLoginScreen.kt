@@ -124,7 +124,7 @@ fun WebViewLoginScreen(
     LaunchedEffect(Unit) { generateQr() }
 
     Scaffold(
-        contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
+        contentWindowInsets = WindowInsets.systemBars,
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.scan_login_title)) },

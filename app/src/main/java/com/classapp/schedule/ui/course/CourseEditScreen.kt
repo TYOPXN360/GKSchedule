@@ -67,7 +67,7 @@ fun CourseEditScreen(
     )
 
     Scaffold(
-        contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
+        contentWindowInsets = WindowInsets.systemBars,
         topBar = {
             TopAppBar(
                 title = {

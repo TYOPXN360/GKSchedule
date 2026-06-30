@@ -57,10 +57,6 @@ class SettingsActivity : AppCompatActivity() {
             }
 
             ClassAppTheme(darkTheme = darkMode) {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
                     // Collect all states
                     val semesterStart by vm.semesterStart.collectAsState(initial = java.time.LocalDate.now())
                     val totalWeeks by vm.totalWeeks.collectAsState(initial = 20)
@@ -179,4 +175,3 @@ class SettingsActivity : AppCompatActivity() {
             }
         }
     }
-}

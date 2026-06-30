@@ -202,7 +202,7 @@ fun SettingsScreen(
 @Composable
 private fun SettingsMainPage(onOpenPage: (String) -> Unit, onExit: () -> Unit) {
     Scaffold(
-        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        contentWindowInsets = WindowInsets.systemBars,
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.settings_title)) },
@@ -251,7 +251,7 @@ private fun CategoryItem(icon: androidx.compose.ui.graphics.vector.ImageVector, 
 @Composable
 private fun SubPage(title: String, onBack: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
     Scaffold(
-        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        contentWindowInsets = WindowInsets.systemBars,
         topBar = {
             TopAppBar(
                 title = { Text(title) },

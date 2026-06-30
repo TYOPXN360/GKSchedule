@@ -64,7 +64,7 @@ fun ExamScreen(
         }
     }
     Scaffold(
-        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        contentWindowInsets = WindowInsets.systemBars,
         topBar = {
             TopAppBar(
                 title = { Text("考试安排") },
