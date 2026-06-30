@@ -14,7 +14,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Login
@@ -439,7 +439,7 @@ private fun CourseCard(
                                 enter = androidx.compose.animation.scaleIn() + androidx.compose.animation.fadeIn()
                             ) {
                                 Icon(
-                                    Icons.Default.CheckCircle,
+                                    Icons.Default.Check,
                                     contentDescription = null,
                                     modifier = Modifier.size(20.dp),
                                     tint = MaterialTheme.colorScheme.primary
