@@ -493,7 +493,7 @@ fun WeeklyScheduleScreen(
             FloatingActionButton(
                 onClick = { com.classapp.schedule.util.HapticFeedback.light(hapticView); fabExpanded = !fabExpanded },
                 modifier = Modifier.align(Alignment.BottomEnd),
-                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                 contentColor = MaterialTheme.colorScheme.onSurfaceVariant
             ) { Text(if (fabExpanded) "—" else "+", style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center, modifier = Modifier.width(20.dp)) }
 
