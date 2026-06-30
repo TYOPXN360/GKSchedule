@@ -201,6 +201,7 @@ fun SettingsScreen(
 private fun SettingsMainPage(onOpenPage: (String) -> Unit, onExit: () -> Unit) {
     Scaffold(
         contentWindowInsets = WindowInsets.systemBars,
+        containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.settings_title)) },
@@ -250,6 +251,7 @@ private fun CategoryItem(icon: androidx.compose.ui.graphics.vector.ImageVector, 
 private fun SubPage(title: String, onBack: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
     Scaffold(
         contentWindowInsets = WindowInsets.systemBars,
+        containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
             TopAppBar(
                 title = { Text(title) },
