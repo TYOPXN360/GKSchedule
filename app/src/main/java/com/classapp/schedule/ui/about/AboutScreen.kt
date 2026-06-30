@@ -65,7 +65,7 @@ fun AboutScreen(
             shape = MaterialTheme.shapes.medium,
             colors = CardDefaults.cardColors(
                 containerColor = if (isLoggedIn) {
-                    if (isTokenExpired) MaterialTheme.colorScheme.tertiaryContainer
+                    if (isTokenExpired) MaterialTheme.colorScheme.surfaceContainerHigh
                     else MaterialTheme.colorScheme.primaryContainer
                 } else MaterialTheme.colorScheme.surfaceVariant
             )
@@ -116,7 +116,7 @@ fun AboutScreen(
                             Text(
                                 text = "登录已过期",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onTertiaryContainer
+                                color = MaterialTheme.colorScheme.onSurface
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Button(
