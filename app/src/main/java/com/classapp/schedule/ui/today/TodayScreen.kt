@@ -42,10 +42,7 @@ fun TodayScreen(
     semesterStart: java.time.LocalDate = java.time.LocalDate.now(),
     getStartTime: (Int) -> String,
     getEndTime: (Int) -> String,
-    onCourseLongPress: (Course) -> Unit,
-    courseColorPalette: List<Pair<Color, Color>> = CourseColors.getColors(0, count = 8),
-    courseColorMap: Map<Long, Color> = emptyMap(),
-    examColorMap: Map<String, Color> = emptyMap()
+    onCourseLongPress: (Course) -> Unit
 ) {
     val today = LocalDate.now()
     val tomorrow = today.plusDays(1)
@@ -96,7 +93,7 @@ fun TodayScreen(
             animationPlayed = true
         }
     }
-    val monetColors = courseColorPalette
+    val isDark = com.classapp.schedule.ui.theme.LocalAppIsDark.current
 
     LazyColumn(
         modifier = Modifier
@@ -170,7 +167,7 @@ fun TodayScreen(
                     isPast = isPast,
                     animDelay = if (animationPlayed) 0L else staggerMap[course.id] ?: 0L,
                     skipAnim = animationPlayed,
-                    barColor = courseColorMap[course.id] ?: monetColors.getOrElse(course.colorIndex.coerceIn(0, monetColors.size - 1)) { monetColors.first() }.first,
+                    barColor = CourseColors.getColorSync(colorGroupMode, course.name, course.classroom, isDark = isDark).container,
                     onClick = { detailCourse = course }
                 )
             }
@@ -209,8 +206,8 @@ fun TodayScreen(
                         endTime = course.getActualEndTime(getEndTime),
                         isCurrent = false,
                         isNext = false,
-                    barColor = courseColorMap[course.id] ?: monetColors.getOrElse(course.colorIndex.coerceIn(0, monetColors.size - 1)) { monetColors.first() }.first,
-                    indicatorColor = courseColorMap[course.id] ?: monetColors.getOrElse(course.colorIndex.coerceIn(0, monetColors.size - 1)) { monetColors.first() }.second,
+                    barColor = CourseColors.getColorSync(colorGroupMode, course.name, course.classroom, isDark = isDark).container,
+                    indicatorColor = CourseColors.getColorSync(colorGroupMode, course.name, course.classroom, isDark = isDark).content,
                         onClick = { detailCourse = course }
                     )
                 }
@@ -248,7 +245,7 @@ fun TodayScreen(
                     Spacer(modifier = Modifier.height(4.dp))
                 }
                 items(upcomingExams) { exam ->
-                    ExamCard(exam = exam, barColor = examColorMap["${exam.kcmc}|${exam.cdmc}"] ?: monetColors.getOrElse((exam.kcmc.hashCode().and(0x7fffffff) % monetColors.size).coerceIn(0, monetColors.size - 1)) { monetColors.first() }.first, indicatorColor = examColorMap["${exam.kcmc}|${exam.cdmc}"] ?: monetColors.getOrElse((exam.kcmc.hashCode().and(0x7fffffff) % monetColors.size).coerceIn(0, monetColors.size - 1)) { monetColors.first() }.second)
+                    ExamCard(exam = exam, barColor = CourseColors.getColorSync(0, exam.kcmc, exam.cdmc, isDark = isDark).container, indicatorColor = CourseColors.getColorSync(0, exam.kcmc, exam.cdmc, isDark = isDark).content)
                 }
             }
         }
@@ -264,9 +261,9 @@ fun TodayScreen(
             getEndTime = getEndTime,
             onDismiss = { detailCourse = null },
             onEdit = { detailCourse = null; onCourseLongPress(course) },
-            courseColors = monetColors,
+            courseColors = CourseColors.getColors(colorEngine, count = 8),
             colorGroupMode = colorGroupMode,
-            dotColor = courseColorMap[course.id]
+            dotColor = CourseColors.getColorSync(colorGroupMode, course.name, course.classroom, isDark = isDark).container
         )
     }
 }

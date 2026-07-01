@@ -97,46 +97,6 @@ fun ScheduleApp(
     val examList by viewModel.examList.collectAsState()
     val showExamSchedule by viewModel.showExamSchedule.collectAsState(initial = false)
 
-    // Shared color palette — computed once
-    val courseColorPalette = com.classapp.schedule.util.CourseColors.getColors(colorEngine, count = 8)
-    val isAppDark = com.classapp.schedule.ui.theme.LocalAppIsDark.current
-
-    // Course name|classroom → Color (deterministic via hashCode)
-    val courseColorMap = remember(courses, colorGroupMode, isAppDark) {
-        val weekCourses = courses.filter { it.isInWeek(realCurrentWeek) }
-        val classroomCounters = mutableMapOf<String, Int>()
-        val result = mutableMapOf<Long, Color>()
-        weekCourses.forEach { c ->
-            val classIdx = if (colorGroupMode == 1) {
-                val idx = classroomCounters.getOrPut(c.name) { 0 }
-                classroomCounters[c.name] = idx + 1
-                idx
-            } else 0
-            result[c.id] = com.classapp.schedule.util.CourseColors.getColorSync(
-                colorGroupMode, c.name, c.classroom, classIdx, isDark = isAppDark
-            ).container
-        }
-        result
-    }
-
-    // Exam kcmc|cdmc → Color. Each exam's color must be computed using the nameToIdx
-    // of THE WEEK THAT EXAM IS IN, not the current week. Otherwise the today page's bar
-    // (which can show exams from any lookahead week) would use the wrong nameToIdx and
-    // mismatch the schedule block.
-    val examColorMap = remember(courses, colorGroupMode, examList, showExamSchedule, semesterStart, isAppDark) {
-        if (!showExamSchedule || examList.isEmpty()) emptyMap<String, Color>()
-        else {
-            val result = mutableMapOf<String, Color>()
-            examList.forEach { exam ->
-                result["${exam.kcmc}|${exam.cdmc}"] =
-                    com.classapp.schedule.util.CourseColors.getColorSync(
-                        colorGroupMode, exam.kcmc, exam.cdmc, isDark = isAppDark
-                    ).container
-            }
-            result
-        }
-    }
-
     // Show snackbar messages
     LaunchedEffect(Unit) {
         viewModel.messages.collect { message ->
@@ -247,10 +207,7 @@ fun ScheduleApp(
                     semesterStart = semesterStart,
                     getStartTime = { viewModel.getStartTime(it) },
                     getEndTime = { viewModel.getEndTime(it) },
-                    onCourseLongPress = { navController.navigate(Screen.CourseEdit.createRoute(it.id)) },
-                    courseColorPalette = courseColorPalette,
-                    courseColorMap = courseColorMap,
-                    examColorMap = examColorMap
+                    onCourseLongPress = { navController.navigate(Screen.CourseEdit.createRoute(it.id)) }
                 )
             }
 
