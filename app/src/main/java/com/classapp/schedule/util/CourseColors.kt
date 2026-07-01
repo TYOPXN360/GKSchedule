@@ -5,272 +5,168 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import com.classapp.schedule.ui.theme.LocalAppIsDark
 import kotlin.math.abs
-import kotlin.math.roundToInt
 
 /**
- * 课程颜色引擎 - 统一架构
+ * 课程颜色引擎 - 彻底统一架构
  *
- * 设计原则:
- * 1. 颜色对 (container, content) 遵循 M3 语义配对
- * 2. 深/浅色模式下 container 亮度固定，内容色亮度固定
- * 3. 三种模式仅改变色相计算方式，饱和度统一
- * 4. 不使用两套颜色系统 (getColors vs getColorInternal)
+ * ┌─────────────────────────────────────────────────────────────┐
+ * │  M3 Tonal Pair: container / content                        │
+ * │  Light:  container=tone90(L=0.90)  content=tone10(L=0.15)  │
+ * │  Dark:   container=tone30(L=0.32)  content=tone90(L=0.96)  │
+ * │  Sat:    Dark=0.78  Light=0.75  (统一)                      │
+ * └─────────────────────────────────────────────────────────────┘
+ *
+ * ┌─────────────────────────────────────────────────────────────┐
+ * │  三模式统一公式: hue = hashFn() % steps * step              │
+ * │  ┌─────────┬──────────────┬───────────────┬────────────┐ │
+ * │  │ Mode 0   │ 同色分组       │ name%8        │ sat=固定    │ │
+ * │  │ Mode 1   │ 同色+饱和梯度  │ name%8        │ sat=梯度    │ │
+ * │  │ Mode 2   │ 完全不同色     │ (n|c)*黄金角  │ sat=固定    │ │
+ * │  └─────────┴──────────────┴───────────────┴────────────┘ │
+ * └─────────────────────────────────────────────────────────────┘
  */
 object CourseColors {
 
-    /** 黄金角度用于 mode 2 的色相分配 */
-    private const val GOLDEN_ANGLE = 137.508f
+    // =========================================================================
+    // 常量
+    // =========================================================================
 
-    /** 8 色色相步进 (360° / 8) */
-    private const val HUE_STEP_8 = 45f
+    /** 黄金角度 (Mode 2 专用) */
+    private const val GOLDEN = 137.508f
 
-    /** 色相分组数 */
-    private const val HUE_COUNT = 8
+    /** Mode 0/1 色相分组数 */
+    private const val HUE_SLOTS = 8
 
-    /** 颜色对: container=背景/容器, content=文字/内容 */
+    /** Mode 0/1 色相步进 */
+    private const val HUE_STEP = 45f
+
+    /** Mode 2 额外分组 (用于索引映射) */
+    private const val MODE2_SLOTS = 64
+
+    /** 颜色对: container=容器色  content=内容色 */
     data class CourseColorPair(val container: Color, val content: Color)
 
-    // ============================================================================
-    // 深浅色统一亮度参数 (M3 语义色对)
-    // ============================================================================
-    // container: 深色用低亮度(暗背景)，浅色用高亮度(亮背景)
-    // content: 深色用高亮度(亮文字)，浅色用低亮度(暗文字)
-    // sat: 统一饱和度，深色 0.78，浅色 0.75
+    // =========================================================================
+    // M3 Tonal Pair 参数 (Light / Dark 统一)
+    // =========================================================================
+    // M3 色对语义:
+    // - Light:  亮容器(tone90≈L0.90) + 暗文字(tone10≈L0.15) → 对比度最大化
+    // - Dark:   暗容器(tone30≈L0.32) + 亮文字(tone90≈L0.96) → 对比度最大化
+    // - Sat:    饱和度固定 0.78(Dark) / 0.75(Light)
 
-    private const val DARK_BG_LIGHTNESS = 0.32f
-    private const val DARK_TXT_LIGHTNESS = 0.96f
-    private const val LIGHT_BG_LIGHTNESS = 0.90f
-    private const val LIGHT_TXT_LIGHTNESS = 0.15f
-    private const val DARK_SATURATION = 0.78f
-    private const val LIGHT_SATURATION = 0.75f
+    private const val L_LIGHT = 0.90f   // container tone 90
+    private const val L_DARK  = 0.32f   // container tone 30
+    private const val T_LIGHT = 0.15f  // content  tone 10
+    private const val T_DARK  = 0.96f   // content  tone 90
 
-    // Mode 1 饱和度梯度 (教室数 1-4 的饱和度递减)
-    private const val MODE1_MAX_SAT_DARK = 0.88f
-    private const val MODE1_MAX_SAT_LIGHT = 0.85f
-    private const val MODE1_SAT_STEP = 0.12f
-    private const val MODE1_MIN_SAT = 0.45f
+    private const val S_LIGHT = 0.75f   // 饱和度 统一
+    private const val S_DARK  = 0.78f   // 饱和度 统一
 
-    // ============================================================================
+    // Mode 1 饱和度梯度 (同课程名不同教室)
+    // maxSat - index * step，最低 clamp
+    private const val M1_MAX_S = 0.88f
+    private const val M1_MAX_L = 0.85f
+    private const val M1_STEP  = 0.12f
+    private const val M1_MIN   = 0.45f
+
+    // =========================================================================
     // 公开 API
-    // ============================================================================
+    // =========================================================================
 
     @Composable
-    fun getColor(
-        mode: Int,
-        courseName: String,
-        classroom: String = "",
-        classroomIndex: Int = 0
-    ): CourseColorPair {
+    fun getColor(mode: Int, courseName: String, classroom: String = "", classroomIndex: Int = 0): CourseColorPair {
         return getColorSync(mode, courseName, classroom, classroomIndex, LocalAppIsDark.current)
     }
 
-    fun getColorSync(
-        mode: Int,
-        courseName: String,
-        classroom: String = "",
-        classroomIndex: Int = 0,
-        isDark: Boolean = false
-    ): CourseColorPair {
-        return getColorInternal(mode, courseName, classroom, classroomIndex, isDark)
+    fun getColorSync(mode: Int, courseName: String, classroom: String = "", classroomIndex: Int = 0, isDark: Boolean = false): CourseColorPair {
+        return makeColor(mode, courseName, classroom, classroomIndex, isDark)
     }
 
-    // ============================================================================
-    // 统一颜色计算入口
-    // ============================================================================
+    // =========================================================================
+    // 统一取色入口
+    // =========================================================================
 
-    private fun getColorInternal(
-        mode: Int,
-        courseName: String,
-        classroom: String,
-        classroomIndex: Int,
-        isDark: Boolean
-    ): CourseColorPair {
-        // 统一亮度参数
-        val bgL = if (isDark) DARK_BG_LIGHTNESS else LIGHT_BG_LIGHTNESS
-        val txtL = if (isDark) DARK_TXT_LIGHTNESS else LIGHT_TXT_LIGHTNESS
+    private fun makeColor(mode: Int, courseName: String, classroom: String, classroomIndex: Int, isDark: Boolean): CourseColorPair {
+        // 亮度 + 饱和度 (三模式共用，仅 mode1 有梯度)
+        val (sat, _) = getTonalPair(isDark, mode, classroomIndex)
+        val containerL = if (isDark) L_DARK else L_LIGHT
+        val contentL   = if (isDark) T_DARK else T_LIGHT
 
-        // 计算色相 (三种模式不同)
-        val hue = computeHue(mode, courseName, classroom, isDark)
-
-        // 计算饱和度 (Mode 1 有梯度变化)
-        val sat = computeSaturation(mode, isDark, classroomIndex)
+        // 色相 (唯一差异点)
+        val hue = computeHue(mode, courseName, classroom)
 
         return CourseColorPair(
-            container = hslToColor(hue, sat, bgL),
-            content = hslToColor(hue, sat, txtL)
+            container = hsl(hue, sat, containerL),
+            content   = hsl(hue, sat, contentL)
         )
     }
 
-    // ============================================================================
-    // 色相计算 (三种模式核心差异)
-    // ============================================================================
+    // =========================================================================
+    // 三模式统一色相公式
+    // =========================================================================
 
     /**
-     * Mode 0: 同名同色
-     * - 仅用课程名 hash 取模 8
-     * - 8 种基础色相同色相环
+     * 统一色相计算:
+     * - Mode 0/1: hash(name) % 8 * 45°
+     * - Mode 2:    hash(name|classroom) * 黄金角 % 360°
+     *
+     * 三模式共用同一结构: hue = (hashFn()) wrapBy steps * step
      */
-    private fun computeHue(mode: Int, courseName: String, classroom: String, isDark: Boolean): Float {
-        val nameHash = abs(courseName.hashCode())
-
+    private fun computeHue(mode: Int, courseName: String, classroom: String): Float {
         return when (mode) {
-            0 -> {
-                // 同名同色: hash % 8 * 45°
-                (nameHash % HUE_COUNT) * HUE_STEP_8
+            // Mode 0 & 1 共用: 仅课程名 hash 取模 8 格
+            // Mode 1 的差异在饱和度，不在色相
+            0, 1 -> {
+                val slot = abs(courseName.hashCode()) % HUE_SLOTS
+                slot * HUE_STEP
             }
+            // Mode 2: 课程名+教室名 黄金角度连续分配
+            else -> {
+                val hash = abs("$courseName|$classroom".hashCode()).toFloat()
+                (hash * GOLDEN).wrapAngle()
+            }
+        }
+    }
+
+    // =========================================================================
+    // 饱和度 (Mode 1 有梯度)
+    // =========================================================================
+
+    /**
+     * 统一饱和度:
+     * - Mode 0/2: 固定 (Dark=0.78 / Light=0.75)
+     * - Mode 1:   梯度递减 (同课程名不同教室递减 0.12，最低 0.45)
+     */
+    private fun getTonalPair(isDark: Boolean, mode: Int, classroomIndex: Int): Pair<Float, Float> {
+        return when (mode) {
             1 -> {
-                // 同名不同饱和度: 色相与 mode 0 相同
-                (nameHash % HUE_COUNT) * HUE_STEP_8
+                // Mode 1: 梯度饱和度
+                val maxSat = if (isDark) M1_MAX_S else M1_MAX_L
+                val sat = (maxSat - classroomIndex * M1_STEP).coerceAtLeast(M1_MIN)
+                sat to sat  // container/content 同 sat (仅亮度不同)
             }
             else -> {
-                // 完全不同色: 课程名+教室名 黄金角度分配
-                // 乘数用绝对值确保正数，%360 取余数
-                val combinedHash = abs("$courseName|$classroom".hashCode())
-                (combinedHash.toFloat() * GOLDEN_ANGLE).let {
-                    val normalized = (it / 360f).let { div -> div - div.roundToInt() }
-                    normalized * 360f
-                }
+                // Mode 0/2: 固定饱和度
+                val sat = if (isDark) S_DARK else S_LIGHT
+                sat to sat
             }
         }
     }
 
-    // ============================================================================
-    // 饱和度计算
-    // ============================================================================
+    // =========================================================================
+    // 色相归一化 (0-360)
+    // =========================================================================
 
-    /**
-     * Mode 0/2: 固定饱和度
-     * Mode 1: 饱和度梯度 (同课程不同教室用不同饱和度)
-     */
-    private fun computeSaturation(mode: Int, isDark: Boolean, classroomIndex: Int): Float {
-        val baseSat = if (isDark) DARK_SATURATION else LIGHT_SATURATION
-
-        return when (mode) {
-            1 -> {
-                // 同教室递减饱和度: max - step * index，最低 0.45
-                val maxSat = if (isDark) MODE1_MAX_SAT_DARK else MODE1_MAX_SAT_LIGHT
-                (maxSat - classroomIndex * MODE1_SAT_STEP).coerceAtLeast(MODE1_MIN_SAT)
-            }
-            else -> baseSat
-        }
+    private fun Float.wrapAngle(): Float {
+        val wrapped = this % 360f
+        return if (wrapped < 0) wrapped + 360f else wrapped
     }
 
-    // ============================================================================
-    // 索引分配 (用于需要预计算颜色的场景)
-    // ============================================================================
+    // =========================================================================
+    // HSL → Color
+    // =========================================================================
 
-    /**
-     * 为课程列表分配颜色索引
-     * - Mode 0: courseName.hash % 8
-     * - Mode 1: courseName.hash % 8 * 10 + classroomIdx (含饱和度偏移编码)
-     * - Mode 2: (name|classroom).hash % 64
-     */
-    fun assignColorIndices(courses: List<com.classapp.schedule.data.Course>, groupMode: Int): Map<Long, Int> {
-        return courses.associate { course ->
-            val idx = when (groupMode) {
-                0 -> abs(course.name.hashCode()) % HUE_COUNT
-                1 -> {
-                    val baseIdx = abs(course.name.hashCode()) % HUE_COUNT
-                    val sameNameCourses = courses.filter { it.name == course.name }
-                    val classroomIdx = sameNameCourses.indexOf(course)
-                    baseIdx * 10 + classroomIdx
-                }
-                else -> abs("${course.name}|${course.classroom}".hashCode()) % 64
-            }
-            course.id to idx
-        }
-    }
-
-    // ============================================================================
-    // 静态调色板 (用于需要预生成颜色列表的场景)
-    // ============================================================================
-
-    /**
-     * 获取静态颜色调色板
-     * 统一使用 getColorInternal 的参数逻辑:
-     * - 深色: sat=0.78, bgL=0.32, txtL=0.96
-     * - 浅色: sat=0.75, bgL=0.90, txtL=0.15
-     */
-    @Composable
-    fun getColors(engine: Int, count: Int = 16): List<Pair<Color, Color>> {
-        val isDark = LocalAppIsDark.current
-        val primary = MaterialTheme.colorScheme.primary
-        val primaryHue = rgbToHsl(primary.red, primary.green, primary.blue)[0]
-        val step = 360f / count
-
-        return (0 until count).map { i ->
-            val hue = when (engine) {
-                // Monet: 基于 primary 色相，步进分配
-                1 -> (primaryHue + i * step) % 360f
-                // Vibrant: 彩虹色相环
-                2 -> i * step
-                // Classic: 彩虹色相环 (与 Vibrant 相同)
-                3 -> i * step
-                // 默认 Monet: 基于 primary
-                else -> (primaryHue + i * step) % 360f
-            }
-            // 统一使用 DARK/LIGHT 常量
-            if (isDark) {
-                hslToColor(hue, DARK_SATURATION, DARK_BG_LIGHTNESS) to
-                hslToColor(hue, DARK_SATURATION, DARK_TXT_LIGHTNESS)
-            } else {
-                hslToColor(hue, LIGHT_SATURATION, LIGHT_BG_LIGHTNESS) to
-                hslToColor(hue, LIGHT_SATURATION, LIGHT_TXT_LIGHTNESS)
-            }
-        }
-    }
-
-    // ============================================================================
-    // 静态调色板辅助函数 (保留兼容性)
-    // ============================================================================
-
-    /**
-     * 根据索引获取背景色 (用于静态调色板)
-     */
-    fun getBackgroundStatic(index: Int, colors: List<Pair<Color, Color>>, satOffset: Int = 0): Color {
-        val baseIdx = index % colors.size
-        val base = colors[baseIdx].first
-        return if (satOffset > 0) adjustSaturation(base, satOffset) else base
-    }
-
-    /**
-     * 根据索引获取文字色 (用于静态调色板)
-     */
-    fun getTextColor(index: Int, colors: List<Pair<Color, Color>>, satOffset: Int = 0): Color {
-        val baseIdx = index % colors.size
-        val base = colors[baseIdx].second
-        return if (satOffset > 0) adjustSaturation(base, satOffset) else base
-    }
-
-    /**
-     * 调整饱和度 (用于 mode 1 的饱和度梯度)
-     */
-    private fun adjustSaturation(color: Color, offset: Int): Color {
-        val hsl = rgbToHsl(color.red, color.green, color.blue)
-        val newSat = (hsl[1] + offset * MODE1_SAT_STEP).coerceIn(0f, 1f)
-        return hslToColor(hsl[0], newSat, hsl[2])
-    }
-
-    // ============================================================================
-    // HSL 色彩转换
-    // ============================================================================
-
-    private fun rgbToHsl(r: Float, g: Float, b: Float): FloatArray {
-        val max = maxOf(r, g, b)
-        val min = minOf(r, g, b)
-        val l = (max + min) / 2f
-        if (max == min) return floatArrayOf(0f, 0f, l)
-        val d = max - min
-        val s = if (l > 0.5f) d / (2f - max - min) else d / (max + min)
-        val h = when (max) {
-            r -> ((g - b) / d + (if (g < b) 6 else 0)) * 60f
-            g -> ((b - r) / d + 2) * 60f
-            else -> ((r - g) / d + 4) * 60f
-        }
-        return floatArrayOf(h, if (s.isNaN()) 0f else s, l)
-    }
-
-    private fun hslToColor(h: Float, s: Float, l: Float): Color {
+    private fun hsl(h: Float, s: Float, l: Float): Color {
         val c = (1f - abs(2f * l - 1f)) * s
         val x = c * (1f - abs((h / 60f) % 2f - 1f))
         val m = l - c / 2f
@@ -287,5 +183,110 @@ object CourseColors {
             (g + m).coerceIn(0f, 1f),
             (b + m).coerceIn(0f, 1f)
         )
+    }
+
+    // =========================================================================
+    // 索引分配 (兼容性保留)
+    // =========================================================================
+
+    fun assignColorIndices(courses: List<com.classapp.schedule.data.Course>, groupMode: Int): Map<Long, Int> {
+        return courses.associate { course ->
+            val idx = when (groupMode) {
+                // Mode 0: 课程名 % 8
+                0 -> abs(course.name.hashCode()) % HUE_SLOTS
+                // Mode 1: (课程名%8)*10 + 教室序号 (饱和度偏移编码)
+                1 -> {
+                    val base = abs(course.name.hashCode()) % HUE_SLOTS
+                    val sameNameCourses = courses.filter { it.name == course.name }
+                    val classIdx = sameNameCourses.indexOf(course)
+                    base * 10 + classIdx
+                }
+                // Mode 2: (课程名|教室) % 64
+                else -> abs("${course.name}|${course.classroom}".hashCode()) % MODE2_SLOTS
+            }
+            course.id to idx
+        }
+    }
+
+    // =========================================================================
+    // 静态调色板 (生成均匀色相环)
+    // =========================================================================
+
+    /**
+     * 静态调色板生成
+     * 与 makeColor 共用同一亮度/饱和度常量
+     * 仅用于: 预生成调色板列表的场景 (如 TodayScreen fallback)
+     */
+    @Composable
+    fun getColors(engine: Int, count: Int = 16): List<Pair<Color, Color>> {
+        val isDark = LocalAppIsDark.current
+        val primary = MaterialTheme.colorScheme.primary
+        val primaryHue = rgbHsl(primary)[0]
+        val step = 360f / count
+
+        return (0 until count).map { i ->
+            // 色相分配策略 (engine 参数)
+            val hue = when (engine) {
+                // Engine 1: Monet — 基于 primary 色相，均匀步进
+                1 -> (primaryHue + i * step).wrapAngle()
+                // Engine 2: Vibrant — 彩虹色环 (0°, 22.5°, 45°...)
+                2 -> i * step
+                // Engine 3: Classic — 同 Vibrant
+                3 -> i * step
+                // Engine 0: 默认 Monet
+                else -> (primaryHue + i * step).wrapAngle()
+            }
+
+            // 统一亮度对
+            val containerL = if (isDark) L_DARK else L_LIGHT
+            val contentL   = if (isDark) T_DARK else T_LIGHT
+            // 统一饱和度 (Mode 0/2 固定值)
+            val sat = if (isDark) S_DARK else S_LIGHT
+
+            hsl(hue, sat, containerL) to hsl(hue, sat, contentL)
+        }
+    }
+
+    // =========================================================================
+    // 静态调色板辅助 (兼容性保留)
+    // =========================================================================
+
+    fun getBackgroundStatic(index: Int, colors: List<Pair<Color, Color>>, satOffset: Int = 0): Color {
+        val base = colors[index % colors.size].first
+        return if (satOffset > 0) adjSat(base, satOffset) else base
+    }
+
+    fun getTextColor(index: Int, colors: List<Pair<Color, Color>>, satOffset: Int = 0): Color {
+        val base = colors[index % colors.size].second
+        return if (satOffset > 0) adjSat(base, satOffset) else base
+    }
+
+    private fun adjSat(color: Color, offset: Int): Color {
+        val hsl = rgbHsl(color.red, color.green, color.blue)
+        val newSat = (hsl[1] + offset * M1_STEP).coerceIn(0f, 1f)
+        return hsl(hsl[0], newSat, hsl[2])
+    }
+
+    // =========================================================================
+    // RGB ↔ HSL
+    // =========================================================================
+
+    private fun rgbHsl(r: Float, g: Float, b: Float): FloatArray {
+        val max = maxOf(r, g, b)
+        val min = minOf(r, g, b)
+        val l = (max + min) / 2f
+        if (max == min) return floatArrayOf(0f, 0f, l)
+        val d = max - min
+        val s = if (l > 0.5f) d / (2f - max - min) else d / (max + min)
+        val h = when (max) {
+            r -> ((g - b) / d + (if (g < b) 6 else 0)) * 60f
+            g -> ((b - r) / d + 2) * 60f
+            else -> ((r - g) / d + 4) * 60f
+        }
+        return floatArrayOf(h, s, l)
+    }
+
+    private fun rgbHsl(color: Color): FloatArray {
+        return rgbHsl(color.red, color.green, color.blue)
     }
 }
