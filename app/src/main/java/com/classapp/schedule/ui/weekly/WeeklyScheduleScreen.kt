@@ -267,8 +267,8 @@ fun WeeklyScheduleScreen(
                 }
             }
 
-            // Grid — HorizontalPager for native swipe
-            val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+            // 🔥 Fix: 使用 LocalAppIsDark 统一暗色模式判定源头（提到 Pager 外部供 detail sheet 使用）
+            val isDark = com.classapp.schedule.ui.theme.LocalAppIsDark.current
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier.fillMaxSize()
@@ -366,15 +366,12 @@ fun WeeklyScheduleScreen(
                     }
 
                     // Pre-compute base colors via getColorSync (unified with today page)
-                    // so background and text colors are always paired from the same palette
+                    // 🔥 Fix: 用 block.colorIdx % 10 还原真实教室序号，修复 Mode 1 非合并模式色彩断层
                     val blockBaseColors = remember(weekBlocks, colorGroupMode, isDark) {
                         weekBlocks.map { block ->
-                            val classIdx = if (colorGroupMode == 1) {
-                                val sameNameBlocks = weekBlocks.filter { it.course.name == block.course.name }
-                                sameNameBlocks.indexOf(block)
-                            } else 0
+                            val realClassroomIdx = if (colorGroupMode == 1) block.colorIdx % 10 else 0
                             com.classapp.schedule.util.CourseColors.getColorSync(
-                                colorGroupMode, block.course.name, block.course.classroom, classIdx, isDark = isDark
+                                colorGroupMode, block.course.name, block.course.classroom, realClassroomIdx, isDark = isDark
                             ).container
                         }
                     }
@@ -446,29 +443,29 @@ fun WeeklyScheduleScreen(
                                 .semantics { contentDescription = block.course.name }
                                 .padding(4.dp)
                         ) {
-                            val textColor = run {
-                                val classIdx = if (colorGroupMode == 1) {
-                                    val sameNameBlocks = weekBlocks.filter { it.course.name == block.course.name }
-                                    sameNameBlocks.indexOf(block)
-                                } else 0
+                            // 🔥 Fix: 用 block.colorIdx % 10 统一文字色计算，消灭 Mode 1 断层
+                            val textColor = remember(block, colorGroupMode, isDark) {
+                                val realClassroomIdx = if (colorGroupMode == 1) block.colorIdx % 10 else 0
                                 com.classapp.schedule.util.CourseColors.getColorSync(
-                                    colorGroupMode, block.course.name, block.course.classroom, classIdx, isDark = isDark
+                                    colorGroupMode, block.course.name, block.course.classroom, realClassroomIdx, isDark = isDark
                                 ).content
                             }
                             Column {
                                 if (block.course.isExamCourse()) {
+                                    // 🔥 Fix: 考试标签用同色系半透底色，拒绝死红 errorContainer
                                     Box(
                                         modifier = Modifier
                                             .padding(bottom = 2.dp)
-                                            .clip(RoundedCornerShape(3.dp))
-                                            .background(MaterialTheme.colorScheme.errorContainer)
-                                            .padding(horizontal = 3.dp, vertical = 1.dp),
+                                            .clip(RoundedCornerShape(4.dp))
+                                            .background(textColor.copy(alpha = 0.2f))
+                                            .padding(horizontal = 4.dp, vertical = 1.dp),
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Text(
                                             text = "考试",
                                             style = MaterialTheme.typography.labelSmall,
-                                            color = MaterialTheme.colorScheme.onErrorContainer,
+                                            fontWeight = FontWeight.Bold,
+                                            color = textColor,
                                             maxLines = 1
                                         )
                                     }
@@ -547,11 +544,19 @@ fun WeeklyScheduleScreen(
         } // if (!hideFabs)
     } // PullToRefreshBox
 
-    // Detail sheet — pass dotColor from courseColorMap (or examColorMap for exam courses)
+    // Detail sheet — 🔥 Fix: 传入正确 classroomIndex 的 dotColor
     detailCourse?.let { course ->
-        val detailDotColor = if (course.isExamCourse()) {
-            examColorMap["${course.name}|${course.classroom}"]
-        } else courseColorMap[course.id]
+        val isDark = com.classapp.schedule.ui.theme.LocalAppIsDark.current
+        val detailDotColor = remember(course, colorGroupMode, isDark) {
+            if (course.isExamCourse()) {
+                examColorMap["${course.name}|${course.classroom}"]
+            } else {
+                val realClassroomIdx = if (colorGroupMode == 1) course.colorIndex % 10 else 0
+                CourseColors.getColorSync(
+                    colorGroupMode, course.name, course.classroom, realClassroomIdx, isDark = isDark
+                ).container
+            }
+        }
         CourseDetailSheet(course = course, getStartTime = getStartTime, getEndTime = getEndTime,
             onDismiss = { detailCourse = null }, onEdit = { detailCourse = null; onCourseLongPress(course) },
             courseColors = CourseColors.getColors(colorEngine, count = 8),
