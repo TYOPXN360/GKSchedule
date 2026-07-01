@@ -9,6 +9,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Article
+import androidx.compose.material.icons.automirrored.filled.Login
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -128,7 +130,7 @@ fun AboutScreen(
                                 },
                                 modifier = Modifier.fillMaxWidth(0.6f)
                             ) {
-                                Icon(Icons.Default.Login, null, modifier = Modifier.size(18.dp))
+                                Icon(Icons.AutoMirrored.Filled.Login, null, modifier = Modifier.size(18.dp))
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text("重新登录")
                             }
@@ -146,7 +148,7 @@ fun AboutScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                Icons.Default.Logout,
+                                Icons.AutoMirrored.Filled.Logout,
                                 contentDescription = stringResource(R.string.logout),
                                 modifier = Modifier.size(20.dp),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
@@ -181,7 +183,7 @@ fun AboutScreen(
                         onClick = onLogin,
                         modifier = Modifier.fillMaxWidth(0.6f)
                     ) {
-                        Icon(Icons.Default.Login, null, modifier = Modifier.size(18.dp))
+                        Icon(Icons.AutoMirrored.Filled.Login, null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(stringResource(R.string.login_button))
                     }

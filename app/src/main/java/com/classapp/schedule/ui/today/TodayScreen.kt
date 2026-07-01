@@ -99,7 +99,7 @@ fun TodayScreen(
     // Only trigger animation once per app session, not on course refresh
     var animationPlayed by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     val maxStagger = (allTodayCourses.size - 1) * 200L
-    val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     LaunchedEffect(allTodayCourses.size) {
         if (!animationPlayed) {
             lifecycleOwner.lifecycle.currentStateFlow.first { it == androidx.lifecycle.Lifecycle.State.RESUMED }
@@ -351,7 +351,7 @@ private fun CourseCard(
     // Animated progress — starts from 0, animates to target after splash screen
     // rememberSaveable keeps state across tab switches
     var startAnimation by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(skipAnim) }
-    val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     LaunchedEffect(skipAnim) {
         if (!skipAnim) {
             lifecycleOwner.lifecycle.currentStateFlow.first { it == androidx.lifecycle.Lifecycle.State.RESUMED }

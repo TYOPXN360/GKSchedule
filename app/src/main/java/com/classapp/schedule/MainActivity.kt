@@ -33,7 +33,7 @@ class MainActivity : AppCompatActivity() {
         val prefs = newBase.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
         val lang = prefs.getString(KEY_APPLIED_LANG, "") ?: ""
         val context = if (lang.isNotEmpty() && lang != "system") {
-            val locale = Locale(lang)
+            val locale = Locale.forLanguageTag(lang)
             Locale.setDefault(locale)
             val config = Configuration(newBase.resources.configuration)
             config.setLocales(LocaleList(locale))
