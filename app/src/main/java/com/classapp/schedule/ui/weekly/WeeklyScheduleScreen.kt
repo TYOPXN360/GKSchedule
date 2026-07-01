@@ -368,11 +368,11 @@ fun WeeklyScheduleScreen(
 
                     // Pre-compute base colors — always use weekBlocks' own colorIdx + monetColors
                     // so background and text colors are always paired from the same palette
-                    val blockBaseColors = remember(weekBlocks, colorGroupMode) {
+                    val blockBaseColors = remember(weekBlocks, colorGroupMode, isDark) {
                         weekBlocks.map { block ->
                             if (colorGroupMode == 2) {
                                 com.classapp.schedule.util.CourseColors.getColorSync(
-                                    2, block.course.name, block.course.classroom
+                                    2, block.course.name, block.course.classroom, isDark = isDark
                                 ).container
                             } else {
                                 val satOffset = if (colorGroupMode == 1) block.colorIdx % 10 else 0
@@ -451,7 +451,7 @@ fun WeeklyScheduleScreen(
                         ) {
                             val textColor = if (colorGroupMode == 2) {
                                 com.classapp.schedule.util.CourseColors.getColorSync(
-                                    2, block.course.name, block.course.classroom
+                                    2, block.course.name, block.course.classroom, isDark = isDark
                                 ).content
                             } else {
                                 CourseColors.getTextColor(block.colorIdx, monetColors, satOffset)
@@ -573,7 +573,8 @@ fun CourseDetailSheet(course: Course, getStartTime: (Int) -> String, getEndTime:
         Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp).padding(bottom = 32.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 val detailDotColor = dotColor ?: run {
-                    com.classapp.schedule.util.CourseColors.getColorSync(colorGroupMode, course.name, course.classroom).container
+                    val isDark = com.classapp.schedule.ui.theme.LocalAppIsDark.current
+                    com.classapp.schedule.util.CourseColors.getColorSync(colorGroupMode, course.name, course.classroom, isDark = isDark).container
                 }
                 Box(modifier = Modifier.size(12.dp).clip(RoundedCornerShape(50)).background(detailDotColor))
                 Spacer(modifier = Modifier.width(12.dp))

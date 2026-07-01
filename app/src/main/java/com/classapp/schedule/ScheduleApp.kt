@@ -99,9 +99,10 @@ fun ScheduleApp(
 
     // Shared color palette — computed once
     val courseColorPalette = com.classapp.schedule.util.CourseColors.getColors(colorEngine, count = 8)
+    val isAppDark = com.classapp.schedule.ui.theme.LocalAppIsDark.current
 
     // Course name|classroom → Color (deterministic via hashCode)
-    val courseColorMap = remember(courses, colorGroupMode) {
+    val courseColorMap = remember(courses, colorGroupMode, isAppDark) {
         val weekCourses = courses.filter { it.isInWeek(realCurrentWeek) }
         val classroomCounters = mutableMapOf<String, Int>()
         val result = mutableMapOf<Long, Color>()
@@ -112,7 +113,7 @@ fun ScheduleApp(
                 idx
             } else 0
             result[c.id] = com.classapp.schedule.util.CourseColors.getColorSync(
-                colorGroupMode, c.name, c.classroom, classIdx
+                colorGroupMode, c.name, c.classroom, classIdx, isDark = isAppDark
             ).container
         }
         result
@@ -122,14 +123,14 @@ fun ScheduleApp(
     // of THE WEEK THAT EXAM IS IN, not the current week. Otherwise the today page's bar
     // (which can show exams from any lookahead week) would use the wrong nameToIdx and
     // mismatch the schedule block.
-    val examColorMap = remember(courses, colorGroupMode, examList, showExamSchedule, semesterStart) {
+    val examColorMap = remember(courses, colorGroupMode, examList, showExamSchedule, semesterStart, isAppDark) {
         if (!showExamSchedule || examList.isEmpty()) emptyMap<String, Color>()
         else {
             val result = mutableMapOf<String, Color>()
             examList.forEach { exam ->
                 result["${exam.kcmc}|${exam.cdmc}"] =
                     com.classapp.schedule.util.CourseColors.getColorSync(
-                        colorGroupMode, exam.kcmc, exam.cdmc
+                        colorGroupMode, exam.kcmc, exam.cdmc, isDark = isAppDark
                     ).container
             }
             result
