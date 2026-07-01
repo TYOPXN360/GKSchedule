@@ -107,20 +107,20 @@ object CourseColors {
 
     /**
      * 统一色相计算:
-     * - Mode 0/1: hash(name) % 8 * 45°
-     * - Mode 2:    hash(name|classroom) * 黄金角 % 360°
+     * - Mode 0/1: courseName * 黄金角 % 360° (连续分布，64 槽)
+     * - Mode 2:    courseName|classroom * 黄金角 % 360°
      *
-     * 三模式共用同一结构: hue = (hashFn()) wrapBy steps * step
+     * 三模式共用同一结构: hue = hash(name) * GOLDEN % 360°
+     * Mode 1 的差异在饱和度，不在色相
      */
     private fun computeHue(mode: Int, courseName: String, classroom: String): Float {
         return when (mode) {
-            // Mode 0 & 1 共用: 仅课程名 hash 取模 8 格
-            // Mode 1 的差异在饱和度，不在色相
+            // Mode 0 & 1: 课程名 hash 黄金角度连续分配 (64 槽)
             0, 1 -> {
-                val slot = abs(courseName.hashCode()) % HUE_SLOTS
-                slot * HUE_STEP
+                val hash = abs(courseName.hashCode()).toFloat()
+                (hash * GOLDEN).wrapAngle()
             }
-            // Mode 2: 课程名+教室名 黄金角度连续分配
+            // Mode 2: 课程名+教室名 黄金角度
             else -> {
                 val hash = abs("$courseName|$classroom".hashCode()).toFloat()
                 (hash * GOLDEN).wrapAngle()
@@ -192,17 +192,17 @@ object CourseColors {
     fun assignColorIndices(courses: List<com.classapp.schedule.data.Course>, groupMode: Int): Map<Long, Int> {
         return courses.associate { course ->
             val idx = when (groupMode) {
-                // Mode 0: 课程名 % 8
-                0 -> abs(course.name.hashCode()) % HUE_SLOTS
-                // Mode 1: (课程名%8)*10 + 教室序号 (饱和度偏移编码)
-                1 -> {
-                    val base = abs(course.name.hashCode()) % HUE_SLOTS
-                    val sameNameCourses = courses.filter { it.name == course.name }
-                    val classIdx = sameNameCourses.indexOf(course)
-                    base * 10 + classIdx
+                // Mode 0/1: courseName hash * GOLDEN 连续分配 (64 槽)
+                0, 1 -> {
+                    val hash = abs(course.name.hashCode())
+                    // 与 computeHue 保持一致: hash * GOLDEN % 360，映射到 64 槽
+                    (((hash.toFloat() * GOLDEN) % 360f) / 360f * 64).toInt().coerceIn(0, 63)
                 }
-                // Mode 2: (课程名|教室) % 64
-                else -> abs("${course.name}|${course.classroom}".hashCode()) % MODE2_SLOTS
+                // Mode 2: courseName|classroom hash * GOLDEN
+                else -> {
+                    val hash = abs("${course.name}|${course.classroom}".hashCode())
+                    (((hash.toFloat() * GOLDEN) % 360f) / 360f * 64).toInt().coerceIn(0, 63)
+                }
             }
             course.id to idx
         }
