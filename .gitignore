@@ -28,6 +28,11 @@
 .DS_Store
 Thumbs.db
 
+# Project-specific
+M3_AUDIT.md
+.mimocode/
+.reasonix/
+
 # Plans (not source)
 PLAN.md
 PLAN_PHASE2.md

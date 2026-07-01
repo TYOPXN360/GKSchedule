@@ -1,1 +1,0 @@
-{"id":"f1","kind":"file","summary":"已读取并修改 AboutScreen.kt，应用 Gemini 三项优化：Card(onClick)、IconButton替代Surface、errorContainer警示胶囊","source":"file","paths":["app/src/main/java/com/classapp/schedule/ui/about/AboutScreen.kt"],"accepted":true,"created_at":"2026-07-01T15:41:08.888435181Z"}
