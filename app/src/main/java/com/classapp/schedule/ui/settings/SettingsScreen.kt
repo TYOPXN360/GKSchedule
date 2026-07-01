@@ -233,12 +233,12 @@ private fun SettingsMainPage(onOpenPage: (String) -> Unit, onExit: () -> Unit) {
                 .verticalScroll(rememberScrollState())
         ) {
             val catPalettes = listOf(
-                com.classapp.schedule.ui.theme.BadgeColorPalette.Primary,
-                com.classapp.schedule.ui.theme.BadgeColorPalette.Tertiary,
-                com.classapp.schedule.ui.theme.BadgeColorPalette.Secondary,
-                com.classapp.schedule.ui.theme.BadgeColorPalette.Primary,  // Notifications = 核心功能
-                com.classapp.schedule.ui.theme.BadgeColorPalette.Neutral,
-                com.classapp.schedule.ui.theme.BadgeColorPalette.Inverse
+                com.classapp.schedule.ui.theme.BadgeColorPalette.Primary,     // 学期 = 主色蓝
+                com.classapp.schedule.ui.theme.BadgeColorPalette.Tertiary,    // 外观 = 第三色粉紫
+                com.classapp.schedule.ui.theme.BadgeColorPalette.Secondary,   // 课表样式 = 次色
+                com.classapp.schedule.ui.theme.BadgeColorPalette.Tertiary,    // 通知 = 粉紫
+                com.classapp.schedule.ui.theme.BadgeColorPalette.Secondary,   // 同步 = 次色
+                com.classapp.schedule.ui.theme.BadgeColorPalette.Primary      // 数据 = 主色
             )
             val catIcons = listOf(Icons.Default.CalendarMonth, Icons.Default.Palette, Icons.Default.GridOn, Icons.Default.Notifications, Icons.Default.Sync, Icons.Default.Storage)
             val catTitles = listOf(
@@ -266,22 +266,45 @@ private fun SettingsMainPage(onOpenPage: (String) -> Unit, onExit: () -> Unit) {
                 { onOpenPage("data") }
             )
 
+            // Group 1: 课程管理
             com.classapp.schedule.ui.theme.Md3Card(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                 variant = com.classapp.schedule.ui.theme.Md3CardVariant.Elevated
             ) {
                 Column {
-                    catIcons.forEachIndexed { index, icon ->
+                    listOf(0, 1, 2).forEach { index ->
                         ListItem(
                             headlineContent = { Text(catTitles[index], style = MaterialTheme.typography.titleMedium) },
                             supportingContent = { Text(catDescs[index], style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) },
-                            leadingContent = { com.classapp.schedule.ui.theme.MonetIconBadge(icon = icon, contentDescription = catTitles[index], badgePalette = catPalettes[index]) },
+                            leadingContent = { com.classapp.schedule.ui.theme.MonetIconBadge(icon = catIcons[index], contentDescription = catTitles[index], badgePalette = catPalettes[index]) },
                             trailingContent = { Icon(Icons.Default.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
                             colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                             modifier = Modifier.clickable(onClick = catCallbacks[index])
                         )
-                        if (index < catIcons.size - 1) {
-                            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+                        if (index < 2) {
+                            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
+                        }
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            // Group 2: 系统与数据
+            com.classapp.schedule.ui.theme.Md3Card(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                variant = com.classapp.schedule.ui.theme.Md3CardVariant.Elevated
+            ) {
+                Column {
+                    listOf(3, 4, 5).forEach { index ->
+                        ListItem(
+                            headlineContent = { Text(catTitles[index], style = MaterialTheme.typography.titleMedium) },
+                            supportingContent = { Text(catDescs[index], style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                            leadingContent = { com.classapp.schedule.ui.theme.MonetIconBadge(icon = catIcons[index], contentDescription = catTitles[index], badgePalette = catPalettes[index]) },
+                            trailingContent = { Icon(Icons.Default.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+                            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                            modifier = Modifier.clickable(onClick = catCallbacks[index])
+                        )
+                        if (index < 5) {
+                            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
                         }
                     }
                 }
@@ -353,7 +376,7 @@ private fun SemesterPage(
             DropdownItem(Icons.Default.FirstPage, stringResource(R.string.first_day_of_week),
                 listOf("1" to stringResource(R.string.first_day_monday), "7" to stringResource(R.string.first_day_sunday)),
                 firstDayOfWeek.toString(), onSelect = { onFirstDayOfWeekChange(it.toInt()) })
-            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
             SwitchItem(Icons.Default.Visibility, stringResource(R.string.hide_empty_weeks), hideEmptyWeeks, onHideEmptyWeeksChange)
         }
     }
@@ -371,7 +394,7 @@ private fun AppearancePage(
             DropdownItem(Icons.Default.DarkMode, stringResource(R.string.dark_mode),
                 listOf("system" to stringResource(R.string.dark_mode_system), "light" to stringResource(R.string.dark_mode_light), "dark" to stringResource(R.string.dark_mode_dark)),
                 darkMode, onSelect = onDarkModeChange)
-            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
             DropdownItem(Icons.Default.Language, stringResource(R.string.language),
                 listOf("system" to stringResource(R.string.language_system), "en" to stringResource(R.string.language_en), "zh" to stringResource(R.string.language_zh)),
                 language, onSelect = onLanguageChange)
@@ -398,25 +421,25 @@ private fun ScheduleStylePage(
     SubPage(stringResource(R.string.settings_category_schedule), onBack) {
         SettingsCard {
             SwitchItem(Icons.Default.AutoAwesome, stringResource(R.string.auto_grid_height), autoGridHeight, onAutoGridHeightChange)
-            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
             if (!autoGridHeight) {
                 StepperItem(Icons.Default.Height, stringResource(R.string.grid_height), gridHeight, 36, 80, onGridHeightChange)
-                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
             }
             StepperItem(Icons.Default.RoundedCorner, stringResource(R.string.grid_corner), gridCorner, 0, 20, onGridCornerChange)
-            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
             StepperItem(Icons.Default.SpaceBar, stringResource(R.string.grid_spacing), gridSpacing, 0, 8, onGridSpacingChange)
-            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
             SwitchItem(Icons.Default.ViewColumn, stringResource(R.string.merge_consecutive), mergeConsecutive, onMergeConsecutiveChange)
-            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
             if (!mergeConsecutive) {
                 SwitchItem(Icons.Default.ViewDay, stringResource(R.string.detailed_split), detailedSplit, onDetailedSplitChange)
-                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
             }
             SwitchItem(Icons.Default.AccessTime, stringResource(R.string.show_time_label), showTimeLabel, onShowTimeLabelChange)
-            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
             SwitchItem(Icons.Default.CalendarMonth, stringResource(R.string.show_date_in_header), showDateInHeader, onShowDateInHeaderChange)
-            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
             SwitchItem(Icons.Default.Pin, stringResource(R.string.show_period_label), showPeriodLabel, onShowPeriodLabelChange)
         }
         Spacer(modifier = Modifier.height(16.dp))
@@ -424,11 +447,11 @@ private fun ScheduleStylePage(
             DropdownItem(Icons.Default.Palette, stringResource(R.string.color_engine),
                 listOf("0" to stringResource(R.string.color_engine_monet), "1" to stringResource(R.string.color_engine_vibrant), "2" to stringResource(R.string.color_engine_classic), "3" to stringResource(R.string.color_engine_hsl)),
                 colorEngine.toString(), onSelect = { onColorEngineChange(it.toInt()) })
-            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
             DropdownItem(Icons.Default.FormatColorFill, stringResource(R.string.color_group_mode),
                 listOf("0" to stringResource(R.string.color_group_same), "1" to stringResource(R.string.color_group_same_sat), "2" to stringResource(R.string.color_group_diff)),
                 colorGroupMode.toString(), onSelect = { onColorGroupModeChange(it.toInt()) })
-            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
             SwitchItem(Icons.Default.Palette, stringResource(R.string.diff_color_per_week), diffColorPerWeek, onDiffColorPerWeekChange)
         }
     }
@@ -486,7 +509,7 @@ private fun SyncPage(
             SwitchItem(Icons.Default.PowerSettingsNew, stringResource(R.string.auto_sync_on_start), autoSyncOnStart) {
                 onAutoSyncOnStartChange(it)
             }
-            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
 
             val syncAlpha = if (autoSyncOnStart) 0.38f else 1f
 
@@ -505,7 +528,7 @@ private fun SyncPage(
                 },
                 colors = ListItemDefaults.colors(containerColor = Color.Transparent)
             )
-            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
 
             // Unit selector
             DropdownItem(Icons.Default.Tune, stringResource(R.string.auto_sync_interval),
@@ -515,7 +538,7 @@ private fun SyncPage(
                     "d" to stringResource(R.string.auto_sync_unit_d)
                 ),
                 autoSyncIntervalUnit, enabled = !autoSyncOnStart, onSelect = onAutoSyncIntervalUnitChange)
-            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
 
             // Value slider with +/- buttons
             ListItem(
@@ -595,9 +618,9 @@ private fun SyncPage(
                     confirmButton = { TextButton(onClick = { showHeartbeatInfo = false }) { Text("OK") } }
                 )
             }
-            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
             SwitchItem(Icons.Default.School, stringResource(R.string.show_exam_schedule), showExamSchedule, onShowExamScheduleChange)
-            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
             StepperItem(
                 Icons.Default.Event,
                 stringResource(R.string.exam_lookahead_weeks),
@@ -617,9 +640,9 @@ private fun DataPage(onExportJson: () -> Unit, onImportJson: () -> Unit, onExpor
     SubPage(stringResource(R.string.settings_category_data), onBack) {
         SettingsCard {
             SettingsItem(Icons.Default.FileUpload, stringResource(R.string.import_json), onClick = onImportJson)
-            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
             SettingsItem(Icons.Default.FileDownload, stringResource(R.string.export_json), onClick = onExportJson)
-            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
             SettingsItem(Icons.Default.CalendarMonth, stringResource(R.string.export_ics), onClick = onExportIcs)
         }
     }
