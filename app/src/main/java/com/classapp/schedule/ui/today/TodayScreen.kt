@@ -392,7 +392,7 @@ private fun CourseCard(
                         }
                         Spacer(modifier = Modifier.width(6.dp))
                     }
-                    Text(course.name, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                    Text(course.name, style = MaterialTheme.typography.titleMedium)
                     if (realIsPast) {
                         androidx.compose.animation.AnimatedVisibility(visible = animDone, enter = androidx.compose.animation.scaleIn() + androidx.compose.animation.fadeIn()) {
                             Icon(Icons.Default.Check, null, modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
