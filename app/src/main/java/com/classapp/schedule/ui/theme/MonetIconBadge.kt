@@ -15,27 +15,20 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 enum class BadgeColorPalette {
-    Primary, Secondary, Tertiary, Error, Neutral
+    Primary, Secondary, Tertiary, Error, Neutral, Inverse
 }
 
 @Composable
 fun MonetIconBadge(
     icon: ImageVector,
     contentDescription: String?,
-    seedColor: Color,
+    badgePalette: BadgeColorPalette,
     modifier: Modifier = Modifier,
     size: Dp = 48.dp,
     iconSize: Dp = 24.dp,
     cornerRadius: Dp = 14.dp
 ) {
-    val palette = seedColorToPalette(seedColor)
-    val (containerColor, contentColor) = when (palette) {
-        BadgeColorPalette.Primary -> MaterialTheme.colorScheme.primaryContainer to MaterialTheme.colorScheme.onPrimaryContainer
-        BadgeColorPalette.Secondary -> MaterialTheme.colorScheme.secondaryContainer to MaterialTheme.colorScheme.onSecondaryContainer
-        BadgeColorPalette.Tertiary -> MaterialTheme.colorScheme.tertiaryContainer to MaterialTheme.colorScheme.onTertiaryContainer
-        BadgeColorPalette.Error -> MaterialTheme.colorScheme.errorContainer to MaterialTheme.colorScheme.onErrorContainer
-        BadgeColorPalette.Neutral -> MaterialTheme.colorScheme.surfaceVariant to MaterialTheme.colorScheme.onSurfaceVariant
-    }
+    val (containerColor, contentColor) = badgePaletteColors(badgePalette)
 
     Box(
         modifier = modifier
@@ -53,30 +46,36 @@ fun MonetIconBadge(
 }
 
 @Composable
+fun MonetIconBadgeTextColor(badgePalette: BadgeColorPalette): Color {
+    return badgePaletteColors(badgePalette).second
+}
+
+@Composable
 fun MonetIconBadgeTextColor(seedColor: Color): Color {
-    val palette = seedColorToPalette(seedColor)
-    return when (palette) {
-        BadgeColorPalette.Primary -> MaterialTheme.colorScheme.onPrimaryContainer
-        BadgeColorPalette.Secondary -> MaterialTheme.colorScheme.onSecondaryContainer
-        BadgeColorPalette.Tertiary -> MaterialTheme.colorScheme.onTertiaryContainer
-        BadgeColorPalette.Error -> MaterialTheme.colorScheme.onErrorContainer
-        BadgeColorPalette.Neutral -> MaterialTheme.colorScheme.onSurfaceVariant
+    val scheme = MaterialTheme.colorScheme
+    val primary = scheme.primary
+    val secondary = scheme.secondary
+    val tertiary = scheme.tertiary
+    val error = scheme.error
+    return when {
+        colorsClose(seedColor, primary) -> scheme.onPrimaryContainer
+        colorsClose(seedColor, secondary) -> scheme.onSecondaryContainer
+        colorsClose(seedColor, tertiary) -> scheme.onTertiaryContainer
+        colorsClose(seedColor, error) -> scheme.onErrorContainer
+        else -> scheme.onSurfaceVariant
     }
 }
 
 @Composable
-private fun seedColorToPalette(seedColor: Color): BadgeColorPalette {
-    val primary = MaterialTheme.colorScheme.primary
-    val secondary = MaterialTheme.colorScheme.secondary
-    val tertiary = MaterialTheme.colorScheme.tertiary
-    val error = MaterialTheme.colorScheme.error
-
-    return when {
-        colorsClose(seedColor, primary) -> BadgeColorPalette.Primary
-        colorsClose(seedColor, secondary) -> BadgeColorPalette.Secondary
-        colorsClose(seedColor, tertiary) -> BadgeColorPalette.Tertiary
-        colorsClose(seedColor, error) -> BadgeColorPalette.Error
-        else -> BadgeColorPalette.Neutral
+private fun badgePaletteColors(palette: BadgeColorPalette): Pair<Color, Color> {
+    val scheme = MaterialTheme.colorScheme
+    return when (palette) {
+        BadgeColorPalette.Primary -> scheme.primaryContainer to scheme.onPrimaryContainer
+        BadgeColorPalette.Secondary -> scheme.secondaryContainer to scheme.onSecondaryContainer
+        BadgeColorPalette.Tertiary -> scheme.tertiaryContainer to scheme.onTertiaryContainer
+        BadgeColorPalette.Error -> scheme.errorContainer to scheme.onErrorContainer
+        BadgeColorPalette.Neutral -> scheme.surfaceVariant to scheme.onSurfaceVariant
+        BadgeColorPalette.Inverse -> scheme.inverseSurface to scheme.inverseOnSurface
     }
 }
 

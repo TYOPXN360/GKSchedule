@@ -23,6 +23,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.classapp.schedule.LoginState
 import com.classapp.schedule.R
+import com.classapp.schedule.ui.theme.BadgeColorPalette
 import com.classapp.schedule.ui.theme.Md3Card
 import com.classapp.schedule.ui.theme.Md3CardVariant
 import com.classapp.schedule.ui.theme.MonetIconBadge
@@ -191,41 +192,33 @@ fun AboutScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         // All items in one grouped card
-        val badgeColors = listOf(
-            MaterialTheme.colorScheme.primary,
-            MaterialTheme.colorScheme.tertiary,
-            MaterialTheme.colorScheme.secondary,
-            MaterialTheme.colorScheme.secondary,
-            MaterialTheme.colorScheme.primary,
-            MaterialTheme.colorScheme.tertiary
-        )
         Md3Card(modifier = Modifier.fillMaxWidth(), variant = Md3CardVariant.Elevated) {
             Column {
                 ListItem(
                     headlineContent = { Text(stringResource(R.string.semester_start)) },
                     supportingContent = { Text(semesterStart.toString()) },
-                    leadingContent = { MonetIconBadge(icon = Icons.Default.CalendarMonth, contentDescription = null, seedColor = badgeColors[0]) },
+                    leadingContent = { MonetIconBadge(icon = Icons.Default.CalendarMonth, contentDescription = null, badgePalette = BadgeColorPalette.Primary) },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                 )
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                 ListItem(
                     headlineContent = { Text(stringResource(R.string.total_weeks)) },
                     supportingContent = { Text("$totalWeeks") },
-                    leadingContent = { MonetIconBadge(icon = Icons.Default.DateRange, contentDescription = null, seedColor = badgeColors[1]) },
+                    leadingContent = { MonetIconBadge(icon = Icons.Default.DateRange, contentDescription = null, badgePalette = BadgeColorPalette.Tertiary) },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                 )
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                 ListItem(
                     headlineContent = { Text(stringResource(R.string.periods_per_day)) },
                     supportingContent = { Text("$periodsPerDay") },
-                    leadingContent = { MonetIconBadge(icon = Icons.Default.AccessTime, contentDescription = null, seedColor = badgeColors[2]) },
+                    leadingContent = { MonetIconBadge(icon = Icons.Default.AccessTime, contentDescription = null, badgePalette = BadgeColorPalette.Secondary) },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                 )
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                 ListItem(
                     headlineContent = { Text("考试安排") },
                     supportingContent = { Text("查看考试时间和考场") },
-                    leadingContent = { MonetIconBadge(icon = Icons.Default.School, contentDescription = null, seedColor = badgeColors[3]) },
+                    leadingContent = { MonetIconBadge(icon = Icons.Default.School, contentDescription = null, badgePalette = BadgeColorPalette.Error) },
                     trailingContent = { Icon(Icons.Default.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                     modifier = Modifier.clickable(onClick = onOpenExam)
@@ -234,7 +227,7 @@ fun AboutScreen(
                 ListItem(
                     headlineContent = { Text(stringResource(R.string.settings_title)) },
                     supportingContent = { Text(stringResource(R.string.about_settings_desc)) },
-                    leadingContent = { MonetIconBadge(icon = Icons.Default.Settings, contentDescription = null, seedColor = badgeColors[4]) },
+                    leadingContent = { MonetIconBadge(icon = Icons.Default.Settings, contentDescription = null, badgePalette = BadgeColorPalette.Neutral) },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                     modifier = Modifier.clickable(onClick = onOpenSettings)
                 )
@@ -242,7 +235,7 @@ fun AboutScreen(
                 ListItem(
                     headlineContent = { Text(stringResource(R.string.about_title)) },
                     supportingContent = { Text(stringResource(R.string.about_school)) },
-                    leadingContent = { MonetIconBadge(icon = Icons.AutoMirrored.Filled.Article, contentDescription = null, seedColor = badgeColors[5]) },
+                    leadingContent = { MonetIconBadge(icon = Icons.AutoMirrored.Filled.Article, contentDescription = null, badgePalette = BadgeColorPalette.Inverse) },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                     modifier = Modifier.clickable { showAboutDialog = true }
                 )

@@ -226,7 +226,14 @@ private fun SettingsMainPage(onOpenPage: (String) -> Unit, onExit: () -> Unit) {
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
         ) {
-            val catColors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.tertiary, MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.tertiary)
+            val catPalettes = listOf(
+                com.classapp.schedule.ui.theme.BadgeColorPalette.Primary,
+                com.classapp.schedule.ui.theme.BadgeColorPalette.Tertiary,
+                com.classapp.schedule.ui.theme.BadgeColorPalette.Secondary,
+                com.classapp.schedule.ui.theme.BadgeColorPalette.Error,
+                com.classapp.schedule.ui.theme.BadgeColorPalette.Neutral,
+                com.classapp.schedule.ui.theme.BadgeColorPalette.Inverse
+            )
             val catIcons = listOf(Icons.Default.CalendarMonth, Icons.Default.Palette, Icons.Default.GridOn, Icons.Default.Notifications, Icons.Default.Sync, Icons.Default.Storage)
             val catTitles = listOf(
                 stringResource(R.string.settings_category_semester),
@@ -262,7 +269,7 @@ private fun SettingsMainPage(onOpenPage: (String) -> Unit, onExit: () -> Unit) {
                         ListItem(
                             headlineContent = { Text(catTitles[index], style = MaterialTheme.typography.titleMedium) },
                             supportingContent = { Text(catDescs[index], style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) },
-                            leadingContent = { com.classapp.schedule.ui.theme.MonetIconBadge(icon = icon, contentDescription = null, seedColor = catColors[index]) },
+                            leadingContent = { com.classapp.schedule.ui.theme.MonetIconBadge(icon = icon, contentDescription = null, badgePalette = catPalettes[index]) },
                             trailingContent = { Icon(Icons.Default.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
                             colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                             modifier = Modifier.clickable(onClick = catCallbacks[index])
@@ -279,12 +286,12 @@ private fun SettingsMainPage(onOpenPage: (String) -> Unit, onExit: () -> Unit) {
 }
 
 @Composable
-private fun CategoryItem(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, subtitle: String, seedColor: androidx.compose.ui.graphics.Color, onClick: () -> Unit) {
+private fun CategoryItem(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, subtitle: String, badgePalette: com.classapp.schedule.ui.theme.BadgeColorPalette, onClick: () -> Unit) {
     com.classapp.schedule.ui.theme.Md3Card(modifier = Modifier.fillMaxWidth(), variant = com.classapp.schedule.ui.theme.Md3CardVariant.Elevated, shape = MaterialTheme.shapes.small) {
         ListItem(
             headlineContent = { Text(title, fontWeight = FontWeight.Medium) },
             supportingContent = { Text(subtitle) },
-            leadingContent = { com.classapp.schedule.ui.theme.MonetIconBadge(icon = icon, contentDescription = null, seedColor = seedColor) },
+            leadingContent = { com.classapp.schedule.ui.theme.MonetIconBadge(icon = icon, contentDescription = null, badgePalette = badgePalette) },
             trailingContent = { Icon(Icons.Default.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
             colors = ListItemDefaults.colors(containerColor = Color.Transparent),
             modifier = Modifier.clickable(onClick = onClick)
