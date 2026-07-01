@@ -368,16 +368,10 @@ fun WeeklyScheduleScreen(
 
                     // Pre-compute base colors — always use weekBlocks' own colorIdx + monetColors
                     // so background and text colors are always paired from the same palette
-                    val blockBaseColors = remember(weekBlocks, colorGroupMode) {
+                    val blockBaseColors = remember(weekBlocks, monetColors, colorGroupMode) {
                         weekBlocks.map { block ->
-                            if (colorGroupMode == 2) {
-                                com.classapp.schedule.util.CourseColors.getColorSync(
-                                    2, block.course.name, block.course.classroom
-                                ).container
-                            } else {
-                                val satOffset = if (colorGroupMode == 1) block.colorIdx % 10 else 0
-                                CourseColors.getBackgroundStatic(block.colorIdx, monetColors, satOffset)
-                            }
+                            val satOffset = if (colorGroupMode == 1) block.colorIdx % 10 else 0
+                            CourseColors.getBackgroundStatic(block.colorIdx, monetColors, satOffset)
                         }
                     }
 
@@ -449,13 +443,7 @@ fun WeeklyScheduleScreen(
                                 .semantics { contentDescription = block.course.name }
                                 .padding(4.dp)
                         ) {
-                            val textColor = if (colorGroupMode == 2) {
-                                com.classapp.schedule.util.CourseColors.getColorSync(
-                                    2, block.course.name, block.course.classroom
-                                ).content
-                            } else {
-                                CourseColors.getTextColor(block.colorIdx, monetColors, satOffset)
-                            }
+                            val textColor = CourseColors.getTextColor(block.colorIdx, monetColors, satOffset)
                             Column {
                                 if (block.course.isExamCourse()) {
                                     Box(
