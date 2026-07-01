@@ -273,10 +273,15 @@ private fun SettingsMainPage(onOpenPage: (String) -> Unit, onExit: () -> Unit) {
             ) {
                 Column {
                     listOf(0, 1, 2).forEach { index ->
+                        val badgeColor = com.classapp.schedule.util.CourseColors.getSettingsBadgeColor(index)
                         ListItem(
                             headlineContent = { Text(catTitles[index], style = MaterialTheme.typography.titleMedium) },
                             supportingContent = { Text(catDescs[index], style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) },
-                            leadingContent = { com.classapp.schedule.ui.theme.MonetIconBadge(icon = catIcons[index], contentDescription = catTitles[index], badgePalette = catPalettes[index]) },
+                            leadingContent = {
+                                Surface(modifier = Modifier.size(40.dp), shape = MaterialTheme.shapes.small, color = badgeColor.container, contentColor = badgeColor.content) {
+                                    Box(contentAlignment = Alignment.Center) { Icon(imageVector = catIcons[index], contentDescription = null, modifier = Modifier.size(22.dp)) }
+                                }
+                            },
                             trailingContent = { Icon(Icons.Default.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
                             colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                             modifier = Modifier.clickable(onClick = catCallbacks[index])
@@ -295,10 +300,15 @@ private fun SettingsMainPage(onOpenPage: (String) -> Unit, onExit: () -> Unit) {
             ) {
                 Column {
                     listOf(3, 4, 5).forEach { index ->
+                        val badgeColor = com.classapp.schedule.util.CourseColors.getSettingsBadgeColor(index)
                         ListItem(
                             headlineContent = { Text(catTitles[index], style = MaterialTheme.typography.titleMedium) },
                             supportingContent = { Text(catDescs[index], style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) },
-                            leadingContent = { com.classapp.schedule.ui.theme.MonetIconBadge(icon = catIcons[index], contentDescription = catTitles[index], badgePalette = catPalettes[index]) },
+                            leadingContent = {
+                                Surface(modifier = Modifier.size(40.dp), shape = MaterialTheme.shapes.small, color = badgeColor.container, contentColor = badgeColor.content) {
+                                    Box(contentAlignment = Alignment.Center) { Icon(imageVector = catIcons[index], contentDescription = null, modifier = Modifier.size(22.dp)) }
+                                }
+                            },
                             trailingContent = { Icon(Icons.Default.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
                             colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                             modifier = Modifier.clickable(onClick = catCallbacks[index])

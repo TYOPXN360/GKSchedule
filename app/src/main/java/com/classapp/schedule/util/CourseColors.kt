@@ -59,17 +59,18 @@ object CourseColors {
     private fun makeColor(mode: Int, courseName: String, classroom: String, classroomIndex: Int, week: Int, diffColorPerWeek: Boolean, isDark: Boolean): CourseColorPair {
         val hue = computeHue(mode, courseName, classroom, week, diffColorPerWeek)
 
-        // 容器用低色度防止暗色模式色域溢出，文字用高色度保持对比
-        val containerChroma = computeChroma(mode, classroomIndex, CHROMA_CONTAINER)
-        val contentChroma = CHROMA_CONTENT
-
-        val containerTone = if (isDark) 34.0 else 92.0
-        val contentTone = if (isDark) 96.0 else 15.0
-
-        return CourseColorPair(
-            container = hctToColor(hue, containerChroma, containerTone),
-            content = hctToColor(hue, contentChroma, contentTone)
-        )
+        return if (isDark) {
+            // M3 Expressive 暗夜晶格：容器 Tone 14/Chroma 16，文字 Tone 85/Chroma 55
+            val darkContainer = hctToColor(hue, 16.0, 14.0)
+            val darkContent = hctToColor(hue, 55.0, 85.0)
+            CourseColorPair(container = darkContainer, content = darkContent)
+        } else {
+            val containerChroma = computeChroma(mode, classroomIndex, CHROMA_CONTAINER)
+            CourseColorPair(
+                container = hctToColor(hue, containerChroma, 92.0),
+                content = hctToColor(hue, CHROMA_CONTENT, 15.0)
+            )
+        }
     }
 
     // =========================================================================
@@ -109,6 +110,22 @@ object CourseColors {
     private fun hctToColor(hue: Double, chroma: Double, tone: Double): Color {
         val hct = Hct.from(hue, chroma, tone)
         return Color(hct.toInt())
+    }
+
+    /**
+     * 设置页图标徽章专用：index * 60° 均匀散射，6 个图标绝不撞色
+     */
+    @Composable
+    fun getSettingsBadgeColor(index: Int): CourseColorPair {
+        val isDark = LocalAppIsDark.current
+        val hue = (index * 60.0) % 360.0
+        val chroma = 45.0
+        val containerTone = if (isDark) 26.0 else 90.0
+        val contentTone = if (isDark) 92.0 else 15.0
+        return CourseColorPair(
+            container = hctToColor(hue, chroma, containerTone),
+            content = hctToColor(hue, chroma, contentTone)
+        )
     }
 
     /**

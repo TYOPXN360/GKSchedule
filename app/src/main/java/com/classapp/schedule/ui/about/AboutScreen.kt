@@ -206,21 +206,21 @@ Column(
                 ListItem(
                     headlineContent = { Text(stringResource(R.string.semester_start)) },
                     supportingContent = { Text(semesterStart.toString()) },
-                    leadingContent = { MonetIconBadge(icon = Icons.Default.CalendarMonth, contentDescription = "学期开始日期", badgePalette = BadgeColorPalette.Primary) },
+                    leadingContent = { val bc = com.classapp.schedule.util.CourseColors.getSettingsBadgeColor(0); Surface(modifier = Modifier.size(40.dp), shape = MaterialTheme.shapes.small, color = bc.container, contentColor = bc.content) { Box(contentAlignment = Alignment.Center) { Icon(Icons.Default.CalendarMonth, null, modifier = Modifier.size(22.dp)) } } },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                 )
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
                 ListItem(
                     headlineContent = { Text(stringResource(R.string.total_weeks)) },
                     supportingContent = { Text("$totalWeeks") },
-                    leadingContent = { MonetIconBadge(icon = Icons.Default.DateRange, contentDescription = "总周数", badgePalette = BadgeColorPalette.Tertiary) },
+                    leadingContent = { val bc = com.classapp.schedule.util.CourseColors.getSettingsBadgeColor(1); Surface(modifier = Modifier.size(40.dp), shape = MaterialTheme.shapes.small, color = bc.container, contentColor = bc.content) { Box(contentAlignment = Alignment.Center) { Icon(Icons.Default.DateRange, null, modifier = Modifier.size(22.dp)) } } },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                 )
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
                 ListItem(
                     headlineContent = { Text(stringResource(R.string.periods_per_day)) },
                     supportingContent = { Text("$periodsPerDay") },
-                    leadingContent = { MonetIconBadge(icon = Icons.Default.AccessTime, contentDescription = "每日节数", badgePalette = BadgeColorPalette.Secondary) },
+                    leadingContent = { val bc = com.classapp.schedule.util.CourseColors.getSettingsBadgeColor(2); Surface(modifier = Modifier.size(40.dp), shape = MaterialTheme.shapes.small, color = bc.container, contentColor = bc.content) { Box(contentAlignment = Alignment.Center) { Icon(Icons.Default.AccessTime, null, modifier = Modifier.size(22.dp)) } } },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                 )
             }
@@ -232,7 +232,7 @@ Column(
                 ListItem(
                     headlineContent = { Text("考试安排") },
                     supportingContent = { Text("查看考试时间和考场") },
-                    leadingContent = { MonetIconBadge(icon = Icons.Default.School, contentDescription = "考试安排", badgePalette = BadgeColorPalette.Tertiary) },
+                    leadingContent = { val bc = com.classapp.schedule.util.CourseColors.getSettingsBadgeColor(3); Surface(modifier = Modifier.size(40.dp), shape = MaterialTheme.shapes.small, color = bc.container, contentColor = bc.content) { Box(contentAlignment = Alignment.Center) { Icon(Icons.Default.School, null, modifier = Modifier.size(22.dp)) } } },
                     trailingContent = { Icon(Icons.Default.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                     modifier = Modifier.clickable(onClick = onOpenExam)
@@ -241,7 +241,7 @@ Column(
                 ListItem(
                     headlineContent = { Text(stringResource(R.string.settings_title)) },
                     supportingContent = { Text(stringResource(R.string.about_settings_desc)) },
-                    leadingContent = { MonetIconBadge(icon = Icons.Default.Settings, contentDescription = "设置", badgePalette = BadgeColorPalette.Secondary) },
+                    leadingContent = { val bc = com.classapp.schedule.util.CourseColors.getSettingsBadgeColor(4); Surface(modifier = Modifier.size(40.dp), shape = MaterialTheme.shapes.small, color = bc.container, contentColor = bc.content) { Box(contentAlignment = Alignment.Center) { Icon(Icons.Default.Settings, null, modifier = Modifier.size(22.dp)) } } },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                     modifier = Modifier.clickable(onClick = onOpenSettings)
                 )
@@ -249,7 +249,7 @@ Column(
                 ListItem(
                     headlineContent = { Text(stringResource(R.string.about_title)) },
                     supportingContent = { Text(stringResource(R.string.about_school)) },
-                    leadingContent = { MonetIconBadge(icon = Icons.AutoMirrored.Filled.Article, contentDescription = "关于", badgePalette = BadgeColorPalette.Primary) },
+                    leadingContent = { val bc = com.classapp.schedule.util.CourseColors.getSettingsBadgeColor(5); Surface(modifier = Modifier.size(40.dp), shape = MaterialTheme.shapes.small, color = bc.container, contentColor = bc.content) { Box(contentAlignment = Alignment.Center) { Icon(Icons.AutoMirrored.Filled.Article, null, modifier = Modifier.size(22.dp)) } } },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                     modifier = Modifier.clickable { showAboutDialog = true }
                 )
