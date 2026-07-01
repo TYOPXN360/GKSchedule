@@ -139,14 +139,17 @@ fun WeeklyScheduleScreen(
     }
 
     // Compute visible weeks (skip empty weeks if hideEmptyWeeks is on)
-    val visibleWeeks = remember(scheduleCourses, totalWeeks, hideEmptyWeeks) {
+    // 🔥 防死锁：强制包含 currentWeek 和 realCurrentWeek，防止 indexOf 返回 -1
+    val visibleWeeks = remember(scheduleCourses, totalWeeks, hideEmptyWeeks, currentWeek, realCurrentWeek) {
         if (!hideEmptyWeeks) (1..totalWeeks).toList()
         else {
             val nonEmpty = (1..totalWeeks).filter { week ->
                 scheduleCourses.any { it.isInWeek(week) }
-            }
-            val allNonEmpty = nonEmpty.distinct().sorted()
-            if (allNonEmpty.isEmpty()) listOf(1) else allNonEmpty
+            }.toMutableList()
+            if (!nonEmpty.contains(currentWeek) && currentWeek in 1..totalWeeks) nonEmpty.add(currentWeek)
+            if (!nonEmpty.contains(realCurrentWeek) && realCurrentWeek in 1..totalWeeks) nonEmpty.add(realCurrentWeek)
+            val finalWeeks = nonEmpty.distinct().sorted()
+            if (finalWeeks.isEmpty()) listOf(1) else finalWeeks
         }
     }
 
@@ -164,10 +167,11 @@ fun WeeklyScheduleScreen(
         if (week != currentWeek) onWeekChange(week)
     }
     // Sync week → pager (from arrow buttons / picker)
-    LaunchedEffect(currentWeek) {
-        val page = visibleWeeks.indexOf(currentWeek).coerceAtLeast(0)
-        if (pagerState.currentPage != page) {
-            coroutineScope.launch { pagerState.animateScrollToPage(page) }
+    // 🔥 防死锁：直接在 LaunchedEffect 作用域内挂起，不再嵌套 coroutineScope.launch
+    LaunchedEffect(currentWeek, visibleWeeks) {
+        val targetPage = visibleWeeks.indexOf(currentWeek).coerceAtLeast(0)
+        if (pagerState.currentPage != targetPage) {
+            pagerState.animateScrollToPage(targetPage)
         }
     }
 
@@ -208,6 +212,7 @@ fun WeeklyScheduleScreen(
                         com.classapp.schedule.util.HapticFeedback.light(hapticView)
                         val idx = visibleWeeks.indexOf(currentWeek)
                         if (idx > 0) onWeekChange(visibleWeeks[idx - 1])
+                        else if (currentWeek > 1) onWeekChange(currentWeek - 1) // 兜底抗沉没
                     }) {
                         Icon(Icons.Default.ChevronLeft, "Prev", tint = MaterialTheme.colorScheme.onPrimaryContainer)
                     }
@@ -231,7 +236,8 @@ fun WeeklyScheduleScreen(
                     IconButton(onClick = {
                         com.classapp.schedule.util.HapticFeedback.light(hapticView)
                         val idx = visibleWeeks.indexOf(currentWeek)
-                        if (idx < visibleWeeks.size - 1) onWeekChange(visibleWeeks[idx + 1])
+                        if (idx >= 0 && idx < visibleWeeks.size - 1) onWeekChange(visibleWeeks[idx + 1])
+                        else if (currentWeek < totalWeeks) onWeekChange(currentWeek + 1) // 兜底抗沉没
                     }) {
                         Icon(Icons.Default.ChevronRight, "Next", tint = MaterialTheme.colorScheme.onPrimaryContainer)
                     }
