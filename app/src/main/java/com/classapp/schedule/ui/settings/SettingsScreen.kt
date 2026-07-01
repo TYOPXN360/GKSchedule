@@ -158,6 +158,8 @@ fun SettingsScreen(
                     onColorEngineChange = onColorEngineChange,
                     onColorGroupModeChange = onColorGroupModeChange,
                     onShowDateInHeaderChange = onShowDateInHeaderChange,
+                    diffColorPerWeek = diffColorPerWeek,
+                    onDiffColorPerWeekChange = onDiffColorPerWeekChange,
                     onBack = { navController.popBackStack() }
                 )
             }
@@ -389,7 +391,9 @@ private fun ScheduleStylePage(
     onAutoGridHeightChange: (Boolean) -> Unit, onMergeConsecutiveChange: (Boolean) -> Unit,
     onShowTimeLabelChange: (Boolean) -> Unit, onDetailedSplitChange: (Boolean) -> Unit,
     onColorEngineChange: (Int) -> Unit, onColorGroupModeChange: (Int) -> Unit,
-    onShowDateInHeaderChange: (Boolean) -> Unit, onBack: () -> Unit
+    onShowDateInHeaderChange: (Boolean) -> Unit,
+    diffColorPerWeek: Boolean, onDiffColorPerWeekChange: (Boolean) -> Unit,
+    onBack: () -> Unit
 ) {
     SubPage(stringResource(R.string.settings_category_schedule), onBack) {
         SettingsCard {
@@ -424,6 +428,8 @@ private fun ScheduleStylePage(
             DropdownItem(Icons.Default.FormatColorFill, stringResource(R.string.color_group_mode),
                 listOf("0" to stringResource(R.string.color_group_same), "1" to stringResource(R.string.color_group_same_sat), "2" to stringResource(R.string.color_group_diff)),
                 colorGroupMode.toString(), onSelect = { onColorGroupModeChange(it.toInt()) })
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            SwitchItem(Icons.Default.Palette, stringResource(R.string.diff_color_per_week), diffColorPerWeek, onDiffColorPerWeekChange)
         }
     }
 }
@@ -591,8 +597,6 @@ private fun SyncPage(
             }
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
             SwitchItem(Icons.Default.School, stringResource(R.string.show_exam_schedule), showExamSchedule, onShowExamScheduleChange)
-            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
-            SwitchItem(Icons.Default.Palette, stringResource(R.string.diff_color_per_week), diffColorPerWeek, onDiffColorPerWeekChange)
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
             StepperItem(
                 Icons.Default.Event,
