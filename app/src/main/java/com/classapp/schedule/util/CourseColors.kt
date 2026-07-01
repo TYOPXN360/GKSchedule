@@ -82,21 +82,21 @@ object CourseColors {
 
     @Composable
     fun getBackground(index: Int, colors: List<Pair<Color, Color>>, satOffset: Int = 0, weekOffset: Int = 0): Color {
-        val base = colors[(index / 10).coerceIn(0, colors.size - 1)].first
+        val base = colors[index % colors.size].first
         val rotated = if (weekOffset != 0) rotateHueByHash(base, index, weekOffset) else base
         return if (satOffset > 0) adjustSaturation(rotated, satOffset) else rotated
     }
 
     fun getBackgroundStatic(index: Int, colors: List<Pair<Color, Color>>, satOffset: Int = 0, weekOffset: Int = 0): Color {
-        val baseIdx = index / 10
-        val base = colors[baseIdx.coerceIn(0, colors.size - 1)].first
+        val baseIdx = index % colors.size
+        val base = colors[baseIdx].first
         val rotated = if (weekOffset != 0) rotateHueByHash(base, baseIdx, weekOffset) else base
         return if (satOffset > 0) adjustSaturation(rotated, satOffset) else rotated
     }
 
     fun getTextColor(index: Int, colors: List<Pair<Color, Color>>, satOffset: Int = 0, weekOffset: Int = 0): Color {
-        val baseIdx = index / 10
-        val base = colors[baseIdx.coerceIn(0, colors.size - 1)].second
+        val baseIdx = index % colors.size
+        val base = colors[baseIdx].second
         val rotated = if (weekOffset != 0) rotateHueByHash(base, baseIdx, weekOffset) else base
         return if (satOffset > 0) adjustSaturation(rotated, satOffset) else rotated
     }

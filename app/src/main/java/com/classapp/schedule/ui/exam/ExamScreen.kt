@@ -278,7 +278,7 @@ private fun ExamCard(exam: ExamInfo, index: Int = 0) {
     val alpha = if (isPast) 0.5f else 1f
 
     // Per-exam color based on course name hash — consistent across screens
-    val examColors = com.classapp.schedule.util.CourseColors.getColors(0, count = 16)
+    val examColors = com.classapp.schedule.util.CourseColors.getColors(0, count = 8)
     val colorIdx = exam.kcmc.hashCode().and(0x7fffffff) % examColors.size
 
     Card(

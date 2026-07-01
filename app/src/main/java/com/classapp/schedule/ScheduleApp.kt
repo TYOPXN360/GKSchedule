@@ -98,7 +98,7 @@ fun ScheduleApp(
     val showExamSchedule by viewModel.showExamSchedule.collectAsState(initial = false)
 
     // Shared color palette — computed once
-    val courseColorPalette = com.classapp.schedule.util.CourseColors.getColors(colorEngine, count = courses.map { it.name }.distinct().size.coerceAtLeast(8))
+    val courseColorPalette = com.classapp.schedule.util.CourseColors.getColors(colorEngine, count = 8)
 
     // Course name|classroom → Color, same iteration logic as WeeklyScheduleScreen's weekBlocks
     val courseColorMap = remember(courses, realCurrentWeek, colorGroupMode, courseColorPalette) {

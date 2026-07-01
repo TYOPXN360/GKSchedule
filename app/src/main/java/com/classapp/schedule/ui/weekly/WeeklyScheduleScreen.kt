@@ -268,7 +268,7 @@ fun WeeklyScheduleScreen(
             }
 
             // Grid — HorizontalPager for native swipe
-            val monetColors = if (courseColorPalette.isNotEmpty()) courseColorPalette else CourseColors.getColors(colorEngine, count = courses.map { it.name }.distinct().size.coerceAtLeast(8))
+            val monetColors = if (courseColorPalette.isNotEmpty()) courseColorPalette else CourseColors.getColors(colorEngine, count = 8)
             val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
             HorizontalPager(
                 state = pagerState,
@@ -546,7 +546,7 @@ fun WeeklyScheduleScreen(
         } else courseColorMap[course.id]
         CourseDetailSheet(course = course, getStartTime = getStartTime, getEndTime = getEndTime,
             onDismiss = { detailCourse = null }, onEdit = { detailCourse = null; onCourseLongPress(course) },
-            courseColors = CourseColors.getColors(colorEngine, count = scheduleCourses.map { it.name }.distinct().size.coerceAtLeast(8)),
+            courseColors = CourseColors.getColors(colorEngine, count = 8),
             colorGroupMode = colorGroupMode,
             colorIndex = courseColorIndexMap[course.id] ?: course.colorIndex,
             dotColor = detailDotColor)
@@ -559,7 +559,7 @@ fun WeeklyScheduleScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CourseDetailSheet(course: Course, getStartTime: (Int) -> String, getEndTime: (Int) -> String, onDismiss: () -> Unit, onEdit: () -> Unit, courseColors: List<Pair<Color, Color>> = CourseColors.getColors(0, count = 32), colorGroupMode: Int = 0, colorIndex: Int = course.colorIndex, dotColor: Color? = null) {
+fun CourseDetailSheet(course: Course, getStartTime: (Int) -> String, getEndTime: (Int) -> String, onDismiss: () -> Unit, onEdit: () -> Unit, courseColors: List<Pair<Color, Color>> = CourseColors.getColors(0, count = 8), colorGroupMode: Int = 0, colorIndex: Int = course.colorIndex, dotColor: Color? = null) {
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState()) {
         Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp).padding(bottom = 32.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
