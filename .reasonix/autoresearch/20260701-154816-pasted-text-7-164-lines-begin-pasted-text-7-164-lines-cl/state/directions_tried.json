@@ -1,0 +1,16 @@
+[
+  {
+    "fingerprint": "coursecolorpalette-coursecolormap-examcolormap",
+    "summary": "上一轮已完成全部清理。两份文件中 `courseColorPalette`、`courseColorMap`、`examColorMap` 的引用已全部清零。",
+    "first_seen_iteration": 1,
+    "last_seen_iteration": 1,
+    "count": 1
+  },
+  {
+    "fingerprint": "turn-completed",
+    "summary": "turn completed",
+    "first_seen_iteration": 2,
+    "last_seen_iteration": 2,
+    "count": 1
+  }
+]

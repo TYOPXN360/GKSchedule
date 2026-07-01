@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [Course::class], version = 3, exportSchema = false)
+@Database(entities = [Course::class], version = 4, exportSchema = false)
 abstract class CourseDatabase : RoomDatabase() {
     abstract fun courseDao(): CourseDao
 
@@ -30,13 +30,19 @@ abstract class CourseDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE courses ADD COLUMN isHidden INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
         fun getDatabase(context: Context): CourseDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     CourseDatabase::class.java,
                     "course_database"
-                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                  .fallbackToDestructiveMigrationOnDowngrade()
                  .build()
                 INSTANCE = instance

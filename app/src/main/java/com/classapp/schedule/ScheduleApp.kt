@@ -95,6 +95,7 @@ fun ScheduleApp(
     val captchaImage by viewModel.captchaImage.collectAsState()
     val examLookaheadWeeks by viewModel.examLookaheadWeeks.collectAsState(initial = 1)
     val diffColorPerWeek by viewModel.diffColorPerWeek.collectAsState(initial = false)
+    val showHiddenCourses by viewModel.showHiddenCourses.collectAsState(initial = false)
     val examList by viewModel.examList.collectAsState()
     val showExamSchedule by viewModel.showExamSchedule.collectAsState(initial = false)
 
@@ -201,9 +202,10 @@ fun ScheduleApp(
                 slideOutHorizontally(targetOffsetX = { it }, animationSpec = tween(200, easing = androidx.compose.animation.core.FastOutLinearInEasing)) + fadeOut(tween(150))
             }
         ) {
+            val displayCourses = if (showHiddenCourses) courses else courses.filter { !it.isHidden }
             composable(Screen.Today.route) {
                 TodayScreen(
-                    courses = courses, currentWeek = realCurrentWeek,
+                    courses = displayCourses, currentWeek = realCurrentWeek,
                     colorEngine = colorEngine, colorGroupMode = colorGroupMode,
                     exams = examList,
                     showExamSchedule = showExamSchedule,
@@ -218,7 +220,7 @@ fun ScheduleApp(
 
             composable(Screen.Weekly.route) {
                 WeeklyScheduleScreen(
-                    courses = courses, currentWeek = selectedWeek,
+                    courses = displayCourses, currentWeek = selectedWeek,
                     totalWeeks = totalWeeks, periodsPerDay = periodsPerDay,
                     gridHeight = gridHeight, gridCorner = gridCorner,
                     gridSpacing = gridSpacing, showPeriodLabel = showPeriodLabel,
