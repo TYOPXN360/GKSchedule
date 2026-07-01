@@ -66,6 +66,8 @@ Column(
         val isTokenExpired = loginState is LoginState.TokenExpired
 
         Card(
+            onClick = { if (!isLoggedIn) onLogin() },
+            enabled = !isLoggedIn,
             modifier = Modifier.fillMaxWidth(),
             shape = MaterialTheme.shapes.medium,
             colors = CardDefaults.cardColors(
@@ -76,7 +78,6 @@ Column(
             )
         ) {
             if (isLoggedIn) {
-                // Logged in — show user info
                 Box(modifier = Modifier.fillMaxWidth()) {
                     Column(
                         modifier = Modifier.fillMaxWidth().padding(20.dp),
@@ -86,13 +87,15 @@ Column(
                         Surface(
                             modifier = Modifier.size(72.dp),
                             shape = CircleShape,
-                            color = MaterialTheme.colorScheme.primary
+                            color = if (isTokenExpired) MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
+                                    else MaterialTheme.colorScheme.primary
                         ) {
                             Box(contentAlignment = Alignment.Center) {
                                 Text(
                                     text = savedRealName.take(1),
                                     style = MaterialTheme.typography.headlineLarge,
-                                    color = MaterialTheme.colorScheme.onPrimary
+                                    color = if (isTokenExpired) MaterialTheme.colorScheme.onSurface
+                                            else MaterialTheme.colorScheme.onPrimary
                                 )
                             }
                         }
@@ -100,36 +103,38 @@ Column(
                         Text(
                             text = savedRealName.ifEmpty { "已登录" },
                             style = MaterialTheme.typography.titleLarge,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                            color = if (isTokenExpired) MaterialTheme.colorScheme.onSurface
+                                    else MaterialTheme.colorScheme.onPrimaryContainer
                         )
+                        val subTextColor = if (isTokenExpired) MaterialTheme.colorScheme.onSurfaceVariant
+                                          else MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                         if (savedStudentId.isNotEmpty()) {
-                            Text(
-                                text = savedStudentId,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                            )
+                            Text(text = savedStudentId, style = MaterialTheme.typography.bodyMedium, color = subTextColor)
                         }
                         if (savedDeptName.isNotEmpty()) {
-                            Text(
-                                text = savedDeptName,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                            )
+                            Text(text = savedDeptName, style = MaterialTheme.typography.bodyMedium, color = subTextColor)
                         }
-                        Spacer(modifier = Modifier.height(16.dp))
                         if (isTokenExpired) {
-                            Text(
-                                text = "登录已过期",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Surface(
+                                shape = CircleShape,
+                                color = MaterialTheme.colorScheme.errorContainer,
+                                contentColor = MaterialTheme.colorScheme.onErrorContainer
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(Icons.Default.Warning, null, modifier = Modifier.size(14.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(text = "登录已过期，请重新验证", style = MaterialTheme.typography.labelSmall)
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(12.dp))
                             Button(
-                                onClick = {
-                                    onRefreshCaptcha()
-                                    showReloginDialog = true
-                                },
-                                modifier = Modifier.fillMaxWidth(0.6f)
+                                onClick = { onRefreshCaptcha(); showReloginDialog = true },
+                                modifier = Modifier.fillMaxWidth(0.6f),
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                             ) {
                                 Icon(Icons.AutoMirrored.Filled.Login, null, modifier = Modifier.size(18.dp))
                                 Spacer(modifier = Modifier.width(8.dp))
@@ -137,57 +142,58 @@ Column(
                             }
                         }
                     }
-                    // Logout icon at top right
-                    Surface(
+                    // Logout icon — no extra Surface wrapper, blends into card color
+                    IconButton(
                         onClick = onLogout,
-                        modifier = Modifier.align(Alignment.TopEnd).padding(12.dp),
-                        shape = MaterialTheme.shapes.medium,
-                        color = MaterialTheme.colorScheme.surfaceVariant
+                        modifier = Modifier.align(Alignment.TopEnd).padding(8.dp)
                     ) {
-                        Box(
-                            modifier = Modifier.size(36.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                Icons.AutoMirrored.Filled.Logout,
-                                contentDescription = stringResource(R.string.logout),
-                                modifier = Modifier.size(20.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.Logout,
+                            contentDescription = stringResource(R.string.logout),
+                            modifier = Modifier.size(22.dp),
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                        )
                     }
                 }
             } else {
-                // Not logged in
+                // Not logged in — card itself is the click target, no nested Button
                 Column(
-                    modifier = Modifier.fillMaxWidth().padding(20.dp).clickable(onClick = onLogin),
+                    modifier = Modifier.fillMaxWidth().padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Icon(
-                        Icons.Default.Person,
-                        contentDescription = "登录",
-                        modifier = Modifier.size(48.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Surface(
+                        modifier = Modifier.size(56.dp),
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.surfaceContainer
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                Icons.Default.Person,
+                                contentDescription = null,
+                                modifier = Modifier.size(28.dp),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
                     Text(
                         text = stringResource(R.string.login_title),
-                        style = MaterialTheme.typography.titleMedium
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
                     )
                     Text(
                         text = stringResource(R.string.about_login_desc),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
                     )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Button(
-                        onClick = onLogin,
-                        modifier = Modifier.fillMaxWidth(0.6f)
-                    ) {
-                        Icon(Icons.AutoMirrored.Filled.Login, null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(R.string.login_button))
-                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = stringResource(R.string.login_button),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }
