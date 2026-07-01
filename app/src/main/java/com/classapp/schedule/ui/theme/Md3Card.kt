@@ -28,13 +28,16 @@ fun Md3Card(
     shape: Shape = MaterialTheme.shapes.medium,
     content: @Composable ColumnScope.() -> Unit
 ) {
+    val isDark = LocalAppIsDark.current
+    val elevatedColor = if (isDark) MaterialTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surface
+
     when (variant) {
         Md3CardVariant.Elevated -> Surface(
             modifier = modifier,
             shape = shape,
-            color = MaterialTheme.colorScheme.surfaceContainerHigh,
-            tonalElevation = 6.dp,
-            shadowElevation = 1.dp
+            color = elevatedColor,
+            tonalElevation = if (isDark) 6.dp else 0.dp,
+            shadowElevation = if (isDark) 1.dp else 0.5.dp
         ) {
             Column { content() }
         }
@@ -61,14 +64,17 @@ fun Md3Card(
     shape: Shape = MaterialTheme.shapes.medium,
     content: @Composable ColumnScope.() -> Unit
 ) {
+    val isDark = LocalAppIsDark.current
+    val elevatedColor = if (isDark) MaterialTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surface
+
     when (variant) {
         Md3CardVariant.Elevated -> Surface(
             onClick = onClick,
             modifier = modifier,
             shape = shape,
-            color = MaterialTheme.colorScheme.surfaceContainerHigh,
-            tonalElevation = 6.dp,
-            shadowElevation = 1.dp
+            color = elevatedColor,
+            tonalElevation = if (isDark) 6.dp else 0.dp,
+            shadowElevation = if (isDark) 1.dp else 0.5.dp
         ) {
             Column { content() }
         }

@@ -212,12 +212,15 @@ private fun SettingsMainPage(onOpenPage: (String) -> Unit, onExit: () -> Unit) {
     val surfHigh = MaterialTheme.colorScheme.surfaceContainerHigh
     val surfHighest = MaterialTheme.colorScheme.surfaceContainerHighest
     android.util.Log.d("SettingsColors", "surface=#${Integer.toHexString(surf.hashCode())}, surfaceContainerLow=#${Integer.toHexString(surfLow.hashCode())}, surfaceContainer=#${Integer.toHexString(surfCont.hashCode())}, surfaceContainerHigh=#${Integer.toHexString(surfHigh.hashCode())}, surfaceContainerHighest=#${Integer.toHexString(surfHighest.hashCode())}")
+    val isDark = com.classapp.schedule.ui.theme.LocalAppIsDark.current
+    val scaffoldBg = if (isDark) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainer
     Scaffold(
         contentWindowInsets = WindowInsets.systemBars,
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = scaffoldBg,
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.settings_title)) },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = scaffoldBg),
                 navigationIcon = {
                     IconButton(onClick = onExit) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
@@ -343,12 +346,15 @@ private fun CategoryItem(icon: androidx.compose.ui.graphics.vector.ImageVector, 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SubPage(title: String, onBack: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
+    val isDark = com.classapp.schedule.ui.theme.LocalAppIsDark.current
+    val scaffoldBg = if (isDark) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainer
     Scaffold(
         contentWindowInsets = WindowInsets.systemBars,
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = scaffoldBg,
         topBar = {
             TopAppBar(
                 title = { Text(title) },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = scaffoldBg),
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
