@@ -100,7 +100,7 @@ fun ScheduleApp(
     // Shared color palette — computed once
     val courseColorPalette = com.classapp.schedule.util.CourseColors.getColors(colorEngine, count = 8)
 
-    // Course name|classroom → Color, same iteration logic as WeeklyScheduleScreen's weekBlocks
+    // Course name|classroom → Color
     val courseColorMap = remember(courses, realCurrentWeek, colorGroupMode, courseColorPalette) {
         val weekCourses = courses.filter { it.isInWeek(realCurrentWeek) }
         val nameToIdx = mutableMapOf<String, Int>()
@@ -119,8 +119,22 @@ fun ScheduleApp(
                 }
                 else -> keyToIdx.getOrPut("${c.name}|${c.classroom}") { nextColor++ }
             }
-            val satOffset = if (colorGroupMode == 1) ci % 10 else 0
-            result[c.id] = com.classapp.schedule.util.CourseColors.getBackgroundStatic(ci, courseColorPalette, satOffset, realCurrentWeek)
+            result[c.id] = when (colorGroupMode) {
+                0 -> {
+                    val baseIdx = ci % courseColorPalette.size
+                    courseColorPalette[baseIdx].first
+                }
+                1 -> {
+                    val courseIdx = ci / 10
+                    val classroomIdx = ci % 10
+                    com.classapp.schedule.util.CourseColors.computeColorSync(courseIdx, classroomIdx, 1).first
+                }
+                else -> {
+                    val courseIdx = ci / 10
+                    val classroomIdx = ci % 10
+                    com.classapp.schedule.util.CourseColors.computeColorSync(courseIdx, classroomIdx, 2).first
+                }
+            }
         }
         result
     }
