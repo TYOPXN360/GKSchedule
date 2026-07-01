@@ -40,8 +40,8 @@ object CourseColors {
         classroomIndex: Int,
         isDark: Boolean
     ): CourseColorPair {
-        val bgL = if (isDark) 0.25f else 0.90f
-        val txtL = if (isDark) 0.92f else 0.15f
+        val bgL = if (isDark) 0.32f else 0.90f
+        val txtL = if (isDark) 0.96f else 0.15f
         val courseHash = abs(courseName.hashCode())
 
         val hue: Float
@@ -50,17 +50,17 @@ object CourseColors {
         when (mode) {
             0 -> {
                 hue = (courseHash % 8) * 45f
-                sat = if (isDark) 0.65f else 0.75f
+                sat = if (isDark) 0.78f else 0.75f
             }
             1 -> {
                 hue = (courseHash % 8) * 45f
-                val maxSat = if (isDark) 0.80f else 0.85f
-                sat = (maxSat - (classroomIndex % 4) * 0.15f).coerceAtLeast(0.40f)
+                val maxSat = if (isDark) 0.88f else 0.85f
+                sat = (maxSat - (classroomIndex % 4) * 0.15f).coerceAtLeast(0.45f)
             }
             else -> {
                 val combinedHash = abs("$courseName|$classroom".hashCode())
                 hue = (combinedHash * GOLDEN_ANGLE) % 360f
-                sat = if (isDark) 0.65f else 0.75f
+                sat = if (isDark) 0.78f else 0.75f
             }
         }
 
@@ -124,7 +124,7 @@ object CourseColors {
         return (0 until count).map { i ->
             val hue = (baseHue + i * step) % 360f
             if (isDark) {
-                hslToColor(hue, 0.45f, 0.28f) to hslToColor(hue, 0.85f, 0.78f)
+                hslToColor(hue, 0.78f, 0.32f) to hslToColor(hue, 0.30f, 0.96f)
             } else {
                 hslToColor(hue, 0.45f, 0.88f) to hslToColor(hue, 0.75f, 0.35f)
             }
@@ -138,7 +138,7 @@ object CourseColors {
         return (0 until count).map { i ->
             val hue = i * step
             if (isDark) {
-                hslToColor(hue, 0.50f, 0.25f) to hslToColor(hue, 0.90f, 0.80f)
+                hslToColor(hue, 0.78f, 0.32f) to hslToColor(hue, 0.30f, 0.96f)
             } else {
                 hslToColor(hue, 0.55f, 0.90f) to hslToColor(hue, 0.80f, 0.32f)
             }
@@ -152,7 +152,7 @@ object CourseColors {
         return (0 until count).map { i ->
             val hue = i * step
             if (isDark) {
-                hslToColor(hue, 0.35f, 0.22f) to hslToColor(hue, 0.70f, 0.72f)
+                hslToColor(hue, 0.78f, 0.32f) to hslToColor(hue, 0.30f, 0.96f)
             } else {
                 hslToColor(hue, 0.35f, 0.92f) to hslToColor(hue, 0.65f, 0.40f)
             }
@@ -170,7 +170,7 @@ object CourseColors {
             val hue = (baseHue + i * step) % 360f
             val sat = if (i % 2 == 0) 0.50f else 0.40f
             if (isDark) {
-                hslToColor(hue, sat, 0.25f) to hslToColor(hue, sat + 0.4f, 0.80f)
+                hslToColor(hue, 0.78f, 0.32f) to hslToColor(hue, 0.30f, 0.96f)
             } else {
                 hslToColor(hue, sat, 0.90f) to hslToColor(hue, sat + 0.3f, 0.35f)
             }

@@ -370,14 +370,13 @@ fun WeeklyScheduleScreen(
                     // so background and text colors are always paired from the same palette
                     val blockBaseColors = remember(weekBlocks, colorGroupMode, isDark) {
                         weekBlocks.map { block ->
-                            if (colorGroupMode == 2) {
-                                com.classapp.schedule.util.CourseColors.getColorSync(
-                                    2, block.course.name, block.course.classroom, isDark = isDark
-                                ).container
-                            } else {
-                                val satOffset = if (colorGroupMode == 1) block.colorIdx % 10 else 0
-                                CourseColors.getBackgroundStatic(block.colorIdx, monetColors, satOffset)
-                            }
+                            val classIdx = if (colorGroupMode == 1) {
+                                val sameNameBlocks = weekBlocks.filter { it.course.name == block.course.name }
+                                sameNameBlocks.indexOf(block)
+                            } else 0
+                            com.classapp.schedule.util.CourseColors.getColorSync(
+                                colorGroupMode, block.course.name, block.course.classroom, classIdx, isDark = isDark
+                            ).container
                         }
                     }
 
@@ -449,12 +448,14 @@ fun WeeklyScheduleScreen(
                                 .semantics { contentDescription = block.course.name }
                                 .padding(4.dp)
                         ) {
-                            val textColor = if (colorGroupMode == 2) {
+                            val textColor = run {
+                                val classIdx = if (colorGroupMode == 1) {
+                                    val sameNameBlocks = weekBlocks.filter { it.course.name == block.course.name }
+                                    sameNameBlocks.indexOf(block)
+                                } else 0
                                 com.classapp.schedule.util.CourseColors.getColorSync(
-                                    2, block.course.name, block.course.classroom, isDark = isDark
+                                    colorGroupMode, block.course.name, block.course.classroom, classIdx, isDark = isDark
                                 ).content
-                            } else {
-                                CourseColors.getTextColor(block.colorIdx, monetColors, satOffset)
                             }
                             Column {
                                 if (block.course.isExamCourse()) {
