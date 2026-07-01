@@ -2,17 +2,13 @@ package com.classapp.schedule.ui.today
 import com.classapp.schedule.ui.theme.Md3Card
 import com.classapp.schedule.ui.theme.Md3CardVariant
 
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -25,16 +21,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import kotlin.math.sin
+
 import com.classapp.schedule.R
 import com.classapp.schedule.data.Course
-import androidx.compose.ui.graphics.Color
 import com.classapp.schedule.util.CourseColors
 import kotlinx.coroutines.flow.first
 import java.time.DayOfWeek
@@ -367,172 +360,56 @@ private fun CourseCard(
     )
     val animDone by remember { derivedStateOf { startAnimation && progress > 0f && (progress - animatedProgress) < 0.01f } }
 
-
-    // Wave animation: during loading for all, or always for current courses
-    val showWave = isCurrent || !animDone
-    val waveOffset = if (showWave) {
-        val transition = rememberInfiniteTransition(label = "wave")
-        transition.animateFloat(
-            initialValue = 0f, targetValue = 2f * Math.PI.toFloat(),
-            animationSpec = infiniteRepeatable(tween(2000, easing = LinearEasing)),
-            label = "wavePhase"
-        ).value
-    } else 0f
-
     Md3Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
         variant = Md3CardVariant.Elevated,
         shape = MaterialTheme.shapes.small
     ) {
-        Box(modifier = Modifier.fillMaxWidth()) {
-            if (animatedProgress > 0f) {
-                val fillColor = barColor.copy(alpha = if (realIsPast) 0.3f else 0.55f)
-                androidx.compose.foundation.Canvas(modifier = Modifier.matchParentSize()) {
-                    val w = size.width
-                    val h = size.height
-                    val progressX = w * animatedProgress
-                    val path = Path().apply {
-                        moveTo(0f, 0f)
-                        if (showWave && waveOffset != 0f) {
-                            val amp = 6.dp.toPx()
-                            val freq = 3f
-                            lineTo(progressX, 0f)
-                            for (y in 0..h.toInt()) {
-                                val yF = y.toFloat()
-                                val wave = amp * sin(freq * yF / h * 2f * Math.PI.toFloat() + waveOffset).toFloat()
-                                lineTo(progressX + wave, yF)
-                            }
-                        } else {
-                            lineTo(progressX, 0f)
-                            lineTo(progressX, h)
-                        }
-                        lineTo(0f, h)
-                        close()
-                    }
-                    drawPath(path, color = fillColor)
-                    if (animatedProgress in 0.01f..0.99f) {
-                        drawLine(
-                            color = indicatorColor.copy(alpha = 0.4f),
-                            start = androidx.compose.ui.geometry.Offset(progressX, 0f),
-                            end = androidx.compose.ui.geometry.Offset(progressX, h),
-                            strokeWidth = 2.dp.toPx()
-                        )
-                    }
-                }
+        Row(
+            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min).padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(modifier = Modifier.width(4.dp).fillMaxHeight().clip(CircleShape).background(indicatorColor.copy(alpha = 0.15f))) {
+                Box(modifier = Modifier.fillMaxWidth().fillMaxHeight(animatedProgress).clip(CircleShape).background(indicatorColor)) {}
             }
-
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Color indicator
-                Box(
-                    modifier = Modifier
-                        .width(4.dp)
-                        .height(48.dp)
-                        .clip(RoundedCornerShape(2.dp))
-                        .background(indicatorColor)
-                )
-                Spacer(modifier = Modifier.width(16.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        if (course.id < 0) {
-                            Box(
-                                modifier = Modifier
-                                    .background(MaterialTheme.colorScheme.errorContainer, RoundedCornerShape(4.dp))
-                                    .padding(horizontal = 5.dp, vertical = 1.dp)
-                            ) {
-                                Text(
-                                    text = "考试",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onErrorContainer
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(6.dp))
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (course.id < 0) {
+                        Box(modifier = Modifier.background(MaterialTheme.colorScheme.errorContainer, RoundedCornerShape(4.dp)).padding(horizontal = 5.dp, vertical = 1.dp)) {
+                            Text("考试", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onErrorContainer)
                         }
-                        if (isCurrent) {
-                            val pctBg = com.classapp.schedule.ui.theme.monetCardColor(barColor)
-                            val pctText = com.classapp.schedule.ui.theme.MonetIconBadgeTextColor(barColor)
-                            Box(
-                                modifier = Modifier
-                                    .background(pctBg, RoundedCornerShape(4.dp))
-                                    .padding(horizontal = 5.dp, vertical = 2.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = "${(progress * 100).toInt()}%",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = pctText
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(6.dp))
-                        }
-                        if (isNext) {
-                            val tagBg = com.classapp.schedule.ui.theme.monetCardColor(barColor)
-                            val tagText = com.classapp.schedule.ui.theme.MonetIconBadgeTextColor(barColor)
-                            Box(
-                                modifier = Modifier
-                                    .background(tagBg, RoundedCornerShape(4.dp))
-                                    .padding(horizontal = 5.dp, vertical = 2.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = stringResource(R.string.next_course),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = tagText
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(6.dp))
-                        }
-                        Text(
-                            text = course.name,
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                        if (realIsPast) {
-                            androidx.compose.animation.AnimatedVisibility(
-                                visible = animDone,
-                                enter = androidx.compose.animation.scaleIn() + androidx.compose.animation.fadeIn()
-                            ) {
-                                Icon(
-                                    Icons.Default.Check,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(20.dp),
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
-                            }
-                        }
+                        Spacer(modifier = Modifier.width(6.dp))
                     }
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        val periodText = if (course.periods > 1)
-                            "${course.startPeriod}-${course.endPeriod()}"
-                        else "${course.startPeriod}"
-                        Text(
-                            text = stringResource(R.string.period_format_short, periodText),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.Medium
-                        )
-                        if (course.teacher.isNotEmpty()) {
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(course.teacher, style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    if (isCurrent) {
+                        Box(modifier = Modifier.background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(4.dp)).padding(horizontal = 5.dp, vertical = 2.dp), contentAlignment = Alignment.Center) {
+                            Text("${(progress * 100).toInt()}%", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
-                        if (course.classroom.isNotEmpty()) {
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(course.classroom, style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Spacer(modifier = Modifier.width(6.dp))
+                    }
+                    if (isNext) {
+                        Box(modifier = Modifier.background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(4.dp)).padding(horizontal = 5.dp, vertical = 2.dp), contentAlignment = Alignment.Center) {
+                            Text(stringResource(R.string.next_course), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                        }
+                        Spacer(modifier = Modifier.width(6.dp))
+                    }
+                    Text(course.name, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                    if (realIsPast) {
+                        androidx.compose.animation.AnimatedVisibility(visible = animDone, enter = androidx.compose.animation.scaleIn() + androidx.compose.animation.fadeIn()) {
+                            Icon(Icons.Default.Check, null, modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
                         }
                     }
                 }
-                // Time
-                Text(
-                    text = "$startTime\n$endTime",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    val periodText = if (course.periods > 1) "${course.startPeriod}-${course.endPeriod()}" else "${course.startPeriod}"
+                    Text(stringResource(R.string.period_format_short, periodText), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Medium)
+                    if (course.teacher.isNotEmpty()) { Spacer(modifier = Modifier.width(8.dp)); Text(course.teacher, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                    if (course.classroom.isNotEmpty()) { Spacer(modifier = Modifier.width(8.dp)); Text(course.classroom, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                }
             }
+            Text("$startTime\n$endTime", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
