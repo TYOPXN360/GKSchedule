@@ -230,7 +230,7 @@ private fun SettingsMainPage(onOpenPage: (String) -> Unit, onExit: () -> Unit) {
                 com.classapp.schedule.ui.theme.BadgeColorPalette.Primary,
                 com.classapp.schedule.ui.theme.BadgeColorPalette.Tertiary,
                 com.classapp.schedule.ui.theme.BadgeColorPalette.Secondary,
-                com.classapp.schedule.ui.theme.BadgeColorPalette.Error,
+                com.classapp.schedule.ui.theme.BadgeColorPalette.Primary,  // Notifications = 核心功能
                 com.classapp.schedule.ui.theme.BadgeColorPalette.Neutral,
                 com.classapp.schedule.ui.theme.BadgeColorPalette.Inverse
             )

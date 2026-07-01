@@ -13,9 +13,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.google.android.material.color.utilities.Hct
 
+/**
+ * Badge 色相来源
+ * - Primary/Secondary/Tertiary: 从 MaterialTheme 对应色提取色相
+ * - Error: 固定红色色相
+ * - Neutral: 中性灰色
+ * - Inverse: 反色
+ */
 enum class BadgeColorPalette {
-    Primary, Secondary, Tertiary, Error, Neutral, Inverse
+    Primary, Secondary, Tertiary, Neutral, Inverse
 }
 
 @Composable
@@ -50,40 +58,60 @@ fun MonetIconBadgeTextColor(badgePalette: BadgeColorPalette): Color {
     return badgePaletteColors(badgePalette).second
 }
 
+/**
+ * 基于 Color 提取 HCT 色相，再生成 M3 标准容器/文字色
+ */
 @Composable
 fun MonetIconBadgeTextColor(seedColor: Color): Color {
-    val scheme = MaterialTheme.colorScheme
-    val primary = scheme.primary
-    val secondary = scheme.secondary
-    val tertiary = scheme.tertiary
-    val error = scheme.error
-    return when {
-        colorsClose(seedColor, primary) -> scheme.onPrimaryContainer
-        colorsClose(seedColor, secondary) -> scheme.onSecondaryContainer
-        colorsClose(seedColor, tertiary) -> scheme.onTertiaryContainer
-        colorsClose(seedColor, error) -> scheme.onErrorContainer
-        else -> scheme.onSurfaceVariant
-    }
+    val hue = Hct.fromInt(seedColor.value.toInt()).hue
+    val isDark = LocalAppIsDark.current
+    val tone = if (isDark) 95.0 else 10.0
+    return Color(Hct.from(hue, 70.0, tone).toInt())
 }
 
 @Composable
 private fun badgePaletteColors(palette: BadgeColorPalette): Pair<Color, Color> {
+    val isDark = LocalAppIsDark.current
     val scheme = MaterialTheme.colorScheme
+
     return when (palette) {
-        BadgeColorPalette.Primary -> scheme.primaryContainer to scheme.onPrimaryContainer
-        BadgeColorPalette.Secondary -> scheme.secondaryContainer to scheme.onSecondaryContainer
-        BadgeColorPalette.Tertiary -> scheme.tertiaryContainer to scheme.onTertiaryContainer
-        BadgeColorPalette.Error -> scheme.errorContainer to scheme.onErrorContainer
-        BadgeColorPalette.Neutral -> scheme.surfaceVariant to scheme.onSurfaceVariant
-        BadgeColorPalette.Inverse -> scheme.inverseSurface to scheme.inverseOnSurface
+        BadgeColorPalette.Primary -> {
+            val hue = Hct.fromInt(scheme.primary.value.toInt()).hue
+            hctPair(hue, isDark)
+        }
+        BadgeColorPalette.Secondary -> {
+            val hue = Hct.fromInt(scheme.secondary.value.toInt()).hue
+            hctPair(hue, isDark)
+        }
+        BadgeColorPalette.Tertiary -> {
+            val hue = Hct.fromInt(scheme.tertiary.value.toInt()).hue
+            hctPair(hue, isDark)
+        }
+        BadgeColorPalette.Neutral -> {
+            // Neutral: 中性灰，无彩色
+            scheme.surfaceVariant to scheme.onSurfaceVariant
+        }
+        BadgeColorPalette.Inverse -> {
+            // Inverse: 反色
+            scheme.inverseSurface to scheme.inverseOnSurface
+        }
     }
 }
 
-private fun colorsClose(a: Color, b: Color, threshold: Float = 0.15f): Boolean {
-    return kotlin.math.abs(a.red - b.red) < threshold &&
-            kotlin.math.abs(a.green - b.green) < threshold &&
-            kotlin.math.abs(a.blue - b.blue) < threshold
+/**
+ * HCT 颜色对: container=容器色  content=文字色
+ */
+private fun hctPair(hue: Double, isDark: Boolean): Pair<Color, Color> {
+    val containerTone = if (isDark) 30.0 else 90.0
+    val contentTone = if (isDark) 95.0 else 10.0
+    val container = Color(Hct.from(hue, 70.0, containerTone).toInt())
+    val content = Color(Hct.from(hue, 70.0, contentTone).toInt())
+    return container to content
 }
+
+// =========================================================================
+// 旧代码兼容 (rgbToHsl/hslToColor)
+// =========================================================================
 
 internal fun rgbToHsl(r: Float, g: Float, b: Float): FloatArray {
     val max = maxOf(r, g, b); val min = minOf(r, g, b)
@@ -113,5 +141,3 @@ internal fun hslToColor(h: Float, s: Float, l: Float): Color {
     }
     return Color((r + m).coerceIn(0f, 1f), (g + m).coerceIn(0f, 1f), (b + m).coerceIn(0f, 1f))
 }
-
-

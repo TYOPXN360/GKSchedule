@@ -221,7 +221,7 @@ Column(
                 ListItem(
                     headlineContent = { Text("考试安排") },
                     supportingContent = { Text("查看考试时间和考场") },
-                    leadingContent = { MonetIconBadge(icon = Icons.Default.School, contentDescription = "考试安排", badgePalette = BadgeColorPalette.Error) },
+                    leadingContent = { MonetIconBadge(icon = Icons.Default.School, contentDescription = "考试安排", badgePalette = BadgeColorPalette.Tertiary) },
                     trailingContent = { Icon(Icons.Default.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                     modifier = Modifier.clickable(onClick = onOpenExam)
