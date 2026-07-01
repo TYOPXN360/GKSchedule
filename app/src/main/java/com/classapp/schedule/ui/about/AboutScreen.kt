@@ -200,7 +200,7 @@ Column(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // All items in one grouped card
+        // Group 1: 学期信息
         Md3Card(modifier = Modifier.fillMaxWidth(), variant = Md3CardVariant.Elevated) {
             Column {
                 ListItem(
@@ -209,21 +209,26 @@ Column(
                     leadingContent = { MonetIconBadge(icon = Icons.Default.CalendarMonth, contentDescription = "学期开始日期", badgePalette = BadgeColorPalette.Primary) },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                 )
-                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
                 ListItem(
                     headlineContent = { Text(stringResource(R.string.total_weeks)) },
                     supportingContent = { Text("$totalWeeks") },
                     leadingContent = { MonetIconBadge(icon = Icons.Default.DateRange, contentDescription = "总周数", badgePalette = BadgeColorPalette.Tertiary) },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                 )
-                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
                 ListItem(
                     headlineContent = { Text(stringResource(R.string.periods_per_day)) },
                     supportingContent = { Text("$periodsPerDay") },
                     leadingContent = { MonetIconBadge(icon = Icons.Default.AccessTime, contentDescription = "每日节数", badgePalette = BadgeColorPalette.Secondary) },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                 )
-                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            }
+        }
+        Spacer(modifier = Modifier.height(12.dp))
+        // Group 2: 功能入口
+        Md3Card(modifier = Modifier.fillMaxWidth(), variant = Md3CardVariant.Elevated) {
+            Column {
                 ListItem(
                     headlineContent = { Text("考试安排") },
                     supportingContent = { Text("查看考试时间和考场") },
@@ -232,19 +237,19 @@ Column(
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                     modifier = Modifier.clickable(onClick = onOpenExam)
                 )
-                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
                 ListItem(
                     headlineContent = { Text(stringResource(R.string.settings_title)) },
                     supportingContent = { Text(stringResource(R.string.about_settings_desc)) },
-                    leadingContent = { MonetIconBadge(icon = Icons.Default.Settings, contentDescription = "设置", badgePalette = BadgeColorPalette.Neutral) },
+                    leadingContent = { MonetIconBadge(icon = Icons.Default.Settings, contentDescription = "设置", badgePalette = BadgeColorPalette.Secondary) },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                     modifier = Modifier.clickable(onClick = onOpenSettings)
                 )
-                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
                 ListItem(
                     headlineContent = { Text(stringResource(R.string.about_title)) },
                     supportingContent = { Text(stringResource(R.string.about_school)) },
-                    leadingContent = { MonetIconBadge(icon = Icons.AutoMirrored.Filled.Article, contentDescription = "关于", badgePalette = BadgeColorPalette.Inverse) },
+                    leadingContent = { MonetIconBadge(icon = Icons.AutoMirrored.Filled.Article, contentDescription = "关于", badgePalette = BadgeColorPalette.Primary) },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                     modifier = Modifier.clickable { showAboutDialog = true }
                 )
