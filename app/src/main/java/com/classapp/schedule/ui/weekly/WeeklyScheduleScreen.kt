@@ -269,7 +269,7 @@ fun WeeklyScheduleScreen(
             val isDark = com.classapp.schedule.ui.theme.LocalAppIsDark.current
             HorizontalPager(
                 state = pagerState,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.weight(1f).fillMaxWidth()
                     .onGloballyPositioned { cropBottomPx = it.positionInRoot().y.toInt() + it.size.height }
             ) { page ->
                 val week = visibleWeeks.getOrElse(page) { currentWeek }
@@ -330,8 +330,8 @@ fun WeeklyScheduleScreen(
                 BoxWithConstraints(
                     modifier = Modifier.fillMaxSize().padding(horizontal = 4.dp)
                 ) {
-                    // Background: empty grid + period labels + Canvas + text all in one scrollable Box
-                    val rowH = gridHeight.dp
+                    // 🎯 智能多轨高度计算，动态恢复 autoGridHeight 功能
+                    val rowH = if (autoGridHeight) maxHeight / periodsPerDay else gridHeight.dp
                     val totalGridHeight = rowH * periodsPerDay
                     val cellW = (maxWidth - labelWidthDp) / 7
 

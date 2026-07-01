@@ -248,7 +248,11 @@ fun TodayScreen(
                     Spacer(modifier = Modifier.height(4.dp))
                 }
                 items(upcomingExams) { exam ->
-                    val examColor = CourseColors.getColorSync(colorGroupMode, exam.kcmc, exam.cdmc, week = currentWeek, diffColorPerWeek = diffColorPerWeek, isDark = isDark)
+                    val examDate = try { java.time.LocalDate.parse(exam.getExamDate()) } catch (_: Exception) { null }
+                    val examWeek = if (examDate != null) {
+                        (java.time.temporal.ChronoUnit.DAYS.between(semesterStart, examDate).toInt() / 7) + 1
+                    } else currentWeek
+                    val examColor = CourseColors.getColorSync(colorGroupMode, exam.kcmc, exam.cdmc, week = examWeek, diffColorPerWeek = diffColorPerWeek, isDark = isDark)
                     ExamCard(exam = exam, examColor = examColor)
                 }
             }
