@@ -298,8 +298,8 @@ private fun ExamCard(exam: ExamInfo, index: Int = 0) {
                     .height(48.dp)
                     .clip(RoundedCornerShape(2.dp))
                     .background(
-                        if (isPast) com.classapp.schedule.util.CourseColors.getBackground(colorIdx, examColors).copy(alpha = 0.3f)
-                        else com.classapp.schedule.util.CourseColors.getBackground(colorIdx, examColors)
+                        if (isPast) com.classapp.schedule.util.CourseColors.getBackgroundStatic(colorIdx, examColors).copy(alpha = 0.3f)
+                        else com.classapp.schedule.util.CourseColors.getBackgroundStatic(colorIdx, examColors)
                     )
             )
             Spacer(modifier = Modifier.width(12.dp))

@@ -4,91 +4,100 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import com.classapp.schedule.ui.theme.LocalAppIsDark
-import java.security.MessageDigest
 import kotlin.math.abs
 
 object CourseColors {
 
     private const val GOLDEN_ANGLE = 137.508f
 
-    @Composable
-    fun getColors(engine: Int, count: Int = 16): List<Pair<Color, Color>> = when (engine) {
-        1 -> getVibrantColors(count)
-        2 -> getClassicColors(count)
-        3 -> getHslColors(count)
-        else -> getMonetColors(count)
-    }
+    data class CourseColorPair(val container: Color, val content: Color)
 
     @Composable
-    fun computeColor(
-        courseIndex: Int,
-        classroomIndex: Int,
-        colorGroupMode: Int,
-        engine: Int = 0
-    ): Pair<Color, Color> {
+    fun getColor(
+        mode: Int,
+        courseName: String,
+        classroom: String = "",
+        classroomIndex: Int = 0
+    ): CourseColorPair {
         val isDark = LocalAppIsDark.current
-        return computeColorInternal(courseIndex, classroomIndex, colorGroupMode, isDark)
+        return getColorInternal(mode, courseName, classroom, classroomIndex, isDark)
     }
 
-    fun computeColorSync(
-        courseIndex: Int,
-        classroomIndex: Int,
-        colorGroupMode: Int,
+    fun getColorSync(
+        mode: Int,
+        courseName: String,
+        classroom: String = "",
+        classroomIndex: Int = 0,
         isDark: Boolean = false
-    ): Pair<Color, Color> {
-        return computeColorInternal(courseIndex, classroomIndex, colorGroupMode, isDark)
+    ): CourseColorPair {
+        return getColorInternal(mode, courseName, classroom, classroomIndex, isDark)
     }
 
-    private fun computeColorInternal(
-        courseIndex: Int,
+    private fun getColorInternal(
+        mode: Int,
+        courseName: String,
+        classroom: String,
         classroomIndex: Int,
-        colorGroupMode: Int,
         isDark: Boolean
-    ): Pair<Color, Color> {
+    ): CourseColorPair {
         val bgL = if (isDark) 0.25f else 0.90f
         val txtL = if (isDark) 0.92f else 0.15f
+        val courseHash = abs(courseName.hashCode())
 
         val hue: Float
         val sat: Float
 
-        when (colorGroupMode) {
+        when (mode) {
             0 -> {
-                hue = (courseIndex % 8) * 45f
+                hue = (courseHash % 8) * 45f
                 sat = if (isDark) 0.65f else 0.75f
             }
             1 -> {
-                hue = (courseIndex % 8) * 45f
+                hue = (courseHash % 8) * 45f
                 val maxSat = if (isDark) 0.80f else 0.85f
                 sat = (maxSat - (classroomIndex % 4) * 0.15f).coerceAtLeast(0.40f)
             }
             else -> {
-                hue = abs((courseIndex * 8 + classroomIndex) * GOLDEN_ANGLE) % 360f
+                val combinedHash = abs("$courseName|$classroom".hashCode())
+                hue = (combinedHash * GOLDEN_ANGLE) % 360f
                 sat = if (isDark) 0.65f else 0.75f
             }
         }
 
-        return hslToColor(hue, sat, bgL) to hslToColor(hue, sat, txtL)
+        return CourseColorPair(
+            container = hslToColor(hue, sat, bgL),
+            content = hslToColor(hue, sat, txtL)
+        )
     }
 
-    @Composable
-    fun getBackground(index: Int, colors: List<Pair<Color, Color>>, satOffset: Int = 0, weekOffset: Int = 0): Color {
-        val base = colors[index % colors.size].first
-        val rotated = if (weekOffset != 0) rotateHueByHash(base, index, weekOffset) else base
-        return if (satOffset > 0) adjustSaturation(rotated, satOffset) else rotated
+    fun assignColorIndices(
+        courses: List<com.classapp.schedule.data.Course>,
+        groupMode: Int = 2
+    ): Map<Long, Int> {
+        return courses.associate { course ->
+            val idx = when (groupMode) {
+                0 -> abs(course.name.hashCode()) % 8
+                1 -> {
+                    val baseIdx = abs(course.name.hashCode()) % 8
+                    val classroomIdx = courses.filter { it.name == course.name }.indexOf(course)
+                    baseIdx * 10 + classroomIdx
+                }
+                else -> abs("${course.name}|${course.classroom}".hashCode()) % 64
+            }
+            course.id to idx
+        }
     }
 
-    fun getBackgroundStatic(index: Int, colors: List<Pair<Color, Color>>, satOffset: Int = 0, weekOffset: Int = 0): Color {
+    fun getBackgroundStatic(index: Int, colors: List<Pair<Color, Color>>, satOffset: Int = 0): Color {
         val baseIdx = index % colors.size
         val base = colors[baseIdx].first
-        val rotated = if (weekOffset != 0) rotateHueByHash(base, baseIdx, weekOffset) else base
-        return if (satOffset > 0) adjustSaturation(rotated, satOffset) else rotated
+        return if (satOffset > 0) adjustSaturation(base, satOffset) else base
     }
 
-    fun getTextColor(index: Int, colors: List<Pair<Color, Color>>, satOffset: Int = 0, weekOffset: Int = 0): Color {
+    fun getTextColor(index: Int, colors: List<Pair<Color, Color>>, satOffset: Int = 0): Color {
         val baseIdx = index % colors.size
         val base = colors[baseIdx].second
-        val rotated = if (weekOffset != 0) rotateHueByHash(base, baseIdx, weekOffset) else base
-        return if (satOffset > 0) adjustSaturation(rotated, satOffset) else rotated
+        return if (satOffset > 0) adjustSaturation(base, satOffset) else base
     }
 
     private fun adjustSaturation(color: Color, offset: Int): Color {
@@ -97,40 +106,12 @@ object CourseColors {
         return hslToColor(hsl[0], newSat, hsl[2])
     }
 
-    private fun rotateHue(color: Color, degrees: Float): Color {
-        val hsl = rgbToHsl(color.red, color.green, color.blue)
-        val newHue = (hsl[0] + degrees) % 360f
-        return hslToColor(if (newHue < 0) newHue + 360f else newHue, hsl[1], hsl[2])
-    }
-
-    private fun rotateHueByHash(color: Color, courseIndex: Int, week: Int): Color {
-        val hsl = rgbToHsl(color.red, color.green, color.blue)
-        val md5 = MessageDigest.getInstance("MD5").digest("$courseIndex:$week".toByteArray())
-        val hashDeg = ((md5[0].toInt() and 0xFF) * 360f / 256f)
-        val newHue = (hsl[0] + hashDeg) % 360f
-        return hslToColor(if (newHue < 0) newHue + 360f else newHue, hsl[1], hsl[2])
-    }
-
-    fun assignColorIndices(
-        courses: List<com.classapp.schedule.data.Course>,
-        groupMode: Int = 2
-    ): Map<Long, Int> {
-        val nameToIndex = mutableMapOf<String, Int>()
-        val keyToIndex = mutableMapOf<String, Int>()
-        var nextColor = 0
-        return courses.associate { course ->
-            val idx = when (groupMode) {
-                0 -> nameToIndex.getOrPut(course.name) { nextColor++ }
-                1 -> {
-                    val baseIdx = nameToIndex.getOrPut(course.name) { nextColor++ }
-                    val classroomCount = courses.count { it.name == course.name }
-                    val classroomIdx = courses.filter { it.name == course.name }.indexOf(course)
-                    baseIdx * 10 + classroomIdx
-                }
-                else -> keyToIndex.getOrPut("${course.name}|${course.classroom}") { nextColor++ }
-            }
-            course.id to idx
-        }
+    @Composable
+    fun getColors(engine: Int, count: Int = 16): List<Pair<Color, Color>> = when (engine) {
+        1 -> getVibrantColors(count)
+        2 -> getClassicColors(count)
+        3 -> getHslColors(count)
+        else -> getMonetColors(count)
     }
 
     @Composable

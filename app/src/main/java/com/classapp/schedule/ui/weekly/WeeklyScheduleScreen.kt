@@ -287,21 +287,18 @@ fun WeeklyScheduleScreen(
                         val startLine: Float,
                         val endLine: Float
                     )
-                    val nameToIdx = mutableMapOf<String, Int>()
-                    val keyToIdx = mutableMapOf<String, Int>()
-                    var nextColor = 0
                     val blocks = mutableListOf<B>()
-                    val classroomSatMap = mutableMapOf<String, MutableMap<String, Int>>()
+                    val classroomCounters = mutableMapOf<String, Int>()
                     weekCourses.forEach { c ->
                         val ci = when (colorGroupMode) {
-                            0 -> nameToIdx.getOrPut(c.name) { nextColor++ }
+                            0 -> abs(c.name.hashCode()) % 8
                             1 -> {
-                                val baseIdx = nameToIdx.getOrPut(c.name) { nextColor++ }
-                                val satMap = classroomSatMap.getOrPut(c.name) { mutableMapOf() }
-                                val satOffset = satMap.getOrPut(c.classroom) { satMap.size }
-                                baseIdx * 10 + satOffset
+                                val baseIdx = abs(c.name.hashCode()) % 8
+                                val classIdx = classroomCounters.getOrPut(c.name) { 0 }
+                                classroomCounters[c.name] = classIdx + 1
+                                baseIdx * 10 + classIdx
                             }
-                            else -> keyToIdx.getOrPut("${c.name}|${c.classroom}") { nextColor++ }
+                            else -> abs("${c.name}|${c.classroom}".hashCode()) % 64
                         }
                         fun addBlock(course: Course, start: Int, span: Int, colorIdx: Int) {
                             val startLine = if (course.isExamCourse()) {
@@ -374,7 +371,7 @@ fun WeeklyScheduleScreen(
                     val blockBaseColors = remember(weekBlocks, monetColors, colorGroupMode) {
                         weekBlocks.map { block ->
                             val satOffset = if (colorGroupMode == 1) block.colorIdx % 10 else 0
-                            CourseColors.getBackgroundStatic(block.colorIdx, monetColors, satOffset, week)
+                            CourseColors.getBackgroundStatic(block.colorIdx, monetColors, satOffset)
                         }
                     }
 
@@ -446,7 +443,7 @@ fun WeeklyScheduleScreen(
                                 .semantics { contentDescription = block.course.name }
                                 .padding(4.dp)
                         ) {
-                            val textColor = CourseColors.getTextColor(block.colorIdx, monetColors, satOffset, week)
+                            val textColor = CourseColors.getTextColor(block.colorIdx, monetColors, satOffset)
                             Column {
                                 if (block.course.isExamCourse()) {
                                     Box(
@@ -460,7 +457,7 @@ fun WeeklyScheduleScreen(
                                         Text(
                                             text = "考试",
                                             style = MaterialTheme.typography.labelSmall,
-                                            color = CourseColors.getBackgroundStatic(block.colorIdx, monetColors, satOffset, week),
+                                            color = CourseColors.getBackgroundStatic(block.colorIdx, monetColors, satOffset),
                                             maxLines = 1
                                         )
                                     }
@@ -564,8 +561,7 @@ fun CourseDetailSheet(course: Course, getStartTime: (Int) -> String, getEndTime:
         Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp).padding(bottom = 32.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 val detailDotColor = dotColor ?: run {
-                    val satOffset = if (colorGroupMode == 1) colorIndex % 10 else 0
-                    CourseColors.getBackgroundStatic(colorIndex, courseColors, satOffset)
+                    com.classapp.schedule.util.CourseColors.getColorSync(colorGroupMode, course.name, course.classroom).container
                 }
                 Box(modifier = Modifier.size(12.dp).clip(RoundedCornerShape(50)).background(detailDotColor))
                 Spacer(modifier = Modifier.width(12.dp))

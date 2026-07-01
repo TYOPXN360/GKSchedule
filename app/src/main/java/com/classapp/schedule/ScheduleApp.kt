@@ -100,41 +100,20 @@ fun ScheduleApp(
     // Shared color palette — computed once
     val courseColorPalette = com.classapp.schedule.util.CourseColors.getColors(colorEngine, count = 8)
 
-    // Course name|classroom → Color
-    val courseColorMap = remember(courses, realCurrentWeek, colorGroupMode, courseColorPalette) {
+    // Course name|classroom → Color (deterministic via hashCode)
+    val courseColorMap = remember(courses, colorGroupMode) {
         val weekCourses = courses.filter { it.isInWeek(realCurrentWeek) }
-        val nameToIdx = mutableMapOf<String, Int>()
-        val keyToIdx = mutableMapOf<String, Int>()
-        val classroomSatMap = mutableMapOf<String, MutableMap<String, Int>>()
-        var nextColor = 0
+        val classroomCounters = mutableMapOf<String, Int>()
         val result = mutableMapOf<Long, Color>()
         weekCourses.forEach { c ->
-            val ci = when (colorGroupMode) {
-                0 -> nameToIdx.getOrPut(c.name) { nextColor++ }
-                1 -> {
-                    val baseIdx = nameToIdx.getOrPut(c.name) { nextColor++ }
-                    val satMap = classroomSatMap.getOrPut(c.name) { mutableMapOf() }
-                    val satOffset = satMap.getOrPut(c.classroom) { satMap.size }
-                    baseIdx * 10 + satOffset
-                }
-                else -> keyToIdx.getOrPut("${c.name}|${c.classroom}") { nextColor++ }
-            }
-            result[c.id] = when (colorGroupMode) {
-                0 -> {
-                    val baseIdx = ci % courseColorPalette.size
-                    courseColorPalette[baseIdx].first
-                }
-                1 -> {
-                    val courseIdx = ci / 10
-                    val classroomIdx = ci % 10
-                    com.classapp.schedule.util.CourseColors.computeColorSync(courseIdx, classroomIdx, 1).first
-                }
-                else -> {
-                    val courseIdx = ci / 10
-                    val classroomIdx = ci % 10
-                    com.classapp.schedule.util.CourseColors.computeColorSync(courseIdx, classroomIdx, 2).first
-                }
-            }
+            val classIdx = if (colorGroupMode == 1) {
+                val idx = classroomCounters.getOrPut(c.name) { 0 }
+                classroomCounters[c.name] = idx + 1
+                idx
+            } else 0
+            result[c.id] = com.classapp.schedule.util.CourseColors.getColorSync(
+                colorGroupMode, c.name, c.classroom, classIdx
+            ).container
         }
         result
     }
@@ -143,59 +122,15 @@ fun ScheduleApp(
     // of THE WEEK THAT EXAM IS IN, not the current week. Otherwise the today page's bar
     // (which can show exams from any lookahead week) would use the wrong nameToIdx and
     // mismatch the schedule block.
-    val examColorMap = remember(courses, colorGroupMode, courseColorPalette, examList, showExamSchedule, semesterStart) {
+    val examColorMap = remember(courses, colorGroupMode, examList, showExamSchedule, semesterStart) {
         if (!showExamSchedule || examList.isEmpty()) emptyMap<String, Color>()
         else {
-            // Find all weeks that contain at least one exam
-            val examWeeks = examList.mapNotNull { exam ->
-                val d = try { java.time.LocalDate.parse(exam.getExamDate()) } catch (_: Exception) { null }
-                if (d == null) null else {
-                    val daysDiff = java.time.temporal.ChronoUnit.DAYS.between(semesterStart, d).toInt()
-                    if (daysDiff < 0) null else (daysDiff / 7) + 1
-                }
-            }.distinct().sorted()
-
             val result = mutableMapOf<String, Color>()
-            for (week in examWeeks) {
-                val weekStart = semesterStart.plusDays(((week - 1) * 7).toLong())
-                val weekEnd = weekStart.plusDays(7)
-                val weekExams = examList.filter { exam ->
-                    val d = try { java.time.LocalDate.parse(exam.getExamDate()) } catch (_: Exception) { null }
-                    d != null && !d.isBefore(weekStart) && d.isBefore(weekEnd)
-                }
-                val weekCourses = courses.filter { it.isInWeek(week) }
-                val nameToIdx = mutableMapOf<String, Int>()
-                val keyToIdx = mutableMapOf<String, Int>()
-                val classroomSatMap = mutableMapOf<String, MutableMap<String, Int>>()
-                var nextColor = 0
-                // Build index from regular courses first (same order as scheduleCourses)
-                weekCourses.forEach { c ->
-                    when (colorGroupMode) {
-                        0 -> nameToIdx.getOrPut(c.name) { nextColor++ }
-                        1 -> {
-                            val baseIdx = nameToIdx.getOrPut(c.name) { nextColor++ }
-                            val satMap = classroomSatMap.getOrPut(c.name) { mutableMapOf() }
-                            satMap.getOrPut(c.classroom) { satMap.size }
-                        }
-                        else -> keyToIdx.getOrPut("${c.name}|${c.classroom}") { nextColor++ }
-                    }
-                }
-                // Assign exam indices for exams in this week
-                weekExams.forEach { exam ->
-                    val ci = when (colorGroupMode) {
-                        0 -> nameToIdx.getOrPut(exam.kcmc) { nextColor++ }
-                        1 -> {
-                            val baseIdx = nameToIdx.getOrPut(exam.kcmc) { nextColor++ }
-                            val satMap = classroomSatMap.getOrPut(exam.kcmc) { mutableMapOf() }
-                            val satOffset = satMap.getOrPut(exam.cdmc) { satMap.size }
-                            baseIdx * 10 + satOffset
-                        }
-                        else -> keyToIdx.getOrPut("${exam.kcmc}|${exam.cdmc}") { nextColor++ }
-                    }
-                    val satOffset = if (colorGroupMode == 1) ci % 10 else 0
-                    result["${exam.kcmc}|${exam.cdmc}"] =
-                        com.classapp.schedule.util.CourseColors.getBackgroundStatic(ci, courseColorPalette, satOffset, week)
-                }
+            examList.forEach { exam ->
+                result["${exam.kcmc}|${exam.cdmc}"] =
+                    com.classapp.schedule.util.CourseColors.getColorSync(
+                        colorGroupMode, exam.kcmc, exam.cdmc
+                    ).container
             }
             result
         }
