@@ -70,13 +70,17 @@ fun CourseEditScreen(
         "custom" to stringResource(R.string.custom_weeks)
     )
 
+    val isDark = com.classapp.schedule.ui.theme.LocalAppIsDark.current
+    val scaffoldBg = if (isDark) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainer
     Scaffold(
         contentWindowInsets = WindowInsets.systemBars,
+        containerColor = scaffoldBg,
         topBar = {
             TopAppBar(
                 title = {
                     Text(if (isEditing) stringResource(R.string.edit_course) else stringResource(R.string.add_new_course))
                 },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = scaffoldBg, scrolledContainerColor = scaffoldBg),
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")

@@ -23,6 +23,7 @@ import com.classapp.schedule.R
 import com.classapp.schedule.data.Course
 import com.classapp.schedule.util.CourseColors
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CourseManageScreen(
     courses: List<Course>,
@@ -46,8 +47,29 @@ fun CourseManageScreen(
         stringResource(R.string.sun)
     )
 
+    val isDark = com.classapp.schedule.ui.theme.LocalAppIsDark.current
+    val scaffoldBg = if (isDark) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainer
     Scaffold(
         contentWindowInsets = WindowInsets.systemBars,
+        containerColor = scaffoldBg,
+        topBar = {
+            TopAppBar(
+                title = {
+                    Column {
+                        Text(stringResource(R.string.course_manage_title), style = MaterialTheme.typography.headlineMedium)
+                        Text(stringResource(R.string.course_count_format, courses.size), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = scaffoldBg, scrolledContainerColor = scaffoldBg),
+                actions = {
+                    if (courses.isNotEmpty()) {
+                        IconButton(onClick = { showDeleteAllDialog = true }) {
+                            Icon(Icons.Default.DeleteSweep, contentDescription = stringResource(R.string.delete_all_courses), tint = MaterialTheme.colorScheme.error)
+                        }
+                    }
+                }
+            )
+        },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onAddCourse,
@@ -58,36 +80,6 @@ fun CourseManageScreen(
         }
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-            // Header
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column {
-                    Text(
-                        text = stringResource(R.string.course_manage_title),
-                        style = MaterialTheme.typography.headlineMedium
-                    )
-                    Text(
-                        text = stringResource(R.string.course_count_format, courses.size),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                if (courses.isNotEmpty()) {
-                    IconButton(onClick = { showDeleteAllDialog = true }) {
-                        Icon(
-                            Icons.Default.DeleteSweep,
-                            contentDescription = stringResource(R.string.delete_all_courses),
-                            tint = MaterialTheme.colorScheme.error
-                        )
-                    }
-                }
-            }
-
             if (courses.isEmpty()) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
