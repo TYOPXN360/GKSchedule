@@ -108,36 +108,3 @@ private fun hctPair(hue: Double, isDark: Boolean): Pair<Color, Color> {
     val content = Color(Hct.from(hue, 70.0, contentTone).toInt())
     return container to content
 }
-
-// =========================================================================
-// 旧代码兼容 (rgbToHsl/hslToColor)
-// =========================================================================
-
-internal fun rgbToHsl(r: Float, g: Float, b: Float): FloatArray {
-    val max = maxOf(r, g, b); val min = minOf(r, g, b)
-    val l = (max + min) / 2f
-    if (max == min) return floatArrayOf(0f, 0f, l)
-    val d = max - min
-    val s = if (l > 0.5f) d / (2f - max - min) else d / (max + min)
-    val h = when (max) {
-        r -> ((g - b) / d + (if (g < b) 6 else 0)) * 60f
-        g -> ((b - r) / d + 2) * 60f
-        else -> ((r - g) / d + 4) * 60f
-    }
-    return floatArrayOf(h, s, l)
-}
-
-internal fun hslToColor(h: Float, s: Float, l: Float): Color {
-    val c = (1f - kotlin.math.abs(2f * l - 1f)) * s
-    val x = c * (1f - kotlin.math.abs((h / 60f) % 2f - 1f))
-    val m = l - c / 2f
-    val (r, g, b) = when {
-        h < 60  -> Triple(c, x, 0f)
-        h < 120 -> Triple(x, c, 0f)
-        h < 180 -> Triple(0f, c, x)
-        h < 240 -> Triple(0f, x, c)
-        h < 300 -> Triple(x, 0f, c)
-        else    -> Triple(c, 0f, x)
-    }
-    return Color((r + m).coerceIn(0f, 1f), (g + m).coerceIn(0f, 1f), (b + m).coerceIn(0f, 1f))
-}
