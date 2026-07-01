@@ -53,6 +53,7 @@ fun SettingsScreen(
     tokenHeartbeat: Boolean,
     showExamSchedule: Boolean,
     examLookaheadWeeks: Int,
+    diffColorPerWeek: Boolean,
     onSemesterStartChange: (LocalDate) -> Unit,
     onTotalWeeksChange: (Int) -> Unit,
     onPeriodsPerDayChange: (Int) -> Unit,
@@ -78,6 +79,7 @@ fun SettingsScreen(
     onTokenHeartbeatChange: (Boolean) -> Unit,
     onShowExamScheduleChange: (Boolean) -> Unit,
     onExamLookaheadWeeksChange: (Int) -> Unit,
+    onDiffColorPerWeekChange: (Boolean) -> Unit,
     onFetchExam: () -> Unit,
     onExportJson: () -> Unit,
     onImportJson: () -> Unit,
@@ -174,12 +176,14 @@ fun SettingsScreen(
                     tokenHeartbeat = tokenHeartbeat,
                     showExamSchedule = showExamSchedule,
                     examLookaheadWeeks = examLookaheadWeeks,
+                    diffColorPerWeek = diffColorPerWeek,
                     onAutoSyncOnStartChange = onAutoSyncOnStartChange,
                     onAutoSyncIntervalValueChange = onAutoSyncIntervalValueChange,
                     onAutoSyncIntervalUnitChange = onAutoSyncIntervalUnitChange,
                     onTokenHeartbeatChange = onTokenHeartbeatChange,
                     onShowExamScheduleChange = onShowExamScheduleChange,
                     onExamLookaheadWeeksChange = onExamLookaheadWeeksChange,
+                    onDiffColorPerWeekChange = onDiffColorPerWeekChange,
                     onFetchExam = onFetchExam,
                     onBack = { navController.popBackStack() }
                 )
@@ -447,12 +451,14 @@ private fun SyncPage(
     tokenHeartbeat: Boolean,
     showExamSchedule: Boolean,
     examLookaheadWeeks: Int,
+    diffColorPerWeek: Boolean,
     onAutoSyncOnStartChange: (Boolean) -> Unit,
     onAutoSyncIntervalValueChange: (Int) -> Unit,
     onAutoSyncIntervalUnitChange: (String) -> Unit,
     onTokenHeartbeatChange: (Boolean) -> Unit,
     onShowExamScheduleChange: (Boolean) -> Unit,
     onExamLookaheadWeeksChange: (Int) -> Unit,
+    onDiffColorPerWeekChange: (Boolean) -> Unit,
     onFetchExam: () -> Unit,
     onBack: () -> Unit
 ) {
@@ -585,6 +591,8 @@ private fun SyncPage(
             }
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
             SwitchItem(Icons.Default.School, stringResource(R.string.show_exam_schedule), showExamSchedule, onShowExamScheduleChange)
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            SwitchItem(Icons.Default.Palette, stringResource(R.string.diff_color_per_week), diffColorPerWeek, onDiffColorPerWeekChange)
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
             StepperItem(
                 Icons.Default.Event,

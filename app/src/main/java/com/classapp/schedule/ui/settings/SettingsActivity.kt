@@ -80,7 +80,8 @@ class SettingsActivity : AppCompatActivity() {
                     val autoSyncIntervalUnit by vm.autoSyncIntervalUnit.collectAsState(initial = "d")
                     val tokenHeartbeat by vm.tokenHeartbeat.collectAsState(initial = true)
                     val showExamSchedule by vm.showExamSchedule.collectAsState(initial = false)
-                    val examLookaheadWeeks by vm.examLookaheadWeeks.collectAsState(initial = 2)
+                    val examLookaheadWeeks by vm.examLookaheadWeeks.collectAsState(initial = 1)
+                    val diffColorPerWeek by vm.diffColorPerWeek.collectAsState(initial = false)
 
                     SettingsScreen(
                         semesterStart = semesterStart,
@@ -108,6 +109,7 @@ class SettingsActivity : AppCompatActivity() {
                         tokenHeartbeat = tokenHeartbeat,
                         showExamSchedule = showExamSchedule,
                         examLookaheadWeeks = examLookaheadWeeks,
+                        diffColorPerWeek = diffColorPerWeek,
                         onSemesterStartChange = { vm.setSemesterStart(it) },
                         onTotalWeeksChange = { vm.setTotalWeeks(it) },
                         onPeriodsPerDayChange = { vm.setPeriodsPerDay(it) },
@@ -133,6 +135,7 @@ class SettingsActivity : AppCompatActivity() {
                         onTokenHeartbeatChange = { vm.setTokenHeartbeat(it) },
                         onShowExamScheduleChange = { vm.setShowExamSchedule(it) },
                         onExamLookaheadWeeksChange = { vm.setExamLookaheadWeeks(it) },
+                        onDiffColorPerWeekChange = { vm.setDiffColorPerWeek(it) },
                         onFetchExam = {
                             vm.refreshExamSchedule()
                             scope.launch {

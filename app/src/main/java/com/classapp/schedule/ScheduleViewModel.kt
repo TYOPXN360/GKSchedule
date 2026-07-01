@@ -65,6 +65,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     val tokenHeartbeat: Flow<Boolean> = settings.tokenHeartbeat
     val showExamSchedule: Flow<Boolean> = settings.showExamSchedule
     val examLookaheadWeeks: Flow<Int> = settings.examLookaheadWeeks
+    val diffColorPerWeek: Flow<Boolean> = settings.diffColorPerWeek
     val courseNames: Flow<List<String>> = courseDao.getAllCourseNames()
 
     private val _selectedWeek = MutableStateFlow(0)
@@ -257,6 +258,10 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
 
     fun setExamLookaheadWeeks(weeks: Int) {
         viewModelScope.launch { settings.setExamLookaheadWeeks(weeks) }
+    }
+
+    fun setDiffColorPerWeek(enabled: Boolean) {
+        viewModelScope.launch { settings.setDiffColorPerWeek(enabled) }
     }
 
     private suspend fun rescheduleSync() {

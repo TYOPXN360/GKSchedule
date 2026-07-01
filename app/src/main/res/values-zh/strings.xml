@@ -131,6 +131,7 @@
     <string name="token_heartbeat_desc">每15分钟自动刷新Token，防止登录过期。低功耗，仅在有网络且电量充足时运行。</string>
     <string name="show_exam_schedule">显示考试安排</string>
     <string name="exam_lookahead_weeks">近期考试提前显示周数</string>
+    <string name="diff_color_per_week">跨周同科不同色</string>
     <string name="show_exam_schedule_hint">请在校园网下获取</string>
     <string name="fetch_exam_now">立即获取</string>
     <!-- Settings - Data -->

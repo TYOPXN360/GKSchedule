@@ -45,19 +45,19 @@ object CourseColors {
 
     @Composable
     fun getColor(mode: Int, courseName: String, classroom: String = "", classroomIndex: Int = 0): CourseColorPair {
-        return getColorSync(mode, courseName, classroom, classroomIndex, LocalAppIsDark.current)
+        return getColorSync(mode, courseName, classroom, classroomIndex, isDark = LocalAppIsDark.current)
     }
 
-    fun getColorSync(mode: Int, courseName: String, classroom: String = "", classroomIndex: Int = 0, isDark: Boolean = false): CourseColorPair {
-        return makeColor(mode, courseName, classroom, classroomIndex, isDark)
+    fun getColorSync(mode: Int, courseName: String, classroom: String = "", classroomIndex: Int = 0, week: Int = 0, diffColorPerWeek: Boolean = false, isDark: Boolean = false): CourseColorPair {
+        return makeColor(mode, courseName, classroom, classroomIndex, week, diffColorPerWeek, isDark)
     }
 
     // =========================================================================
     // HCT 官方取色
     // =========================================================================
 
-    private fun makeColor(mode: Int, courseName: String, classroom: String, classroomIndex: Int, isDark: Boolean): CourseColorPair {
-        val hue = computeHue(mode, courseName, classroom)
+    private fun makeColor(mode: Int, courseName: String, classroom: String, classroomIndex: Int, week: Int, diffColorPerWeek: Boolean, isDark: Boolean): CourseColorPair {
+        val hue = computeHue(mode, courseName, classroom, week, diffColorPerWeek)
 
         // 容器用低色度防止暗色模式色域溢出，文字用高色度保持对比
         val containerChroma = computeChroma(mode, classroomIndex, CHROMA_CONTAINER)
@@ -76,15 +76,16 @@ object CourseColors {
     // 色相计算 - 全模式统一黄金角度散射
     // =========================================================================
 
-    private fun computeHue(mode: Int, courseName: String, classroom: String): Double {
+    private fun computeHue(mode: Int, courseName: String, classroom: String, week: Int, diffColorPerWeek: Boolean): Double {
         return when (mode) {
             0, 1 -> {
-                // 取消 % 8 限制，黄金角度直接散射课程名 Hash
-                val hash = abs(courseName.hashCode()).toDouble()
+                val seed = if (diffColorPerWeek) "$courseName|$week" else courseName
+                val hash = abs(seed.hashCode()).toDouble()
                 (hash * GOLDEN) % 360.0
             }
             else -> {
-                val hash = abs("$courseName|$classroom".hashCode()).toDouble()
+                val seed = if (diffColorPerWeek) "$courseName|$classroom|$week" else "$courseName|$classroom"
+                val hash = abs(seed.hashCode()).toDouble()
                 (hash * GOLDEN) % 360.0
             }
         }

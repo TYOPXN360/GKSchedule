@@ -86,6 +86,7 @@ fun WeeklyScheduleScreen(
     onAddCourse: () -> Unit,
     onRefresh: () -> Unit,
     realCurrentWeek: Int = currentWeek,
+    diffColorPerWeek: Boolean = false,
     getStartTime: (Int) -> String = { "" },
     getEndTime: (Int) -> String = { "" }
 ) {
@@ -367,7 +368,7 @@ fun WeeklyScheduleScreen(
                         weekBlocks.map { block ->
                             val realClassroomIdx = if (colorGroupMode == 1) block.colorIdx % 10 else 0
                             com.classapp.schedule.util.CourseColors.getColorSync(
-                                colorGroupMode, block.course.name, block.course.classroom, realClassroomIdx, isDark = isDark
+                                colorGroupMode, block.course.name, block.course.classroom, realClassroomIdx, week = week, diffColorPerWeek = diffColorPerWeek, isDark = isDark
                             ).container
                         }
                     }
@@ -443,7 +444,7 @@ fun WeeklyScheduleScreen(
                             val textColor = remember(block, colorGroupMode, isDark) {
                                 val realClassroomIdx = if (colorGroupMode == 1) block.colorIdx % 10 else 0
                                 com.classapp.schedule.util.CourseColors.getColorSync(
-                                    colorGroupMode, block.course.name, block.course.classroom, realClassroomIdx, isDark = isDark
+                                    colorGroupMode, block.course.name, block.course.classroom, realClassroomIdx, week = week, diffColorPerWeek = diffColorPerWeek, isDark = isDark
                                 ).content
                             }
                             Column {
@@ -550,6 +551,8 @@ fun WeeklyScheduleScreen(
                 courseName = course.name,
                 classroom = course.classroom,
                 classroomIndex = realClassroomIdx,
+                week = currentWeek,
+                diffColorPerWeek = diffColorPerWeek,
                 isDark = isDark
             ).container
         }

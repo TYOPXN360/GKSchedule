@@ -135,6 +135,7 @@
     <string name="token_heartbeat_desc">Auto-refresh token every 15 minutes to prevent expiration. Low power, runs only when network available and battery not low.</string>
     <string name="show_exam_schedule">Show Exam Schedule</string>
     <string name="exam_lookahead_weeks">Upcoming exams window (weeks)</string>
+    <string name="diff_color_per_week">Different color per week</string>
     <string name="show_exam_schedule_hint">Please fetch under campus network</string>
     <string name="fetch_exam_now">Fetch Now</string>
     <string name="data_management">Data</string>

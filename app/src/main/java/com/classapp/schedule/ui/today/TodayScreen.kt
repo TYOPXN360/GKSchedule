@@ -42,7 +42,8 @@ fun TodayScreen(
     semesterStart: java.time.LocalDate = java.time.LocalDate.now(),
     getStartTime: (Int) -> String,
     getEndTime: (Int) -> String,
-    onCourseLongPress: (Course) -> Unit
+    onCourseLongPress: (Course) -> Unit,
+    diffColorPerWeek: Boolean = false
 ) {
     val today = LocalDate.now()
     val tomorrow = today.plusDays(1)
@@ -167,7 +168,7 @@ fun TodayScreen(
                     isPast = isPast,
                     animDelay = if (animationPlayed) 0L else staggerMap[course.id] ?: 0L,
                     skipAnim = animationPlayed,
-                    barColor = CourseColors.getColorSync(colorGroupMode, course.name, course.classroom, isDark = isDark).container,
+                    barColor = CourseColors.getColorSync(colorGroupMode, course.name, course.classroom, week = currentWeek, diffColorPerWeek = diffColorPerWeek, isDark = isDark).container,
                     onClick = { detailCourse = course }
                 )
             }
@@ -206,8 +207,8 @@ fun TodayScreen(
                         endTime = course.getActualEndTime(getEndTime),
                         isCurrent = false,
                         isNext = false,
-                    barColor = CourseColors.getColorSync(colorGroupMode, course.name, course.classroom, isDark = isDark).container,
-                    indicatorColor = CourseColors.getColorSync(colorGroupMode, course.name, course.classroom, isDark = isDark).content,
+                    barColor = CourseColors.getColorSync(colorGroupMode, course.name, course.classroom, week = currentWeek, diffColorPerWeek = diffColorPerWeek, isDark = isDark).container,
+                    indicatorColor = CourseColors.getColorSync(colorGroupMode, course.name, course.classroom, week = currentWeek, diffColorPerWeek = diffColorPerWeek, isDark = isDark).content,
                         onClick = { detailCourse = course }
                     )
                 }
@@ -245,7 +246,7 @@ fun TodayScreen(
                     Spacer(modifier = Modifier.height(4.dp))
                 }
                 items(upcomingExams) { exam ->
-                    ExamCard(exam = exam, barColor = CourseColors.getColorSync(0, exam.kcmc, exam.cdmc, isDark = isDark).container, indicatorColor = CourseColors.getColorSync(0, exam.kcmc, exam.cdmc, isDark = isDark).content)
+                    ExamCard(exam = exam, barColor = CourseColors.getColorSync(0, exam.kcmc, exam.cdmc, week = currentWeek, diffColorPerWeek = diffColorPerWeek, isDark = isDark).container, indicatorColor = CourseColors.getColorSync(0, exam.kcmc, exam.cdmc, week = currentWeek, diffColorPerWeek = diffColorPerWeek, isDark = isDark).content)
                 }
             }
         }
@@ -263,7 +264,7 @@ fun TodayScreen(
             onEdit = { detailCourse = null; onCourseLongPress(course) },
             courseColors = CourseColors.getColors(colorEngine, count = 8),
             colorGroupMode = colorGroupMode,
-            dotColor = CourseColors.getColorSync(colorGroupMode, course.name, course.classroom, isDark = isDark).container
+            dotColor = CourseColors.getColorSync(colorGroupMode, course.name, course.classroom, week = currentWeek, diffColorPerWeek = diffColorPerWeek, isDark = isDark).container
         )
     }
 }

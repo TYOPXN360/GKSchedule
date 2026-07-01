@@ -93,7 +93,8 @@ fun ScheduleApp(
     val language by viewModel.language.collectAsState(initial = "system")
     val loginState by viewModel.loginState.collectAsState()
     val captchaImage by viewModel.captchaImage.collectAsState()
-    val examLookaheadWeeks by viewModel.examLookaheadWeeks.collectAsState(initial = 2)
+    val examLookaheadWeeks by viewModel.examLookaheadWeeks.collectAsState(initial = 1)
+    val diffColorPerWeek by viewModel.diffColorPerWeek.collectAsState(initial = false)
     val examList by viewModel.examList.collectAsState()
     val showExamSchedule by viewModel.showExamSchedule.collectAsState(initial = false)
 
@@ -207,7 +208,8 @@ fun ScheduleApp(
                     semesterStart = semesterStart,
                     getStartTime = { viewModel.getStartTime(it) },
                     getEndTime = { viewModel.getEndTime(it) },
-                    onCourseLongPress = { navController.navigate(Screen.CourseEdit.createRoute(it.id)) }
+                    onCourseLongPress = { navController.navigate(Screen.CourseEdit.createRoute(it.id)) },
+                    diffColorPerWeek = diffColorPerWeek
                 )
             }
 
@@ -237,6 +239,7 @@ fun ScheduleApp(
                     onRefresh = { viewModel.refreshFromSchool() },
                     getStartTime = { viewModel.getStartTime(it) },
                     getEndTime = { viewModel.getEndTime(it) },
+                    diffColorPerWeek = diffColorPerWeek
                 )
             }
 
