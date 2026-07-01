@@ -183,10 +183,18 @@ private fun CourseListItem(
     onClick: () -> Unit,
     onDelete: () -> Unit
 ) {
+    val courseColor = CourseColors.getColor(
+        mode = 0,
+        courseName = course.name,
+        classroom = course.classroom
+    )
+
     Card(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
-        shape = MaterialTheme.shapes.small,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        shape = MaterialTheme.shapes.medium,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+        )
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(12.dp),
@@ -194,16 +202,18 @@ private fun CourseListItem(
         ) {
             Box(
                 modifier = Modifier
-                    .size(8.dp)
-                    .clip(RoundedCornerShape(50))
-                    .background(MaterialTheme.colorScheme.primary)
+                    .width(4.dp)
+                    .height(36.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(courseColor.content)
             )
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = "$dayName  ${course.startPeriod}-${course.endPeriod()}",
                     style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 if (course.classroom.isNotEmpty() || course.teacher.isNotEmpty()) {
                     Text(
@@ -218,13 +228,14 @@ private fun CourseListItem(
                 Text(
                     text = course.weekRange,
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                    color = courseColor.content.copy(alpha = 0.8f)
                 )
             }
             IconButton(onClick = onDelete) {
                 Icon(
-                    Icons.Default.Delete, contentDescription = stringResource(R.string.delete),
-                    tint = MaterialTheme.colorScheme.error.copy(alpha = 0.7f),
+                    Icons.Default.Delete,
+                    contentDescription = stringResource(R.string.delete),
+                    tint = MaterialTheme.colorScheme.error.copy(alpha = 0.8f),
                     modifier = Modifier.size(20.dp)
                 )
             }
