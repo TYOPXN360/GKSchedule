@@ -480,9 +480,9 @@ private fun timeToPeriod(time: String, timeProvider: (Int) -> String): Int {
 @Composable
 private fun ExamCard(exam: com.classapp.schedule.api.ExamInfo, barColor: Color = MaterialTheme.colorScheme.outline, indicatorColor: Color = barColor) {
 
-    ElevatedCard(
+    com.classapp.schedule.ui.theme.Md3Card(
         modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
-        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+        variant = com.classapp.schedule.ui.theme.Md3CardVariant.Elevated,
         shape = MaterialTheme.shapes.small
     ) {
         Row(

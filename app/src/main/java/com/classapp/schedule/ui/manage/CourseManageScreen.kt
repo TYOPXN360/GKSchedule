@@ -189,12 +189,10 @@ private fun CourseListItem(
         classroom = course.classroom
     )
 
-    Card(
+    com.classapp.schedule.ui.theme.Md3Card(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
-        shape = MaterialTheme.shapes.medium,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-        )
+        variant = com.classapp.schedule.ui.theme.Md3CardVariant.Elevated,
+        shape = MaterialTheme.shapes.medium
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(12.dp),
