@@ -6,6 +6,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -329,159 +330,138 @@ fun WeeklyScheduleScreen(
                 BoxWithConstraints(
                     modifier = Modifier.fillMaxSize().padding(horizontal = 4.dp)
                 ) {
-                    val totalH = maxHeight
-                    val totalW = maxWidth
-                    val rowH = totalH / periodsPerDay
-                    val cellW = (totalW - labelWidthDp) / 7
+                    // Background: empty grid + period labels + Canvas + text all in one scrollable Box
+                    val rowH = gridHeight.dp
+                    val totalGridHeight = rowH * periodsPerDay
+                    val cellW = (maxWidth - labelWidthDp) / 7
 
-                    // Background: empty grid + period labels
-        Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-                        for (period in 1..periodsPerDay) {
-                            Row(modifier = Modifier.fillMaxWidth().height(rowH)) {
-                                if (showPeriodLabel) {
-                                    Box(modifier = Modifier.width(labelWidthDp).fillMaxHeight(), contentAlignment = Alignment.Center) {
-                                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                            Text("$period", style = MaterialTheme.typography.labelMedium,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                            if (showTimeLabel) {
-                                                Text("${getStartTime(period)}\n${getEndTime(period)}",
-                                                    style = MaterialTheme.typography.labelSmall,
-                                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                                                    textAlign = TextAlign.Center)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
+                    ) {
+                        // Layer 1: Grid background
+                        Column(modifier = Modifier.fillMaxWidth().height(totalGridHeight)) {
+                            for (period in 1..periodsPerDay) {
+                                Row(modifier = Modifier.fillMaxWidth().height(rowH)) {
+                                    if (showPeriodLabel) {
+                                        Box(modifier = Modifier.width(labelWidthDp).fillMaxHeight(), contentAlignment = Alignment.Center) {
+                                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                                Text("$period", style = MaterialTheme.typography.labelMedium,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                                if (showTimeLabel) {
+                                                    Text("${getStartTime(period)}\n${getEndTime(period)}",
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                                                        textAlign = TextAlign.Center)
+                                                }
+                                            }
+                                        }
+                                    }
+                                    for (day in 1..7) {
+                                        Box(modifier = Modifier.weight(1f).fillMaxHeight().padding(gridSpacing.dp)
+                                            .clip(RoundedCornerShape(gridCorner.dp))
+                                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)))
+                                    }
                                 }
                             }
                         }
-                    }
 
-                                for (day in 1..7) {
-                                    Box(modifier = Modifier.weight(1f).fillMaxHeight().padding(gridSpacing.dp)
-                                        .clip(RoundedCornerShape(gridCorner.dp))
-                                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)))
-                                }
-                            }
-                        }
-                    }
-
-                    // Pre-compute base colors via getColorSync (unified with today page)
-                    // 🔥 Fix: 用 block.colorIdx % 10 还原真实教室序号，修复 Mode 1 非合并模式色彩断层
-                    val blockBaseColors = remember(weekBlocks, colorGroupMode, isDark) {
-                        weekBlocks.map { block ->
-                            val realClassroomIdx = if (colorGroupMode == 1) block.colorIdx % 10 else 0
-                            com.classapp.schedule.util.CourseColors.getColorSync(
-                                colorGroupMode, block.course.name, block.course.classroom, realClassroomIdx, week = week, diffColorPerWeek = diffColorPerWeek, isDark = isDark
-                            ).container
-                        }
-                    }
-
-                    // Draw backgrounds: base colors + overlapping regions blended
-                    androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize()) {
-                        val ch = size.height
-                        val rowH2 = ch / periodsPerDay
-                        val cellW2 = (size.width - labelWidthDp.toPx()) / 7
-                        val spacing = gridSpacing.dp.toPx()
-                        val corner = gridCorner.dp.toPx()
-
-                        // Draw all blocks with original colors
-                        weekBlocks.forEachIndexed { idx, block ->
-                            val x = labelWidthDp.toPx() + cellW2 * (block.day - 1) + spacing
-                            val y = rowH2 * block.startLine + spacing
-                            val bw = cellW2 - spacing * 2
-                            val bh = rowH2 * (block.endLine - block.startLine) - spacing * 2
-                            drawRoundRect(
-                                color = blockBaseColors[idx],
-                                topLeft = Offset(x, y),
-                                size = Size(bw.coerceAtLeast(24.dp.toPx()), bh.coerceAtLeast(24.dp.toPx())),
-                                cornerRadius = CornerRadius(corner)
-                            )
-                        }
-
-                        // Draw blended overlay on overlapping regions
-                        for (i in weekBlocks.indices) {
-                            for (j in i + 1 until weekBlocks.size) {
-                                val a = weekBlocks[i]; val b = weekBlocks[j]
-                                if (a.day == b.day && a.startLine < b.endLine && a.endLine > b.startLine) {
-                                    val overlapStart = maxOf(a.startLine, b.startLine)
-                                    val overlapEnd = minOf(a.endLine, b.endLine)
-                                    val ox = labelWidthDp.toPx() + cellW2 * (a.day - 1) + spacing
-                                    val oy = rowH2 * overlapStart + spacing
-                                    val ow = cellW2 - spacing * 2
-                                    val oh = rowH2 * (overlapEnd - overlapStart) - spacing * 2
-                                    val blend = Color(
-                                        (blockBaseColors[i].red + blockBaseColors[j].red) / 2f,
-                                        (blockBaseColors[i].green + blockBaseColors[j].green) / 2f,
-                                        (blockBaseColors[i].blue + blockBaseColors[j].blue) / 2f,
-                                        (blockBaseColors[i].alpha + blockBaseColors[j].alpha) / 2f
-                                    )
-                                    drawRoundRect(
-                                        color = blend,
-                                        topLeft = Offset(ox, oy),
-                                        size = Size(ow, oh),
-                                        cornerRadius = CornerRadius(corner)
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    // Overlay: course text
-                    weekBlocks.forEach { block ->
-                        val x = labelWidthDp + cellW * (block.day - 1) + gridSpacing.dp
-                        val y = rowH * block.startLine + gridSpacing.dp
-                        val w = cellW - gridSpacing.dp * 2
-                        val h = rowH * (block.endLine - block.startLine) - gridSpacing.dp * 2
-
-                        Box(
-                            modifier = Modifier.offset(x = x, y = y)
-                                .size(width = w.coerceAtLeast(24.dp), height = h.coerceAtLeast(24.dp))
-                                .clickable {
-                                com.classapp.schedule.util.HapticFeedback.medium(hapticView)
-                                detailCourse = block.course
-                            }
-                                .semantics { contentDescription = block.course.name }
-                                .padding(4.dp)
-                        ) {
-                            // 🔥 Fix: 用 block.colorIdx % 10 统一文字色计算，消灭 Mode 1 断层
-                            val textColor = remember(block, colorGroupMode, isDark) {
+                        // Layer 2: Canvas for course block colors
+                        val blockBaseColors = remember(weekBlocks, colorGroupMode, isDark) {
+                            weekBlocks.map { block ->
                                 val realClassroomIdx = if (colorGroupMode == 1) block.colorIdx % 10 else 0
                                 com.classapp.schedule.util.CourseColors.getColorSync(
                                     colorGroupMode, block.course.name, block.course.classroom, realClassroomIdx, week = week, diffColorPerWeek = diffColorPerWeek, isDark = isDark
-                                ).content
+                                ).container
                             }
-                            Column {
-                                if (block.course.isExamCourse()) {
-                                    // 🔥 Fix: 考试标签用同色系半透底色，拒绝死红 errorContainer
-                                    Box(
-                                        modifier = Modifier
-                                            .padding(bottom = 2.dp)
-                                            .clip(RoundedCornerShape(4.dp))
-                                            .background(textColor.copy(alpha = 0.2f))
-                                            .padding(horizontal = 4.dp, vertical = 1.dp),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(
-                                            text = "考试",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            fontWeight = FontWeight.Bold,
-                                            color = textColor,
-                                            maxLines = 1
-                                        )
-                                    }
-                                }
-                                Text(
-                                    block.course.name,
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = textColor,
-                                    overflow = TextOverflow.Ellipsis
+                        }
+
+                        val density = LocalDensity.current
+                        val rowHPx = with(density) { rowH.toPx() }
+                        val labelWidthPx = with(density) { labelWidthDp.toPx() }
+
+                        Canvas(modifier = Modifier.fillMaxWidth().height(totalGridHeight)) {
+                            val cellW2 = (size.width - labelWidthPx) / 7
+                            val spacing = gridSpacing.dp.toPx()
+                            val corner = gridCorner.dp.toPx()
+
+                            weekBlocks.forEachIndexed { idx, block ->
+                                val x = labelWidthPx + cellW2 * (block.day - 1) + spacing
+                                val y = rowHPx * block.startLine + spacing
+                                val bw = cellW2 - spacing * 2
+                                val bh = rowHPx * (block.endLine - block.startLine) - spacing * 2
+                                drawRoundRect(
+                                    color = blockBaseColors[idx],
+                                    topLeft = Offset(x, y),
+                                    size = Size(bw.coerceAtLeast(24.dp.toPx()), bh.coerceAtLeast(24.dp.toPx())),
+                                    cornerRadius = CornerRadius(corner)
                                 )
-                                if (block.course.classroom.isNotEmpty()) {
-                                    Text(block.course.classroom, style = MaterialTheme.typography.labelSmall,
-                                        color = textColor.copy(alpha = 0.7f),
-                                        overflow = TextOverflow.Ellipsis)
+                            }
+
+                            for (i in weekBlocks.indices) {
+                                for (j in i + 1 until weekBlocks.size) {
+                                    val a = weekBlocks[i]; val b = weekBlocks[j]
+                                    if (a.day == b.day && a.startLine < b.endLine && a.endLine > b.startLine) {
+                                        val overlapStart = maxOf(a.startLine, b.startLine)
+                                        val overlapEnd = minOf(a.endLine, b.endLine)
+                                        val ox = labelWidthPx + cellW2 * (a.day - 1) + spacing
+                                        val oy = rowHPx * overlapStart + spacing
+                                        val ow = cellW2 - spacing * 2
+                                        val oh = rowHPx * (overlapEnd - overlapStart) - spacing * 2
+                                        val blend = Color(
+                                            (blockBaseColors[i].red + blockBaseColors[j].red) / 2f,
+                                            (blockBaseColors[i].green + blockBaseColors[j].green) / 2f,
+                                            (blockBaseColors[i].blue + blockBaseColors[j].blue) / 2f,
+                                            (blockBaseColors[i].alpha + blockBaseColors[j].alpha) / 2f
+                                        )
+                                        drawRoundRect(color = blend, topLeft = Offset(ox, oy), size = Size(ow, oh), cornerRadius = CornerRadius(corner))
+                                    }
                                 }
                             }
                         }
-                    }
-                }
+
+                        // Layer 3: Course text overlay
+                        weekBlocks.forEach { block ->
+                            val x = labelWidthDp + cellW * (block.day - 1) + gridSpacing.dp
+                            val y = rowH * block.startLine + gridSpacing.dp
+                            val w = cellW - gridSpacing.dp * 2
+                            val h = rowH * (block.endLine - block.startLine) - gridSpacing.dp * 2
+
+                            Box(
+                                modifier = Modifier.offset(x = x, y = y)
+                                    .size(width = w.coerceAtLeast(24.dp), height = h.coerceAtLeast(24.dp))
+                                    .clickable {
+                                        com.classapp.schedule.util.HapticFeedback.medium(hapticView)
+                                        detailCourse = block.course
+                                    }
+                                    .semantics { contentDescription = block.course.name }
+                                    .padding(4.dp)
+                            ) {
+                                val textColor = remember(block, colorGroupMode, isDark) {
+                                    val realClassroomIdx = if (colorGroupMode == 1) block.colorIdx % 10 else 0
+                                    com.classapp.schedule.util.CourseColors.getColorSync(
+                                        colorGroupMode, block.course.name, block.course.classroom, realClassroomIdx, week = week, diffColorPerWeek = diffColorPerWeek, isDark = isDark
+                                    ).content
+                                }
+                                Column {
+                                    if (block.course.isExamCourse()) {
+                                        Box(
+                                            modifier = Modifier.padding(bottom = 2.dp).clip(RoundedCornerShape(4.dp)).background(textColor.copy(alpha = 0.2f)).padding(horizontal = 4.dp, vertical = 1.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text("考试", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = textColor, maxLines = 1)
+                                        }
+                                    }
+                                    Text(block.course.name, style = MaterialTheme.typography.labelMedium, color = textColor, overflow = TextOverflow.Ellipsis)
+                                    if (block.course.classroom.isNotEmpty()) {
+                                        Text(block.course.classroom, style = MaterialTheme.typography.labelSmall, color = textColor.copy(alpha = 0.7f), overflow = TextOverflow.Ellipsis)
+                                    }
+                                }
+                            }
+                        }
+                    } // scrollable Box
+                } // BoxWithConstraints
             } // HorizontalPager
         }
 
@@ -522,7 +502,7 @@ fun WeeklyScheduleScreen(
                     FloatingActionButton(onClick = { com.classapp.schedule.util.HapticFeedback.medium(hapticView); coroutineScope.launch { try { hideFabs = true; kotlinx.coroutines.delay(100); val fb = android.graphics.Bitmap.createBitmap(rootView.width, rootView.height, android.graphics.Bitmap.Config.ARGB_8888); rootView.draw(android.graphics.Canvas(fb)); hideFabs = false; val c = android.graphics.Bitmap.createBitmap(fb, 0, cropTopPx.coerceIn(0, fb.height), fb.width, cropBottomPx.coerceIn(cropTopPx.coerceIn(0, fb.height), fb.height) - cropTopPx.coerceIn(0, fb.height)); val s = com.classapp.schedule.util.ImageExport.saveBitmapToGallery(context, c, "Pictures/Screenshots/schedule_${System.currentTimeMillis()}.png"); android.widget.Toast.makeText(context, if (s) "已保存到 Pictures/Screenshots" else "保存失败", android.widget.Toast.LENGTH_SHORT).show() } catch (e: Exception) { android.widget.Toast.makeText(context, "截图失败: ${e.message}", android.widget.Toast.LENGTH_SHORT).show() } }
                     }, containerColor = MaterialTheme.colorScheme.tertiaryContainer, contentColor = MaterialTheme.colorScheme.onTertiaryContainer) { Icon(Icons.Default.CameraAlt, "Screenshot") }
                     }
-            } // Column
+            } // HorizontalPager
 
             // Back to current week — horizontal slide + fade, no clip bounds
             AnimatedVisibility(

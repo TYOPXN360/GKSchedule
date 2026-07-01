@@ -170,6 +170,7 @@ fun TodayScreen(
                     animDelay = if (animationPlayed) 0L else staggerMap[course.id] ?: 0L,
                     skipAnim = animationPlayed,
                     barColor = CourseColors.getColorSync(colorGroupMode, course.name, course.classroom, week = currentWeek, diffColorPerWeek = diffColorPerWeek, isDark = isDark).container,
+                    indicatorColor = CourseColors.getColorSync(colorGroupMode, course.name, course.classroom, week = currentWeek, diffColorPerWeek = diffColorPerWeek, isDark = isDark).content,
                     onClick = { detailCourse = course }
                 )
             }
