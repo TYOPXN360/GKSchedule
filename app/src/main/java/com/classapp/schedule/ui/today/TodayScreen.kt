@@ -1,6 +1,4 @@
 package com.classapp.schedule.ui.today
-import com.classapp.schedule.ui.theme.Md3Card
-import com.classapp.schedule.ui.theme.Md3CardVariant
 
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -11,11 +9,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material.icons.filled.School
-import androidx.compose.material.icons.filled.Login
-import androidx.compose.material.icons.filled.WbSunny
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -25,9 +19,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-
 import com.classapp.schedule.R
 import com.classapp.schedule.data.Course
+import com.classapp.schedule.ui.theme.LocalAppIsDark
+import com.classapp.schedule.ui.theme.Md3Card
+import com.classapp.schedule.ui.theme.Md3CardVariant
 import com.classapp.schedule.util.CourseColors
 import kotlinx.coroutines.flow.first
 import java.time.DayOfWeek
@@ -377,8 +373,10 @@ private fun CourseCard(
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     if (course.id < 0) {
-                        Box(modifier = Modifier.background(MaterialTheme.colorScheme.errorContainer, RoundedCornerShape(4.dp)).padding(horizontal = 5.dp, vertical = 1.dp)) {
-                            Text("考试", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onErrorContainer)
+                        val isDark = LocalAppIsDark.current
+                        val examColors = CourseColors.getColorSync(0, course.name, course.classroom, isDark = isDark)
+                        Box(modifier = Modifier.background(examColors.container, RoundedCornerShape(4.dp)).padding(horizontal = 5.dp, vertical = 1.dp)) {
+                            Text("考试", style = MaterialTheme.typography.labelSmall, color = examColors.content)
                         }
                         Spacer(modifier = Modifier.width(6.dp))
                     }

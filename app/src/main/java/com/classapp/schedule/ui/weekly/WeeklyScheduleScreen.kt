@@ -461,14 +461,14 @@ fun WeeklyScheduleScreen(
                                         modifier = Modifier
                                             .padding(bottom = 2.dp)
                                             .clip(RoundedCornerShape(3.dp))
-                                            .background(textColor.copy(alpha = 0.92f))
+                                            .background(MaterialTheme.colorScheme.errorContainer)
                                             .padding(horizontal = 3.dp, vertical = 1.dp),
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Text(
                                             text = "考试",
                                             style = MaterialTheme.typography.labelSmall,
-                                            color = textColor.copy(alpha = 0.92f),
+                                            color = MaterialTheme.colorScheme.onErrorContainer,
                                             maxLines = 1
                                         )
                                     }

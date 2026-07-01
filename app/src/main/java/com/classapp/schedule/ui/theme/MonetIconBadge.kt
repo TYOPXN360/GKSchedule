@@ -13,14 +13,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.google.android.material.color.utilities.Hct
 
 /**
  * Badge 色相来源
- * - Primary/Secondary/Tertiary: 从 MaterialTheme 对应色提取色相
- * - Error: 固定红色色相
- * - Neutral: 中性灰色
- * - Inverse: 反色
+ * 直接使用 M3 标准语义色（已包含正确 Tone）
  */
 enum class BadgeColorPalette {
     Primary, Secondary, Tertiary, Neutral, Inverse
@@ -36,7 +32,7 @@ fun MonetIconBadge(
     iconSize: Dp = 24.dp,
     cornerRadius: Dp = 14.dp
 ) {
-    val (containerColor, contentColor) = badgePaletteColors(badgePalette)
+    val (containerColor, contentColor) = badgePaletteColors(MaterialTheme.colorScheme, badgePalette)
 
     Box(
         modifier = modifier
@@ -55,56 +51,44 @@ fun MonetIconBadge(
 
 @Composable
 fun MonetIconBadgeTextColor(badgePalette: BadgeColorPalette): Color {
-    return badgePaletteColors(badgePalette).second
+    return badgePaletteColors(MaterialTheme.colorScheme, badgePalette).second
 }
 
 /**
- * 基于 Color 提取 HCT 色相，再生成 M3 标准容器/文字色
+ * 直接使用 M3 标准语义色，无需手动计算 Tone
  */
 @Composable
-fun MonetIconBadgeTextColor(seedColor: Color): Color {
-    val hue = Hct.fromInt(seedColor.value.toInt()).hue
-    val isDark = LocalAppIsDark.current
-    val tone = if (isDark) 95.0 else 10.0
-    return Color(Hct.from(hue, 70.0, tone).toInt())
-}
-
-@Composable
-private fun badgePaletteColors(palette: BadgeColorPalette): Pair<Color, Color> {
-    val isDark = LocalAppIsDark.current
-    val scheme = MaterialTheme.colorScheme
-
+private fun badgePaletteColors(scheme: androidx.compose.material3.ColorScheme, palette: BadgeColorPalette): Pair<Color, Color> {
     return when (palette) {
-        BadgeColorPalette.Primary -> {
-            val hue = Hct.fromInt(scheme.primary.value.toInt()).hue
-            hctPair(hue, isDark)
-        }
-        BadgeColorPalette.Secondary -> {
-            val hue = Hct.fromInt(scheme.secondary.value.toInt()).hue
-            hctPair(hue, isDark)
-        }
-        BadgeColorPalette.Tertiary -> {
-            val hue = Hct.fromInt(scheme.tertiary.value.toInt()).hue
-            hctPair(hue, isDark)
-        }
-        BadgeColorPalette.Neutral -> {
-            // Neutral: 中性灰，无彩色
-            scheme.surfaceVariant to scheme.onSurfaceVariant
-        }
-        BadgeColorPalette.Inverse -> {
-            // Inverse: 反色
-            scheme.inverseSurface to scheme.inverseOnSurface
-        }
+        BadgeColorPalette.Primary -> scheme.primaryContainer to scheme.onPrimaryContainer
+        BadgeColorPalette.Secondary -> scheme.secondaryContainer to scheme.onSecondaryContainer
+        BadgeColorPalette.Tertiary -> scheme.tertiaryContainer to scheme.onTertiaryContainer
+        BadgeColorPalette.Neutral -> scheme.surfaceVariant to scheme.onSurfaceVariant
+        BadgeColorPalette.Inverse -> scheme.inverseSurface to scheme.inverseOnSurface
     }
 }
 
 /**
- * HCT 颜色对: container=容器色  content=文字色
+ * 基于 seedColor 生成文字色（用于自定义场景）
  */
-private fun hctPair(hue: Double, isDark: Boolean): Pair<Color, Color> {
-    val containerTone = if (isDark) 30.0 else 90.0
-    val contentTone = if (isDark) 95.0 else 10.0
-    val container = Color(Hct.from(hue, 70.0, containerTone).toInt())
-    val content = Color(Hct.from(hue, 70.0, contentTone).toInt())
-    return container to content
+@Composable
+fun MonetIconBadgeTextColor(seedColor: Color): Color {
+    val scheme = MaterialTheme.colorScheme
+    val isDark = LocalAppIsDark.current
+    
+    // 找到最接近的语义色
+    return when {
+        isHueClose(seedColor, scheme.primary) -> scheme.onPrimaryContainer
+        isHueClose(seedColor, scheme.secondary) -> scheme.onSecondaryContainer
+        isHueClose(seedColor, scheme.tertiary) -> scheme.onTertiaryContainer
+        else -> scheme.onSurfaceVariant
+    }
+}
+
+@Composable
+private fun isHueClose(color: Color, target: Color): Boolean {
+    val colorHue = com.google.android.material.color.utilities.Hct.fromInt(color.value.toInt()).hue
+    val targetHue = com.google.android.material.color.utilities.Hct.fromInt(target.value.toInt()).hue
+    val diff = kotlin.math.abs(colorHue - targetHue)
+    return diff < 30 || diff > 330  // 30° 范围内视为同色相
 }
