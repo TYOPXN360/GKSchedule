@@ -544,24 +544,24 @@ fun WeeklyScheduleScreen(
         } // if (!hideFabs)
     } // PullToRefreshBox
 
-    // Detail sheet — 🔥 Fix: 传入正确 classroomIndex 的 dotColor
+    // Detail sheet — 🔥 归一：无论是否考试课，统一走 HCT 动态分配
     detailCourse?.let { course ->
         val isDark = com.classapp.schedule.ui.theme.LocalAppIsDark.current
         val detailDotColor = remember(course, colorGroupMode, isDark) {
-            if (course.isExamCourse()) {
-                examColorMap["${course.name}|${course.classroom}"]
-            } else {
-                val realClassroomIdx = if (colorGroupMode == 1) course.colorIndex % 10 else 0
-                CourseColors.getColorSync(
-                    colorGroupMode, course.name, course.classroom, realClassroomIdx, isDark = isDark
-                ).container
-            }
+            val realClassroomIdx = if (colorGroupMode == 1) course.colorIndex % 10 else 0
+            CourseColors.getColorSync(
+                mode = colorGroupMode,
+                courseName = course.name,
+                classroom = course.classroom,
+                classroomIndex = realClassroomIdx,
+                isDark = isDark
+            ).container
         }
         CourseDetailSheet(course = course, getStartTime = getStartTime, getEndTime = getEndTime,
             onDismiss = { detailCourse = null }, onEdit = { detailCourse = null; onCourseLongPress(course) },
             courseColors = CourseColors.getColors(colorEngine, count = 8),
             colorGroupMode = colorGroupMode,
-            colorIndex = courseColorIndexMap[course.id] ?: course.colorIndex,
+            colorIndex = course.colorIndex,
             dotColor = detailDotColor)
     }
 
