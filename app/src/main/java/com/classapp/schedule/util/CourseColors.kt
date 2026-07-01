@@ -60,9 +60,9 @@ object CourseColors {
         val hue = computeHue(mode, courseName, classroom, week, diffColorPerWeek)
 
         return if (isDark) {
-            // M3 Expressive 暗夜晶格：容器 Tone 14/Chroma 16，文字 Tone 85/Chroma 55
-            val darkContainer = hctToColor(hue, 16.0, 14.0)
-            val darkContent = hctToColor(hue, 55.0, 85.0)
+            // 暗色课表：Tone 24/Chroma 32 宝石质感，文字 Tone 95 荧光白
+            val darkContainer = hctToColor(hue, 32.0, 24.0)
+            val darkContent = hctToColor(hue, 40.0, 95.0)
             CourseColorPair(container = darkContainer, content = darkContent)
         } else {
             val containerChroma = computeChroma(mode, classroomIndex, CHROMA_CONTAINER)
@@ -120,12 +120,20 @@ object CourseColors {
         val isDark = LocalAppIsDark.current
         val hue = (index * 60.0) % 360.0
         val chroma = 45.0
-        val containerTone = if (isDark) 26.0 else 90.0
-        val contentTone = if (isDark) 92.0 else 15.0
-        return CourseColorPair(
-            container = hctToColor(hue, chroma, containerTone),
-            content = hctToColor(hue, chroma, contentTone)
-        )
+
+        return if (isDark) {
+            // 暗色模式：容器亮糖果色 Tone 76，图标深色 Tone 15（与原生设置对齐）
+            CourseColorPair(
+                container = hctToColor(hue, chroma, 76.0),
+                content = hctToColor(hue, chroma, 15.0)
+            )
+        } else {
+            // 亮色模式：容器柔和 Tone 90，图标深色 Tone 22
+            CourseColorPair(
+                container = hctToColor(hue, chroma, 90.0),
+                content = hctToColor(hue, chroma, 22.0)
+            )
+        }
     }
 
     /**
