@@ -227,7 +227,16 @@ fun ScheduleApp(
     val navView = androidx.compose.ui.platform.LocalView.current
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
+        snackbarHost = {
+            SnackbarHost(snackbarHostState) { snackbarData ->
+                Snackbar(
+                    snackbarData = snackbarData,
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    contentColor = MaterialTheme.colorScheme.onSurface,
+                    shape = MaterialTheme.shapes.small
+                )
+            }
+        },
         bottomBar = {
             if (showBottomBar) {
                 NavigationBar {
