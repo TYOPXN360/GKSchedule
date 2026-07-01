@@ -123,7 +123,10 @@ fun ScheduleApp(
 
     val navView = androidx.compose.ui.platform.LocalView.current
 
+    val mainScaffoldBg = if (com.classapp.schedule.ui.theme.LocalAppIsDark.current) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainer
+
     Scaffold(
+        containerColor = mainScaffoldBg,
         snackbarHost = {
             SnackbarHost(snackbarHostState) { snackbarData ->
                 Snackbar(
