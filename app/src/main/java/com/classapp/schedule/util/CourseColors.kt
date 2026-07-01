@@ -66,7 +66,7 @@ object CourseColors {
         val chroma = computeChroma(mode, classroomIndex)
 
         // M3 标准 Tone 档位
-        val containerTone = if (isDark) 30.0 else 90.0
+        val containerTone = if (isDark) 33.0 else 90.0  // 暗色 33 更明亮
         val contentTone = if (isDark) 95.0 else 10.0
 
         // HCT → Compose Color
@@ -150,37 +150,9 @@ object CourseColors {
                 1 -> (primaryHue + i * step).wrapAngle()  // Monet
                 else -> i * step  // Vibrant/Classic
             }
-            val containerTone = if (isDark) 30.0 else 90.0
+            val containerTone = if (isDark) 33.0 else 90.0
             val contentTone = if (isDark) 95.0 else 10.0
             hctToColor(hue, CHROMA, containerTone) to hctToColor(hue, CHROMA, contentTone)
         }
-    }
-
-    // =========================================================================
-    // 兼容旧代码
-    // =========================================================================
-
-    fun assignColorIndices(courses: List<com.classapp.schedule.data.Course>, groupMode: Int): Map<Long, Int> {
-        return courses.associate { course ->
-            val idx = when (groupMode) {
-                0 -> abs(course.name.hashCode()) % HUE_SLOTS
-                1 -> {
-                    val base = abs(course.name.hashCode()) % HUE_SLOTS
-                    val sameNameCourses = courses.filter { it.name == course.name }
-                    val classIdx = sameNameCourses.indexOf(course)
-                    base * 10 + classIdx
-                }
-                else -> abs("${course.name}|${course.classroom}".hashCode()) % 64
-            }
-            course.id to idx
-        }
-    }
-
-    fun getBackgroundStatic(index: Int, colors: List<Pair<Color, Color>>, satOffset: Int = 0): Color {
-        return colors[index % colors.size].first
-    }
-
-    fun getTextColor(index: Int, colors: List<Pair<Color, Color>>, satOffset: Int = 0): Color {
-        return colors[index % colors.size].second
     }
 }

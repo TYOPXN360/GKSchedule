@@ -28,6 +28,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.classapp.schedule.api.ExamInfo
+import com.classapp.schedule.util.CourseColors
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
@@ -277,9 +278,9 @@ private fun ExamCard(exam: ExamInfo, index: Int = 0) {
     val isPast = examDate?.isBefore(LocalDate.now()) == true
     val alpha = if (isPast) 0.5f else 1f
 
-    // Per-exam color based on course name hash — consistent across screens
-    val examColors = com.classapp.schedule.util.CourseColors.getColors(0, count = 8)
-    val colorIdx = exam.kcmc.hashCode().and(0x7fffffff) % examColors.size
+    // Per-exam color using HCT — consistent across screens
+    val isDark = com.classapp.schedule.ui.theme.LocalAppIsDark.current
+    val examColor = CourseColors.getColorSync(0, exam.kcmc, exam.cdmc, isDark = isDark)
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -298,8 +299,8 @@ private fun ExamCard(exam: ExamInfo, index: Int = 0) {
                     .height(48.dp)
                     .clip(RoundedCornerShape(2.dp))
                     .background(
-                        if (isPast) com.classapp.schedule.util.CourseColors.getBackgroundStatic(colorIdx, examColors).copy(alpha = 0.3f)
-                        else com.classapp.schedule.util.CourseColors.getBackgroundStatic(colorIdx, examColors)
+                        if (isPast) examColor.container.copy(alpha = 0.3f)
+                        else examColor.container
                     )
             )
             Spacer(modifier = Modifier.width(12.dp))
