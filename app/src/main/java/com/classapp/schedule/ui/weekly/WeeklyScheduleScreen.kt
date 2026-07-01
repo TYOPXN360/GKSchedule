@@ -86,10 +86,6 @@ fun WeeklyScheduleScreen(
     onAddCourse: () -> Unit,
     onRefresh: () -> Unit,
     realCurrentWeek: Int = currentWeek,
-    courseColorIndexMap: Map<Long, Int> = emptyMap(),
-    courseColorPalette: List<Pair<Color, Color>> = emptyList(),
-    courseColorMap: Map<Long, Color> = emptyMap(),
-    examColorMap: Map<String, Color> = emptyMap(),
     getStartTime: (Int) -> String = { "" },
     getEndTime: (Int) -> String = { "" }
 ) {

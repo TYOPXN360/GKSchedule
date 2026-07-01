@@ -280,9 +280,6 @@ fun ScheduleApp(
                     onRefresh = { viewModel.refreshFromSchool() },
                     getStartTime = { viewModel.getStartTime(it) },
                     getEndTime = { viewModel.getEndTime(it) },
-                    courseColorPalette = courseColorPalette,
-                    courseColorMap = courseColorMap,
-                    examColorMap = examColorMap
                 )
             }
 
