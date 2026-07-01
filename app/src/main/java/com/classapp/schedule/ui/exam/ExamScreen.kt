@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -275,32 +276,38 @@ fun ExamScreen(
 @Composable
 private fun ExamCard(exam: ExamInfo, index: Int = 0) {
     val examDate = try { LocalDate.parse(exam.getExamDate()) } catch (_: Exception) { null }
-    val isPast = examDate?.isBefore(LocalDate.now()) == true
+    val now = LocalDate.now()
+    val isPast = examDate?.isBefore(now) == true
     val alpha = if (isPast) 0.5f else 1f
 
-    // Per-exam color using HCT — consistent across screens
+    val daysLeft = if (examDate != null && !isPast) {
+        ChronoUnit.DAYS.between(now, examDate)
+    } else { -1L }
+
     val isDark = com.classapp.schedule.ui.theme.LocalAppIsDark.current
     val examColor = CourseColors.getColorSync(0, exam.kcmc, exam.cdmc, isDark = isDark)
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+        ),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        shape = MaterialTheme.shapes.small
+        shape = MaterialTheme.shapes.medium
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Color indicator — per exam color
+            // Color indicator — use content color for contrast on thin bar
             Box(
                 modifier = Modifier
                     .width(4.dp)
                     .height(48.dp)
                     .clip(RoundedCornerShape(2.dp))
                     .background(
-                        if (isPast) examColor.container.copy(alpha = 0.3f)
-                        else examColor.container
+                        if (isPast) examColor.content.copy(alpha = 0.2f)
+                        else examColor.content
                     )
             )
             Spacer(modifier = Modifier.width(12.dp))
@@ -309,10 +316,13 @@ private fun ExamCard(exam: ExamInfo, index: Int = 0) {
                     Text(
                         text = exam.kcmc,
                         style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha)
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                     if (isPast) {
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
                         Icon(Icons.Default.CheckCircle, null, modifier = Modifier.size(16.dp),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
                     }
@@ -340,6 +350,31 @@ private fun ExamCard(exam: ExamInfo, index: Int = 0) {
                         text = exam.ksfs,
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha * 0.7f)
+                    )
+                }
+            }
+
+            // Countdown badge
+            if (!isPast && daysLeft >= 0) {
+                Spacer(modifier = Modifier.width(8.dp))
+                Surface(
+                    shape = CircleShape,
+                    color = if (daysLeft == 0L) {
+                        MaterialTheme.colorScheme.errorContainer
+                    } else {
+                        examColor.container
+                    },
+                    contentColor = if (daysLeft == 0L) {
+                        MaterialTheme.colorScheme.onErrorContainer
+                    } else {
+                        examColor.content
+                    }
+                ) {
+                    Text(
+                        text = if (daysLeft == 0L) "今天" else "剩 ${daysLeft} 天",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
                 }
             }
