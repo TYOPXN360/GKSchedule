@@ -23,7 +23,6 @@ import com.classapp.schedule.R
 import com.classapp.schedule.data.Course
 import com.classapp.schedule.util.CourseColors
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CourseManageScreen(
     courses: List<Course>,
@@ -35,7 +34,6 @@ fun CourseManageScreen(
     var showDeleteAllDialog by remember { mutableStateOf(false) }
     var courseToDelete by remember { mutableStateOf<Course?>(null) }
 
-    // Group courses by name
     val groupedCourses = remember(courses) {
         courses.groupBy { it.name }.toSortedMap()
     }
@@ -47,123 +45,81 @@ fun CourseManageScreen(
         stringResource(R.string.sun)
     )
 
-    val isDark = com.classapp.schedule.ui.theme.LocalAppIsDark.current
-    val scaffoldBg = if (isDark) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainer
-    Scaffold(
-        contentWindowInsets = WindowInsets.systemBars,
-        containerColor = scaffoldBg,
-        topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text(stringResource(R.string.course_manage_title), style = MaterialTheme.typography.headlineMedium)
-                        Text(stringResource(R.string.course_count_format, courses.size), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = scaffoldBg, scrolledContainerColor = scaffoldBg),
-                actions = {
-                    if (courses.isNotEmpty()) {
-                        IconButton(onClick = { showDeleteAllDialog = true }) {
-                            Icon(Icons.Default.DeleteSweep, contentDescription = stringResource(R.string.delete_all_courses), tint = MaterialTheme.colorScheme.error)
+    Box(modifier = Modifier.fillMaxSize()) {
+        if (courses.isEmpty()) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(Icons.Default.Schedule, null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(text = stringResource(R.string.no_course_today), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
+                }
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 88.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.Bottom
+                    ) {
+                        Column {
+                            Text(stringResource(R.string.course_manage_title), style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(stringResource(R.string.course_count_format, courses.size), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        if (courses.isNotEmpty()) {
+                            IconButton(onClick = { showDeleteAllDialog = true }) {
+                                Icon(Icons.Default.DeleteSweep, contentDescription = null, tint = MaterialTheme.colorScheme.error)
+                            }
                         }
                     }
                 }
-            )
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = onAddCourse,
-                containerColor = MaterialTheme.colorScheme.primary
-            ) {
-                Icon(Icons.Default.Add, stringResource(R.string.add_course))
+
+                groupedCourses.forEach { (name, courseList) ->
+                    item {
+                        Text(text = name, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(vertical = 4.dp))
+                    }
+                    items(courseList) { course ->
+                        CourseListItem(
+                            course = course,
+                            dayName = dayNames[course.dayOfWeek],
+                            onClick = { onCourseClick(course) },
+                            onDelete = { courseToDelete = course }
+                        )
+                    }
+                }
             }
         }
-    ) { padding ->
-        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-            if (courses.isEmpty()) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(
-                            Icons.Default.Schedule, contentDescription = "暂无课程",
-                            modifier = Modifier.size(64.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = stringResource(R.string.no_course_today),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
-                        )
-                    }
-                }
-            } else {
-                LazyColumn(
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    groupedCourses.forEach { (name, courseList) ->
-                        item {
-                            Text(
-                                text = name,
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.padding(vertical = 4.dp)
-                            )
-                        }
-                        items(courseList) { course ->
-                            CourseListItem(
-                                course = course,
-                                dayName = dayNames[course.dayOfWeek],
-                                onClick = { onCourseClick(course) },
-                                onDelete = { courseToDelete = course }
-                            )
-                        }
-                    }
-                }
-            }
+
+        FloatingActionButton(
+            onClick = onAddCourse,
+            containerColor = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp)
+        ) {
+            Icon(Icons.Default.Add, stringResource(R.string.add_course))
         }
     }
 
-    // Delete single course dialog
     courseToDelete?.let { course ->
         AlertDialog(
             onDismissRequest = { courseToDelete = null },
             title = { Text(stringResource(R.string.confirm_delete)) },
             text = { Text(stringResource(R.string.confirm_delete_msg)) },
-            confirmButton = {
-                TextButton(onClick = {
-                    onDeleteCourse(course)
-                    courseToDelete = null
-                }) { Text(stringResource(R.string.delete)) }
-            },
-            dismissButton = {
-                TextButton(onClick = { courseToDelete = null }) {
-                    Text(stringResource(R.string.cancel))
-                }
-            }
+            confirmButton = { TextButton(onClick = { onDeleteCourse(course); courseToDelete = null }) { Text(stringResource(R.string.delete)) } },
+            dismissButton = { TextButton(onClick = { courseToDelete = null }) { Text(stringResource(R.string.cancel)) } }
         )
     }
-
-    // Delete all dialog
     if (showDeleteAllDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteAllDialog = false },
             title = { Text(stringResource(R.string.confirm_delete_all)) },
             text = { Text(stringResource(R.string.confirm_delete_all_msg)) },
-            confirmButton = {
-                TextButton(onClick = {
-                    onDeleteAll()
-                    showDeleteAllDialog = false
-                }) { Text(stringResource(R.string.delete)) }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDeleteAllDialog = false }) {
-                    Text(stringResource(R.string.cancel))
-                }
-            }
+            confirmButton = { TextButton(onClick = { onDeleteAll(); showDeleteAllDialog = false }) { Text(stringResource(R.string.delete)) } },
+            dismissButton = { TextButton(onClick = { showDeleteAllDialog = false }) { Text(stringResource(R.string.cancel)) } }
         )
     }
 }

@@ -68,7 +68,7 @@ object CourseColors {
             val containerChroma = computeChroma(mode, classroomIndex, CHROMA_CONTAINER)
             CourseColorPair(
                 container = hctToColor(hue, containerChroma, 92.0),
-                content = hctToColor(hue, CHROMA_CONTENT, 15.0)
+                content = hctToColor(hue, CHROMA_CONTENT, 40.0)
             )
         }
     }
