@@ -268,7 +268,6 @@ fun WeeklyScheduleScreen(
             }
 
             // Grid — HorizontalPager for native swipe
-            val monetColors = if (courseColorPalette.isNotEmpty()) courseColorPalette else CourseColors.getColors(colorEngine, count = 8)
             val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
             HorizontalPager(
                 state = pagerState,
@@ -366,7 +365,7 @@ fun WeeklyScheduleScreen(
                         }
                     }
 
-                    // Pre-compute base colors — always use weekBlocks' own colorIdx + monetColors
+                    // Pre-compute base colors via getColorSync (unified with today page)
                     // so background and text colors are always paired from the same palette
                     val blockBaseColors = remember(weekBlocks, colorGroupMode, isDark) {
                         weekBlocks.map { block ->
@@ -436,7 +435,6 @@ fun WeeklyScheduleScreen(
                         val y = rowH * block.startLine + gridSpacing.dp
                         val w = cellW - gridSpacing.dp * 2
                         val h = rowH * (block.endLine - block.startLine) - gridSpacing.dp * 2
-                        val satOffset = if (colorGroupMode == 1) block.colorIdx % 10 else 0
 
                         Box(
                             modifier = Modifier.offset(x = x, y = y)
@@ -470,7 +468,7 @@ fun WeeklyScheduleScreen(
                                         Text(
                                             text = "考试",
                                             style = MaterialTheme.typography.labelSmall,
-                                            color = CourseColors.getBackgroundStatic(block.colorIdx, monetColors, satOffset),
+                                            color = textColor.copy(alpha = 0.92f),
                                             maxLines = 1
                                         )
                                     }
