@@ -155,34 +155,7 @@ fun LoginScreen(
             }
 
             // Quick re-login with saved encrypted credentials.
-            if (hasSavedCredentials) {
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
-                    shape = MaterialTheme.shapes.small
-                ) {
-                    Column(modifier = Modifier.fillMaxWidth().padding(12.dp)) {
-                        Text(
-                            text = stringResource(R.string.quick_relogin),
-                            style = MaterialTheme.typography.titleSmall,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = stringResource(R.string.quick_relogin_hint),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.75f)
-                        )
-                        Spacer(modifier = Modifier.height(10.dp))
-                        Button(
-                            onClick = { onQuickRelogin(captcha) },
-                            modifier = Modifier.fillMaxWidth().height(44.dp),
-                            enabled = !isLoading && captcha.isNotBlank()
-                        ) {
-                            Text(stringResource(R.string.quick_relogin))
-                        }
-                    }
-                }
-            }
+            // Removed from login page - quick login only available from AboutScreen after token expiry.
 
             // Login button
             Button(
