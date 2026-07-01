@@ -411,6 +411,14 @@ private fun CourseCard(
                         close()
                     }
                     drawPath(path, color = fillColor)
+                    if (animatedProgress in 0.01f..0.99f) {
+                        drawLine(
+                            color = indicatorColor.copy(alpha = 0.4f),
+                            start = androidx.compose.ui.geometry.Offset(progressX, 0f),
+                            end = androidx.compose.ui.geometry.Offset(progressX, h),
+                            strokeWidth = 2.dp.toPx()
+                        )
+                    }
                 }
             }
 
@@ -490,7 +498,7 @@ private fun CourseCard(
                                     Icons.Default.Check,
                                     contentDescription = null,
                                     modifier = Modifier.size(20.dp),
-                                    tint = barColor
+                                    tint = MaterialTheme.colorScheme.primary
                                 )
                             }
                         }
