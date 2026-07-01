@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.first
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
+import androidx.compose.ui.text.style.TextOverflow
 
 @Composable
 fun TodayScreen(
@@ -246,7 +247,8 @@ fun TodayScreen(
                     Spacer(modifier = Modifier.height(4.dp))
                 }
                 items(upcomingExams) { exam ->
-                    ExamCard(exam = exam, barColor = CourseColors.getColorSync(0, exam.kcmc, exam.cdmc, week = currentWeek, diffColorPerWeek = diffColorPerWeek, isDark = isDark).container, indicatorColor = CourseColors.getColorSync(0, exam.kcmc, exam.cdmc, week = currentWeek, diffColorPerWeek = diffColorPerWeek, isDark = isDark).content)
+                    val examColor = CourseColors.getColorSync(colorGroupMode, exam.kcmc, exam.cdmc, week = currentWeek, diffColorPerWeek = diffColorPerWeek, isDark = isDark)
+                    ExamCard(exam = exam, examColor = examColor)
                 }
             }
         }
@@ -478,7 +480,12 @@ private fun timeToPeriod(time: String, timeProvider: (Int) -> String): Int {
 }
 
 @Composable
-private fun ExamCard(exam: com.classapp.schedule.api.ExamInfo, barColor: Color = MaterialTheme.colorScheme.outline, indicatorColor: Color = barColor) {
+private fun ExamCard(exam: com.classapp.schedule.api.ExamInfo, examColor: com.classapp.schedule.util.CourseColors.CourseColorPair) {
+    val examDate = try { java.time.LocalDate.parse(exam.getExamDate()) } catch (_: Exception) { null }
+    val now = java.time.LocalDate.now()
+    val isPast = examDate?.isBefore(now) == true
+    val alpha = if (isPast) 0.5f else 1f
+    val daysLeft = if (examDate != null && !isPast) java.time.temporal.ChronoUnit.DAYS.between(now, examDate) else -1L
 
     com.classapp.schedule.ui.theme.Md3Card(
         modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
@@ -489,44 +496,29 @@ private fun ExamCard(exam: com.classapp.schedule.api.ExamInfo, barColor: Color =
             modifier = Modifier.fillMaxWidth().padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Color indicator
             Box(
-                modifier = Modifier
-                    .width(4.dp)
-                    .height(48.dp)
-                    .clip(RoundedCornerShape(2.dp))
-                    .background(indicatorColor)
+                modifier = Modifier.width(4.dp).height(48.dp).clip(RoundedCornerShape(2.dp))
+                    .background(if (isPast) examColor.content.copy(alpha = 0.2f) else examColor.content)
             )
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = exam.kcmc,
-                    style = MaterialTheme.typography.titleMedium
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(exam.kcmc, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    if (isPast) { Spacer(modifier = Modifier.width(6.dp)); Icon(Icons.Default.CheckCircle, null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)) }
+                }
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (exam.kssj.isNotEmpty()) {
-                        Text(
-                            text = exam.kssj,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    if (exam.cdmc.isNotEmpty()) {
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = exam.cdmc,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+                    if (exam.kssj.isNotEmpty()) { Text(exam.kssj, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha)) }
+                    if (exam.cdmc.isNotEmpty()) { Spacer(modifier = Modifier.width(8.dp)); Text(exam.cdmc, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha)) }
                 }
-                if (exam.ksfs.isNotEmpty()) {
-                    Text(
-                        text = exam.ksfs,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                    )
+                if (exam.ksfs.isNotEmpty()) { Text(exam.ksfs, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha * 0.7f)) }
+            }
+            if (!isPast && daysLeft >= 0) {
+                Spacer(modifier = Modifier.width(8.dp))
+                Surface(shape = CircleShape, color = if (daysLeft == 0L) MaterialTheme.colorScheme.errorContainer else examColor.container,
+                    contentColor = if (daysLeft == 0L) MaterialTheme.colorScheme.onErrorContainer else examColor.content) {
+                    Text(if (daysLeft == 0L) "今天" else "剩 ${daysLeft} 天", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
                 }
             }
         }

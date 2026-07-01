@@ -355,6 +355,7 @@ fun ScheduleApp(
                     onDismissRelogin = { viewModel.dismissExamReloginDialog() },
                     onRefreshCaptcha = { viewModel.refreshCaptcha() },
                     onQuickRelogin = { cap -> viewModel.quickRelogin(cap) },
+                    colorGroupMode = colorGroupMode,
                     onBack = { navController.popBackStack() }
                 )
             }

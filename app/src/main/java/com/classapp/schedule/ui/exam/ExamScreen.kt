@@ -50,6 +50,7 @@ fun ExamScreen(
     onDismissRelogin: () -> Unit = {},
     onRefreshCaptcha: () -> Unit = {},
     onQuickRelogin: (String) -> Unit = {},
+    colorGroupMode: Int = 2,
     onBack: () -> Unit
 ) {
     // Auto-detect current academic year and semester on first display
@@ -259,13 +260,15 @@ fun ExamScreen(
             } else {
                 // Card list sorted by date
                 val sortedExams = exams.sortedBy { it.getExamDate() }
+                val isDark = com.classapp.schedule.ui.theme.LocalAppIsDark.current
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(sortedExams) { exam ->
-                        ExamCard(exam = exam)
+                        val examColor = CourseColors.getColorSync(colorGroupMode, exam.kcmc, exam.cdmc, isDark = isDark)
+                        ExamCard(exam = exam, examColor = examColor)
                     }
                 }
             }
@@ -274,7 +277,7 @@ fun ExamScreen(
 }
 
 @Composable
-private fun ExamCard(exam: ExamInfo, index: Int = 0) {
+private fun ExamCard(exam: ExamInfo, examColor: com.classapp.schedule.util.CourseColors.CourseColorPair) {
     val examDate = try { LocalDate.parse(exam.getExamDate()) } catch (_: Exception) { null }
     val now = LocalDate.now()
     val isPast = examDate?.isBefore(now) == true
@@ -283,9 +286,6 @@ private fun ExamCard(exam: ExamInfo, index: Int = 0) {
     val daysLeft = if (examDate != null && !isPast) {
         ChronoUnit.DAYS.between(now, examDate)
     } else { -1L }
-
-    val isDark = com.classapp.schedule.ui.theme.LocalAppIsDark.current
-    val examColor = CourseColors.getColorSync(0, exam.kcmc, exam.cdmc, isDark = isDark)
 
     Card(
         modifier = Modifier.fillMaxWidth(),
