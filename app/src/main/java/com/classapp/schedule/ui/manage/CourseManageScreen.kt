@@ -95,7 +95,7 @@ fun CourseManageScreen(
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Icon(
-                            Icons.Default.Schedule, contentDescription = null,
+                            Icons.Default.Schedule, contentDescription = "暂无课程",
                             modifier = Modifier.size(64.dp),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
                         )

@@ -269,7 +269,7 @@ private fun SettingsMainPage(onOpenPage: (String) -> Unit, onExit: () -> Unit) {
                         ListItem(
                             headlineContent = { Text(catTitles[index], style = MaterialTheme.typography.titleMedium) },
                             supportingContent = { Text(catDescs[index], style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) },
-                            leadingContent = { com.classapp.schedule.ui.theme.MonetIconBadge(icon = icon, contentDescription = null, badgePalette = catPalettes[index]) },
+                            leadingContent = { com.classapp.schedule.ui.theme.MonetIconBadge(icon = icon, contentDescription = catTitles[index], badgePalette = catPalettes[index]) },
                             trailingContent = { Icon(Icons.Default.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
                             colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                             modifier = Modifier.clickable(onClick = catCallbacks[index])
@@ -291,7 +291,7 @@ private fun CategoryItem(icon: androidx.compose.ui.graphics.vector.ImageVector, 
         ListItem(
             headlineContent = { Text(title, fontWeight = FontWeight.Medium) },
             supportingContent = { Text(subtitle) },
-            leadingContent = { com.classapp.schedule.ui.theme.MonetIconBadge(icon = icon, contentDescription = null, badgePalette = badgePalette) },
+            leadingContent = { com.classapp.schedule.ui.theme.MonetIconBadge(icon = icon, contentDescription = title, badgePalette = badgePalette) },
             trailingContent = { Icon(Icons.Default.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
             colors = ListItemDefaults.colors(containerColor = Color.Transparent),
             modifier = Modifier.clickable(onClick = onClick)

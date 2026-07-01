@@ -242,7 +242,7 @@ fun ExamScreen(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Icon(
                             Icons.Default.School,
-                            contentDescription = null,
+                            contentDescription = "暂无考试",
                             modifier = Modifier.size(64.dp),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
                         )

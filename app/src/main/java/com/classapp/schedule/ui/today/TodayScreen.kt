@@ -188,7 +188,7 @@ fun TodayScreen(
                 Spacer(modifier = Modifier.height(8.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
-                            Icons.Default.WbSunny, contentDescription = null,
+                            Icons.Default.WbSunny, contentDescription = "明日课程",
                             modifier = Modifier.size(20.dp),
                             tint = MaterialTheme.colorScheme.primary
                         )
@@ -239,7 +239,7 @@ fun TodayScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
-                            Icons.Default.School, contentDescription = null,
+                            Icons.Default.School, contentDescription = "考试",
                             modifier = Modifier.size(20.dp),
                             tint = MaterialTheme.colorScheme.primary
                         )
@@ -285,7 +285,7 @@ private fun EmptyCard(text: String) {
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(
-                Icons.Default.Schedule, contentDescription = null,
+                Icons.Default.Schedule, contentDescription = "暂无课程",
                 modifier = Modifier.size(32.dp),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
             )
@@ -484,10 +484,9 @@ private fun timeToPeriod(time: String, timeProvider: (Int) -> String): Int {
 @Composable
 private fun ExamCard(exam: com.classapp.schedule.api.ExamInfo, barColor: Color = MaterialTheme.colorScheme.outline, indicatorColor: Color = barColor) {
 
-    Card(
+    ElevatedCard(
         modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
         shape = MaterialTheme.shapes.small
     ) {
         Row(

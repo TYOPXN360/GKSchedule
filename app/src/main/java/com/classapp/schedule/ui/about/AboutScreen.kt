@@ -51,13 +51,14 @@ fun AboutScreen(
     var showAboutDialog by remember { mutableStateOf(false) }
     var showReloginDialog by remember { mutableStateOf(false) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
+Column(
+            modifier = Modifier
+                .widthIn(max = 560.dp)
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
         Spacer(modifier = Modifier.height(16.dp))
 
         // Account card
@@ -164,7 +165,7 @@ fun AboutScreen(
                 ) {
                     Icon(
                         Icons.Default.Person,
-                        contentDescription = null,
+                        contentDescription = "登录",
                         modifier = Modifier.size(48.dp),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -199,28 +200,28 @@ fun AboutScreen(
                 ListItem(
                     headlineContent = { Text(stringResource(R.string.semester_start)) },
                     supportingContent = { Text(semesterStart.toString()) },
-                    leadingContent = { MonetIconBadge(icon = Icons.Default.CalendarMonth, contentDescription = null, badgePalette = BadgeColorPalette.Primary) },
+                    leadingContent = { MonetIconBadge(icon = Icons.Default.CalendarMonth, contentDescription = "学期开始日期", badgePalette = BadgeColorPalette.Primary) },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                 )
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                 ListItem(
                     headlineContent = { Text(stringResource(R.string.total_weeks)) },
                     supportingContent = { Text("$totalWeeks") },
-                    leadingContent = { MonetIconBadge(icon = Icons.Default.DateRange, contentDescription = null, badgePalette = BadgeColorPalette.Tertiary) },
+                    leadingContent = { MonetIconBadge(icon = Icons.Default.DateRange, contentDescription = "总周数", badgePalette = BadgeColorPalette.Tertiary) },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                 )
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                 ListItem(
                     headlineContent = { Text(stringResource(R.string.periods_per_day)) },
                     supportingContent = { Text("$periodsPerDay") },
-                    leadingContent = { MonetIconBadge(icon = Icons.Default.AccessTime, contentDescription = null, badgePalette = BadgeColorPalette.Secondary) },
+                    leadingContent = { MonetIconBadge(icon = Icons.Default.AccessTime, contentDescription = "每日节数", badgePalette = BadgeColorPalette.Secondary) },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                 )
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                 ListItem(
                     headlineContent = { Text("考试安排") },
                     supportingContent = { Text("查看考试时间和考场") },
-                    leadingContent = { MonetIconBadge(icon = Icons.Default.School, contentDescription = null, badgePalette = BadgeColorPalette.Error) },
+                    leadingContent = { MonetIconBadge(icon = Icons.Default.School, contentDescription = "考试安排", badgePalette = BadgeColorPalette.Error) },
                     trailingContent = { Icon(Icons.Default.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                     modifier = Modifier.clickable(onClick = onOpenExam)
@@ -229,7 +230,7 @@ fun AboutScreen(
                 ListItem(
                     headlineContent = { Text(stringResource(R.string.settings_title)) },
                     supportingContent = { Text(stringResource(R.string.about_settings_desc)) },
-                    leadingContent = { MonetIconBadge(icon = Icons.Default.Settings, contentDescription = null, badgePalette = BadgeColorPalette.Neutral) },
+                    leadingContent = { MonetIconBadge(icon = Icons.Default.Settings, contentDescription = "设置", badgePalette = BadgeColorPalette.Neutral) },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                     modifier = Modifier.clickable(onClick = onOpenSettings)
                 )
@@ -237,7 +238,7 @@ fun AboutScreen(
                 ListItem(
                     headlineContent = { Text(stringResource(R.string.about_title)) },
                     supportingContent = { Text(stringResource(R.string.about_school)) },
-                    leadingContent = { MonetIconBadge(icon = Icons.AutoMirrored.Filled.Article, contentDescription = null, badgePalette = BadgeColorPalette.Inverse) },
+                    leadingContent = { MonetIconBadge(icon = Icons.AutoMirrored.Filled.Article, contentDescription = "关于", badgePalette = BadgeColorPalette.Inverse) },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                     modifier = Modifier.clickable { showAboutDialog = true }
                 )
