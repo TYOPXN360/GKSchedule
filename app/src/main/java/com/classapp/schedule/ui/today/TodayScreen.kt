@@ -220,7 +220,8 @@ fun TodayScreen(
                         endTime = course.getActualEndTime(getEndTime),
                         isCurrent = false,
                         isNext = false,
-                        barColor = courseColorMap[course.id] ?: monetColors.getOrElse(course.colorIndex.coerceIn(0, monetColors.size - 1)) { monetColors.first() }.first,
+                    barColor = courseColorMap[course.id] ?: monetColors.getOrElse(course.colorIndex.coerceIn(0, monetColors.size - 1)) { monetColors.first() }.first,
+                    indicatorColor = courseColorMap[course.id] ?: monetColors.getOrElse(course.colorIndex.coerceIn(0, monetColors.size - 1)) { monetColors.first() }.second,
                         onClick = { detailCourse = course }
                     )
                 }
@@ -258,7 +259,7 @@ fun TodayScreen(
                     Spacer(modifier = Modifier.height(4.dp))
                 }
                 items(upcomingExams) { exam ->
-                    ExamCard(exam = exam, barColor = examColorMap["${exam.kcmc}|${exam.cdmc}"] ?: monetColors.getOrElse((exam.kcmc.hashCode().and(0x7fffffff) % monetColors.size).coerceIn(0, monetColors.size - 1)) { monetColors.first() }.first)
+                    ExamCard(exam = exam, barColor = examColorMap["${exam.kcmc}|${exam.cdmc}"] ?: monetColors.getOrElse((exam.kcmc.hashCode().and(0x7fffffff) % monetColors.size).coerceIn(0, monetColors.size - 1)) { monetColors.first() }.first, indicatorColor = examColorMap["${exam.kcmc}|${exam.cdmc}"] ?: monetColors.getOrElse((exam.kcmc.hashCode().and(0x7fffffff) % monetColors.size).coerceIn(0, monetColors.size - 1)) { monetColors.first() }.second)
                 }
             }
         }
@@ -313,9 +314,10 @@ private fun CourseCard(
     isCurrent: Boolean,
     isNext: Boolean,
     isPast: Boolean = false,
-    animDelay: Long = 0L,
+    animDelay: Long = 0,
     skipAnim: Boolean = false,
     barColor: Color = MaterialTheme.colorScheme.outline,
+    indicatorColor: Color = barColor,
     onClick: () -> Unit
 ) {
     // Real-time isPast check — only for today's courses, updates every 30 seconds
@@ -422,7 +424,7 @@ private fun CourseCard(
                         .width(4.dp)
                         .height(48.dp)
                         .clip(RoundedCornerShape(2.dp))
-                        .background(barColor)
+                        .background(indicatorColor)
                 )
                 Spacer(modifier = Modifier.width(16.dp))
                 Column(modifier = Modifier.weight(1f)) {
@@ -595,7 +597,7 @@ private fun timeToPeriod(time: String, timeProvider: (Int) -> String): Int {
 }
 
 @Composable
-private fun ExamCard(exam: com.classapp.schedule.api.ExamInfo, barColor: Color = MaterialTheme.colorScheme.outline) {
+private fun ExamCard(exam: com.classapp.schedule.api.ExamInfo, barColor: Color = MaterialTheme.colorScheme.outline, indicatorColor: Color = barColor) {
 
     Card(
         modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
@@ -613,7 +615,7 @@ private fun ExamCard(exam: com.classapp.schedule.api.ExamInfo, barColor: Color =
                     .width(4.dp)
                     .height(48.dp)
                     .clip(RoundedCornerShape(2.dp))
-                    .background(barColor)
+                    .background(indicatorColor)
             )
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
