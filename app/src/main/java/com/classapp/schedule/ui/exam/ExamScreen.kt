@@ -100,7 +100,12 @@ fun ExamScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = onAddExam, containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary) {
+            FloatingActionButton(
+                onClick = onAddExam,
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+                modifier = Modifier.padding(bottom = 64.dp)
+            ) {
                 Icon(Icons.Default.Add, contentDescription = "添加考试")
             }
         }
