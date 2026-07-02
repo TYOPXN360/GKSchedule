@@ -382,10 +382,8 @@ private fun CourseCard(
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     if (course.id < 0) {
-                        val isDark = LocalAppIsDark.current
-                        val examColors = CourseColors.getColorSync(0, course.name, course.classroom, isDark = isDark)
-                        Box(modifier = Modifier.background(examColors.container, RoundedCornerShape(4.dp)).padding(horizontal = 5.dp, vertical = 1.dp)) {
-                            Text("考试", style = MaterialTheme.typography.labelSmall, color = examColors.content)
+                        Box(modifier = Modifier.background(indicatorColor.copy(alpha = 0.2f), RoundedCornerShape(4.dp)).padding(horizontal = 5.dp, vertical = 1.dp)) {
+                            Text("考试", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = indicatorColor)
                         }
                         Spacer(modifier = Modifier.width(6.dp))
                     }
