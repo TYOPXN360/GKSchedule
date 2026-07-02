@@ -435,8 +435,15 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                 val isHid = hiddenNames.contains(c.name)
                 courseDao.insertCourse(c.copy(isHidden = isHid))
             }
-            // Re-insert manually edited courses (they overwrite school data)
-            manualCourses.forEach { courseDao.insertCourse(it.copy(id = 0)) }
+            // Re-insert manually edited courses: exams (id<0) keep original ID, regular courses go through schoolKeys filter
+            val schoolKeys = courses.map { "${it.name}|${it.dayOfWeek}|${it.startPeriod}" }.toSet()
+            manualCourses.forEach { mc ->
+                if (mc.id < 0) {
+                    courseDao.insertCourse(mc) // Preserve exam negative ID
+                } else if ("${mc.name}|${mc.dayOfWeek}|${mc.startPeriod}" !in schoolKeys) {
+                    courseDao.insertCourse(mc.copy(id = 0))
+                }
+            }
 
             _loginState.value = LoginState.ImportResult(courses.size)
         } catch (e: Exception) {
@@ -522,9 +529,14 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                             val isHid = hiddenNames.contains(c.name)
                             courseDao.insertCourse(c.copy(isHidden = isHid))
                         }
-                        // Re-insert manual courses, but skip if school already has same course
-                        manualCourses.filter { "${it.name}|${it.dayOfWeek}|${it.startPeriod}" !in schoolKeys }
-                            .forEach { courseDao.insertCourse(it.copy(id = 0)) }
+                        // Re-insert manual courses: exams (id<0) keep original ID, regular courses skip school duplicates
+                        manualCourses.forEach { mc ->
+                            if (mc.id < 0) {
+                                courseDao.insertCourse(mc) // Preserve exam negative ID
+                            } else if ("${mc.name}|${mc.dayOfWeek}|${mc.startPeriod}" !in schoolKeys) {
+                                courseDao.insertCourse(mc.copy(id = 0))
+                            }
+                        }
                         _messages.emit("已更新 ${newCourses.size} 门课程")
                     } else {
                         _messages.emit("课程无变化")
