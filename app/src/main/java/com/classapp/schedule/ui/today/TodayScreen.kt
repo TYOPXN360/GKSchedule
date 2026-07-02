@@ -504,9 +504,10 @@ private fun ExamCard(exam: com.classapp.schedule.api.ExamInfo, examColor: com.cl
             modifier = Modifier.fillMaxWidth().padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // 竖条使用课表方块同款底色 container
             Box(
                 modifier = Modifier.width(4.dp).height(48.dp).clip(RoundedCornerShape(2.dp))
-                    .background(if (isPast) examColor.content.copy(alpha = 0.2f) else examColor.content)
+                    .background(if (isPast) examColor.container.copy(alpha = 0.2f) else examColor.container)
             )
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {

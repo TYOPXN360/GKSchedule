@@ -279,7 +279,7 @@ private fun ExamCard(exam: ExamInfo, examColor: CourseColors.CourseColorPair, on
     Md3Card(onClick = onClick, modifier = Modifier.fillMaxWidth(), variant = Md3CardVariant.Elevated) {
         Row(modifier = Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(modifier = Modifier.width(4.dp).height(48.dp).clip(RoundedCornerShape(2.dp))
-                .background(if (isPast) examColor.content.copy(alpha = 0.2f) else examColor.content))
+                .background(if (isPast) examColor.container.copy(alpha = 0.2f) else examColor.container))
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
