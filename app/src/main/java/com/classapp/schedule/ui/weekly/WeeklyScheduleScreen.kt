@@ -95,6 +95,11 @@ fun WeeklyScheduleScreen(
     // Reorder days based on firstDayOfWeek setting (1=Monday, 7=Sunday)
     val allDays = listOf(R.string.mon, R.string.tue, R.string.wed, R.string.thu, R.string.fri, R.string.sat, R.string.sun)
     val daysOfWeek = allDays.drop(firstDayOfWeek - 1) + allDays.take(firstDayOfWeek - 1)
+    // Map course dayOfWeek (1=Mon..7=Sun) to visual column position
+    fun dayToColumn(courseDay: Int): Int {
+        // courseDay is 1-based Monday=1, column is 1-based with firstDayOfWeek
+        return ((courseDay - firstDayOfWeek + 7) % 7) + 1
+    }
     var showWeekPicker by remember { mutableStateOf(false) }
     var detailCourse by remember { mutableStateOf<Course?>(null) }
     val hapticContext = androidx.compose.ui.platform.LocalContext.current
@@ -396,7 +401,7 @@ fun WeeklyScheduleScreen(
                             val corner = gridCorner.dp.toPx()
 
                             weekBlocks.forEachIndexed { idx, block ->
-                                val x = labelWidthPx + cellW2 * (block.day - 1) + spacing
+                                val x = labelWidthPx + cellW2 * (dayToColumn(block.day) - 1) + spacing
                                 val y = rowHPx * block.startLine + spacing
                                 val bw = cellW2 - spacing * 2
                                 val bh = rowHPx * (block.endLine - block.startLine) - spacing * 2
@@ -414,7 +419,7 @@ fun WeeklyScheduleScreen(
                                     if (a.day == b.day && a.startLine < b.endLine && a.endLine > b.startLine) {
                                         val overlapStart = maxOf(a.startLine, b.startLine)
                                         val overlapEnd = minOf(a.endLine, b.endLine)
-                                        val ox = labelWidthPx + cellW2 * (a.day - 1) + spacing
+                                        val ox = labelWidthPx + cellW2 * (dayToColumn(a.day) - 1) + spacing
                                         val oy = rowHPx * overlapStart + spacing
                                         val ow = cellW2 - spacing * 2
                                         val oh = rowHPx * (overlapEnd - overlapStart) - spacing * 2
@@ -432,7 +437,7 @@ fun WeeklyScheduleScreen(
 
                         // Layer 3: Course text overlay
                         weekBlocks.forEach { block ->
-                            val x = labelWidthDp + cellW * (block.day - 1) + gridSpacing.dp
+                            val x = labelWidthDp + cellW * (dayToColumn(block.day) - 1) + gridSpacing.dp
                             val y = rowH * block.startLine + gridSpacing.dp
                             val w = cellW - gridSpacing.dp * 2
                             val h = rowH * (block.endLine - block.startLine) - gridSpacing.dp * 2
