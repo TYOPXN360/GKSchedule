@@ -8,31 +8,27 @@ import com.google.android.material.color.utilities.Hct
 import kotlin.math.abs
 
 /**
- * 课程颜色引擎 - Google HCT 官方算法 (M3 Expressive 像素级重构版)
+ * MD3 Expressive 课程颜色引擎
  *
- * 三模式统一用 HCT 色相分配:
- * - Mode 0/1: 课程名 hash → 黄金角度散射 (同课同名，异名绝对错开)
- * - Mode 2:    课程名|教室 hash → 黄金角度散射 (完全差异化)
- *
- * 色相分配: hue = hash * 137.508° % 360
- * 容器 Chroma 限制在 42 防止暗色模式 sRGB 色域溢出
+ * 架构: Seed Palette → HCT Tonal Palette → Role Mapping → UI
+ * - 8 个 Material Design seed colors（非随机）
+ * - 课程名 hash → 稳定 seed 选择（无 jitter）
+ * - 暗色/亮色固定 tone 映射（MD3 标准）
+ * - container / content / accent 三角色体系
  */
 object CourseColors {
 
-    /** 黄金角度 - 全圆周绝对均匀发散 */
-    private const val GOLDEN = 137.508
-
-    /** 容器色度 - 42.0 防止暗色低明度下 sRGB 色域溢出产生硬色 */
-    private const val CHROMA_CONTAINER = 42.0
-
-    /** 文字色度 - 65.0 保持高对比度可读性 */
-    private const val CHROMA_CONTENT = 65.0
-
-    /** Mode 1 最低色度 */
-    private const val CHROMA_MIN = 22.0
-
-    /** Mode 1 色度递减步进 */
-    private const val CHROMA_STEP = 6.0
+    /** MD3 Expressive Seed Palette — 8 个 Google Material 风格种子色 */
+    private val seeds = intArrayOf(
+        0x6750A4,  // primary purple
+        0x006A6A,  // teal
+        0x386A20,  // green
+        0x8C4A2F,  // brown
+        0x7D5260,  // rose
+        0x525F79,  // blue grey
+        0x984061,  // magenta
+        0x7C4DFF   // deep purple
+    )
 
     /** 颜色对: container=背景色  content=文字色 */
     data class CourseColorPair(val container: Color, val content: Color)
@@ -47,75 +43,52 @@ object CourseColors {
     }
 
     private fun makeColor(mode: Int, courseName: String, classroom: String, classroomIndex: Int, week: Int, diffColorPerWeek: Boolean, isDark: Boolean): CourseColorPair {
-        val hue = computeHue(mode, courseName, classroom, week, diffColorPerWeek)
+        // 1. 稳定 seed 选择（NO random jitter）
+        val seedKey = when {
+            mode == 2 -> if (diffColorPerWeek) "$courseName|$classroom|$week" else "$courseName|$classroom"
+            diffColorPerWeek -> "$courseName|$week"
+            else -> courseName
+        }
+        val seedIndex = abs(seedKey.hashCode()) % seeds.size
+        val seed = seeds[seedIndex] or 0xFF000000.toInt()
 
+        // 2. HCT base
+        val base = Hct.fromInt(seed)
+
+        // 3. MD3 Expressive tone mapping — 暗色/亮色固定 tone
         return if (isDark) {
-            // Micro-Jittering with hash-based chroma/tone
-            val colorSeed = if (mode == 1 || mode == 0) {
-                if (diffColorPerWeek) "$courseName|$week" else courseName
-            } else {
-                if (diffColorPerWeek) "$courseName|$classroom|$week" else "$courseName|$classroom"
-            }
-            val seedHash = abs(colorSeed.hashCode())
-            val baseChroma = 16.0 + (seedHash % 12) // 16~28
-            val baseTone = 38.0 + (seedHash % 10)   // 38~47
-
-            // Mode 1 gentle decrement
-            val dynamicChroma = if (mode == 1) {
-                (baseChroma - classroomIndex * 1.5).coerceAtLeast(12.0)
-            } else baseChroma
-            val dynamicTone = if (mode == 1) {
-                (baseTone - classroomIndex * 1.0).coerceAtLeast(32.0)
-            } else baseTone
-
-            val darkContainer = hctToColor(hue, dynamicChroma, dynamicTone)
-            val darkContent = hctToColor(hue, 22.0, 96.0)
-            CourseColorPair(container = darkContainer, content = darkContent)
-        } else {
-            val containerChroma = computeChroma(mode, classroomIndex, CHROMA_CONTAINER)
+            // 暗色: container=Tone 25 + mode衰减, content=Tone 90
+            val modeShift = if (mode == 1) classroomIndex * 2.0 else 0.0
+            val containerTone = (25.0 - modeShift).coerceIn(18.0, 30.0)
             CourseColorPair(
-                container = hctToColor(hue, containerChroma, 92.0),
-                content = hctToColor(hue, CHROMA_CONTENT, 40.0)
+                container = hctToColor(base.hue, 30.0, containerTone),
+                content = hctToColor(base.hue, 40.0, 90.0)
+            )
+        } else {
+            // 亮色: container=Tone 90, content=Tone 40 (MD3 standard)
+            CourseColorPair(
+                container = hctToColor(base.hue, 48.0, 90.0),
+                content = hctToColor(base.hue, 65.0, 40.0)
             )
         }
     }
 
-    /** Settings icon badge: index * 60° uniform spread, 6 colors never collide */
+    /** Settings icon badge — 8 色 seed 循环，MD3 表达式风格 */
     @Composable
     fun getSettingsBadgeColor(index: Int): CourseColorPair {
         val isDark = LocalAppIsDark.current
-        val hue = (index * 60.0) % 360.0
-        val chroma = 45.0
+        val seed = seeds[index % seeds.size]
+        val base = Hct.fromInt(seed)
         return if (isDark) {
             CourseColorPair(
-                container = hctToColor(hue, chroma, 76.0),
-                content = hctToColor(hue, chroma, 15.0)
+                container = hctToColor(base.hue, 45.0, 76.0),
+                content = hctToColor(base.hue, 60.0, 15.0)
             )
         } else {
             CourseColorPair(
-                container = hctToColor(hue, chroma, 90.0),
-                content = hctToColor(hue, chroma, 22.0)
+                container = hctToColor(base.hue, 45.0, 90.0),
+                content = hctToColor(base.hue, 60.0, 22.0)
             )
-        }
-    }
-
-    private fun computeHue(mode: Int, courseName: String, classroom: String, week: Int, diffColorPerWeek: Boolean): Double {
-        return when (mode) {
-            0, 1 -> {
-                val seed = if (diffColorPerWeek) "$courseName|$week" else courseName
-                (abs(seed.hashCode()).toDouble() * GOLDEN) % 360.0
-            }
-            else -> {
-                val seed = if (diffColorPerWeek) "$courseName|$classroom|$week" else "$courseName|$classroom"
-                (abs(seed.hashCode()).toDouble() * GOLDEN) % 360.0
-            }
-        }
-    }
-
-    private fun computeChroma(mode: Int, classroomIndex: Int, baseChroma: Double): Double {
-        return when (mode) {
-            1 -> (baseChroma - classroomIndex * CHROMA_STEP).coerceAtLeast(CHROMA_MIN)
-            else -> baseChroma
         }
     }
 
@@ -134,9 +107,11 @@ object CourseColors {
                 1 -> (primaryHue + i * step) % 360.0
                 else -> i * step
             }
-            val containerTone = if (isDark) 34.0 else 92.0
-            val contentTone = if (isDark) 96.0 else 15.0
-            hctToColor(hue, CHROMA_CONTAINER, containerTone) to hctToColor(hue, CHROMA_CONTENT, contentTone)
+            if (isDark) {
+                hctToColor(hue, 30.0, 25.0) to hctToColor(hue, 40.0, 90.0)
+            } else {
+                hctToColor(hue, 48.0, 90.0) to hctToColor(hue, 65.0, 40.0)
+            }
         }
     }
 }
