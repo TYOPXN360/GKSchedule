@@ -376,7 +376,7 @@ private fun CourseCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(modifier = Modifier.width(4.dp).fillMaxHeight().clip(CircleShape).background(barColor)) {
-                Box(modifier = Modifier.fillMaxWidth().fillMaxHeight(animatedProgress).clip(CircleShape).background(indicatorColor)) {}
+                Box(modifier = Modifier.fillMaxWidth().fillMaxHeight(animatedProgress).clip(CircleShape).background(indicatorColor.copy(alpha = 0.2f))) {}
             }
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
