@@ -57,6 +57,10 @@ sealed class Screen(val route: String) {
         fun createRoute(courseId: Long? = null, isExam: Boolean = false): String =
             "course_edit?courseId=${courseId ?: -1L}&isExam=$isExam"
     }
+    data object ExamEdit : Screen("exam_edit?courseId={courseId}") {
+        fun createRoute(courseId: Long? = null): String =
+            "exam_edit?courseId=${courseId ?: -1L}"
+    }
 }
 
 @Composable
@@ -365,7 +369,7 @@ fun ScheduleApp(
                     getEndTime = { viewModel.getEndTime(it) },
                     currentWeek = selectedWeek,
                     diffColorPerWeek = diffColorPerWeek,
-                    onAddExam = { navController.navigate(Screen.CourseEdit.createRoute(isExam = true)) },
+                    onAddExam = { navController.navigate(Screen.ExamEdit.createRoute()) },
                     onBack = { navController.popBackStack() }
                 )
             }
@@ -389,6 +393,24 @@ fun ScheduleApp(
 
                 CourseEditScreen(
                     course = currentCourse, periodsPerDay = periodsPerDay,
+                    onSave = { viewModel.saveCourse(it); navController.popBackStack() },
+                    onDelete = { viewModel.deleteCourse(it); navController.popBackStack() },
+                    onBack = { navController.popBackStack() }
+                )
+            }
+
+            composable(
+                route = Screen.ExamEdit.route,
+                arguments = listOf(navArgument("courseId") { type = NavType.LongType; defaultValue = -1L })
+            ) { backStackEntry ->
+                val courseId = backStackEntry.arguments?.getLong("courseId") ?: -1L
+                val currentCourse = remember(courseId, courses) {
+                    if (courseId != -1L) courses.find { it.id == courseId } else null
+                }
+                com.classapp.schedule.ui.exam.ExamEditScreen(
+                    course = currentCourse,
+                    periodsPerDay = periodsPerDay,
+                    semesterStart = semesterStart,
                     onSave = { viewModel.saveCourse(it); navController.popBackStack() },
                     onDelete = { viewModel.deleteCourse(it); navController.popBackStack() },
                     onBack = { navController.popBackStack() }
