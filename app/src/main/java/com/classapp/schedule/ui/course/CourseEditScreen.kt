@@ -49,6 +49,7 @@ fun CourseEditScreen(
     var startPeriod by remember { mutableIntStateOf(course?.startPeriod ?: 1) }
     var periods by remember { mutableIntStateOf(course?.periods ?: 1) }
     var colorIndex by remember { mutableIntStateOf(course?.colorIndex ?: 0) }
+    var isHidden by remember { mutableStateOf(course?.isHidden ?: false) }
     var weekRange by remember { mutableStateOf(course?.weekRange ?: "all") }
     var customWeekRange by remember { mutableStateOf(if (course?.weekRange == "all" || course?.weekRange == "odd" || course?.weekRange == "even") "" else (course?.weekRange ?: "")) }
     var remark by remember { mutableStateOf(course?.remark ?: "") }
@@ -213,6 +214,27 @@ fun CourseEditScreen(
                 }
             }
 
+            // Hide course switch
+            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("在课表中隐藏", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+                    Text("勾选后此节课将不再显示在今日和课表主页中", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Switch(
+                    checked = isHidden,
+                    onCheckedChange = { isHidden = it },
+                    thumbContent = if (isHidden) {
+                        { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(SwitchDefaults.IconSize)) }
+                    } else null
+                )
+            }
+            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
+
             // Week range
             Text(stringResource(R.string.week_range), style = MaterialTheme.typography.labelLarge)
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -257,7 +279,8 @@ fun CourseEditScreen(
                         colorIndex = colorIndex, weekRange = finalWeekRange,
                         remark = remark.trim(), isCustomTime = isCustomTime,
                         customStartTime = customStartTime, customEndTime = customEndTime,
-                        isManuallyEdited = true
+                        isManuallyEdited = true,
+                        isHidden = isHidden
                     ))
                 },
                 modifier = Modifier.fillMaxWidth(),
