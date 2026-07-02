@@ -428,8 +428,13 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
             // Convert and save — preserve manually edited courses
             val courses = CourseImporter.convertRemoteCourses(allRemoteCourses)
             val manualCourses = courseDao.getAllCourses().first().filter { it.isManuallyEdited }
+            // Save hidden status before deleting
+            val hiddenNames = manualCourses.filter { it.isHidden }.map { it.name }.toSet()
             courseDao.deleteAllCourses()
-            courses.forEach { courseDao.insertCourse(it) }
+            courses.forEach { c ->
+                val isHid = hiddenNames.contains(c.name)
+                courseDao.insertCourse(c.copy(isHidden = isHid))
+            }
             // Re-insert manually edited courses (they overwrite school data)
             manualCourses.forEach { courseDao.insertCourse(it.copy(id = 0)) }
 
@@ -508,8 +513,13 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                         }
                     
                     if (hasChanges) {
+                        // Save hidden status before deleting
+                        val hiddenNames = existingCourses.filter { it.isHidden }.map { it.name }.toSet()
                         courseDao.deleteAllCourses()
-                        newCourses.forEach { courseDao.insertCourse(it) }
+                        newCourses.forEach { c ->
+                            val isHid = hiddenNames.contains(c.name)
+                            courseDao.insertCourse(c.copy(isHidden = isHid))
+                        }
                         manualCourses.forEach { courseDao.insertCourse(it.copy(id = 0)) }
                         _messages.emit("已更新 ${newCourses.size} 门课程")
                     } else {
