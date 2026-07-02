@@ -158,7 +158,7 @@ fun ExamEditScreen(
             OutlinedTextField(
                 value = remarkText, onValueChange = { remarkText = it },
                 label = { Text("其他备注 (选填)") }, leadingIcon = { Icon(Icons.Default.Assignment, null) },
-                modifier = Modifier.fillMaxWidth(), minLines = 1, maxLines = 4,
+                modifier = Modifier.fillMaxWidth(), minLines = 1,
                 shape = RoundedCornerShape(12.dp)
             )
 
