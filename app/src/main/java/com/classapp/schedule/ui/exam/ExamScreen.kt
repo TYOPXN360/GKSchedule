@@ -178,7 +178,10 @@ fun ExamScreen(
                         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
                             Icon(Icons.Default.Event, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                             Spacer(modifier = Modifier.width(12.dp))
-                            Text("今日页提前多少周显示考试", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                            Column {
+                                Text("考试预览周数", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                                Text("今日页提前多少周显示考试", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
                         }
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             IconButton(onClick = { if (examLookaheadWeeks > 1) onExamLookaheadWeeksChange(examLookaheadWeeks - 1) }, enabled = examLookaheadWeeks > 1) {
