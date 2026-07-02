@@ -37,7 +37,7 @@ fun TodayScreen(
     currentWeek: Int,
     colorEngine: Int = 0,
     colorGroupMode: Int = 2,
-    exams: List<com.classapp.schedule.api.ExamInfo> = emptyList(),
+    exams: List<com.classapp.schedule.data.ExamEntity> = emptyList(),
     showExamSchedule: Boolean = false,
     examLookaheadWeeks: Int = 2,
     semesterStart: java.time.LocalDate = java.time.LocalDate.now(),
@@ -62,7 +62,7 @@ fun TodayScreen(
     val todayExamCourses = if (showExamSchedule) {
         exams.mapNotNull { exam ->
             try {
-                val examDate = java.time.LocalDate.parse(exam.getExamDate())
+                val examDate = java.time.LocalDate.parse(exam.examDate)
                 if (examDate == today) exam.toTodayCourse(semesterStart, getStartTime, getEndTime) else null
             } catch (_: Exception) { null }
         }
@@ -226,10 +226,10 @@ fun TodayScreen(
             val latestExamDate = todayDate.plusWeeks(examLookaheadWeeks.toLong())
             val upcomingExams = exams.filter { exam ->
                 try {
-                    val examDate = java.time.LocalDate.parse(exam.getExamDate())
+                    val examDate = java.time.LocalDate.parse(exam.examDate)
                     !examDate.isBefore(todayDate) && !examDate.isAfter(latestExamDate) && examDate != todayDate
                 } catch (_: Exception) { false }
-            }.sortedBy { it.getExamDate() }.take(5)
+            }.sortedBy { it.examDate }.take(5)
 
             if (upcomingExams.isNotEmpty()) {
                 item {
@@ -251,11 +251,11 @@ fun TodayScreen(
                     Spacer(modifier = Modifier.height(4.dp))
                 }
                 items(upcomingExams) { exam ->
-                    val examDate = try { java.time.LocalDate.parse(exam.getExamDate()) } catch (_: Exception) { null }
+                    val examDate = try { java.time.LocalDate.parse(exam.examDate) } catch (_: Exception) { null }
                     val examWeek = if (examDate != null) {
                         (java.time.temporal.ChronoUnit.DAYS.between(semesterStart, examDate).toInt() / 7) + 1
                     } else currentWeek
-                    val examColor = CourseColors.getColorSync(colorGroupMode, exam.kcmc, exam.cdmc, week = examWeek, diffColorPerWeek = diffColorPerWeek, isDark = isDark)
+                    val examColor = CourseColors.getColorSync(colorGroupMode, exam.courseName, exam.classroom, week = examWeek, diffColorPerWeek = diffColorPerWeek, isDark = isDark)
                     ExamCard(exam = exam, examColor = examColor, onClick = { detailCourse = exam.toTodayCourse(semesterStart, getStartTime, getEndTime) })
                 }
             }
@@ -438,15 +438,15 @@ private fun parseTime(time: String): Int {
     return (parts.getOrNull(0)?.toIntOrNull() ?: 0) * 60 + (parts.getOrNull(1)?.toIntOrNull() ?: 0)
 }
 
-private fun com.classapp.schedule.api.ExamInfo.toTodayCourse(
+private fun com.classapp.schedule.data.ExamEntity.toTodayCourse(
     semesterStart: java.time.LocalDate,
     getStartTime: (Int) -> String,
     getEndTime: (Int) -> String
 ): Course? {
     return try {
-        val examDate = java.time.LocalDate.parse(getExamDate())
-        val timeRange = getExamTimeRange()
-        android.util.Log.d("TodayExam", "kssj=$kssj, timeRange=$timeRange")
+        val examDate = java.time.LocalDate.parse(this.examDate)
+        val timeRange = this.examTimeRange
+        android.util.Log.d("TodayExam", "examDate=${this.examDate}, timeRange=$timeRange")
         val timeParts = timeRange.split("-")
         if (timeParts.size != 2) return null
         val startPeriod = timeToPeriod(timeParts[0].trim(), getStartTime)
@@ -455,15 +455,15 @@ private fun com.classapp.schedule.api.ExamInfo.toTodayCourse(
         val daysDiff = java.time.temporal.ChronoUnit.DAYS.between(semesterStart, examDate).toInt()
         val week = (daysDiff / 7) + 1
         Course(
-            id = -((kch.ifEmpty { "$kcmc|$kssj|$cdmc" }).hashCode().toLong().let { kotlin.math.abs(it) } + 1L),
-            name = kcmc,
-            teacher = jsxx,
-            classroom = cdmc,
+            id = -((courseCode.ifEmpty { "$courseName|$examDate|$classroom" }).hashCode().toLong().let { kotlin.math.abs(it) } + 1L),
+            name = courseName,
+            teacher = teacherInfo,
+            classroom = classroom,
             dayOfWeek = examDate.dayOfWeek.value,
             startPeriod = startPeriod,
             periods = endPeriod - startPeriod + 1,
             weekRange = week.toString(),
-            remark = listOf(kssj, ksfs, khfs).filter { it.isNotEmpty() }.joinToString("\n"),
+            remark = examMethod,
             isCustomTime = true,
             customStartTime = timeParts[0].trim(),
             customEndTime = timeParts[1].trim()
@@ -487,8 +487,8 @@ private fun timeToPeriod(time: String, timeProvider: (Int) -> String): Int {
 }
 
 @Composable
-private fun ExamCard(exam: com.classapp.schedule.api.ExamInfo, examColor: com.classapp.schedule.util.CourseColors.CourseColorPair, onClick: () -> Unit = {}) {
-    val examDate = try { java.time.LocalDate.parse(exam.getExamDate()) } catch (_: Exception) { null }
+private fun ExamCard(exam: com.classapp.schedule.data.ExamEntity, examColor: com.classapp.schedule.util.CourseColors.CourseColorPair, onClick: () -> Unit = {}) {
+    val examDate = try { java.time.LocalDate.parse(exam.examDate) } catch (_: Exception) { null }
     val now = java.time.LocalDate.now()
     val isPast = examDate?.isBefore(now) == true
     val alpha = if (isPast) 0.5f else 1f
@@ -512,16 +512,16 @@ private fun ExamCard(exam: com.classapp.schedule.api.ExamInfo, examColor: com.cl
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(exam.kcmc, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,
+                    Text(exam.courseName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha), maxLines = 1, overflow = TextOverflow.Ellipsis)
                     if (isPast) { Spacer(modifier = Modifier.width(6.dp)); Icon(Icons.Default.CheckCircle, null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)) }
                 }
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (exam.kssj.isNotEmpty()) { Text(exam.kssj, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha)) }
-                    if (exam.cdmc.isNotEmpty()) { Spacer(modifier = Modifier.width(8.dp)); Text(exam.cdmc, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha)) }
+                    if (exam.examDate.isNotEmpty()) { Text(exam.examDate + " " + exam.examTimeRange, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha)) }
+                    if (exam.classroom.isNotEmpty()) { Spacer(modifier = Modifier.width(8.dp)); Text(exam.classroom, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha)) }
                 }
-                if (exam.ksfs.isNotEmpty()) { Text(exam.ksfs, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha * 0.7f)) }
+                if (exam.examMethod.isNotEmpty()) { Text(exam.examMethod, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha * 0.7f)) }
             }
             if (!isPast && daysLeft >= 0) {
                 Spacer(modifier = Modifier.width(8.dp))

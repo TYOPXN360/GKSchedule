@@ -79,7 +79,7 @@ fun WeeklyScheduleScreen(
     showDateInHeader: Boolean,
     semesterStart: java.time.LocalDate,
     isRefreshing: Boolean,
-    exams: List<com.classapp.schedule.api.ExamInfo> = emptyList(),
+    exams: List<com.classapp.schedule.data.ExamEntity> = emptyList(),
     showExamSchedule: Boolean = false,
     onWeekChange: (Int) -> Unit,
     onCourseClick: (Course) -> Unit,
@@ -654,33 +654,33 @@ private fun WeekPickerSheet(totalWeeks: Int, currentWeek: Int, onWeekSelected: (
 
 private fun Course.isExamCourse(): Boolean = id < 0
 
-private fun com.classapp.schedule.api.ExamInfo.toScheduleCourse(
+private fun com.classapp.schedule.data.ExamEntity.toScheduleCourse(
     semesterStart: java.time.LocalDate,
     getStartTime: (Int) -> String,
     getEndTime: (Int) -> String
 ): Course? {
     return try {
-        val examDate = java.time.LocalDate.parse(getExamDate())
+        val examDate = java.time.LocalDate.parse(examDate)
         val daysDiff = java.time.temporal.ChronoUnit.DAYS.between(semesterStart, examDate).toInt()
         val week = (daysDiff / 7) + 1
         if (week <= 0) return null
 
-        val timeParts = getExamTimeRange().split("-")
+        val timeParts = examTimeRange.split("-")
         if (timeParts.size != 2) return null
         val startPeriod = timeToPeriod(timeParts[0].trim(), getStartTime)
         val endPeriod = timeToPeriod(timeParts[1].trim(), getEndTime)
         if (startPeriod <= 0 || endPeriod < startPeriod) return null
 
         Course(
-            id = -((kch.ifEmpty { "$kcmc|$kssj|$cdmc" }).hashCode().toLong().let { kotlin.math.abs(it) } + 1L),
-            name = kcmc,
-            teacher = jsxx,
-            classroom = cdmc,
+            id = -((courseCode.ifEmpty { "$courseName|$examDate|$classroom" }).hashCode().toLong().let { kotlin.math.abs(it) } + 1L),
+            name = courseName,
+            teacher = teacherInfo,
+            classroom = classroom,
             dayOfWeek = examDate.dayOfWeek.value,
             startPeriod = startPeriod,
             periods = endPeriod - startPeriod + 1,
             weekRange = week.toString(),
-            remark = listOf(kssj, ksfs, khfs).filter { it.isNotEmpty() }.joinToString("\n"),
+            remark = examMethod,
             isCustomTime = true,
             customStartTime = timeParts[0].trim(),
             customEndTime = timeParts[1].trim()

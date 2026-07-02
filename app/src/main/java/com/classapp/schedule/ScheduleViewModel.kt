@@ -28,6 +28,7 @@ import java.time.LocalDate
 class ScheduleViewModel(application: Application) : AndroidViewModel(application) {
 
     private val courseDao: CourseDao = CourseDatabase.getDatabase(application).courseDao()
+    val examDao: com.classapp.schedule.data.ExamDao = CourseDatabase.getDatabase(application).examDao()
     private val settings = SettingsDataStore(application)
     private val app = application
     val api = GdustApi() // Public for WebView login
@@ -115,15 +116,11 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                 val ticket = settings.casTicket.first()
                 if (ticket.isNotEmpty()) api.setCasTicket(ticket)
                 android.util.Log.d("GdustApi", "restore: login restored, hasToken=${api.hasToken()}, hasTicket=${ticket.isNotEmpty()}")
-                // Load cached exams
-                val cachedJson = settings.cachedExams.first()
-                if (cachedJson.isNotEmpty()) {
-                    try {
-                        _examList.value = kotlinx.serialization.json.Json.decodeFromString(cachedJson)
-                        _examYear.value = settings.cachedExamYear.first()
-                        _examSemester.value = settings.cachedExamSemester.first()
-                    } catch (_: Exception) {}
-                }
+                // Load cached exams from DB (or skip if empty)
+                try {
+                    _examYear.value = settings.cachedExamYear.first()
+                    _examSemester.value = settings.cachedExamSemester.first()
+                } catch (_: Exception) {}
                 // Auto-refresh on app start if enabled
                 val syncOnStart = settings.autoSyncOnStart.first()
                 if (syncOnStart) refreshFromSchool()
@@ -638,9 +635,8 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
-    // Exam schedule
-    private val _examList = MutableStateFlow<List<com.classapp.schedule.api.ExamInfo>>(emptyList())
-    val examList: StateFlow<List<com.classapp.schedule.api.ExamInfo>> = _examList
+    // Exam schedule — backed by Room DB (single source of truth)
+    val examList: Flow<List<com.classapp.schedule.data.ExamEntity>> = examDao.getAllExams()
     private val _examLoading = MutableStateFlow(false)
     val examLoading: StateFlow<Boolean> = _examLoading
     private val _examYear = MutableStateFlow("")
@@ -677,13 +673,25 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                 android.util.Log.d("GdustApi", "refreshExamSchedule: yearStr=$yearStr, year=$year, semester=$semester")
                 val result = api.getExamSchedule(year, semester)
                 result.onSuccess { exams ->
-                    _examList.value = exams
-                    // Cache exams
-                    val json = kotlinx.serialization.json.Json.encodeToString(
-                        kotlinx.serialization.builtins.ListSerializer(com.classapp.schedule.api.ExamInfo.serializer()), exams
-                    )
-                    settings.saveCachedExams(json, yearStr, semester)
-                    _messages.emit("已获取 ${exams.size} 条考试信息")
+                    // Convert API ExamInfo to ExamEntity and persist to DB
+                    val entities = exams.map { e ->
+                        com.classapp.schedule.data.ExamEntity(
+                            courseName = e.kcmc,
+                            examDate = e.getExamDate(),
+                            examTimeRange = e.getExamTimeRange(),
+                            classroom = e.cdmc,
+                            campus = e.cdxqmc,
+                            examMethod = e.ksfs,
+                            courseCode = e.kch,
+                            credits = e.xf,
+                            yearName = e.xnmc,
+                            semesterName = e.xqmmc,
+                            teacherInfo = e.jsxx
+                        )
+                    }
+                    examDao.clearAll()
+                    examDao.insertAll(entities)
+                    _messages.emit("已获取 ${entities.size} 条考试信息")
                 }.onFailure { e ->
                     val msg = e.message ?: ""
                     if (msg.contains("901") || msg.contains("认证失败") || msg.contains("未登录")) {

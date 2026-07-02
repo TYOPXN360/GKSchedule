@@ -30,8 +30,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.classapp.schedule.api.ExamInfo
 import com.classapp.schedule.data.Course
+import com.classapp.schedule.data.ExamEntity
 import com.classapp.schedule.util.CourseColors
 import com.classapp.schedule.ui.theme.LocalAppIsDark
 import com.classapp.schedule.ui.theme.Md3Card
@@ -43,7 +43,7 @@ import kotlin.math.abs
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExamScreen(
-    exams: List<ExamInfo>,
+    exams: List<ExamEntity>,
     customExams: List<Course> = emptyList(),
     isLoading: Boolean,
     semesterStart: LocalDate,
@@ -229,16 +229,16 @@ fun ExamScreen(
                     }
                 }
             } else {
-                val sortedExams = exams.sortedBy { it.getExamDate() }
+                val sortedExams = exams.sortedBy { it.examDate }
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(sortedExams) { exam ->
-                        val examDate = try { LocalDate.parse(exam.getExamDate()) } catch (_: Exception) { null }
+                        val examDate = try { LocalDate.parse(exam.examDate) } catch (_: Exception) { null }
                         val examWeek = if (examDate != null) (ChronoUnit.DAYS.between(semesterStart, examDate).toInt() / 7) + 1 else currentWeek
-                        val examColor = CourseColors.getColorSync(colorGroupMode, exam.kcmc, exam.cdmc, week = examWeek, diffColorPerWeek = diffColorPerWeek, isDark = isDark)
+                        val examColor = CourseColors.getColorSync(colorGroupMode, exam.courseName, exam.classroom, week = examWeek, diffColorPerWeek = diffColorPerWeek, isDark = isDark)
                         ExamCard(exam = exam, examColor = examColor, onClick = { detailCourse = exam.toCourseObject(semesterStart, getStartTime, getEndTime) })
                     }
 
@@ -312,8 +312,8 @@ fun ExamScreen(
 }
 
 @Composable
-private fun ExamCard(exam: ExamInfo, examColor: CourseColors.CourseColorPair, onClick: () -> Unit) {
-    val examDate = try { LocalDate.parse(exam.getExamDate()) } catch (_: Exception) { null }
+private fun ExamCard(exam: ExamEntity, examColor: CourseColors.CourseColorPair, onClick: () -> Unit) {
+    val examDate = try { LocalDate.parse(exam.examDate) } catch (_: Exception) { null }
     val now = LocalDate.now()
     val isPast = examDate?.isBefore(now) == true
     val alpha = if (isPast) 0.5f else 1f
@@ -326,16 +326,16 @@ private fun ExamCard(exam: ExamInfo, examColor: CourseColors.CourseColorPair, on
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(exam.kcmc, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,
+                    Text(exam.courseName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha), maxLines = 1, overflow = TextOverflow.Ellipsis)
                     if (isPast) { Spacer(modifier = Modifier.width(6.dp)); Icon(Icons.Default.CheckCircle, null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)) }
                 }
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (exam.kssj.isNotEmpty()) Text(exam.kssj, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha))
-                    if (exam.cdmc.isNotEmpty()) { Spacer(modifier = Modifier.width(8.dp)); Text(exam.cdmc, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha)) }
+                    if (exam.examDate.isNotEmpty()) Text(exam.examDate + " " + exam.examTimeRange, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha))
+                    if (exam.classroom.isNotEmpty()) { Spacer(modifier = Modifier.width(8.dp)); Text(exam.classroom, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha)) }
                 }
-                if (exam.ksfs.isNotEmpty()) Text(exam.ksfs, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha * 0.7f))
+                if (exam.examMethod.isNotEmpty()) Text(exam.examMethod, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha * 0.7f))
             }
             if (!isPast && daysLeft >= 0) {
                 Spacer(modifier = Modifier.width(8.dp))
@@ -348,13 +348,13 @@ private fun ExamCard(exam: ExamInfo, examColor: CourseColors.CourseColorPair, on
     }
 }
 
-// Helper: convert ExamInfo to Course for CourseDetailSheet
-private fun ExamInfo.toCourseObject(semesterStart: LocalDate, getStartTime: (Int) -> String, getEndTime: (Int) -> String): Course? {
+// Helper: convert ExamEntity to Course for CourseDetailSheet
+private fun ExamEntity.toCourseObject(semesterStart: LocalDate, getStartTime: (Int) -> String, getEndTime: (Int) -> String): Course? {
     return try {
-        val examDate = LocalDate.parse(getExamDate())
+        val examDate = LocalDate.parse(examDate)
         val daysDiff = ChronoUnit.DAYS.between(semesterStart, examDate).toInt()
         val week = (daysDiff / 7) + 1
-        val timeParts = getExamTimeRange().split("-")
+        val timeParts = examTimeRange.split("-")
         if (timeParts.size != 2) return null
         fun timeToPeriodLocal(time: String, provider: (Int) -> String): Int {
             val parts = time.split(":")
@@ -371,11 +371,11 @@ private fun ExamInfo.toCourseObject(semesterStart: LocalDate, getStartTime: (Int
         val startPeriod = timeToPeriodLocal(timeParts[0].trim(), getStartTime)
         val endPeriod = timeToPeriodLocal(timeParts[1].trim(), getEndTime)
         Course(
-            id = -((kch.ifEmpty { "$kcmc|$kssj|$cdmc" }).hashCode().toLong().let { abs(it) } + 1L),
-            name = kcmc, teacher = jsxx, classroom = cdmc,
+            id = -((courseCode.ifEmpty { "$courseName|$examDate|$classroom" }).hashCode().toLong().let { abs(it) } + 1L),
+            name = courseName, teacher = teacherInfo, classroom = classroom,
             dayOfWeek = examDate.dayOfWeek.value, startPeriod = startPeriod,
             periods = (endPeriod - startPeriod + 1).coerceAtLeast(1), weekRange = week.toString(),
-            remark = listOf(kssj, ksfs, khfs).filter { it.isNotEmpty() }.joinToString("\n"),
+            remark = examMethod,
             isCustomTime = true, customStartTime = timeParts[0].trim(), customEndTime = timeParts[1].trim()
         )
     } catch (_: Exception) { null }

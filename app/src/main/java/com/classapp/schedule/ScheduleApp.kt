@@ -102,7 +102,7 @@ fun ScheduleApp(
     val showHiddenCourses by viewModel.showHiddenCourses.collectAsState(initial = false)
     // Gemini Fix: displayCourses 在 NavHost 外面，作为活的 State 随数据变化实时更新
     val displayCourses = if (showHiddenCourses) courses else courses.filter { !it.isHidden }
-    val examList by viewModel.examList.collectAsState()
+    val examList by viewModel.examList.collectAsState(initial = emptyList())
     val showExamSchedule by viewModel.showExamSchedule.collectAsState(initial = false)
 
     // Show snackbar messages
