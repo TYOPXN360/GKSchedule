@@ -58,19 +58,14 @@ fun TodayScreen(
         .filter { it.dayOfWeek == todayDow && it.isInWeek(currentWeek) }
         .sortedBy { it.startPeriod }
 
-    // Convert today's exams to Course objects and merge into today's list
-    val todayExamCourses = if (showExamSchedule) {
-        exams.mapNotNull { exam ->
-            try {
-                val examDate = java.time.LocalDate.parse(exam.examDate)
-                if (examDate == today) exam.toTodayCourse(semesterStart, getStartTime, getEndTime) else null
-            } catch (_: Exception) { null }
+    // Today's exam entities (direct, no Course conversion)
+    val todayExams = if (showExamSchedule) {
+        exams.filter { exam ->
+            try { java.time.LocalDate.parse(exam.examDate) == today } catch (_: Exception) { false }
         }
     } else emptyList()
-    // Merge and deduplicate by business key (name+period+day) to prevent clone records
-    val allTodayCourses = (todayCourses + todayExamCourses)
-        .distinctBy { "${it.name}|${it.startPeriod}|${it.dayOfWeek}" }
-        .sortedBy { it.startPeriod }
+
+    val allTodayCourses = todayCourses
 
     val tomorrowCourses = courses
         .filter { it.dayOfWeek == tomorrowDow && tomorrowWeek in 1..52 && it.isInWeek(tomorrowWeek) }
@@ -179,6 +174,27 @@ fun TodayScreen(
             }
         }
 
+        // Today's exams (native ExamCard, no Course conversion)
+        if (todayExams.isNotEmpty()) {
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+                HorizontalDivider()
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.School, contentDescription = "今日考试", modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.error)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("今日考试", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.error)
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+            }
+            items(todayExams) { exam ->
+                val examDate = try { java.time.LocalDate.parse(exam.examDate) } catch (_: Exception) { null }
+                val examWeek = if (examDate != null) (java.time.temporal.ChronoUnit.DAYS.between(semesterStart, examDate).toInt() / 7) + 1 else currentWeek
+                val examColor = CourseColors.getColorSync(colorGroupMode, exam.courseName, exam.classroom, week = examWeek, diffColorPerWeek = diffColorPerWeek, isDark = isDark)
+                ExamCard(exam = exam, examColor = examColor)
+            }
+        }
+
         // Tomorrow preview — only show between 16:00 and 23:59
         if (currentTimeMinutes >= 960) {
             item {
@@ -256,7 +272,7 @@ fun TodayScreen(
                         (java.time.temporal.ChronoUnit.DAYS.between(semesterStart, examDate).toInt() / 7) + 1
                     } else currentWeek
                     val examColor = CourseColors.getColorSync(colorGroupMode, exam.courseName, exam.classroom, week = examWeek, diffColorPerWeek = diffColorPerWeek, isDark = isDark)
-                    ExamCard(exam = exam, examColor = examColor, onClick = { detailCourse = exam.toTodayCourse(semesterStart, getStartTime, getEndTime) })
+                    ExamCard(exam = exam, examColor = examColor)
                 }
             }
         }
@@ -436,39 +452,6 @@ private fun findCurrentPeriod(
 private fun parseTime(time: String): Int {
     val parts = time.split(":")
     return (parts.getOrNull(0)?.toIntOrNull() ?: 0) * 60 + (parts.getOrNull(1)?.toIntOrNull() ?: 0)
-}
-
-private fun com.classapp.schedule.data.ExamEntity.toTodayCourse(
-    semesterStart: java.time.LocalDate,
-    getStartTime: (Int) -> String,
-    getEndTime: (Int) -> String
-): Course? {
-    return try {
-        val examDate = java.time.LocalDate.parse(this.examDate)
-        val timeRange = this.examTimeRange
-        android.util.Log.d("TodayExam", "examDate=${this.examDate}, timeRange=$timeRange")
-        val timeParts = timeRange.split("-")
-        if (timeParts.size != 2) return null
-        val startPeriod = timeToPeriod(timeParts[0].trim(), getStartTime)
-        val endPeriod = timeToPeriod(timeParts[1].trim(), getEndTime)
-        if (startPeriod <= 0 || endPeriod < startPeriod) return null
-        val daysDiff = java.time.temporal.ChronoUnit.DAYS.between(semesterStart, examDate).toInt()
-        val week = (daysDiff / 7) + 1
-        Course(
-            id = -((courseCode.ifEmpty { "$courseName|$examDate|$classroom" }).hashCode().toLong().let { kotlin.math.abs(it) } + 1L),
-            name = courseName,
-            teacher = teacherInfo,
-            classroom = classroom,
-            dayOfWeek = examDate.dayOfWeek.value,
-            startPeriod = startPeriod,
-            periods = endPeriod - startPeriod + 1,
-            weekRange = week.toString(),
-            remark = examMethod,
-            isCustomTime = true,
-            customStartTime = timeParts[0].trim(),
-            customEndTime = timeParts[1].trim()
-        )
-    } catch (_: Exception) { null }
 }
 
 private fun timeToPeriod(time: String, timeProvider: (Int) -> String): Int {
