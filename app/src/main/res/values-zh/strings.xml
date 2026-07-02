@@ -66,7 +66,7 @@
     <!-- Settings - Categories -->
     <string name="settings_title">设置</string>
     <string name="settings_category_semester">学期</string>
-    <string name="settings_category_semester_desc">开学日期、总周数、每天节数</string>
+    <string name="settings_category_semester_desc">每周第一天、隐藏空周</string>
     <string name="settings_category_appearance">外观</string>
     <string name="settings_category_appearance_desc">深色模式、语言</string>
     <string name="settings_category_schedule">课表样式</string>
