@@ -9,6 +9,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.google.android.material.color.utilities.Hct
 
 val LocalAppIsDark = compositionLocalOf { false }
 
@@ -87,10 +88,16 @@ fun ClassAppTheme(
     }
     val context = LocalContext.current
     val colorScheme = when {
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && isDark -> dynamicDarkColorScheme(context)
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && isDark -> {
+            val dynamicDark = dynamicDarkColorScheme(context)
+            val systemHue = Hct.fromInt(dynamicDark.primary.value.toInt()).hue
+            val dynamicContainerHigh = Color(Hct.from(systemHue, 6.0, 17.0).toInt())
+            val dynamicContainerHighest = Color(Hct.from(systemHue, 6.0, 22.0).toInt())
+            dynamicDark.copy(surfaceContainerHigh = dynamicContainerHigh, surfaceContainerHighest = dynamicContainerHighest)
+        }
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !isDark -> {
             val dynamicLight = dynamicLightColorScheme(context)
-            if (dynamicLight.surface.luminance() < 0.5f) LightColorScheme else dynamicLight
+            if (dynamicLight.surface.luminance() < 0.85f) LightColorScheme else dynamicLight
         }
         isDark -> DarkColorScheme
         else -> LightColorScheme
