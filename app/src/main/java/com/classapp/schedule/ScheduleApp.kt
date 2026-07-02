@@ -53,9 +53,9 @@ sealed class Screen(val route: String) {
     data object Login : Screen("login")
     data object WebViewLogin : Screen("webview_login")
     data object Exam : Screen("exam")
-    data object CourseEdit : Screen("course_edit?courseId={courseId}") {
-        fun createRoute(courseId: Long? = null): String =
-            if (courseId != null) "course_edit?courseId=$courseId" else "course_edit"
+    data object CourseEdit : Screen("course_edit?courseId={courseId}&isExam={isExam}") {
+        fun createRoute(courseId: Long? = null, isExam: Boolean = false): String =
+            "course_edit?courseId=${courseId ?: -1L}&isExam=$isExam"
     }
 }
 
@@ -365,16 +365,20 @@ fun ScheduleApp(
                     getEndTime = { viewModel.getEndTime(it) },
                     currentWeek = selectedWeek,
                     diffColorPerWeek = diffColorPerWeek,
-                    onAddExam = { /* TODO: navigate to add exam */ },
+                    onAddExam = { navController.navigate(Screen.CourseEdit.createRoute(isExam = true)) },
                     onBack = { navController.popBackStack() }
                 )
             }
 
             composable(
                 route = Screen.CourseEdit.route,
-                arguments = listOf(navArgument("courseId") { type = NavType.LongType; defaultValue = -1L })
+                arguments = listOf(
+                    navArgument("courseId") { type = NavType.LongType; defaultValue = -1L },
+                    navArgument("isExam") { type = NavType.BoolType; defaultValue = false }
+                )
             ) { backStackEntry ->
                 val courseId = backStackEntry.arguments?.getLong("courseId") ?: -1L
+                val isExam = backStackEntry.arguments?.getBoolean("isExam") ?: false
                 var currentCourse by remember { mutableStateOf(if (courseId > 0) courses.find { it.id == courseId } else null) }
 
                 LaunchedEffect(courseId) {
