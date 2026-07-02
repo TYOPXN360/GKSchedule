@@ -57,6 +57,8 @@ fun CourseEditScreen(
     var customStartTime by remember { mutableStateOf(course?.customStartTime ?: "08:00") }
     var customEndTime by remember { mutableStateOf(course?.customEndTime ?: "09:00") }
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var showM3StartTimePicker by remember { mutableStateOf(false) }
+    var showM3EndTimePicker by remember { mutableStateOf(false) }
 
     val dayNames = listOf(
         stringResource(R.string.mon), stringResource(R.string.tue),
@@ -161,23 +163,13 @@ fun CourseEditScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     OutlinedButton(
-                        onClick = {
-                            val parts = customStartTime.split(":")
-                            TimePickerDialog(context, { _, h, m ->
-                                customStartTime = "%02d:%02d".format(h, m)
-                            }, parts[0].toIntOrNull() ?: 8, parts[1].toIntOrNull() ?: 0, true).show()
-                        },
+                        onClick = { showM3StartTimePicker = true },
                         modifier = Modifier.weight(1f)
                     ) {
                         Text("${stringResource(R.string.custom_start_time)}: $customStartTime")
                     }
                     OutlinedButton(
-                        onClick = {
-                            val parts = customEndTime.split(":")
-                            TimePickerDialog(context, { _, h, m ->
-                                customEndTime = "%02d:%02d".format(h, m)
-                            }, parts[0].toIntOrNull() ?: 9, parts[1].toIntOrNull() ?: 0, true).show()
-                        },
+                        onClick = { showM3EndTimePicker = true },
                         modifier = Modifier.weight(1f)
                     ) {
                         Text("${stringResource(R.string.custom_end_time)}: $customEndTime")
@@ -288,6 +280,48 @@ fun CourseEditScreen(
                     Text(stringResource(R.string.cancel))
                 }
             }
+        )
+    }
+
+    // M3 TimePicker - start time
+    if (showM3StartTimePicker) {
+        val startParts = customStartTime.split(":")
+        val timePickerState = rememberTimePickerState(
+            initialHour = startParts.getOrNull(0)?.toIntOrNull() ?: 8,
+            initialMinute = startParts.getOrNull(1)?.toIntOrNull() ?: 0, is24Hour = true
+        )
+        AlertDialog(
+            onDismissRequest = { showM3StartTimePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    customStartTime = String.format("%02d:%02d", timePickerState.hour, timePickerState.minute)
+                    showM3StartTimePicker = false
+                }) { Text("确定") }
+            },
+            dismissButton = { TextButton(onClick = { showM3StartTimePicker = false }) { Text("取消") } },
+            title = { Text(stringResource(R.string.custom_start_time), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) },
+            text = { Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { TimePicker(state = timePickerState) } }
+        )
+    }
+
+    // M3 TimePicker - end time
+    if (showM3EndTimePicker) {
+        val endParts = customEndTime.split(":")
+        val timePickerState = rememberTimePickerState(
+            initialHour = endParts.getOrNull(0)?.toIntOrNull() ?: 9,
+            initialMinute = endParts.getOrNull(1)?.toIntOrNull() ?: 0, is24Hour = true
+        )
+        AlertDialog(
+            onDismissRequest = { showM3EndTimePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    customEndTime = String.format("%02d:%02d", timePickerState.hour, timePickerState.minute)
+                    showM3EndTimePicker = false
+                }) { Text("确定") }
+            },
+            dismissButton = { TextButton(onClick = { showM3EndTimePicker = false }) { Text("取消") } },
+            title = { Text(stringResource(R.string.custom_end_time), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) },
+            text = { Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { TimePicker(state = timePickerState) } }
         )
     }
 }
