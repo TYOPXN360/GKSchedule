@@ -225,7 +225,7 @@ fun ScheduleApp(
                     totalWeeks = totalWeeks, periodsPerDay = periodsPerDay,
                     gridHeight = gridHeight, gridCorner = gridCorner,
                     gridSpacing = gridSpacing, showPeriodLabel = showPeriodLabel,
-                    autoGridHeight = autoGridHeight,
+                    autoGridHeight = autoGridHeight, firstDayOfWeek = firstDayOfWeek,
                     mergeConsecutive = mergeConsecutive,
                     showTimeLabel = showTimeLabel,
                     detailedSplit = detailedSplit,

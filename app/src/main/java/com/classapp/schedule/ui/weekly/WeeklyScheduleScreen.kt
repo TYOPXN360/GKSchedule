@@ -87,11 +87,14 @@ fun WeeklyScheduleScreen(
     onAddCourse: () -> Unit,
     onRefresh: () -> Unit,
     realCurrentWeek: Int = currentWeek,
+    firstDayOfWeek: Int = 1,
     diffColorPerWeek: Boolean = false,
     getStartTime: (Int) -> String = { "" },
     getEndTime: (Int) -> String = { "" }
 ) {
-    val daysOfWeek = listOf(R.string.mon, R.string.tue, R.string.wed, R.string.thu, R.string.fri, R.string.sat, R.string.sun)
+    // Reorder days based on firstDayOfWeek setting (1=Monday, 7=Sunday)
+    val allDays = listOf(R.string.mon, R.string.tue, R.string.wed, R.string.thu, R.string.fri, R.string.sat, R.string.sun)
+    val daysOfWeek = allDays.drop(firstDayOfWeek - 1) + allDays.take(firstDayOfWeek - 1)
     var showWeekPicker by remember { mutableStateOf(false) }
     var detailCourse by remember { mutableStateOf<Course?>(null) }
     val hapticContext = androidx.compose.ui.platform.LocalContext.current
