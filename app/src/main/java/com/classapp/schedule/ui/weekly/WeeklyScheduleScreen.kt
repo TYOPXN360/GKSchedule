@@ -252,28 +252,31 @@ fun WeeklyScheduleScreen(
                 }
             }
 
-            // Header
-            Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
+            // Header: unified day+date grid with today highlight
+            Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                 if (showPeriodLabel) Spacer(modifier = Modifier.width(labelWidthDp))
-                daysOfWeek.forEach { dayRes ->
-                    Box(modifier = Modifier.weight(1f).padding(2.dp), contentAlignment = Alignment.Center) {
+                val todayDate = java.time.LocalDate.now()
+                val todayDow = todayDate.dayOfWeek.value
+                for (index in 0 until 7) {
+                    val dayRes = daysOfWeek[index]
+                    val courseDay = ((startDay - 1 + index) % 7) + 1
+                    val isToday = courseDay == todayDow && currentWeek == realCurrentWeek
+                    Column(
+                        modifier = Modifier.weight(1f).padding(horizontal = 2.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(if (isToday) MaterialTheme.colorScheme.primaryContainer else Color.Transparent)
+                            .padding(vertical = 6.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
                         Text(stringResource(dayRes), style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                }
-            }
-            // Date row (optional)
-            if (showDateInHeader) {
-                Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
-                    if (showPeriodLabel) Spacer(modifier = Modifier.width(labelWidthDp))
-                    for (dow in 1..7) {
-                        val date = semesterStart.plusDays(((currentWeek - 1) * 7 + (dow - 1)).toLong())
-                        Box(modifier = Modifier.weight(1f).padding(2.dp), contentAlignment = Alignment.Center) {
-                            Text(
-                                text = "${date.monthValue}/${date.dayOfMonth}",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                            )
+                            fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal,
+                            color = if (isToday) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant)
+                        if (showDateInHeader) {
+                            val date = semesterStart.plusDays(((currentWeek - 1) * 7 + (courseDay - 1)).toLong())
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text("${date.monthValue}/${date.dayOfMonth}", style = MaterialTheme.typography.labelSmall,
+                                fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal,
+                                color = if (isToday) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f))
                         }
                     }
                 }
