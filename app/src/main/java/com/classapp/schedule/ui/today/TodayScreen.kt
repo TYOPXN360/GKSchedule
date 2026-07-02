@@ -256,7 +256,7 @@ fun TodayScreen(
                         (java.time.temporal.ChronoUnit.DAYS.between(semesterStart, examDate).toInt() / 7) + 1
                     } else currentWeek
                     val examColor = CourseColors.getColorSync(colorGroupMode, exam.kcmc, exam.cdmc, week = examWeek, diffColorPerWeek = diffColorPerWeek, isDark = isDark)
-                    ExamCard(exam = exam, examColor = examColor)
+                    ExamCard(exam = exam, examColor = examColor, onClick = { detailCourse = exam.toTodayCourse(semesterStart, getStartTime, getEndTime) })
                 }
             }
         }
@@ -488,7 +488,7 @@ private fun timeToPeriod(time: String, timeProvider: (Int) -> String): Int {
 }
 
 @Composable
-private fun ExamCard(exam: com.classapp.schedule.api.ExamInfo, examColor: com.classapp.schedule.util.CourseColors.CourseColorPair) {
+private fun ExamCard(exam: com.classapp.schedule.api.ExamInfo, examColor: com.classapp.schedule.util.CourseColors.CourseColorPair, onClick: () -> Unit = {}) {
     val examDate = try { java.time.LocalDate.parse(exam.getExamDate()) } catch (_: Exception) { null }
     val now = java.time.LocalDate.now()
     val isPast = examDate?.isBefore(now) == true
@@ -496,6 +496,7 @@ private fun ExamCard(exam: com.classapp.schedule.api.ExamInfo, examColor: com.cl
     val daysLeft = if (examDate != null && !isPast) java.time.temporal.ChronoUnit.DAYS.between(now, examDate) else -1L
 
     com.classapp.schedule.ui.theme.Md3Card(
+        onClick = onClick,
         modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
         variant = com.classapp.schedule.ui.theme.Md3CardVariant.Elevated,
         shape = MaterialTheme.shapes.small

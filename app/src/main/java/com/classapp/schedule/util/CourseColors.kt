@@ -60,9 +60,12 @@ object CourseColors {
         val hue = computeHue(mode, courseName, classroom, week, diffColorPerWeek)
 
         return if (isDark) {
-            // 暗色课表：Tone 30/Chroma 18 莫兰迪微光质感，文字 Tone 90/Chroma 24 柔和发光
-            val darkContainer = hctToColor(hue, 18.0, 30.0)
-            val darkContent = hctToColor(hue, 24.0, 90.0)
+            // Micro-Jittering: hash-based dynamic chroma/tone to prevent RGB pixel collapse
+            val hashModifier = abs(courseName.hashCode())
+            val dynamicChroma = 19.0 + (hashModifier % 6)
+            val dynamicTone = 31.0 + (hashModifier % 5)
+            val darkContainer = hctToColor(hue, dynamicChroma, dynamicTone)
+            val darkContent = hctToColor(hue, 24.0, 92.0)
             CourseColorPair(container = darkContainer, content = darkContent)
         } else {
             val containerChroma = computeChroma(mode, classroomIndex, CHROMA_CONTAINER)
