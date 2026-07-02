@@ -197,22 +197,6 @@ fun CourseEditScreen(
                 }
             }
 
-            // Color
-            Text(stringResource(R.string.course_color), style = MaterialTheme.typography.labelLarge)
-            val editMonetColors = CourseColors.getColors(0)
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                editMonetColors.forEachIndexed { index, (bg, fg) ->
-                    Box(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(CircleShape)
-                            .background(fg)
-                            .then(if (colorIndex == index) Modifier.border(3.dp, MaterialTheme.colorScheme.onSurface, CircleShape) else Modifier)
-                            .clickable { colorIndex = index }
-                            .semantics { role = Role.RadioButton; stateDescription = if (colorIndex == index) "已选择" else "未选择" }
-                    )
-                }
-            }
 
             // Hide course switch
             HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
