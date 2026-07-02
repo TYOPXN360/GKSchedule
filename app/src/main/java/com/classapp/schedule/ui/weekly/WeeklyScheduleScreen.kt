@@ -467,6 +467,14 @@ fun WeeklyScheduleScreen(
                                             Text("考试", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = textColor, maxLines = 1)
                                         }
                                     }
+                                    if (block.course.isHidden) {
+                                        Box(
+                                            modifier = Modifier.padding(bottom = 2.dp).clip(RoundedCornerShape(4.dp)).background(textColor.copy(alpha = 0.2f)).padding(horizontal = 4.dp, vertical = 1.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text("隐藏", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = textColor, maxLines = 1)
+                                        }
+                                    }
                                     Text(block.course.name, style = MaterialTheme.typography.labelMedium, color = textColor, overflow = TextOverflow.Ellipsis)
                                     if (block.course.classroom.isNotEmpty()) {
                                         Text(block.course.classroom, style = MaterialTheme.typography.labelSmall, color = textColor.copy(alpha = 0.7f), overflow = TextOverflow.Ellipsis)
