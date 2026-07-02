@@ -587,16 +587,15 @@ fun CourseDetailSheet(course: Course, getStartTime: (Int) -> String, getEndTime:
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState()) {
         Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp).padding(bottom = 32.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                val detailDotColor = if (course.id < 0) hctColors.content else (dotColor ?: hctColors.container)
+                val detailDotColor = dotColor ?: hctColors.container
                 Box(modifier = Modifier.size(12.dp).clip(RoundedCornerShape(50)).background(detailDotColor))
                 Spacer(modifier = Modifier.width(12.dp))
-                // Exam tag BEFORE course name, labelLarge to match titleLarge
                 if (course.id < 0) {
                     Box(
-                        modifier = Modifier.padding(end = 8.dp).clip(RoundedCornerShape(6.dp)).background(hctColors.content.copy(alpha = 0.15f)).padding(horizontal = 8.dp, vertical = 3.dp),
+                        modifier = Modifier.padding(end = 8.dp).clip(RoundedCornerShape(4.dp)).background(hctColors.content.copy(alpha = 0.2f)).padding(horizontal = 4.dp, vertical = 1.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("考试", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = hctColors.content, maxLines = 1)
+                        Text("考试", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = hctColors.content, maxLines = 1)
                     }
                 }
                 Text(course.name, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f, fill = false), maxLines = 2, overflow = TextOverflow.Ellipsis)

@@ -2,15 +2,13 @@ package com.classapp.schedule.util
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import com.classapp.schedule.ui.theme.LocalAppIsDark
 import com.google.android.material.color.utilities.Hct
-import com.google.android.material.color.utilities.TonalPalette
 import kotlin.math.abs
 
 /**
- * 课程颜色引擎 - Google HCT 官方算法
+ * 课程颜色引擎 - Google HCT 官方算法 (M3 Expressive 像素级重构版)
  *
  * 三模式统一用 HCT 色相分配:
  * - Mode 0/1: 课程名 hash → 黄金角度散射 (同课同名，异名绝对错开)
@@ -39,10 +37,6 @@ object CourseColors {
     /** 颜色对: container=背景色  content=文字色 */
     data class CourseColorPair(val container: Color, val content: Color)
 
-    // =========================================================================
-    // 公开 API
-    // =========================================================================
-
     @Composable
     fun getColor(mode: Int, courseName: String, classroom: String = "", classroomIndex: Int = 0): CourseColorPair {
         return getColorSync(mode, courseName, classroom, classroomIndex, isDark = LocalAppIsDark.current)
@@ -52,25 +46,27 @@ object CourseColors {
         return makeColor(mode, courseName, classroom, classroomIndex, week, diffColorPerWeek, isDark)
     }
 
-    // =========================================================================
-    // HCT 官方取色
-    // =========================================================================
-
     private fun makeColor(mode: Int, courseName: String, classroom: String, classroomIndex: Int, week: Int, diffColorPerWeek: Boolean, isDark: Boolean): CourseColorPair {
         val hue = computeHue(mode, courseName, classroom, week, diffColorPerWeek)
 
         return if (isDark) {
+            // Micro-Jittering with hash-based chroma/tone
             val colorSeed = if (mode == 1 || mode == 0) {
                 if (diffColorPerWeek) "$courseName|$week" else courseName
             } else {
                 if (diffColorPerWeek) "$courseName|$classroom|$week" else "$courseName|$classroom"
             }
             val seedHash = abs(colorSeed.hashCode())
-            val baseChroma = 16.0 + (seedHash % 12)
-            val baseTone = 38.0 + (seedHash % 10)
+            val baseChroma = 16.0 + (seedHash % 12) // 16~28
+            val baseTone = 38.0 + (seedHash % 10)   // 38~47
 
-            val dynamicChroma = if (mode == 1) (baseChroma + classroomIndex * 4.5).coerceAtMost(38.0) else baseChroma
-            val dynamicTone = if (mode == 1) (baseTone - classroomIndex * 3.5).coerceAtLeast(26.0) else baseTone
+            // Mode 1 gentle decrement
+            val dynamicChroma = if (mode == 1) {
+                (baseChroma - classroomIndex * 1.5).coerceAtLeast(12.0)
+            } else baseChroma
+            val dynamicTone = if (mode == 1) {
+                (baseTone - classroomIndex * 1.0).coerceAtLeast(32.0)
+            } else baseTone
 
             val darkContainer = hctToColor(hue, dynamicChroma, dynamicTone)
             val darkContent = hctToColor(hue, 22.0, 96.0)
@@ -84,28 +80,37 @@ object CourseColors {
         }
     }
 
-    // =========================================================================
-    // 色相计算 - 全模式统一黄金角度散射
-    // =========================================================================
+    /** Settings icon badge: index * 60° uniform spread, 6 colors never collide */
+    @Composable
+    fun getSettingsBadgeColor(index: Int): CourseColorPair {
+        val isDark = LocalAppIsDark.current
+        val hue = (index * 60.0) % 360.0
+        val chroma = 45.0
+        return if (isDark) {
+            CourseColorPair(
+                container = hctToColor(hue, chroma, 76.0),
+                content = hctToColor(hue, chroma, 15.0)
+            )
+        } else {
+            CourseColorPair(
+                container = hctToColor(hue, chroma, 90.0),
+                content = hctToColor(hue, chroma, 22.0)
+            )
+        }
+    }
 
     private fun computeHue(mode: Int, courseName: String, classroom: String, week: Int, diffColorPerWeek: Boolean): Double {
         return when (mode) {
             0, 1 -> {
                 val seed = if (diffColorPerWeek) "$courseName|$week" else courseName
-                val hash = abs(seed.hashCode()).toDouble()
-                (hash * GOLDEN) % 360.0
+                (abs(seed.hashCode()).toDouble() * GOLDEN) % 360.0
             }
             else -> {
                 val seed = if (diffColorPerWeek) "$courseName|$classroom|$week" else "$courseName|$classroom"
-                val hash = abs(seed.hashCode()).toDouble()
-                (hash * GOLDEN) % 360.0
+                (abs(seed.hashCode()).toDouble() * GOLDEN) % 360.0
             }
         }
     }
-
-    // =========================================================================
-    // 色度计算 (Mode 1 梯度)
-    // =========================================================================
 
     private fun computeChroma(mode: Int, classroomIndex: Int, baseChroma: Double): Double {
         return when (mode) {
@@ -114,49 +119,16 @@ object CourseColors {
         }
     }
 
-    // =========================================================================
-    // HCT → Compose Color
-    // =========================================================================
-
     private fun hctToColor(hue: Double, chroma: Double, tone: Double): Color {
-        val hct = Hct.from(hue, chroma, tone)
-        return Color(hct.toInt())
+        return Color(Hct.from(hue, chroma, tone).toInt())
     }
 
-    /**
-     * 设置页图标徽章专用：index * 60° 均匀散射，6 个图标绝不撞色
-     */
-    @Composable
-    fun getSettingsBadgeColor(index: Int): CourseColorPair {
-        val isDark = LocalAppIsDark.current
-        val hue = (index * 60.0) % 360.0
-        val chroma = 45.0
-
-        return if (isDark) {
-            // 暗色模式：容器亮糖果色 Tone 76，图标深色 Tone 15（与原生设置对齐）
-            CourseColorPair(
-                container = hctToColor(hue, chroma, 76.0),
-                content = hctToColor(hue, chroma, 15.0)
-            )
-        } else {
-            // 亮色模式：容器柔和 Tone 90，图标深色 Tone 22
-            CourseColorPair(
-                container = hctToColor(hue, chroma, 90.0),
-                content = hctToColor(hue, chroma, 22.0)
-            )
-        }
-    }
-
-    /**
-     * 静态调色板 - 供需要 List<Pair<Color,Color>> 的旧接口使用
-     */
     @Composable
     fun getColors(engine: Int, count: Int = 16): List<Pair<Color, Color>> {
         val isDark = LocalAppIsDark.current
         val primary = MaterialTheme.colorScheme.primary
         val primaryHue = Hct.fromInt(primary.value.toInt()).hue
         val step = 360.0 / count
-
         return (0 until count).map { i ->
             val hue = when (engine) {
                 1 -> (primaryHue + i * step) % 360.0
