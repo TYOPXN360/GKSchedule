@@ -60,12 +60,12 @@ object CourseColors {
         val hue = computeHue(mode, courseName, classroom, week, diffColorPerWeek)
 
         return if (isDark) {
-            // Micro-Jittering: hash-based dynamic chroma/tone to prevent RGB pixel collapse
+            // Micro-Jittering: expanded range to avoid sRGB gamut collapse
             val hashModifier = abs(courseName.hashCode())
-            val dynamicChroma = 19.0 + (hashModifier % 6)
-            val dynamicTone = 31.0 + (hashModifier % 5)
+            val dynamicChroma = 20.0 + (hashModifier % 8)
+            val dynamicTone = 35.0 + (hashModifier % 6)
             val darkContainer = hctToColor(hue, dynamicChroma, dynamicTone)
-            val darkContent = hctToColor(hue, 24.0, 92.0)
+            val darkContent = hctToColor(hue, 22.0, 92.0)
             CourseColorPair(container = darkContainer, content = darkContent)
         } else {
             val containerChroma = computeChroma(mode, classroomIndex, CHROMA_CONTAINER)

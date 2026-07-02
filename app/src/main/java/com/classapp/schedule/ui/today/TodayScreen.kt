@@ -274,7 +274,8 @@ fun TodayScreen(
             onEdit = { detailCourse = null; onCourseLongPress(course) },
             courseColors = CourseColors.getColors(colorEngine, count = 8),
             colorGroupMode = colorGroupMode,
-            dotColor = CourseColors.getColorSync(colorGroupMode, course.name, course.classroom, week = currentWeek, diffColorPerWeek = diffColorPerWeek, isDark = isDark).container
+            currentWeek = currentWeek,
+            diffColorPerWeek = diffColorPerWeek
         )
     }
 }

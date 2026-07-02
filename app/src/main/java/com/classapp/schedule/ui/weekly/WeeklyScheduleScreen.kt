@@ -549,25 +549,13 @@ fun WeeklyScheduleScreen(
     // Detail sheet — 🔥 归一：无论是否考试课，统一走 HCT 动态分配
     detailCourse?.let { course ->
         val isDark = com.classapp.schedule.ui.theme.LocalAppIsDark.current
-        val detailDotColor = remember(course, colorGroupMode, isDark) {
-            val realClassroomIdx = if (colorGroupMode == 1) course.colorIndex % 10 else 0
-            CourseColors.getColorSync(
-                mode = colorGroupMode,
-                courseName = course.name,
-                classroom = course.classroom,
-                classroomIndex = realClassroomIdx,
-                week = currentWeek,
-                diffColorPerWeek = diffColorPerWeek,
-                isDark = isDark
-            ).container
-        }
+        val targetWeek = if (course.id < 0) course.weekRange.toIntOrNull() ?: currentWeek else currentWeek
         CourseDetailSheet(course = course, getStartTime = getStartTime, getEndTime = getEndTime,
             onDismiss = { detailCourse = null }, onEdit = { detailCourse = null; onCourseLongPress(course) },
             courseColors = CourseColors.getColors(colorEngine, count = 8),
             colorGroupMode = colorGroupMode,
             colorIndex = course.colorIndex,
-            dotColor = detailDotColor,
-            currentWeek = currentWeek,
+            currentWeek = targetWeek,
             diffColorPerWeek = diffColorPerWeek)
     }
 
