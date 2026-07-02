@@ -24,10 +24,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -95,112 +91,77 @@ fun CourseEditScreen(
         stringResource(R.string.sun)
     )
     val weekRangeOptions = listOf(
-        "all" to stringResource(R.string.all_weeks),
-        "odd" to stringResource(R.string.odd_weeks),
-        "even" to stringResource(R.string.even_weeks),
-        "custom" to stringResource(R.string.custom_weeks)
+        "all" to stringResource(R.string.all_weeks), "odd" to stringResource(R.string.odd_weeks),
+        "even" to stringResource(R.string.even_weeks), "custom" to stringResource(R.string.custom_weeks)
     )
 
     val isDark = com.classapp.schedule.ui.theme.LocalAppIsDark.current
     val scaffoldBg = if (isDark) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainer
+
     Scaffold(
-        contentWindowInsets = WindowInsets.systemBars,
-        containerColor = scaffoldBg,
+        contentWindowInsets = WindowInsets.systemBars, containerColor = scaffoldBg,
         topBar = {
-            TopAppBar(
-                title = { Text(if (isEditing) stringResource(R.string.edit_course) else stringResource(R.string.add_new_course)) },
+            TopAppBar(title = { Text(if (isEditing) stringResource(R.string.edit_course) else stringResource(R.string.add_new_course)) },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = scaffoldBg, scrolledContainerColor = scaffoldBg),
                 navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") } },
-                actions = {
-                    if (isEditing) { IconButton(onClick = { showDeleteDialog = true }) { Icon(Icons.Default.Delete, stringResource(R.string.delete), tint = MaterialTheme.colorScheme.error) } }
-                }
+                actions = { if (isEditing) { IconButton(onClick = { showDeleteDialog = true }) { Icon(Icons.Default.Delete, stringResource(R.string.delete), tint = MaterialTheme.colorScheme.error) } } }
             )
         }
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            // AI Import Panel
-            Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f)), modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
-                Column(modifier = Modifier.padding(14.dp)) {
+            // AI Import Panel — MD3E compliant
+            Card(
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                modifier = Modifier.fillMaxWidth().border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.25f), MaterialTheme.shapes.large),
+                shape = MaterialTheme.shapes.large
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
                     Row(modifier = Modifier.fillMaxWidth().clickable { showAiPanel = !showAiPanel }, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             Icon(Icons.Default.AutoAwesome, null, tint = MaterialTheme.colorScheme.primary)
-                            Text("AI 智能文本/图片快速导入", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                            Text("从AI中导入", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                         }
-                        Text(if (showAiPanel) "收起" else "展开", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+                        Text(if (showAiPanel) "收起" else "展开", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
                     }
                     AnimatedVisibility(visible = showAiPanel) {
-                        Column(modifier = Modifier.padding(top = 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            Text("第一步：复制 Prompt，粘贴到任意 AI 助手中，发送课表文字或图片。", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            Button(onClick = { clipboardManager.setText(AnnotatedString(courseAiPrompt)); android.widget.Toast.makeText(context, "解析提示词已复制！", android.widget.Toast.LENGTH_SHORT).show() }, colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary), modifier = Modifier.fillMaxWidth(), contentPadding = PaddingValues(vertical = 8.dp)) {
-                                Icon(Icons.Default.ContentCopy, null, modifier = Modifier.size(16.dp)); Spacer(modifier = Modifier.width(6.dp)); Text("复制 AI 解析提示词", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
-                            }
-                            Text("第二步：将 AI 返回的纯 JSON 粘贴到下方。", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            OutlinedTextField(value = aiClipboardInput, onValueChange = { aiClipboardInput = it; aiErrorHint = "" }, placeholder = { Text("[{\"name\": \"...\"}]", style = MaterialTheme.typography.bodySmall) }, leadingIcon = { Icon(Icons.Default.DataObject, null, modifier = Modifier.size(18.dp)) }, modifier = Modifier.fillMaxWidth(), minLines = 2, maxLines = 4, shape = RoundedCornerShape(10.dp), textStyle = MaterialTheme.typography.bodySmall)
+                        Column(modifier = Modifier.padding(top = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Text("1. 复制下方专用提示词，贴入任意 AI 软件中，并附带你的课表文字或截图。", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Button(onClick = { clipboardManager.setText(AnnotatedString(courseAiPrompt)); android.widget.Toast.makeText(context, "提示词已复制！", android.widget.Toast.LENGTH_SHORT).show() }, shape = MaterialTheme.shapes.medium, modifier = Modifier.fillMaxWidth()) { Icon(Icons.Default.ContentCopy, null, modifier = Modifier.size(16.dp)); Spacer(modifier = Modifier.width(8.dp)); Text("复制 AI 解析提示词", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold) }
+                            Text("2. 将 AI 结构化返回的纯 JSON 复制粘贴到下方文本框中。", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            OutlinedTextField(value = aiClipboardInput, onValueChange = { aiClipboardInput = it; aiErrorHint = "" }, placeholder = { Text("[{\"name\": \"...\"}]", style = MaterialTheme.typography.bodyMedium) }, leadingIcon = { Icon(Icons.Default.DataObject, null) }, modifier = Modifier.fillMaxWidth(), minLines = 2, maxLines = 4, shape = MaterialTheme.shapes.medium)
                             if (aiErrorHint.isNotEmpty()) Text(aiErrorHint, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
-                            Button(onClick = {
-                                if (aiClipboardInput.isBlank()) return@Button
+                            FilledTonalButton(onClick = {
+                                if (aiClipboardInput.isBlank()) return@FilledTonalButton
                                 try {
                                     val parsedList = JsonImportExport.importFromJson(aiClipboardInput.trim())
                                     val extracted = parsedList.firstOrNull()
-                                    if (extracted != null) {
-                                        name = extracted.name; teacher = extracted.teacher; classroom = extracted.classroom
-                                        dayOfWeek = extracted.dayOfWeek.coerceIn(1, 7); startPeriod = extracted.startPeriod.coerceIn(1, periodsPerDay); periods = extracted.periods.coerceIn(1, periodsPerDay)
-                                        remark = extracted.remark
-                                        if (extracted.weekRange != "all" && extracted.weekRange != "odd" && extracted.weekRange != "even") { weekRange = "custom"; customWeekRange = extracted.weekRange } else { weekRange = extracted.weekRange; customWeekRange = "" }
-                                        aiErrorHint = ""; showAiPanel = false
-                                        android.widget.Toast.makeText(context, "AI 导入成功，请核对表单！", android.widget.Toast.LENGTH_SHORT).show()
-                                    } else { aiErrorHint = "JSON 解析成功，但未发现有效的课程节点数据。" }
-                                } catch (e: Exception) { aiErrorHint = "JSON 矩阵语法有误: ${e.localizedMessage}" }
-                            }, enabled = aiClipboardInput.isNotBlank(), modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer, contentColor = MaterialTheme.colorScheme.onSecondaryContainer)) { Text("立即解析并注入表单", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold) }
+                                    if (extracted != null) { name = extracted.name; teacher = extracted.teacher; classroom = extracted.classroom; dayOfWeek = extracted.dayOfWeek.coerceIn(1, 7); startPeriod = extracted.startPeriod.coerceIn(1, periodsPerDay); periods = extracted.periods.coerceIn(1, periodsPerDay); remark = extracted.remark; if (extracted.weekRange != "all" && extracted.weekRange != "odd" && extracted.weekRange != "even") { weekRange = "custom"; customWeekRange = extracted.weekRange } else { weekRange = extracted.weekRange; customWeekRange = "" }; aiErrorHint = ""; showAiPanel = false; android.widget.Toast.makeText(context, "导入成功，请核对表单！", android.widget.Toast.LENGTH_SHORT).show() } else { aiErrorHint = "解析成功，但未匹配到课程节点。" }
+                                } catch (e: Exception) { aiErrorHint = "JSON 语法错误，请确保复制了完整的代码块。" }
+                            }, shape = MaterialTheme.shapes.medium, enabled = aiClipboardInput.isNotBlank(), modifier = Modifier.fillMaxWidth()) { Text("解析并注入课程表单", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold) }
                         }
                     }
                 }
             }
 
+            // Form fields
             OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text(stringResource(R.string.course_name)) }, modifier = Modifier.fillMaxWidth(), singleLine = true)
             OutlinedTextField(value = teacher, onValueChange = { teacher = it }, label = { Text(stringResource(R.string.course_teacher)) }, modifier = Modifier.fillMaxWidth(), singleLine = true)
             OutlinedTextField(value = classroom, onValueChange = { classroom = it }, label = { Text(stringResource(R.string.course_classroom)) }, modifier = Modifier.fillMaxWidth(), singleLine = true)
-
             Text(stringResource(R.string.day_of_week), style = MaterialTheme.typography.labelLarge)
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                dayNames.forEachIndexed { index, dn -> FilterChip(selected = dayOfWeek == index + 1, onClick = { dayOfWeek = index + 1 }, label = { Text(dn, style = MaterialTheme.typography.labelSmall) }, modifier = Modifier.weight(1f)) }
-            }
-
-            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(stringResource(R.string.custom_time), style = MaterialTheme.typography.labelLarge)
-                Switch(checked = isCustomTime, onCheckedChange = { isCustomTime = it }, thumbContent = if (isCustomTime) { { Icon(Icons.Default.Check, null, modifier = Modifier.size(SwitchDefaults.IconSize)) } } else null)
-            }
-            if (isCustomTime) {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                    OutlinedButton(onClick = { showM3StartTimePicker = true }, modifier = Modifier.weight(1f)) { Text("${stringResource(R.string.custom_start_time)}: $customStartTime") }
-                    OutlinedButton(onClick = { showM3EndTimePicker = true }, modifier = Modifier.weight(1f)) { Text("${stringResource(R.string.custom_end_time)}: $customEndTime") }
-                }
-            } else {
-                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) { Text(stringResource(R.string.start_period), style = MaterialTheme.typography.labelLarge); Spacer(modifier = Modifier.weight(1f)); Stepper(value = startPeriod, min = 1, max = periodsPerDay, onChange = { startPeriod = it }) }
-                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) { Text(stringResource(R.string.duration), style = MaterialTheme.typography.labelLarge); Spacer(modifier = Modifier.weight(1f)); Stepper(value = periods, min = 1, max = (periodsPerDay - startPeriod + 1).coerceAtLeast(1), onChange = { periods = it }) }
-            }
-
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) { dayNames.forEachIndexed { index, dn -> FilterChip(selected = dayOfWeek == index + 1, onClick = { dayOfWeek = index + 1 }, label = { Text(dn, style = MaterialTheme.typography.labelSmall) }, modifier = Modifier.weight(1f)) } }
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) { Text(stringResource(R.string.custom_time), style = MaterialTheme.typography.labelLarge); Switch(checked = isCustomTime, onCheckedChange = { isCustomTime = it }, thumbContent = if (isCustomTime) { { Icon(Icons.Default.Check, null, modifier = Modifier.size(SwitchDefaults.IconSize)) } } else null) }
+            if (isCustomTime) { Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) { OutlinedButton(onClick = { showM3StartTimePicker = true }, modifier = Modifier.weight(1f)) { Text("${stringResource(R.string.custom_start_time)}: $customStartTime") }; OutlinedButton(onClick = { showM3EndTimePicker = true }, modifier = Modifier.weight(1f)) { Text("${stringResource(R.string.custom_end_time)}: $customEndTime") } } } else { Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) { Text(stringResource(R.string.start_period), style = MaterialTheme.typography.labelLarge); Spacer(modifier = Modifier.weight(1f)); Stepper(value = startPeriod, min = 1, max = periodsPerDay, onChange = { startPeriod = it }) }; Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) { Text(stringResource(R.string.duration), style = MaterialTheme.typography.labelLarge); Spacer(modifier = Modifier.weight(1f)); Stepper(value = periods, min = 1, max = (periodsPerDay - startPeriod + 1).coerceAtLeast(1), onChange = { periods = it }) } }
             HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
-            Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                Column(modifier = Modifier.weight(1f)) { Text("在课表中隐藏", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold); Text("勾选后此节课将不再显示在今日和课表主页中", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-                Switch(checked = isHidden, onCheckedChange = { isHidden = it }, thumbContent = if (isHidden) { { Icon(Icons.Default.Check, null, modifier = Modifier.size(SwitchDefaults.IconSize)) } } else null)
-            }
+            Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) { Column(modifier = Modifier.weight(1f)) { Text("在课表中隐藏", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold); Text("勾选后此节课将不再显示在今日和课表主页中", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }; Switch(checked = isHidden, onCheckedChange = { isHidden = it }, thumbContent = if (isHidden) { { Icon(Icons.Default.Check, null, modifier = Modifier.size(SwitchDefaults.IconSize)) } } else null) }
             HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
-
             Text(stringResource(R.string.week_range), style = MaterialTheme.typography.labelLarge)
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) { weekRangeOptions.forEach { (key, label) -> FilterChip(selected = weekRange == key || (key == "custom" && weekRange !in listOf("all", "odd", "even")), onClick = { weekRange = key }, label = { Text(label, style = MaterialTheme.typography.labelSmall) }) } }
             if (weekRange == "custom") { OutlinedTextField(value = customWeekRange, onValueChange = { customWeekRange = it }, label = { Text(stringResource(R.string.week_range_hint)) }, modifier = Modifier.fillMaxWidth(), singleLine = true) }
-
             OutlinedTextField(value = remark, onValueChange = { remark = it }, label = { Text(stringResource(R.string.course_remark)) }, placeholder = { Text(stringResource(R.string.course_remark_hint)) }, modifier = Modifier.fillMaxWidth(), minLines = 1)
             Spacer(modifier = Modifier.height(8.dp))
-
-            Button(onClick = {
-                val finalWeekRange = when (weekRange) { "all", "odd", "even" -> weekRange; else -> customWeekRange.ifEmpty { weekRange } }
-                onSave(Course(id = course?.id ?: 0, name = name.trim(), teacher = teacher.trim(), classroom = classroom.trim(), dayOfWeek = dayOfWeek, startPeriod = startPeriod, periods = periods, colorIndex = colorIndex, weekRange = finalWeekRange, remark = remark.trim(), isCustomTime = isCustomTime, customStartTime = customStartTime, customEndTime = customEndTime, isManuallyEdited = true, isHidden = isHidden))
-            }, modifier = Modifier.fillMaxWidth(), enabled = name.isNotBlank()) { Text(stringResource(R.string.save)) }
+            Button(onClick = { val finalWeekRange = when (weekRange) { "all", "odd", "even" -> weekRange; else -> customWeekRange.ifEmpty { weekRange } }; onSave(Course(id = course?.id ?: 0, name = name.trim(), teacher = teacher.trim(), classroom = classroom.trim(), dayOfWeek = dayOfWeek, startPeriod = startPeriod, periods = periods, colorIndex = colorIndex, weekRange = finalWeekRange, remark = remark.trim(), isCustomTime = isCustomTime, customStartTime = customStartTime, customEndTime = customEndTime, isManuallyEdited = true, isHidden = isHidden)) }, modifier = Modifier.fillMaxWidth(), enabled = name.isNotBlank()) { Text(stringResource(R.string.save)) }
         }
     }
-
     if (showDeleteDialog && course != null) { AlertDialog(onDismissRequest = { showDeleteDialog = false }, title = { Text(stringResource(R.string.confirm_delete)) }, text = { Text(stringResource(R.string.confirm_delete_msg)) }, confirmButton = { TextButton(onClick = { onDelete(course); showDeleteDialog = false }) { Text(stringResource(R.string.delete)) } }, dismissButton = { TextButton(onClick = { showDeleteDialog = false }) { Text(stringResource(R.string.cancel)) } }) }
     if (showM3StartTimePicker) { val startParts = customStartTime.split(":"); val timePickerState = rememberTimePickerState(initialHour = startParts.getOrNull(0)?.toIntOrNull() ?: 8, initialMinute = startParts.getOrNull(1)?.toIntOrNull() ?: 0, is24Hour = true); AlertDialog(onDismissRequest = { showM3StartTimePicker = false }, confirmButton = { TextButton(onClick = { customStartTime = String.format("%02d:%02d", timePickerState.hour, timePickerState.minute); showM3StartTimePicker = false }) { Text("确定") } }, dismissButton = { TextButton(onClick = { showM3StartTimePicker = false }) { Text("取消") } }, title = { Text(stringResource(R.string.custom_start_time), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }, text = { Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { TimePicker(state = timePickerState) } }) }
     if (showM3EndTimePicker) { val endParts = customEndTime.split(":"); val timePickerState = rememberTimePickerState(initialHour = endParts.getOrNull(0)?.toIntOrNull() ?: 9, initialMinute = endParts.getOrNull(1)?.toIntOrNull() ?: 0, is24Hour = true); AlertDialog(onDismissRequest = { showM3EndTimePicker = false }, confirmButton = { TextButton(onClick = { customEndTime = String.format("%02d:%02d", timePickerState.hour, timePickerState.minute); showM3EndTimePicker = false }) { Text("确定") } }, dismissButton = { TextButton(onClick = { showM3EndTimePicker = false }) { Text("取消") } }, title = { Text(stringResource(R.string.custom_end_time), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }, text = { Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { TimePicker(state = timePickerState) } }) }
