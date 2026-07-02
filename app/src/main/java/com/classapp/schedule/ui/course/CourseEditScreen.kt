@@ -3,6 +3,7 @@ package com.classapp.schedule.ui.course
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -59,30 +60,48 @@ fun CourseEditScreen(
     var isCustomTime by remember { mutableStateOf(course?.isCustomTime ?: false) }
     var customStartTime by remember { mutableStateOf(course?.customStartTime ?: "08:00") }
     var customEndTime by remember { mutableStateOf(course?.customEndTime ?: "09:00") }
+
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showM3StartTimePicker by remember { mutableStateOf(false) }
     var showM3EndTimePicker by remember { mutableStateOf(false) }
+
+    var batchCourses by remember { mutableStateOf<List<Course>>(emptyList()) }
+    var selectedTabIndex by remember { mutableIntStateOf(0) }
 
     var showAiPanel by remember { mutableStateOf(false) }
     var aiClipboardInput by remember { mutableStateOf("") }
     var aiErrorHint by remember { mutableStateOf("") }
 
     val courseAiPrompt = """
-        你是一个课程表数据结构化清洗专家。请将用户接下来发送的任意格式的课程安排文本（或图片识别出来的杂乱文字），提取并重整为以下标准 JSON 对象（由于只需填入当前表单，请只返回一个包含单个对象的纯 JSON 数组，严禁包含任何 Markdown ``` 块包裹包裹标识）：
+        你是一个课程表数据结构化清洗专家。请将用户接下来发送的任意格式的课程安排文本（或图片识别出来的杂乱文字），提取并重整为标准 JSON 数组格式。
+        要求：
+        1. 必须使用标准的 ```json ... ``` 代码块包裹返回的 JSON 数据。
+        2. 如果同一门课程在同一个时间段内分布在多个不同的教室，请务必将其合并为一个课程对象，并将教室合并为一个字符串，用逗号隔开（例如: "classroom": "某某教学楼A101, 某某教学楼A102"）。
+        3. 即使只有一门课程，也必须返回一个包裹着对象的标准的 JSON 数组。
+        标准 JSON 数组结构体示例：
+        ```json
         [
           {
-            "name": "高等数学",
-            "teacher": "张教授",
-            "classroom": "第一教学楼302",
+            "name": "示例课程名称",
+            "teacher": "任课老师姓名",
+            "classroom": "某某教学楼A101, 某某教学楼A102",
             "dayOfWeek": 1, 
             "startPeriod": 3,
             "periods": 2,
             "weekRange": "1-16",
-            "remark": "带好教材"
+            "remark": "备注说明信息"
           }
         ]
+        ```
         注意：dayOfWeek 必须是数字 (1=周一, 7=周日)；startPeriod 为开始节次，periods 为持续节次。
     """.trimIndent()
+
+    fun extractJsonArrayString(input: String): String {
+        val start = input.indexOf('[')
+        val end = input.lastIndexOf(']')
+        if (start != -1 && end != -1 && end > start) return input.substring(start, end + 1)
+        return input
+    }
 
     val dayNames = listOf(
         stringResource(R.string.mon), stringResource(R.string.tue),
@@ -98,52 +117,71 @@ fun CourseEditScreen(
     val isDark = com.classapp.schedule.ui.theme.LocalAppIsDark.current
     val scaffoldBg = if (isDark) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainer
 
-    Scaffold(
-        contentWindowInsets = WindowInsets.systemBars, containerColor = scaffoldBg,
+    Scaffold(contentWindowInsets = WindowInsets.systemBars, containerColor = scaffoldBg,
         topBar = {
             TopAppBar(title = { Text(if (isEditing) stringResource(R.string.edit_course) else stringResource(R.string.add_new_course)) },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = scaffoldBg, scrolledContainerColor = scaffoldBg),
                 navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") } },
-                actions = { if (isEditing) { IconButton(onClick = { showDeleteDialog = true }) { Icon(Icons.Default.Delete, stringResource(R.string.delete), tint = MaterialTheme.colorScheme.error) } } }
-            )
+                actions = { if (isEditing) { IconButton(onClick = { showDeleteDialog = true }) { Icon(Icons.Default.Delete, stringResource(R.string.delete), tint = MaterialTheme.colorScheme.error) } } })
         }
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            // AI Import Panel — MD3E compliant
-            Card(
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-                modifier = Modifier.fillMaxWidth().border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.25f), MaterialTheme.shapes.large),
-                shape = MaterialTheme.shapes.large
-            ) {
+            // AI Import Panel
+            Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh), modifier = Modifier.fillMaxWidth().border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.25f), MaterialTheme.shapes.large), shape = MaterialTheme.shapes.large) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(modifier = Modifier.fillMaxWidth().clickable { showAiPanel = !showAiPanel }, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            Icon(Icons.Default.AutoAwesome, null, tint = MaterialTheme.colorScheme.primary)
-                            Text("从AI中导入", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                        }
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) { Icon(Icons.Default.AutoAwesome, null, tint = MaterialTheme.colorScheme.primary); Text("从AI中导入", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }
                         Text(if (showAiPanel) "收起" else "展开", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
                     }
                     AnimatedVisibility(visible = showAiPanel) {
                         Column(modifier = Modifier.padding(top = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                            Text("1. 复制下方专用提示词，贴入任意 AI 软件中，并附带你的课表文字或截图。", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("1. 复制提示词到 AI 软件。你可以直接复制包含 AI 回复全文的整条消息，系统会自动剔除杂质代码符号。", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Button(onClick = { clipboardManager.setText(AnnotatedString(courseAiPrompt)); android.widget.Toast.makeText(context, "提示词已复制！", android.widget.Toast.LENGTH_SHORT).show() }, shape = MaterialTheme.shapes.medium, modifier = Modifier.fillMaxWidth()) { Icon(Icons.Default.ContentCopy, null, modifier = Modifier.size(16.dp)); Spacer(modifier = Modifier.width(8.dp)); Text("复制 AI 解析提示词", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold) }
-                            Text("2. 将 AI 结构化返回的纯 JSON 复制粘贴到下方文本框中。", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            OutlinedTextField(value = aiClipboardInput, onValueChange = { aiClipboardInput = it; aiErrorHint = "" }, placeholder = { Text("[{\"name\": \"...\"}]", style = MaterialTheme.typography.bodyMedium) }, leadingIcon = { Icon(Icons.Default.DataObject, null) }, modifier = Modifier.fillMaxWidth(), minLines = 2, maxLines = 4, shape = MaterialTheme.shapes.medium)
+                            Text("2. 在下方贴入包含 JSON 代码块的消息全文：", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            OutlinedTextField(value = aiClipboardInput, onValueChange = { aiClipboardInput = it; aiErrorHint = "" }, placeholder = { Text("支持包含 Markdown 标识或聊天问候语的整条消息复合文本...", style = MaterialTheme.typography.bodyMedium) }, leadingIcon = { Icon(Icons.Default.DataObject, null) }, modifier = Modifier.fillMaxWidth(), minLines = 2, maxLines = 4, shape = MaterialTheme.shapes.medium)
                             if (aiErrorHint.isNotEmpty()) Text(aiErrorHint, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
                             FilledTonalButton(onClick = {
                                 if (aiClipboardInput.isBlank()) return@FilledTonalButton
                                 try {
-                                    val parsedList = JsonImportExport.importFromJson(aiClipboardInput.trim())
-                                    val extracted = parsedList.firstOrNull()
-                                    if (extracted != null) { name = extracted.name; teacher = extracted.teacher; classroom = extracted.classroom; dayOfWeek = extracted.dayOfWeek.coerceIn(1, 7); startPeriod = extracted.startPeriod.coerceIn(1, periodsPerDay); periods = extracted.periods.coerceIn(1, periodsPerDay); remark = extracted.remark; if (extracted.weekRange != "all" && extracted.weekRange != "odd" && extracted.weekRange != "even") { weekRange = "custom"; customWeekRange = extracted.weekRange } else { weekRange = extracted.weekRange; customWeekRange = "" }; aiErrorHint = ""; showAiPanel = false; android.widget.Toast.makeText(context, "导入成功，请核对表单！", android.widget.Toast.LENGTH_SHORT).show() } else { aiErrorHint = "解析成功，但未匹配到课程节点。" }
-                                } catch (e: Exception) { aiErrorHint = "JSON 语法错误，请确保复制了完整的代码块。" }
-                            }, shape = MaterialTheme.shapes.medium, enabled = aiClipboardInput.isNotBlank(), modifier = Modifier.fillMaxWidth()) { Text("解析并注入课程表单", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold) }
+                                    val cleanedJson = extractJsonArrayString(aiClipboardInput.trim())
+                                    val parsedList = JsonImportExport.importFromJson(cleanedJson)
+                                    val mappedCourses = parsedList.map { data ->
+                                        Course(id = 0, name = data.name, teacher = data.teacher, classroom = data.classroom, dayOfWeek = data.dayOfWeek.coerceIn(1, 7), startPeriod = data.startPeriod.coerceIn(1, periodsPerDay), periods = data.periods.coerceIn(1, periodsPerDay), colorIndex = data.colorIndex, weekRange = data.weekRange, remark = data.remark, isCustomTime = data.isCustomTime, customStartTime = data.customStartTime.ifBlank { "08:00" }, customEndTime = data.customEndTime.ifBlank { "09:00" }, isManuallyEdited = true, isHidden = false)
+                                    }
+                                    if (mappedCourses.isNotEmpty()) {
+                                        batchCourses = mappedCourses; selectedTabIndex = 0
+                                        val first = mappedCourses[0]
+                                        name = first.name; teacher = first.teacher; classroom = first.classroom
+                                        dayOfWeek = first.dayOfWeek; startPeriod = first.startPeriod; periods = first.periods; remark = first.remark
+                                        if (first.weekRange != "all" && first.weekRange != "odd" && first.weekRange != "even") { weekRange = "custom"; customWeekRange = first.weekRange } else { weekRange = first.weekRange; customWeekRange = "" }
+                                        isCustomTime = first.isCustomTime; customStartTime = first.customStartTime; customEndTime = first.customEndTime
+                                        aiErrorHint = ""; showAiPanel = false
+                                        android.widget.Toast.makeText(context, "成功识别到 ${mappedCourses.size} 门课程，请通过多标签页进行切换核对！", android.widget.Toast.LENGTH_SHORT).show()
+                                    } else { aiErrorHint = "未在 JSON 数组中发现有效的课程节点。" }
+                                } catch (e: Exception) { aiErrorHint = "智能中转清洗失败，请确保贴入的文本内含有完整的 [ ... ] 数组闭环代码。" }
+                            }, shape = MaterialTheme.shapes.medium, enabled = aiClipboardInput.isNotBlank(), modifier = Modifier.fillMaxWidth()) { Text("智能清洗并解析注入", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold) }
                         }
                     }
                 }
             }
 
-            // Form fields
+            // Multi-tab review rail
+            if (batchCourses.size > 1) {
+                ScrollableTabRow(selectedTabIndex = selectedTabIndex, edgePadding = 0.dp, containerColor = Color.Transparent, modifier = Modifier.fillMaxWidth().clip(MaterialTheme.shapes.medium)) {
+                    batchCourses.forEachIndexed { index, _ ->
+                        Tab(selected = selectedTabIndex == index, onClick = {
+                            val currentState = Course(id = course?.id ?: 0, name = name.trim(), teacher = teacher.trim(), classroom = classroom.trim(), dayOfWeek = dayOfWeek, startPeriod = startPeriod, periods = periods, colorIndex = colorIndex, weekRange = if (weekRange == "custom") customWeekRange.ifEmpty { "all" } else weekRange, remark = remark.trim(), isCustomTime = isCustomTime, customStartTime = customStartTime, customEndTime = customEndTime, isManuallyEdited = true, isHidden = isHidden)
+                            batchCourses = batchCourses.toMutableList().apply { this[selectedTabIndex] = currentState }
+                            selectedTabIndex = index
+                            val target = batchCourses[index]
+                            name = target.name; teacher = target.teacher; classroom = target.classroom; dayOfWeek = target.dayOfWeek; startPeriod = target.startPeriod; periods = target.periods; remark = target.remark
+                            if (target.weekRange != "all" && target.weekRange != "odd" && target.weekRange != "even") { weekRange = "custom"; customWeekRange = target.weekRange } else { weekRange = target.weekRange; customWeekRange = "" }
+                            isCustomTime = target.isCustomTime; customStartTime = target.customStartTime; customEndTime = target.customEndTime; isHidden = target.isHidden
+                        }, text = { Text("课程 ${index + 1}", fontWeight = FontWeight.Bold) })
+                    }
+                }
+            }
+
             OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text(stringResource(R.string.course_name)) }, modifier = Modifier.fillMaxWidth(), singleLine = true)
             OutlinedTextField(value = teacher, onValueChange = { teacher = it }, label = { Text(stringResource(R.string.course_teacher)) }, modifier = Modifier.fillMaxWidth(), singleLine = true)
             OutlinedTextField(value = classroom, onValueChange = { classroom = it }, label = { Text(stringResource(R.string.course_classroom)) }, modifier = Modifier.fillMaxWidth(), singleLine = true)
@@ -159,7 +197,10 @@ fun CourseEditScreen(
             if (weekRange == "custom") { OutlinedTextField(value = customWeekRange, onValueChange = { customWeekRange = it }, label = { Text(stringResource(R.string.week_range_hint)) }, modifier = Modifier.fillMaxWidth(), singleLine = true) }
             OutlinedTextField(value = remark, onValueChange = { remark = it }, label = { Text(stringResource(R.string.course_remark)) }, placeholder = { Text(stringResource(R.string.course_remark_hint)) }, modifier = Modifier.fillMaxWidth(), minLines = 1)
             Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = { val finalWeekRange = when (weekRange) { "all", "odd", "even" -> weekRange; else -> customWeekRange.ifEmpty { weekRange } }; onSave(Course(id = course?.id ?: 0, name = name.trim(), teacher = teacher.trim(), classroom = classroom.trim(), dayOfWeek = dayOfWeek, startPeriod = startPeriod, periods = periods, colorIndex = colorIndex, weekRange = finalWeekRange, remark = remark.trim(), isCustomTime = isCustomTime, customStartTime = customStartTime, customEndTime = customEndTime, isManuallyEdited = true, isHidden = isHidden)) }, modifier = Modifier.fillMaxWidth(), enabled = name.isNotBlank()) { Text(stringResource(R.string.save)) }
+            Button(onClick = {
+                val finalWeekRange = when (weekRange) { "all", "odd", "even" -> weekRange; else -> customWeekRange.ifEmpty { weekRange } }
+                onSave(Course(id = course?.id ?: 0, name = name.trim(), teacher = teacher.trim(), classroom = classroom.trim(), dayOfWeek = dayOfWeek, startPeriod = startPeriod, periods = periods, colorIndex = colorIndex, weekRange = finalWeekRange, remark = remark.trim(), isCustomTime = isCustomTime, customStartTime = customStartTime, customEndTime = customEndTime, isManuallyEdited = true, isHidden = isHidden))
+            }, modifier = Modifier.fillMaxWidth(), enabled = name.isNotBlank()) { Text(if (batchCourses.size > 1) "保存当前标签课程 (${selectedTabIndex + 1}/${batchCourses.size})" else stringResource(R.string.save)) }
         }
     }
     if (showDeleteDialog && course != null) { AlertDialog(onDismissRequest = { showDeleteDialog = false }, title = { Text(stringResource(R.string.confirm_delete)) }, text = { Text(stringResource(R.string.confirm_delete_msg)) }, confirmButton = { TextButton(onClick = { onDelete(course); showDeleteDialog = false }) { Text(stringResource(R.string.delete)) } }, dismissButton = { TextButton(onClick = { showDeleteDialog = false }) { Text(stringResource(R.string.cancel)) } }) }
