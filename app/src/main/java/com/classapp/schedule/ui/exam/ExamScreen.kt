@@ -44,6 +44,7 @@ import kotlin.math.abs
 @Composable
 fun ExamScreen(
     exams: List<ExamInfo>,
+    customExams: List<Course> = emptyList(),
     isLoading: Boolean,
     semesterStart: LocalDate,
     examYear: String,
@@ -219,7 +220,7 @@ fun ExamScreen(
             // Exam list
             if (isLoading && exams.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
-            } else if (exams.isEmpty()) {
+            } else if (exams.isEmpty() && customExams.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Icon(Icons.Default.School, null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
@@ -238,11 +239,29 @@ fun ExamScreen(
                         val examDate = try { LocalDate.parse(exam.getExamDate()) } catch (_: Exception) { null }
                         val examWeek = if (examDate != null) (ChronoUnit.DAYS.between(semesterStart, examDate).toInt() / 7) + 1 else currentWeek
                         val examColor = CourseColors.getColorSync(colorGroupMode, exam.kcmc, exam.cdmc, week = examWeek, diffColorPerWeek = diffColorPerWeek, isDark = isDark)
-                        ExamCard(
-                            exam = exam,
-                            examColor = examColor,
-                            onClick = { detailCourse = exam.toCourseObject(semesterStart, getStartTime, getEndTime) }
-                        )
+                        ExamCard(exam = exam, examColor = examColor, onClick = { detailCourse = exam.toCourseObject(semesterStart, getStartTime, getEndTime) })
+                    }
+
+                    // Custom exams from local DB
+                    items(customExams) { course ->
+                        val weekOffset = (course.weekRange.toIntOrNull() ?: 1) - 1
+                        val examDate = try { semesterStart.plusWeeks(weekOffset.toLong()).plusDays((course.dayOfWeek - 1).toLong()) } catch (_: Exception) { LocalDate.now() }
+                        val now = LocalDate.now()
+                        val isPast = examDate.isBefore(now)
+                        val daysLeft = if (!isPast) ChronoUnit.DAYS.between(now, examDate) else -1L
+                        val examColor = CourseColors.getColorSync(colorGroupMode, course.name, course.classroom, week = weekOffset + 1, diffColorPerWeek = diffColorPerWeek, isDark = isDark)
+                        Md3Card(onClick = { detailCourse = course }, modifier = Modifier.fillMaxWidth(), variant = Md3CardVariant.Elevated) {
+                            Row(modifier = Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Box(modifier = Modifier.width(4.dp).height(48.dp).clip(RoundedCornerShape(2.dp)).background(if (isPast) examColor.container.copy(alpha = 0.2f) else examColor.container))
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(course.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface.copy(alpha = if (isPast) 0.5f else 1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(course.classroom, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                                if (!isPast && daysLeft >= 0) { Spacer(modifier = Modifier.width(8.dp)); Surface(shape = CircleShape, color = if (daysLeft == 0L) MaterialTheme.colorScheme.errorContainer else examColor.container, contentColor = if (daysLeft == 0L) MaterialTheme.colorScheme.onErrorContainer else examColor.content) { Text(if (daysLeft == 0L) "今天" else "剩 ${daysLeft} 天", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)) } }
+                            }
+                        }
                     }
                 }
             }

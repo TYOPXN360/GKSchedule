@@ -46,7 +46,7 @@ fun ExamEditScreen(
     course: Course?,
     periodsPerDay: Int,
     semesterStart: LocalDate,
-    onSave: (Course) -> Unit,
+    onSave: (List<Course>) -> Unit,
     onDelete: (Course) -> Unit,
     onBack: () -> Unit
 ) {
@@ -182,8 +182,12 @@ fun ExamEditScreen(
                 if (name.isBlank()) return@Button
                 val daysDiff = ChronoUnit.DAYS.between(semesterStart, examDate).toInt(); val targetWeek = (daysDiff / 7) + 1; val dayOfWeek = examDate.dayOfWeek.value
                 fun timeToPeriod(timeStr: String): Int { val hour = timeStr.split(":")[0].toInt(); return when { hour < 10 -> 1; hour < 12 -> 3; hour < 16 -> 5; hour < 18 -> 7; else -> 9 } }
-                onSave(Course(id = course?.id ?: -abs(System.currentTimeMillis() % 1000000L + 2000000L), name = name, teacher = teacher, classroom = classroom, dayOfWeek = dayOfWeek, startPeriod = timeToPeriod(startTime), periods = 2, weekRange = targetWeek.toString(), remark = "$startTime-$endTime\n$examMethod\n$remarkText".trimEnd(), isCustomTime = true, customStartTime = startTime, customEndTime = endTime, isManuallyEdited = true))
-            }, modifier = Modifier.fillMaxWidth().height(52.dp), shape = RoundedCornerShape(26.dp), enabled = name.isNotBlank()) { Text("保存安排", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }
+                val currentExam = Course(id = course?.id ?: -abs(System.currentTimeMillis() % 1000000L + 2000000L), name = name, teacher = teacher, classroom = classroom, dayOfWeek = dayOfWeek, startPeriod = timeToPeriod(startTime), periods = 2, weekRange = targetWeek.toString(), remark = "$startTime-$endTime\n$examMethod\n$remarkText".trimEnd(), isCustomTime = true, customStartTime = startTime, customEndTime = endTime, isManuallyEdited = true)
+                if (batchExams.isNotEmpty()) {
+                    val finalBatch = batchExams.toMutableList().apply { this[selectedTabIndex] = currentExam }
+                    onSave(finalBatch)
+                } else { onSave(listOf(currentExam)) }
+            }, modifier = Modifier.fillMaxWidth().height(52.dp), shape = RoundedCornerShape(26.dp), enabled = name.isNotBlank()) { Text(if (batchExams.size > 1) "保存全部考试安排 (${batchExams.size})" else "保存安排", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }
             Spacer(modifier = Modifier.height(24.dp))
         }
     }

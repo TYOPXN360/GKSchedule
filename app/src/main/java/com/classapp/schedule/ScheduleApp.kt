@@ -348,6 +348,7 @@ fun ScheduleApp(
                 val showExamReloginDialog by viewModel.showExamReloginDialog.collectAsState()
                 ExamScreen(
                     exams = examList,
+                    customExams = courses.filter { it.id < 0 },
                     isLoading = examLoading,
                     semesterStart = semesterStart,
                     examYear = examYear,
@@ -411,7 +412,11 @@ fun ScheduleApp(
                     course = currentCourse,
                     periodsPerDay = periodsPerDay,
                     semesterStart = semesterStart,
-                    onSave = { viewModel.saveCourse(it); navController.popBackStack() },
+                    onSave = { examList ->
+                        examList.forEach { viewModel.saveCourse(it) }
+                        android.widget.Toast.makeText(context, "成功导入 ${examList.size} 场考试！", android.widget.Toast.LENGTH_SHORT).show()
+                        navController.popBackStack()
+                    },
                     onDelete = { viewModel.deleteCourse(it); navController.popBackStack() },
                     onBack = { navController.popBackStack() }
                 )
