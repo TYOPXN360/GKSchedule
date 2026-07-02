@@ -359,6 +359,8 @@ fun ScheduleApp(
                     colorGroupMode = colorGroupMode,
                     examLookaheadWeeks = examLookaheadWeeks,
                     onExamLookaheadWeeksChange = { viewModel.setExamLookaheadWeeks(it) },
+                    showExamSchedule = showExamSchedule,
+                    onShowExamScheduleChange = { viewModel.setShowExamSchedule(it) },
                     getStartTime = { viewModel.getStartTime(it) },
                     getEndTime = { viewModel.getEndTime(it) },
                     currentWeek = selectedWeek,

@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material3.*
@@ -47,6 +48,8 @@ fun ExamScreen(
     examSemester: String,
     colorGroupMode: Int = 2,
     examLookaheadWeeks: Int = 1,
+    showExamSchedule: Boolean = false,
+    onShowExamScheduleChange: (Boolean) -> Unit = {},
     onExamLookaheadWeeksChange: (Int) -> Unit = {},
     getStartTime: (Int) -> String = { "" },
     getEndTime: (Int) -> String = { "" },
@@ -156,16 +159,26 @@ fun ExamScreen(
                         }
                     }
 
+                    // Show exam schedule in timetable switch
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
+                    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text("在课表页显示考试安排", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                        Switch(
+                            checked = showExamSchedule,
+                            onCheckedChange = onShowExamScheduleChange,
+                            thumbContent = if (showExamSchedule) {
+                                { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(SwitchDefaults.IconSize)) }
+                            } else null
+                        )
+                    }
+
                     // Exam preview weeks stepper
                     HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
                     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
                         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
                             Icon(Icons.Default.Event, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                             Spacer(modifier = Modifier.width(12.dp))
-                            Column {
-                                Text("今日页考试预览周数", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
-                                Text("控制今日主页近期考试看板的前瞻范围", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
+                            Text("今日页提前多少周显示考试", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
                         }
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             IconButton(onClick = { if (examLookaheadWeeks > 1) onExamLookaheadWeeksChange(examLookaheadWeeks - 1) }, enabled = examLookaheadWeeks > 1) {
