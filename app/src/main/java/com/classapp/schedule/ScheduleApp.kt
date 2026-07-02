@@ -359,6 +359,10 @@ fun ScheduleApp(
                     colorGroupMode = colorGroupMode,
                     examLookaheadWeeks = examLookaheadWeeks,
                     onExamLookaheadWeeksChange = { viewModel.setExamLookaheadWeeks(it) },
+                    getStartTime = { viewModel.getStartTime(it) },
+                    getEndTime = { viewModel.getEndTime(it) },
+                    currentWeek = selectedWeek,
+                    diffColorPerWeek = diffColorPerWeek,
                     onBack = { navController.popBackStack() }
                 )
             }

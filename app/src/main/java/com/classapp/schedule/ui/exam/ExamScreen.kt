@@ -28,12 +28,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.classapp.schedule.api.ExamInfo
+import com.classapp.schedule.data.Course
 import com.classapp.schedule.util.CourseColors
 import com.classapp.schedule.ui.theme.LocalAppIsDark
 import com.classapp.schedule.ui.theme.Md3Card
 import com.classapp.schedule.ui.theme.Md3CardVariant
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
+import kotlin.math.abs
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,6 +48,10 @@ fun ExamScreen(
     colorGroupMode: Int = 2,
     examLookaheadWeeks: Int = 1,
     onExamLookaheadWeeksChange: (Int) -> Unit = {},
+    getStartTime: (Int) -> String = { "" },
+    getEndTime: (Int) -> String = { "" },
+    currentWeek: Int = 1,
+    diffColorPerWeek: Boolean = false,
     showReloginDialog: Boolean = false,
     captchaImageBase64: String? = null,
     onYearChange: (String) -> Unit,
@@ -71,6 +77,7 @@ fun ExamScreen(
 
     val isDark = LocalAppIsDark.current
     val scaffoldBg = if (isDark) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainer
+    var detailCourse by remember { mutableStateOf<Course?>(null) }
 
     Scaffold(
         contentWindowInsets = WindowInsets.systemBars,
@@ -88,24 +95,24 @@ fun ExamScreen(
         }
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-            // Year + Semester selector + fetch button
+            // Filter card
             Md3Card(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
                 variant = Md3CardVariant.Elevated
             ) {
-                Column(modifier = Modifier.padding(12.dp)) {
+                Column(modifier = Modifier.padding(16.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         var yearExpanded by remember { mutableStateOf(false) }
                         val currentYear = LocalDate.now().year
                         val years = ((currentYear - 3)..currentYear).map { "$it-${it + 1}" }.reversed()
                         OutlinedCard(onClick = { yearExpanded = true }, modifier = Modifier.weight(1f)) {
-                            Row(modifier = Modifier.fillMaxWidth().padding(12.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                                Text(examYear.ifEmpty { "学年" }, style = MaterialTheme.typography.bodyMedium)
-                                Icon(Icons.Default.ArrowDropDown, null, modifier = Modifier.size(18.dp))
+                            Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                                Text(examYear.ifEmpty { "学年" }, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+                                Icon(Icons.Default.ArrowDropDown, null, modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
                             }
                         }
                         Box {
@@ -116,9 +123,9 @@ fun ExamScreen(
 
                         var semExpanded by remember { mutableStateOf(false) }
                         OutlinedCard(onClick = { semExpanded = true }, modifier = Modifier.weight(1f)) {
-                            Row(modifier = Modifier.fillMaxWidth().padding(12.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                                Text(if (examSemester == "1") "第一学期" else "第二学期", style = MaterialTheme.typography.bodyMedium)
-                                Icon(Icons.Default.ArrowDropDown, null, modifier = Modifier.size(18.dp))
+                            Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                                Text(if (examSemester == "1") "第一学期" else "第二学期", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+                                Icon(Icons.Default.ArrowDropDown, null, modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
                             }
                         }
                         Box {
@@ -129,47 +136,51 @@ fun ExamScreen(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
 
                     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Icon(Icons.Default.Info, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
-                        Text(text = "请在校园网下获取", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
-                        Button(onClick = onRefresh, enabled = !isLoading && examYear.isNotEmpty()) {
+                        Icon(Icons.Default.Info, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
+                        Text(text = "请在校园网下获取", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
+                        Button(
+                            onClick = onRefresh,
+                            enabled = !isLoading && examYear.isNotEmpty(),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp)
+                        ) {
                             if (isLoading) {
                                 CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onPrimary)
                             } else {
                                 Icon(Icons.Default.Refresh, null, modifier = Modifier.size(18.dp))
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text("获取")
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("获取数据", fontWeight = FontWeight.Bold)
                             }
                         }
                     }
-                }
 
-                // Exam lookahead weeks stepper
-                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
-                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                        Icon(Icons.Default.Event, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column {
-                            Text("今日页考试预览周数", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
-                            Text("控制今日主页近期考试看板的前瞻范围", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    // Exam preview weeks stepper
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
+                    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                            Icon(Icons.Default.Event, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text("今日页考试预览周数", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                                Text("控制今日主页近期考试看板的前瞻范围", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
                         }
-                    }
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        IconButton(onClick = { if (examLookaheadWeeks > 1) onExamLookaheadWeeksChange(examLookaheadWeeks - 1) }, enabled = examLookaheadWeeks > 1) {
-                            Text("−", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.primary)
-                        }
-                        Text("$examLookaheadWeeks 周", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-                        IconButton(onClick = { if (examLookaheadWeeks < 20) onExamLookaheadWeeksChange(examLookaheadWeeks + 1) }, enabled = examLookaheadWeeks < 20) {
-                            Text("+", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.primary)
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            IconButton(onClick = { if (examLookaheadWeeks > 1) onExamLookaheadWeeksChange(examLookaheadWeeks - 1) }, enabled = examLookaheadWeeks > 1) {
+                                Text("−", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.primary)
+                            }
+                            Text("$examLookaheadWeeks 周", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                            IconButton(onClick = { if (examLookaheadWeeks < 20) onExamLookaheadWeeksChange(examLookaheadWeeks + 1) }, enabled = examLookaheadWeeks < 20) {
+                                Text("+", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.primary)
+                            }
                         }
                     }
                 }
             }
 
-            // Content
+            // Exam list
             if (isLoading && exams.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
             } else if (exams.isEmpty()) {
@@ -188,12 +199,27 @@ fun ExamScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(sortedExams) { exam ->
-                        val examColor = CourseColors.getColorSync(colorGroupMode, exam.kcmc, exam.cdmc, isDark = isDark)
-                        ExamCard(exam = exam, examColor = examColor)
+                        val examColor = CourseColors.getColorSync(colorGroupMode, exam.kcmc, exam.cdmc, week = currentWeek, diffColorPerWeek = diffColorPerWeek, isDark = isDark)
+                        ExamCard(
+                            exam = exam,
+                            examColor = examColor,
+                            onClick = { detailCourse = exam.toCourseObject(semesterStart, getStartTime, getEndTime) }
+                        )
                     }
                 }
             }
         }
+    }
+
+    // Detail sheet
+    detailCourse?.let { course ->
+        val detailDotColor = CourseColors.getColorSync(mode = colorGroupMode, courseName = course.name, classroom = course.classroom, classroomIndex = course.colorIndex % 10, week = currentWeek, diffColorPerWeek = diffColorPerWeek, isDark = isDark).container
+        com.classapp.schedule.ui.weekly.CourseDetailSheet(
+            course = course, getStartTime = getStartTime, getEndTime = getEndTime,
+            onDismiss = { detailCourse = null }, onEdit = {},
+            colorGroupMode = colorGroupMode, colorIndex = course.colorIndex,
+            dotColor = detailDotColor, currentWeek = currentWeek, diffColorPerWeek = diffColorPerWeek
+        )
     }
 
     // Re-login dialog
@@ -230,14 +256,14 @@ fun ExamScreen(
 }
 
 @Composable
-private fun ExamCard(exam: ExamInfo, examColor: com.classapp.schedule.util.CourseColors.CourseColorPair) {
+private fun ExamCard(exam: ExamInfo, examColor: CourseColors.CourseColorPair, onClick: () -> Unit) {
     val examDate = try { LocalDate.parse(exam.getExamDate()) } catch (_: Exception) { null }
     val now = LocalDate.now()
     val isPast = examDate?.isBefore(now) == true
     val alpha = if (isPast) 0.5f else 1f
     val daysLeft = if (examDate != null && !isPast) ChronoUnit.DAYS.between(now, examDate) else -1L
 
-    Md3Card(modifier = Modifier.fillMaxWidth(), variant = Md3CardVariant.Elevated) {
+    Md3Card(onClick = onClick, modifier = Modifier.fillMaxWidth(), variant = Md3CardVariant.Elevated) {
         Row(modifier = Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(modifier = Modifier.width(4.dp).height(48.dp).clip(RoundedCornerShape(2.dp))
                 .background(if (isPast) examColor.content.copy(alpha = 0.2f) else examColor.content))
@@ -264,4 +290,37 @@ private fun ExamCard(exam: ExamInfo, examColor: com.classapp.schedule.util.Cours
             }
         }
     }
+}
+
+// Helper: convert ExamInfo to Course for CourseDetailSheet
+private fun ExamInfo.toCourseObject(semesterStart: LocalDate, getStartTime: (Int) -> String, getEndTime: (Int) -> String): Course? {
+    return try {
+        val examDate = LocalDate.parse(getExamDate())
+        val daysDiff = ChronoUnit.DAYS.between(semesterStart, examDate).toInt()
+        val week = (daysDiff / 7) + 1
+        val timeParts = getExamTimeRange().split("-")
+        if (timeParts.size != 2) return null
+        fun timeToPeriodLocal(time: String, provider: (Int) -> String): Int {
+            val parts = time.split(":")
+            val targetMins = ((parts.getOrNull(0)?.toIntOrNull() ?: 0) * 60) + (parts.getOrNull(1)?.toIntOrNull() ?: 0)
+            var bestPeriod = 1; var bestDiff = Int.MAX_VALUE
+            for (p in 1..14) {
+                val pTime = provider(p); if (pTime.isEmpty()) continue
+                val pParts = pTime.split(":")
+                val pMins = ((pParts.getOrNull(0)?.toIntOrNull() ?: 0) * 60) + (pParts.getOrNull(1)?.toIntOrNull() ?: 0)
+                val diff = abs(targetMins - pMins); if (diff < bestDiff) { bestDiff = diff; bestPeriod = p }
+            }
+            return bestPeriod
+        }
+        val startPeriod = timeToPeriodLocal(timeParts[0].trim(), getStartTime)
+        val endPeriod = timeToPeriodLocal(timeParts[1].trim(), getEndTime)
+        Course(
+            id = -((kch.ifEmpty { "$kcmc|$kssj|$cdmc" }).hashCode().toLong().let { abs(it) } + 1L),
+            name = kcmc, teacher = jsxx, classroom = cdmc,
+            dayOfWeek = examDate.dayOfWeek.value, startPeriod = startPeriod,
+            periods = (endPeriod - startPeriod + 1).coerceAtLeast(1), weekRange = week.toString(),
+            remark = listOf(kssj, ksfs, khfs).filter { it.isNotEmpty() }.joinToString("\n"),
+            isCustomTime = true, customStartTime = timeParts[0].trim(), customEndTime = timeParts[1].trim()
+        )
+    } catch (_: Exception) { null }
 }
