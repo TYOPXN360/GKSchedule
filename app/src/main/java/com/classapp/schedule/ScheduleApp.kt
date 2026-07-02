@@ -348,7 +348,7 @@ fun ScheduleApp(
                 val showExamReloginDialog by viewModel.showExamReloginDialog.collectAsState()
                 ExamScreen(
                     exams = examList,
-                    customExams = courses.filter { it.id < 0 || it.remark.contains("[Exam]") },
+                    customExams = emptyList(),
                     isLoading = examLoading,
                     semesterStart = semesterStart,
                     examYear = examYear,
@@ -402,23 +402,24 @@ fun ScheduleApp(
 
             composable(
                 route = Screen.ExamEdit.route,
-                arguments = listOf(navArgument("courseId") { type = NavType.LongType; defaultValue = -1L })
+                arguments = listOf(navArgument("examId") { type = NavType.LongType; defaultValue = -1L })
             ) { backStackEntry ->
-                val courseId = backStackEntry.arguments?.getLong("courseId") ?: -1L
-                val currentCourse = remember(courseId, courses) {
-                    if (courseId != -1L) courses.find { it.id == courseId } else null
+                val examId = backStackEntry.arguments?.getLong("examId") ?: -1L
+                val currentExam = remember(examId, examList) {
+                    if (examId != -1L) examList.find { it.id == examId } else null
                 }
                 com.classapp.schedule.ui.exam.ExamEditScreen(
-                    course = currentCourse,
-                    periodsPerDay = periodsPerDay,
+                    exam = currentExam,
                     semesterStart = semesterStart,
-                    onSave = { examList ->
-                        examList.forEach { viewModel.saveCourse(it) }
-                        // Toast 必须在 popBackStack 之前触发
-                        android.widget.Toast.makeText(context, "成功导入 ${examList.size} 场考试！", android.widget.Toast.LENGTH_SHORT).show()
+                    onSave = { examEntities ->
+                        viewModel.saveExams(examEntities)
+                        android.widget.Toast.makeText(context, "成功导入 ${examEntities.size} 场考试！", android.widget.Toast.LENGTH_SHORT).show()
                         navController.popBackStack()
                     },
-                    onDelete = { viewModel.deleteCourse(it); navController.popBackStack() },
+                    onDelete = { entity ->
+                        viewModel.deleteExamById(entity.id)
+                        navController.popBackStack()
+                    },
                     onBack = { navController.popBackStack() }
                 )
             }

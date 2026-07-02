@@ -30,24 +30,21 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.classapp.schedule.data.Course
+import com.classapp.schedule.data.ExamEntity
 import com.classapp.schedule.ui.theme.LocalAppIsDark
-import com.classapp.schedule.util.JsonImportExport
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
-import kotlin.math.abs
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExamEditScreen(
-    course: Course?,
-    periodsPerDay: Int,
+    exam: ExamEntity?,
     semesterStart: LocalDate,
-    onSave: (List<Course>) -> Unit,
-    onDelete: (Course) -> Unit,
+    onSave: (List<ExamEntity>) -> Unit,
+    onDelete: (ExamEntity) -> Unit,
     onBack: () -> Unit
 ) {
     val isDark = LocalAppIsDark.current
@@ -55,18 +52,18 @@ fun ExamEditScreen(
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
 
-    var name by remember { mutableStateOf(course?.name ?: "") }
-    var classroom by remember { mutableStateOf(course?.classroom ?: "") }
-    var teacher by remember { mutableStateOf(course?.teacher ?: "") }
-    var examMethod by remember { mutableStateOf(course?.remark?.split("\n")?.getOrNull(1) ?: "闭卷") }
-    var remarkText by remember { mutableStateOf(course?.remark?.split("\n")?.getOrNull(2) ?: "") }
-    var examDate by remember { mutableStateOf(if (course != null) { val weekOffset = (course.weekRange.toIntOrNull() ?: 1) - 1; try { semesterStart.plusWeeks(weekOffset.toLong()).plusDays((course.dayOfWeek - 1).toLong()) } catch (_: Exception) { LocalDate.now() } } else LocalDate.now()) }
-    var startTime by remember { mutableStateOf(course?.customStartTime ?: "09:00") }
-    var endTime by remember { mutableStateOf(course?.customEndTime ?: "11:00") }
+    var name by remember { mutableStateOf(exam?.courseName ?: "") }
+    var classroom by remember { mutableStateOf(exam?.classroom ?: "") }
+    var teacher by remember { mutableStateOf(exam?.teacherInfo ?: "") }
+    var examMethod by remember { mutableStateOf(exam?.examMethod ?: "闭卷") }
+    var remarkText by remember { mutableStateOf(exam?.customRemark ?: "") }
+    var examDate by remember { mutableStateOf(if (exam?.examDate?.isNotEmpty() == true) { try { LocalDate.parse(exam.examDate) } catch (_: Exception) { LocalDate.now() } } else LocalDate.now()) }
+    var startTime by remember { mutableStateOf(exam?.customStartTime?.ifEmpty { "09:00" } ?: "09:00") }
+    var endTime by remember { mutableStateOf(exam?.customEndTime?.ifEmpty { "11:00" } ?: "11:00") }
     var showM3DatePicker by remember { mutableStateOf(false) }
     var showM3StartTimePicker by remember { mutableStateOf(false) }
     var showM3EndTimePicker by remember { mutableStateOf(false) }
-    var batchExams by remember { mutableStateOf<List<Course>>(emptyList()) }
+    var batchExams by remember { mutableStateOf<List<ExamEntity>>(emptyList()) }
     var selectedTabIndex by remember { mutableIntStateOf(0) }
     var showAiPanel by remember { mutableStateOf(false) }
     var aiClipboardInput by remember { mutableStateOf("") }
@@ -85,7 +82,7 @@ fun ExamEditScreen(
             "name": "示例考试科目",
             "classroom": "某某考场101, 某某考场102",
             "teacher": "监考老师姓名",
-            "examDate": "2026-01-01", 
+            "examDate": "2026-01-01",
             "startTime": "09:00",
             "endTime": "11:00",
             "examMethod": "闭卷",
@@ -103,10 +100,10 @@ fun ExamEditScreen(
     }
 
     Scaffold(containerColor = scaffoldBg, topBar = {
-        TopAppBar(title = { Text(if (course == null) "添加考试安排" else "编辑考试安排", fontWeight = FontWeight.Bold) },
+        TopAppBar(title = { Text(if (exam == null) "添加考试安排" else "编辑考试安排", fontWeight = FontWeight.Bold) },
             colors = TopAppBarDefaults.topAppBarColors(containerColor = scaffoldBg, scrolledContainerColor = scaffoldBg),
             navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") } },
-            actions = { if (course != null) { IconButton(onClick = { onDelete(course) }) { Icon(Icons.Default.Delete, "Delete", tint = MaterialTheme.colorScheme.error) } } })
+            actions = { if (exam != null) { IconButton(onClick = { onDelete(exam) }) { Icon(Icons.Default.Delete, "Delete", tint = MaterialTheme.colorScheme.error) } } })
     }) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Spacer(modifier = Modifier.height(4.dp))
@@ -130,20 +127,17 @@ fun ExamEditScreen(
                                 try {
                                     val cleanedJson = extractJsonArrayString(aiClipboardInput.trim())
                                     val jsonArray = org.json.JSONArray(cleanedJson)
-                                    val parsedExams = mutableListOf<Course>()
+                                    val parsedExams = mutableListOf<ExamEntity>()
                                     for (i in 0 until jsonArray.length()) {
                                         val obj = jsonArray.getJSONObject(i)
                                         val eName = obj.optString("name"); val eClassroom = obj.optString("classroom"); val eTeacher = obj.optString("teacher"); val eMethod = obj.optString("examMethod", "闭卷"); val eStartTime = obj.optString("startTime", "09:00"); val eEndTime = obj.optString("endTime", "11:00"); val eRemark = obj.optString("remark"); val dateStr = obj.optString("examDate")
-                                        val parsedDate = if (dateStr.isNotEmpty()) LocalDate.parse(dateStr) else LocalDate.now()
-                                        val daysDiff = ChronoUnit.DAYS.between(semesterStart, parsedDate).toInt(); val targetWeek = (daysDiff / 7) + 1; val dayOfWeek = parsedDate.dayOfWeek.value
-                                        fun timeToPeriod(timeStr: String): Int { val hour = timeStr.split(":")[0].toIntOrNull() ?: 9; return when { hour < 10 -> 1; hour < 12 -> 3; hour < 16 -> 5; hour < 18 -> 7; else -> 9 } }
-                                        parsedExams.add(Course(id = course?.id ?: -abs(System.currentTimeMillis() % 1000000L + 2000000L + i), name = eName, teacher = eTeacher, classroom = eClassroom, dayOfWeek = dayOfWeek, startPeriod = timeToPeriod(eStartTime), periods = 2, weekRange = targetWeek.toString(), remark = "$eStartTime-$eEndTime\n$eMethod\n$eRemark".trimEnd(), isCustomTime = true, customStartTime = eStartTime, customEndTime = eEndTime, isManuallyEdited = true))
+                                        parsedExams.add(ExamEntity(courseName = eName, examDate = dateStr, examTimeRange = "$eStartTime-$eEndTime", classroom = eClassroom, examMethod = eMethod, teacherInfo = eTeacher, isLocal = true, customStartTime = eStartTime, customEndTime = eEndTime, customRemark = eRemark))
                                     }
                                     if (parsedExams.isNotEmpty()) {
                                         batchExams = parsedExams; selectedTabIndex = 0
-                                        val first = parsedExams[0]; name = first.name; classroom = first.classroom; teacher = first.teacher; startTime = first.customStartTime; endTime = first.customEndTime
-                                        val remarkParts = first.remark.split("\n"); examMethod = remarkParts.getOrNull(1) ?: "闭卷"; remarkText = remarkParts.getOrNull(2) ?: ""
-                                        val weekOffset = (first.weekRange.toIntOrNull() ?: 1) - 1; examDate = semesterStart.plusWeeks(weekOffset.toLong()).plusDays((first.dayOfWeek - 1).toLong())
+                                        val first = parsedExams[0]; name = first.courseName; classroom = first.classroom; teacher = first.teacherInfo; startTime = first.customStartTime; endTime = first.customEndTime
+                                        examMethod = first.examMethod; remarkText = first.customRemark
+                                        examDate = try { LocalDate.parse(first.examDate) } catch (_: Exception) { LocalDate.now() }
                                         aiErrorHint = ""; showAiPanel = false
                                         android.widget.Toast.makeText(context, "成功录入 ${parsedExams.size} 场考试，请通过多标签切换审核！", android.widget.Toast.LENGTH_SHORT).show()
                                     } else { aiErrorHint = "未发现有效的考务配置信息。" }
@@ -159,11 +153,11 @@ fun ExamEditScreen(
                 ScrollableTabRow(selectedTabIndex = selectedTabIndex, edgePadding = 0.dp, containerColor = Color.Transparent, modifier = Modifier.fillMaxWidth().clip(MaterialTheme.shapes.medium)) {
                     batchExams.forEachIndexed { index, _ ->
                         Tab(selected = selectedTabIndex == index, onClick = {
-                            val currentState = Course(id = course?.id ?: 0, name = name.trim(), teacher = teacher.trim(), classroom = classroom.trim(), dayOfWeek = examDate.dayOfWeek.value, startPeriod = 1, periods = 2, weekRange = ((ChronoUnit.DAYS.between(semesterStart, examDate).toInt() / 7) + 1).toString(), remark = "$startTime-$endTime\n$examMethod\n$remarkText".trimEnd(), isCustomTime = true, customStartTime = startTime, customEndTime = endTime, isManuallyEdited = true)
+                            val currentState = ExamEntity(id = batchExams[selectedTabIndex].id, courseName = name.trim(), examDate = examDate.toString(), examTimeRange = "$startTime-$endTime", classroom = classroom.trim(), examMethod = examMethod, teacherInfo = teacher.trim(), isLocal = true, customStartTime = startTime, customEndTime = endTime, customRemark = remarkText)
                             batchExams = batchExams.toMutableList().apply { this[selectedTabIndex] = currentState }
-                            selectedTabIndex = index; val target = batchExams[index]; name = target.name; classroom = target.classroom; teacher = target.teacher; startTime = target.customStartTime; endTime = target.customEndTime
-                            val remarkParts = target.remark.split("\n"); examMethod = remarkParts.getOrNull(1) ?: "闭卷"; remarkText = remarkParts.getOrNull(2) ?: ""
-                            val weekOffset = (target.weekRange.toIntOrNull() ?: 1) - 1; examDate = semesterStart.plusWeeks(weekOffset.toLong()).plusDays((target.dayOfWeek - 1).toLong())
+                            selectedTabIndex = index; val target = batchExams[index]; name = target.courseName; classroom = target.classroom; teacher = target.teacherInfo; startTime = target.customStartTime; endTime = target.customEndTime
+                            examMethod = target.examMethod; remarkText = target.customRemark
+                            examDate = try { LocalDate.parse(target.examDate) } catch (_: Exception) { LocalDate.now() }
                         }, text = { Text("考试 ${index + 1}", fontWeight = FontWeight.Bold) })
                     }
                 }
@@ -179,16 +173,10 @@ fun ExamEditScreen(
             OutlinedTextField(value = remarkText, onValueChange = { remarkText = it }, label = { Text("其他备注 (选填)") }, leadingIcon = { Icon(Icons.Default.Assignment, null) }, modifier = Modifier.fillMaxWidth(), minLines = 1, shape = RoundedCornerShape(12.dp))
             Spacer(modifier = Modifier.height(16.dp))
             Button(onClick = {
-                android.util.Log.d("ExamEdit", "Save button clicked, name='$name'")
-                if (name.isBlank()) { android.util.Log.d("ExamEdit", "name is blank, returning"); return@Button }
-                val daysDiff = ChronoUnit.DAYS.between(semesterStart, examDate).toInt(); val targetWeek = (daysDiff / 7) + 1; val dayOfWeek = examDate.dayOfWeek.value
-                fun timeToPeriod(timeStr: String): Int { val hour = timeStr.split(":")[0].toInt(); return when { hour < 10 -> 1; hour < 12 -> 3; hour < 16 -> 5; hour < 18 -> 7; else -> 9 } }
-                val currentExam = Course(id = course?.id ?: 0L, name = name, teacher = teacher, classroom = classroom, dayOfWeek = dayOfWeek, startPeriod = timeToPeriod(startTime), periods = 2, weekRange = targetWeek.toString(), remark = "$startTime-$endTime\n$examMethod\n$remarkText\n[Exam]".trimEnd(), isCustomTime = true, customStartTime = startTime, customEndTime = endTime, isManuallyEdited = true)
+                if (name.isBlank()) return@Button
+                val currentExam = ExamEntity(id = exam?.id ?: 0L, courseName = name.trim(), examDate = examDate.toString(), examTimeRange = "$startTime-$endTime", classroom = classroom.trim(), examMethod = examMethod, teacherInfo = teacher.trim(), isLocal = true, customStartTime = startTime, customEndTime = endTime, customRemark = remarkText)
                 if (batchExams.isNotEmpty()) {
-                    val finalBatch = batchExams.mapIndexed { index, cached ->
-                        if (index == selectedTabIndex) currentExam
-                        else cached.copy(id = 0L, remark = if (cached.remark.contains("[Exam]")) cached.remark else "${cached.remark}\n[Exam]".trimEnd())
-                    }
+                    val finalBatch = batchExams.toMutableList().apply { this[selectedTabIndex] = currentExam }
                     onSave(finalBatch)
                 } else { onSave(listOf(currentExam)) }
             }, modifier = Modifier.fillMaxWidth().height(52.dp), shape = RoundedCornerShape(26.dp), enabled = name.isNotBlank()) { Text(if (batchExams.size > 1) "保存全部考试安排 (${batchExams.size})" else "保存安排", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }
