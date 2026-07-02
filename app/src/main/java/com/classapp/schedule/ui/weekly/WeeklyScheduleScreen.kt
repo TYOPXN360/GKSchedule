@@ -574,25 +574,33 @@ fun WeeklyScheduleScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CourseDetailSheet(course: Course, getStartTime: (Int) -> String, getEndTime: (Int) -> String, onDismiss: () -> Unit, onEdit: () -> Unit, courseColors: List<Pair<Color, Color>> = CourseColors.getColors(0, count = 8), colorGroupMode: Int = 0, colorIndex: Int = course.colorIndex, dotColor: Color? = null) {
+    val isDark = com.classapp.schedule.ui.theme.LocalAppIsDark.current
+    val hctColors = remember(course, colorGroupMode, isDark) {
+        com.classapp.schedule.util.CourseColors.getColorSync(colorGroupMode, course.name, course.classroom, isDark = isDark)
+    }
+
+    // Smart remark cleaner: filter out time/date lines, keep "闭卷" "笔试" etc.
+    val cleanedRemark = if (course.id >= 0) course.remark
+    else course.remark.split("\n")
+        .filter { line -> !line.contains(":") && !line.contains("时间") && line.isNotBlank() }
+        .joinToString("\n")
+
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState()) {
         Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp).padding(bottom = 32.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                val detailDotColor = dotColor ?: run {
-                    val isDark = com.classapp.schedule.ui.theme.LocalAppIsDark.current
-                    com.classapp.schedule.util.CourseColors.getColorSync(colorGroupMode, course.name, course.classroom, isDark = isDark).container
-                }
+                val detailDotColor = dotColor ?: hctColors.container
                 Box(modifier = Modifier.size(12.dp).clip(RoundedCornerShape(50)).background(detailDotColor))
                 Spacer(modifier = Modifier.width(12.dp))
-                Text(course.name, style = MaterialTheme.typography.titleLarge)
-                if (course.isExamCourse()) {
-                    Spacer(modifier = Modifier.width(8.dp))
+                // Exam tag BEFORE course name, using HCT content color
+                if (course.id < 0) {
                     Box(
-                        modifier = Modifier.clip(RoundedCornerShape(4.dp)).background(MaterialTheme.colorScheme.tertiaryContainer).padding(horizontal = 5.dp, vertical = 1.dp),
+                        modifier = Modifier.padding(end = 8.dp).clip(RoundedCornerShape(4.dp)).background(hctColors.content.copy(alpha = 0.2f)).padding(horizontal = 4.dp, vertical = 1.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("考试", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onTertiaryContainer, fontWeight = FontWeight.Bold)
+                        Text("考试", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = hctColors.content, maxLines = 1)
                     }
                 }
+                Text(course.name, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f, fill = false), maxLines = 2, overflow = TextOverflow.Ellipsis)
             }
             Spacer(modifier = Modifier.height(16.dp))
             val dayNames = listOf("", "周一", "周二", "周三", "周四", "周五", "周六", "周日")
@@ -606,9 +614,7 @@ fun CourseDetailSheet(course: Course, getStartTime: (Int) -> String, getEndTime:
             if (course.teacher.isNotEmpty()) DetailRow("教师", course.teacher)
             if (course.classroom.isNotEmpty()) DetailRow("教室", course.classroom)
             DetailRow("周次", course.weekRange)
-            if (course.remark.isNotEmpty() && !course.isExamCourse()) DetailRow("备注", course.remark)
-            Spacer(modifier = Modifier.height(24.dp))
-            val detailView = androidx.compose.ui.platform.LocalView.current
+            if (cleanedRemark.isNotEmpty()) DetailRow("备注", cleanedRemark)
         }
     }
 }
