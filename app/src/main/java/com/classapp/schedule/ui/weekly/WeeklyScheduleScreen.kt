@@ -584,6 +584,15 @@ fun CourseDetailSheet(course: Course, getStartTime: (Int) -> String, getEndTime:
                 Box(modifier = Modifier.size(12.dp).clip(RoundedCornerShape(50)).background(detailDotColor))
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(course.name, style = MaterialTheme.typography.titleLarge)
+                if (course.isExamCourse()) {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Box(
+                        modifier = Modifier.clip(RoundedCornerShape(4.dp)).background(MaterialTheme.colorScheme.tertiaryContainer).padding(horizontal = 5.dp, vertical = 1.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("考试", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onTertiaryContainer, fontWeight = FontWeight.Bold)
+                    }
+                }
             }
             Spacer(modifier = Modifier.height(16.dp))
             val dayNames = listOf("", "周一", "周二", "周三", "周四", "周五", "周六", "周日")
@@ -597,7 +606,7 @@ fun CourseDetailSheet(course: Course, getStartTime: (Int) -> String, getEndTime:
             if (course.teacher.isNotEmpty()) DetailRow("教师", course.teacher)
             if (course.classroom.isNotEmpty()) DetailRow("教室", course.classroom)
             DetailRow("周次", course.weekRange)
-            if (course.remark.isNotEmpty()) DetailRow("备注", course.remark)
+            if (course.remark.isNotEmpty() && !course.isExamCourse()) DetailRow("备注", course.remark)
             Spacer(modifier = Modifier.height(24.dp))
             val detailView = androidx.compose.ui.platform.LocalView.current
         }
