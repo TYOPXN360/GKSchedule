@@ -563,7 +563,9 @@ fun WeeklyScheduleScreen(
             courseColors = CourseColors.getColors(colorEngine, count = 8),
             colorGroupMode = colorGroupMode,
             colorIndex = course.colorIndex,
-            dotColor = detailDotColor)
+            dotColor = detailDotColor,
+            currentWeek = currentWeek,
+            diffColorPerWeek = diffColorPerWeek)
     }
 
     if (showWeekPicker) {
@@ -573,17 +575,22 @@ fun WeeklyScheduleScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CourseDetailSheet(course: Course, getStartTime: (Int) -> String, getEndTime: (Int) -> String, onDismiss: () -> Unit, onEdit: () -> Unit, courseColors: List<Pair<Color, Color>> = CourseColors.getColors(0, count = 8), colorGroupMode: Int = 0, colorIndex: Int = course.colorIndex, dotColor: Color? = null) {
+fun CourseDetailSheet(course: Course, getStartTime: (Int) -> String, getEndTime: (Int) -> String, onDismiss: () -> Unit, onEdit: () -> Unit, courseColors: List<Pair<Color, Color>> = CourseColors.getColors(0, count = 8), colorGroupMode: Int = 0, colorIndex: Int = course.colorIndex, dotColor: Color? = null, currentWeek: Int = 0, diffColorPerWeek: Boolean = false) {
     val isDark = com.classapp.schedule.ui.theme.LocalAppIsDark.current
-    val hctColors = remember(course, colorGroupMode, isDark) {
-        com.classapp.schedule.util.CourseColors.getColorSync(colorGroupMode, course.name, course.classroom, isDark = isDark)
+    val hctColors = remember(course, colorGroupMode, currentWeek, diffColorPerWeek, isDark) {
+        val realClassroomIdx = if (colorGroupMode == 1) course.colorIndex % 10 else 0
+        com.classapp.schedule.util.CourseColors.getColorSync(colorGroupMode, course.name, course.classroom, classroomIndex = realClassroomIdx, week = currentWeek, diffColorPerWeek = diffColorPerWeek, isDark = isDark)
     }
 
-    // Smart remark cleaner: filter out time/date lines, keep "闭卷" "笔试" etc.
-    val cleanedRemark = if (course.id >= 0) course.remark
-    else course.remark.split("\n")
-        .filter { line -> !line.contains(":") && !line.contains("时间") && line.isNotBlank() }
-        .joinToString("\n")
+    // Smart remark cleaner: filter time lines + strip "考试" text
+    val cleanedRemark = remember(course.remark, course.id) {
+        if (course.id >= 0) course.remark
+        else course.remark.split("\n")
+            .filter { line -> !line.contains(":") && !line.contains("时间") && line.isNotBlank() }
+            .map { it.replace("考试", "").trim() }
+            .filter { it.isNotBlank() }
+            .joinToString("\n")
+    }
 
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState()) {
         Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp).padding(bottom = 32.dp)) {
@@ -591,13 +598,13 @@ fun CourseDetailSheet(course: Course, getStartTime: (Int) -> String, getEndTime:
                 val detailDotColor = dotColor ?: hctColors.container
                 Box(modifier = Modifier.size(12.dp).clip(RoundedCornerShape(50)).background(detailDotColor))
                 Spacer(modifier = Modifier.width(12.dp))
-                // Exam tag BEFORE course name, using HCT content color
+                // Exam tag BEFORE course name, labelLarge to match titleLarge
                 if (course.id < 0) {
                     Box(
-                        modifier = Modifier.padding(end = 8.dp).clip(RoundedCornerShape(4.dp)).background(hctColors.content.copy(alpha = 0.2f)).padding(horizontal = 4.dp, vertical = 1.dp),
+                        modifier = Modifier.padding(end = 8.dp).clip(RoundedCornerShape(6.dp)).background(hctColors.content.copy(alpha = 0.15f)).padding(horizontal = 8.dp, vertical = 3.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("考试", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = hctColors.content, maxLines = 1)
+                        Text("考试", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = hctColors.content, maxLines = 1)
                     }
                 }
                 Text(course.name, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f, fill = false), maxLines = 2, overflow = TextOverflow.Ellipsis)
