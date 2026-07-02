@@ -1,7 +1,5 @@
 package com.classapp.schedule.ui.exam
 
-import android.app.DatePickerDialog
-import android.app.TimePickerDialog
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -20,12 +18,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.classapp.schedule.data.Course
 import com.classapp.schedule.ui.theme.LocalAppIsDark
+import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import kotlin.math.abs
@@ -40,7 +39,6 @@ fun ExamEditScreen(
     onDelete: (Course) -> Unit,
     onBack: () -> Unit
 ) {
-    val context = LocalContext.current
     val isDark = LocalAppIsDark.current
     val scaffoldBg = if (isDark) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainer
 
@@ -54,10 +52,8 @@ fun ExamEditScreen(
         mutableStateOf(
             if (course != null) {
                 val weekOffset = (course.weekRange.toIntOrNull() ?: 1) - 1
-                val semesterStartForDate = LocalDate.now().withDayOfYear(1) // fallback
                 try {
-                    // Reconstruct date from weekRange and dayOfWeek
-                    val base = LocalDate.now().withMonth(9).withDayOfMonth(1) // Sept 1 as semester start approximation
+                    val base = LocalDate.now().withMonth(9).withDayOfMonth(1)
                     base.plusWeeks(weekOffset.toLong()).plusDays((course.dayOfWeek - 1).toLong())
                 } catch (_: Exception) { LocalDate.now() }
             } else LocalDate.now()
@@ -65,6 +61,10 @@ fun ExamEditScreen(
     }
     var startTime by remember { mutableStateOf(course?.customStartTime ?: "09:00") }
     var endTime by remember { mutableStateOf(course?.customEndTime ?: "11:00") }
+
+    var showM3DatePicker by remember { mutableStateOf(false) }
+    var showM3StartTimePicker by remember { mutableStateOf(false) }
+    var showM3EndTimePicker by remember { mutableStateOf(false) }
 
     Scaffold(
         containerColor = scaffoldBg,
@@ -96,14 +96,13 @@ fun ExamEditScreen(
                 shape = RoundedCornerShape(12.dp)
             )
 
+            // Date selection card
             Card(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
                 modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)
             ) {
                 Row(
-                    modifier = Modifier.clickable {
-                        DatePickerDialog(context, { _, y, m, d -> examDate = LocalDate.of(y, m + 1, d) }, examDate.year, examDate.monthValue - 1, examDate.dayOfMonth).show()
-                    }.fillMaxWidth().padding(16.dp),
+                    modifier = Modifier.clickable { showM3DatePicker = true }.fillMaxWidth().padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(Icons.Default.CalendarMonth, null, tint = MaterialTheme.colorScheme.primary)
@@ -115,6 +114,7 @@ fun ExamEditScreen(
                 }
             }
 
+            // Time range card
             Card(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
                 modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)
@@ -126,18 +126,8 @@ fun ExamEditScreen(
                         Text("考试时间", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                     }
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        OutlinedButton(
-                            onClick = {
-                                val parts = startTime.split(":")
-                                TimePickerDialog(context, { _, h, m -> startTime = String.format("%02d:%02d", h, m) }, parts[0].toInt(), parts[1].toInt(), true).show()
-                            }, modifier = Modifier.weight(1f)
-                        ) { Text("开始: $startTime") }
-                        OutlinedButton(
-                            onClick = {
-                                val parts = endTime.split(":")
-                                TimePickerDialog(context, { _, h, m -> endTime = String.format("%02d:%02d", h, m) }, parts[0].toInt(), parts[1].toInt(), true).show()
-                            }, modifier = Modifier.weight(1f)
-                        ) { Text("结束: $endTime") }
+                        OutlinedButton(onClick = { showM3StartTimePicker = true }, modifier = Modifier.weight(1f)) { Text("开始: $startTime") }
+                        OutlinedButton(onClick = { showM3EndTimePicker = true }, modifier = Modifier.weight(1f)) { Text("结束: $endTime") }
                     }
                 }
             }
@@ -183,9 +173,7 @@ fun ExamEditScreen(
 
                     fun timeToPeriod(timeStr: String): Int {
                         val hour = timeStr.split(":")[0].toInt()
-                        return when {
-                            hour < 10 -> 1; hour < 12 -> 3; hour < 16 -> 5; hour < 18 -> 7; else -> 9
-                        }
+                        return when { hour < 10 -> 1; hour < 12 -> 3; hour < 16 -> 5; hour < 18 -> 7; else -> 9 }
                     }
                     val startP = timeToPeriod(startTime)
 
@@ -206,5 +194,65 @@ fun ExamEditScreen(
             ) { Text("保存安排", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }
             Spacer(modifier = Modifier.height(24.dp))
         }
+    }
+
+    // M3 DatePicker
+    if (showM3DatePicker) {
+        val initialEpochMillis = remember(examDate) { examDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli() }
+        val datePickerState = rememberDatePickerState(initialSelectedDateMillis = initialEpochMillis)
+        DatePickerDialog(
+            onDismissRequest = { showM3DatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let { millis ->
+                        examDate = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).toLocalDate()
+                    }
+                    showM3DatePicker = false
+                }) { Text("确定") }
+            },
+            dismissButton = { TextButton(onClick = { showM3DatePicker = false }) { Text("取消") } }
+        ) { DatePicker(state = datePickerState) }
+    }
+
+    // M3 TimePicker - start time
+    if (showM3StartTimePicker) {
+        val startParts = startTime.split(":")
+        val timePickerState = rememberTimePickerState(
+            initialHour = startParts.getOrNull(0)?.toIntOrNull() ?: 9,
+            initialMinute = startParts.getOrNull(1)?.toIntOrNull() ?: 0, is24Hour = true
+        )
+        AlertDialog(
+            onDismissRequest = { showM3StartTimePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    startTime = String.format("%02d:%02d", timePickerState.hour, timePickerState.minute)
+                    showM3StartTimePicker = false
+                }) { Text("确定") }
+            },
+            dismissButton = { TextButton(onClick = { showM3StartTimePicker = false }) { Text("取消") } },
+            title = { Text("选择开始时间", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) },
+            text = { Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { TimePicker(state = timePickerState) } }
+        )
+    }
+
+    // M3 TimePicker - end time
+    if (showM3EndTimePicker) {
+        val endParts = endTime.split(":")
+        val timePickerState = rememberTimePickerState(
+            initialHour = endParts.getOrNull(0)?.toIntOrNull() ?: 11,
+            initialMinute = endParts.getOrNull(1)?.toIntOrNull() ?: 0, is24Hour = true
+        )
+        AlertDialog(
+            onDismissRequest = { showM3EndTimePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    endTime = String.format("%02d:%02d", timePickerState.hour, timePickerState.minute)
+                    showM3EndTimePicker = false
+                }) { Text("确定") }
+            },
+            dismissButton = { TextButton(onClick = { showM3EndTimePicker = false }) { Text("取消") } },
+            title = { Text("选择结束时间", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) },
+            text = { Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { TimePicker(state = timePickerState) } }
+        )
     }
 }
