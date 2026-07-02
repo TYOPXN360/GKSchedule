@@ -595,7 +595,7 @@ fun CourseDetailSheet(course: Course, getStartTime: (Int) -> String, getEndTime:
                         modifier = Modifier.padding(end = 8.dp).clip(RoundedCornerShape(4.dp)).background(hctColors.content.copy(alpha = 0.2f)).padding(horizontal = 4.dp, vertical = 1.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("考试", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = hctColors.content, maxLines = 1)
+                        Text("考试", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = hctColors.content, maxLines = 1)
                     }
                 }
                 Text(course.name, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f, fill = false), maxLines = 2, overflow = TextOverflow.Ellipsis)
