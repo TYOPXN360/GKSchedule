@@ -9,7 +9,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.google.android.material.color.utilities.Hct
 
 val LocalAppIsDark = compositionLocalOf { false }
 
@@ -49,11 +48,11 @@ private val LightColorScheme = lightColorScheme(
 )
 
 private val DarkColorScheme = darkColorScheme(
-    surface = Color(0xFF141218),
+    surface = Color(0xFF161A1F),
     onSurface = Color(0xFFE6E0E9),
     surfaceContainerHigh = Color(0xFF282C34),
     surfaceContainerHighest = Color(0xFF30343C),
-    surfaceContainer = Color(0xFF211F26),
+    surfaceContainer = Color(0xFF1E2228),
     surfaceVariant = Color(0xFF49454F),
     onSurfaceVariant = Color(0xFFCAC4D0),
     primary = Color(0xFFD0BCFF),
@@ -90,15 +89,32 @@ fun ClassAppTheme(
     val colorScheme = when {
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && isDark -> {
             val dynamicDark = dynamicDarkColorScheme(context)
-            // Linear color blend from primary - 100% immune to HCT gamut clipping
-            val w = 1f / 6f
-            val baseR = 13f; val baseG = 13f; val baseB = 15f
-            val r = (baseR * (1f - w) + dynamicDark.primary.red * 255f * w).coerceIn(0f, 255f).toInt()
-            val g = (baseG * (1f - w) + dynamicDark.primary.green * 255f * w).coerceIn(0f, 255f).toInt()
-            val b = (baseB * (1f - w) + dynamicDark.primary.blue * 255f * w).coerceIn(0f, 255f).toInt()
-            val dynamicContainerHigh = Color(r, g, b)
-            val dynamicContainerHighest = Color((r + 8).coerceAtMost(255), (g + 8).coerceAtMost(255), (b + 8).coerceAtMost(255))
-            dynamicDark.copy(surfaceContainerHigh = dynamicContainerHigh, surfaceContainerHighest = dynamicContainerHighest)
+            val pColor = dynamicDark.primary
+
+            // 轨道一：底部大盘底色（surface）
+            val wSurface = 1f / 12f
+            val sR = (8f * (1f - wSurface) + pColor.red * 255f * wSurface).toInt().coerceIn(0, 255)
+            val sG = (10f * (1f - wSurface) + pColor.green * 255f * wSurface).toInt().coerceIn(0, 255)
+            val sB = (12f * (1f - wSurface) + pColor.blue * 255f * wSurface).toInt().coerceIn(0, 255)
+            val dynamicSurface = Color(sR, sG, sB)
+
+            // 轨道二：卡片框色（surfaceContainerHigh）
+            val wCard = 1f / 6f
+            val cR = (13f * (1f - wCard) + pColor.red * 255f * wCard).toInt().coerceIn(0, 255)
+            val cG = (13f * (1f - wCard) + pColor.green * 255f * wCard).toInt().coerceIn(0, 255)
+            val cB = (15f * (1f - wCard) + pColor.blue * 255f * wCard).toInt().coerceIn(0, 255)
+            val dynamicContainerHigh = Color(cR, cG, cB)
+
+            // 平滑层级
+            val dynamicContainer = Color((sR + cR) / 2, (sG + cG) / 2, (sB + cB) / 2)
+            val dynamicContainerHighest = Color((cR + 8).coerceAtMost(255), (cG + 8).coerceAtMost(255), (cB + 8).coerceAtMost(255))
+
+            dynamicDark.copy(
+                surface = dynamicSurface,
+                surfaceContainer = dynamicContainer,
+                surfaceContainerHigh = dynamicContainerHigh,
+                surfaceContainerHighest = dynamicContainerHighest
+            )
         }
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !isDark -> {
             val dynamicLight = dynamicLightColorScheme(context)
