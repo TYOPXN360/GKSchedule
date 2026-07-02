@@ -570,7 +570,8 @@ fun CourseDetailSheet(course: Course, getStartTime: (Int) -> String, getEndTime:
     val isDark = com.classapp.schedule.ui.theme.LocalAppIsDark.current
     val hctColors = remember(course, colorGroupMode, currentWeek, diffColorPerWeek, isDark) {
         val realClassroomIdx = if (colorGroupMode == 1) course.colorIndex % 10 else 0
-        com.classapp.schedule.util.CourseColors.getColorSync(colorGroupMode, course.name, course.classroom, classroomIndex = realClassroomIdx, week = currentWeek, diffColorPerWeek = diffColorPerWeek, isDark = isDark)
+        val targetWeek = if (course.id < 0) course.weekRange.toIntOrNull() ?: currentWeek else currentWeek
+        com.classapp.schedule.util.CourseColors.getColorSync(colorGroupMode, course.name, course.classroom, classroomIndex = realClassroomIdx, week = targetWeek, diffColorPerWeek = diffColorPerWeek, isDark = isDark)
     }
 
     // Smart remark cleaner: filter time lines + strip "考试" text
@@ -586,7 +587,7 @@ fun CourseDetailSheet(course: Course, getStartTime: (Int) -> String, getEndTime:
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState()) {
         Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp).padding(bottom = 32.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                val detailDotColor = dotColor ?: hctColors.container
+                val detailDotColor = if (course.id < 0) hctColors.content else (dotColor ?: hctColors.container)
                 Box(modifier = Modifier.size(12.dp).clip(RoundedCornerShape(50)).background(detailDotColor))
                 Spacer(modifier = Modifier.width(12.dp))
                 // Exam tag BEFORE course name, labelLarge to match titleLarge

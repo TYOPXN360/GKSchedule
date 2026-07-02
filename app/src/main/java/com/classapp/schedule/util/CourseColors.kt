@@ -60,12 +60,20 @@ object CourseColors {
         val hue = computeHue(mode, courseName, classroom, week, diffColorPerWeek)
 
         return if (isDark) {
-            // Micro-Jittering: expanded range to avoid sRGB gamut collapse
-            val hashModifier = abs(courseName.hashCode())
-            val dynamicChroma = 20.0 + (hashModifier % 8)
-            val dynamicTone = 35.0 + (hashModifier % 6)
+            val colorSeed = if (mode == 1 || mode == 0) {
+                if (diffColorPerWeek) "$courseName|$week" else courseName
+            } else {
+                if (diffColorPerWeek) "$courseName|$classroom|$week" else "$courseName|$classroom"
+            }
+            val seedHash = abs(colorSeed.hashCode())
+            val baseChroma = 16.0 + (seedHash % 12)
+            val baseTone = 38.0 + (seedHash % 10)
+
+            val dynamicChroma = if (mode == 1) (baseChroma + classroomIndex * 4.5).coerceAtMost(38.0) else baseChroma
+            val dynamicTone = if (mode == 1) (baseTone - classroomIndex * 3.5).coerceAtLeast(26.0) else baseTone
+
             val darkContainer = hctToColor(hue, dynamicChroma, dynamicTone)
-            val darkContent = hctToColor(hue, 22.0, 92.0)
+            val darkContent = hctToColor(hue, 22.0, 96.0)
             CourseColorPair(container = darkContainer, content = darkContent)
         } else {
             val containerChroma = computeChroma(mode, classroomIndex, CHROMA_CONTAINER)
