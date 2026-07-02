@@ -93,12 +93,12 @@ fun WeeklyScheduleScreen(
     getEndTime: (Int) -> String = { "" }
 ) {
     // Reorder days based on firstDayOfWeek setting (1=Monday, 7=Sunday)
+    val startDay = firstDayOfWeek.coerceIn(1, 7)
     val allDays = listOf(R.string.mon, R.string.tue, R.string.wed, R.string.thu, R.string.fri, R.string.sat, R.string.sun)
-    val daysOfWeek = allDays.drop(firstDayOfWeek - 1) + allDays.take(firstDayOfWeek - 1)
+    val daysOfWeek = allDays.drop(startDay - 1) + allDays.take(startDay - 1)
     // Map course dayOfWeek (1=Mon..7=Sun) to visual column position
     fun dayToColumn(courseDay: Int): Int {
-        // courseDay is 1-based Monday=1, column is 1-based with firstDayOfWeek
-        return ((courseDay - firstDayOfWeek + 7) % 7) + 1
+        return ((courseDay - startDay + 7) % 7) + 1
     }
     var showWeekPicker by remember { mutableStateOf(false) }
     var detailCourse by remember { mutableStateOf<Course?>(null) }

@@ -67,8 +67,10 @@ fun TodayScreen(
             } catch (_: Exception) { null }
         }
     } else emptyList()
-    // Merge and deduplicate by id
-    val allTodayCourses = (todayCourses + todayExamCourses).distinctBy { it.id }.sortedBy { it.startPeriod }
+    // Merge and deduplicate by business key (name+period+day) to prevent clone records
+    val allTodayCourses = (todayCourses + todayExamCourses)
+        .distinctBy { "${it.name}|${it.startPeriod}|${it.dayOfWeek}" }
+        .sortedBy { it.startPeriod }
 
     val tomorrowCourses = courses
         .filter { it.dayOfWeek == tomorrowDow && tomorrowWeek in 1..52 && it.isInWeek(tomorrowWeek) }
