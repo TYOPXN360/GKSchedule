@@ -179,12 +179,16 @@ fun ExamEditScreen(
             OutlinedTextField(value = remarkText, onValueChange = { remarkText = it }, label = { Text("其他备注 (选填)") }, leadingIcon = { Icon(Icons.Default.Assignment, null) }, modifier = Modifier.fillMaxWidth(), minLines = 1, shape = RoundedCornerShape(12.dp))
             Spacer(modifier = Modifier.height(16.dp))
             Button(onClick = {
-                if (name.isBlank()) return@Button
+                android.util.Log.d("ExamEdit", "Save button clicked, name='$name'")
+                if (name.isBlank()) { android.util.Log.d("ExamEdit", "name is blank, returning"); return@Button }
                 val daysDiff = ChronoUnit.DAYS.between(semesterStart, examDate).toInt(); val targetWeek = (daysDiff / 7) + 1; val dayOfWeek = examDate.dayOfWeek.value
                 fun timeToPeriod(timeStr: String): Int { val hour = timeStr.split(":")[0].toInt(); return when { hour < 10 -> 1; hour < 12 -> 3; hour < 16 -> 5; hour < 18 -> 7; else -> 9 } }
-                val currentExam = Course(id = course?.id ?: -abs(System.currentTimeMillis() % 1000000L + 2000000L), name = name, teacher = teacher, classroom = classroom, dayOfWeek = dayOfWeek, startPeriod = timeToPeriod(startTime), periods = 2, weekRange = targetWeek.toString(), remark = "$startTime-$endTime\n$examMethod\n$remarkText".trimEnd(), isCustomTime = true, customStartTime = startTime, customEndTime = endTime, isManuallyEdited = true)
+                val currentExam = Course(id = course?.id ?: 0L, name = name, teacher = teacher, classroom = classroom, dayOfWeek = dayOfWeek, startPeriod = timeToPeriod(startTime), periods = 2, weekRange = targetWeek.toString(), remark = "$startTime-$endTime\n$examMethod\n$remarkText\n[Exam]".trimEnd(), isCustomTime = true, customStartTime = startTime, customEndTime = endTime, isManuallyEdited = true)
                 if (batchExams.isNotEmpty()) {
-                    val finalBatch = batchExams.toMutableList().apply { this[selectedTabIndex] = currentExam }
+                    val finalBatch = batchExams.mapIndexed { index, cached ->
+                        if (index == selectedTabIndex) currentExam
+                        else cached.copy(id = 0L, remark = if (cached.remark.contains("[Exam]")) cached.remark else "${cached.remark}\n[Exam]".trimEnd())
+                    }
                     onSave(finalBatch)
                 } else { onSave(listOf(currentExam)) }
             }, modifier = Modifier.fillMaxWidth().height(52.dp), shape = RoundedCornerShape(26.dp), enabled = name.isNotBlank()) { Text(if (batchExams.size > 1) "保存全部考试安排 (${batchExams.size})" else "保存安排", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }

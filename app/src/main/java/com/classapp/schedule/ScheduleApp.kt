@@ -348,7 +348,7 @@ fun ScheduleApp(
                 val showExamReloginDialog by viewModel.showExamReloginDialog.collectAsState()
                 ExamScreen(
                     exams = examList,
-                    customExams = courses.filter { it.id < 0 },
+                    customExams = courses.filter { it.id < 0 || it.remark.contains("[Exam]") },
                     isLoading = examLoading,
                     semesterStart = semesterStart,
                     examYear = examYear,
@@ -414,6 +414,7 @@ fun ScheduleApp(
                     semesterStart = semesterStart,
                     onSave = { examList ->
                         examList.forEach { viewModel.saveCourse(it) }
+                        // Toast 必须在 popBackStack 之前触发
                         android.widget.Toast.makeText(context, "成功导入 ${examList.size} 场考试！", android.widget.Toast.LENGTH_SHORT).show()
                         navController.popBackStack()
                     },
