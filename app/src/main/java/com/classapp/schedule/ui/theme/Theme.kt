@@ -90,9 +90,9 @@ fun ClassAppTheme(
     val colorScheme = when {
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && isDark -> {
             val dynamicDark = dynamicDarkColorScheme(context)
-            val systemHue = Hct.fromInt(dynamicDark.primary.value.toInt()).hue
-            val dynamicContainerHigh = Color(Hct.from(systemHue, 6.0, 17.0).toInt())
-            val dynamicContainerHighest = Color(Hct.from(systemHue, 6.0, 22.0).toInt())
+            val n1Hct = Hct.fromInt(dynamicDark.surfaceContainerHigh.value.toInt())
+            val dynamicContainerHigh = Color(Hct.from(n1Hct.hue, n1Hct.chroma, 18.0).toInt())
+            val dynamicContainerHighest = Color(Hct.from(n1Hct.hue, n1Hct.chroma, 22.0).toInt())
             dynamicDark.copy(surfaceContainerHigh = dynamicContainerHigh, surfaceContainerHighest = dynamicContainerHighest)
         }
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !isDark -> {
