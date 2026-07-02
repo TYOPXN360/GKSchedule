@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Event
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -43,6 +44,8 @@ fun ExamScreen(
     examYear: String,
     examSemester: String,
     colorGroupMode: Int = 2,
+    examLookaheadWeeks: Int = 1,
+    onExamLookaheadWeeksChange: (Int) -> Unit = {},
     showReloginDialog: Boolean = false,
     captchaImageBase64: String? = null,
     onYearChange: (String) -> Unit,
@@ -139,6 +142,28 @@ fun ExamScreen(
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text("获取")
                             }
+                        }
+                    }
+                }
+
+                // Exam lookahead weeks stepper
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
+                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                        Icon(Icons.Default.Event, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text("今日页考试预览周数", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                            Text("控制今日主页近期考试看板的前瞻范围", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        IconButton(onClick = { if (examLookaheadWeeks > 1) onExamLookaheadWeeksChange(examLookaheadWeeks - 1) }, enabled = examLookaheadWeeks > 1) {
+                            Text("−", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.primary)
+                        }
+                        Text("$examLookaheadWeeks 周", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                        IconButton(onClick = { if (examLookaheadWeeks < 20) onExamLookaheadWeeksChange(examLookaheadWeeks + 1) }, enabled = examLookaheadWeeks < 20) {
+                            Text("+", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.primary)
                         }
                     }
                 }

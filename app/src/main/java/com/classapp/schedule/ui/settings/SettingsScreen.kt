@@ -647,15 +647,6 @@ private fun SyncPage(
             }
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
             SwitchItem(Icons.Default.School, stringResource(R.string.show_exam_schedule), showExamSchedule, onShowExamScheduleChange)
-            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
-            StepperItem(
-                Icons.Default.Event,
-                stringResource(R.string.exam_lookahead_weeks),
-                examLookaheadWeeks,
-                0,
-                20,
-                onExamLookaheadWeeksChange
-            )
         }
     }
 }

@@ -357,6 +357,8 @@ fun ScheduleApp(
                     onRefreshCaptcha = { viewModel.refreshCaptcha() },
                     onQuickRelogin = { cap -> viewModel.quickRelogin(cap) },
                     colorGroupMode = colorGroupMode,
+                    examLookaheadWeeks = examLookaheadWeeks,
+                    onExamLookaheadWeeksChange = { viewModel.setExamLookaheadWeeks(it) },
                     onBack = { navController.popBackStack() }
                 )
             }
