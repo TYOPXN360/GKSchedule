@@ -49,7 +49,6 @@ class SettingsDataStore(private val context: Context) {
         private val CACHED_EXAM_YEAR = stringPreferencesKey("cached_exam_year")
         private val CACHED_EXAM_SEMESTER = stringPreferencesKey("cached_exam_semester")
         private val DIFF_COLOR_PER_WEEK = booleanPreferencesKey("diff_color_per_week")
-        private val SHOW_HIDDEN_COURSES = booleanPreferencesKey("show_hidden_courses")
 
         private val DEFAULT_START_TIMES = listOf(
             "08:30", "09:20", "10:25", "11:15",  // Morning 1-4
@@ -101,7 +100,6 @@ class SettingsDataStore(private val context: Context) {
     val cachedExamYear: Flow<String> = context.dataStore.data.map { prefs -> prefs[CACHED_EXAM_YEAR] ?: "" }
     val cachedExamSemester: Flow<String> = context.dataStore.data.map { prefs -> prefs[CACHED_EXAM_SEMESTER] ?: "" }
     val diffColorPerWeek: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[DIFF_COLOR_PER_WEEK] ?: false }
-    val showHiddenCourses: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[SHOW_HIDDEN_COURSES] ?: false }
 
     fun getCurrentWeek(): Flow<Int> = context.dataStore.data.map { prefs ->
         val start = prefs[SEMESTER_START]?.let { LocalDate.parse(it) } ?: LocalDate.now()
@@ -172,7 +170,6 @@ class SettingsDataStore(private val context: Context) {
     suspend fun setShowExamSchedule(show: Boolean) { context.dataStore.edit { it[SHOW_EXAM_SCHEDULE] = show } }
     suspend fun setExamLookaheadWeeks(weeks: Int) { context.dataStore.edit { it[EXAM_LOOKAHEAD_WEEKS] = weeks.coerceIn(0, 20) } }
     suspend fun setDiffColorPerWeek(enabled: Boolean) { context.dataStore.edit { it[DIFF_COLOR_PER_WEEK] = enabled } }
-    suspend fun setShowHiddenCourses(show: Boolean) { context.dataStore.edit { it[SHOW_HIDDEN_COURSES] = show } }
     suspend fun saveCasTicket(ticket: String) { context.dataStore.edit { it[CAS_TICKET] = ticket } }
     suspend fun saveCachedExams(json: String, year: String, semester: String) {
         context.dataStore.edit {

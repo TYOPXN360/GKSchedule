@@ -80,8 +80,6 @@ fun SettingsScreen(
     onShowExamScheduleChange: (Boolean) -> Unit,
     onExamLookaheadWeeksChange: (Int) -> Unit,
     onDiffColorPerWeekChange: (Boolean) -> Unit,
-    showHiddenCourses: Boolean = false,
-    onShowHiddenCoursesChange: (Boolean) -> Unit = {},
     onFetchExam: () -> Unit,
     onExportJson: () -> Unit,
     onImportJson: () -> Unit,
@@ -162,8 +160,6 @@ fun SettingsScreen(
                     onShowDateInHeaderChange = onShowDateInHeaderChange,
                     diffColorPerWeek = diffColorPerWeek,
                     onDiffColorPerWeekChange = onDiffColorPerWeekChange,
-                    showHiddenCourses = showHiddenCourses,
-                    onShowHiddenCoursesChange = onShowHiddenCoursesChange,
                     onBack = { navController.popBackStack() }
                 )
             }
@@ -436,7 +432,6 @@ private fun ScheduleStylePage(
     onColorEngineChange: (Int) -> Unit, onColorGroupModeChange: (Int) -> Unit,
     onShowDateInHeaderChange: (Boolean) -> Unit,
     diffColorPerWeek: Boolean, onDiffColorPerWeekChange: (Boolean) -> Unit,
-    showHiddenCourses: Boolean = false, onShowHiddenCoursesChange: (Boolean) -> Unit = {},
     onBack: () -> Unit
 ) {
     SubPage(stringResource(R.string.settings_category_schedule), onBack) {
@@ -474,8 +469,6 @@ private fun ScheduleStylePage(
                 colorGroupMode.toString(), onSelect = { onColorGroupModeChange(it.toInt()) })
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
             SwitchItem(Icons.Default.Palette, stringResource(R.string.diff_color_per_week), diffColorPerWeek, onDiffColorPerWeekChange)
-            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
-            SwitchItem(Icons.Default.VisibilityOff, "显示已隐藏的课程", showHiddenCourses, onShowHiddenCoursesChange)
         }
     }
 }

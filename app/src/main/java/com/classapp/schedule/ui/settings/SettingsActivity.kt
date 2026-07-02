@@ -82,7 +82,6 @@ class SettingsActivity : AppCompatActivity() {
                     val showExamSchedule by vm.showExamSchedule.collectAsState(initial = false)
                     val examLookaheadWeeks by vm.examLookaheadWeeks.collectAsState(initial = 1)
                     val diffColorPerWeek by vm.diffColorPerWeek.collectAsState(initial = false)
-                    val showHiddenCourses by vm.showHiddenCourses.collectAsState(initial = false)
 
                     SettingsScreen(
                         semesterStart = semesterStart,
@@ -137,8 +136,6 @@ class SettingsActivity : AppCompatActivity() {
                         onShowExamScheduleChange = { vm.setShowExamSchedule(it) },
                         onExamLookaheadWeeksChange = { vm.setExamLookaheadWeeks(it) },
                         onDiffColorPerWeekChange = { vm.setDiffColorPerWeek(it) },
-                        showHiddenCourses = showHiddenCourses,
-                        onShowHiddenCoursesChange = { vm.setShowHiddenCourses(it) },
                         onFetchExam = {
                             vm.refreshExamSchedule()
                             scope.launch {
