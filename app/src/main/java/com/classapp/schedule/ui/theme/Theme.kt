@@ -91,18 +91,18 @@ fun ClassAppTheme(
             val dynamicDark = dynamicDarkColorScheme(context)
             val pColor = dynamicDark.primary
 
-            // 轨道一：底部大盘底色（surface）
+            // 轨道一：底部大盘底色（微调 baseG/baseB 精准补齐灰阶）
             val wSurface = 1f / 12f
-            val sR = (8f * (1f - wSurface) + pColor.red * 255f * wSurface).toInt().coerceIn(0, 255)
-            val sG = (10f * (1f - wSurface) + pColor.green * 255f * wSurface).toInt().coerceIn(0, 255)
+            val sR = (7f * (1f - wSurface) + pColor.red * 255f * wSurface).toInt().coerceIn(0, 255)
+            val sG = (10.5f * (1f - wSurface) + pColor.green * 255f * wSurface).toInt().coerceIn(0, 255)
             val sB = (12f * (1f - wSurface) + pColor.blue * 255f * wSurface).toInt().coerceIn(0, 255)
             val dynamicSurface = Color(sR, sG, sB)
 
-            // 轨道二：卡片框色（surfaceContainerHigh）
+            // 轨道二：卡片框色（微调 baseB 精准拉正 0x34）
             val wCard = 1f / 6f
-            val cR = (13f * (1f - wCard) + pColor.red * 255f * wCard).toInt().coerceIn(0, 255)
-            val cG = (13f * (1f - wCard) + pColor.green * 255f * wCard).toInt().coerceIn(0, 255)
-            val cB = (15f * (1f - wCard) + pColor.blue * 255f * wCard).toInt().coerceIn(0, 255)
+            val cR = (11f * (1f - wCard) + pColor.red * 255f * wCard).toInt().coerceIn(0, 255)
+            val cG = (11f * (1f - wCard) + pColor.green * 255f * wCard).toInt().coerceIn(0, 255)
+            val cB = (14f * (1f - wCard) + pColor.blue * 255f * wCard).toInt().coerceIn(0, 255)
             val dynamicContainerHigh = Color(cR, cG, cB)
 
             // 平滑层级
