@@ -516,11 +516,15 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                         // Save hidden status before deleting
                         val hiddenNames = existingCourses.filter { it.isHidden }.map { it.name }.toSet()
                         courseDao.deleteAllCourses()
+                        // Build a set of school course keys to skip duplicates from manualCourses
+                        val schoolKeys = newCourses.map { "${it.name}|${it.dayOfWeek}|${it.startPeriod}" }.toSet()
                         newCourses.forEach { c ->
                             val isHid = hiddenNames.contains(c.name)
                             courseDao.insertCourse(c.copy(isHidden = isHid))
                         }
-                        manualCourses.forEach { courseDao.insertCourse(it.copy(id = 0)) }
+                        // Re-insert manual courses, but skip if school already has same course
+                        manualCourses.filter { "${it.name}|${it.dayOfWeek}|${it.startPeriod}" !in schoolKeys }
+                            .forEach { courseDao.insertCourse(it.copy(id = 0)) }
                         _messages.emit("已更新 ${newCourses.size} 门课程")
                     } else {
                         _messages.emit("课程无变化")
