@@ -1,5 +1,6 @@
 package com.classapp.schedule.ui.exam
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -14,14 +15,21 @@ import androidx.compose.material.icons.filled.Room
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Assignment
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.DataObject
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.classapp.schedule.data.Course
 import com.classapp.schedule.ui.theme.LocalAppIsDark
+import com.classapp.schedule.util.JsonImportExport
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -41,6 +49,8 @@ fun ExamEditScreen(
 ) {
     val isDark = LocalAppIsDark.current
     val scaffoldBg = if (isDark) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainer
+    val context = LocalContext.current
+    val clipboardManager = LocalClipboardManager.current
 
     var name by remember { mutableStateOf(course?.name ?: "") }
     var classroom by remember { mutableStateOf(course?.classroom ?: "") }
@@ -66,6 +76,27 @@ fun ExamEditScreen(
     var showM3StartTimePicker by remember { mutableStateOf(false) }
     var showM3EndTimePicker by remember { mutableStateOf(false) }
 
+    var showAiPanel by remember { mutableStateOf(false) }
+    var aiClipboardInput by remember { mutableStateOf("") }
+    var aiErrorHint by remember { mutableStateOf("") }
+
+    val examAiPrompt = """
+        你是一个考务日程日程清洗专家。请将用户提供的考务通知、考试安排文本，结构化提取为以下标准 JSON 数组（由于只需填入当前表单，请只返回单条对象的纯 JSON 数组，严禁包含任何 Markdown 代码包裹块）：
+        [
+          {
+            "name": "网络工程期末考试",
+            "classroom": "松山湖校区图文信息中心401",
+            "teacher": "李老师",
+            "examDate": "2026-07-10",
+            "startTime": "14:30",
+            "endTime": "16:30",
+            "examMethod": "闭卷",
+            "remark": "带好学生证"
+          }
+        ]
+        注意：examDate 必须是 YYYY-MM-DD 格式。
+    """.trimIndent()
+
     Scaffold(
         containerColor = scaffoldBg,
         topBar = {
@@ -88,6 +119,45 @@ fun ExamEditScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Spacer(modifier = Modifier.height(4.dp))
+
+            // AI Import Panel
+            Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.25f)), modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
+                Column(modifier = Modifier.padding(14.dp)) {
+                    Row(modifier = Modifier.fillMaxWidth().clickable { showAiPanel = !showAiPanel }, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Icon(Icons.Default.AutoAwesome, null, tint = MaterialTheme.colorScheme.tertiary)
+                            Text("AI 智能考务通知一键导入", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onTertiaryContainer)
+                        }
+                        Text(if (showAiPanel) "收起" else "展开", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.tertiary)
+                    }
+                    AnimatedVisibility(visible = showAiPanel) {
+                        Column(modifier = Modifier.padding(top = 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Text("第一步：复制 Prompt，在 AI 软件中贴入考务文本或图片。", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Button(onClick = { clipboardManager.setText(AnnotatedString(examAiPrompt)); android.widget.Toast.makeText(context, "考试解析提示词已复制！", android.widget.Toast.LENGTH_SHORT).show() }, colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary), modifier = Modifier.fillMaxWidth()) { Icon(Icons.Default.ContentCopy, null, modifier = Modifier.size(16.dp)); Spacer(modifier = Modifier.width(6.dp)); Text("复制 AI 考务解析提示词", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold) }
+                            Text("第二步：贴入 AI 返回的纯 JSON。", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            OutlinedTextField(value = aiClipboardInput, onValueChange = { aiClipboardInput = it; aiErrorHint = "" }, placeholder = { Text("[{\"name\": \"...\"}]", style = MaterialTheme.typography.bodySmall) }, leadingIcon = { Icon(Icons.Default.DataObject, null, modifier = Modifier.size(18.dp)) }, modifier = Modifier.fillMaxWidth(), minLines = 2, maxLines = 4, shape = RoundedCornerShape(10.dp), textStyle = MaterialTheme.typography.bodySmall)
+                            if (aiErrorHint.isNotEmpty()) Text(aiErrorHint, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
+                            Button(onClick = {
+                                if (aiClipboardInput.isBlank()) return@Button
+                                try {
+                                    val jsonObject = org.json.JSONArray(aiClipboardInput.trim()).getJSONObject(0)
+                                    name = jsonObject.optString("name", name)
+                                    classroom = jsonObject.optString("classroom", classroom)
+                                    teacher = jsonObject.optString("teacher", teacher)
+                                    examMethod = jsonObject.optString("examMethod", "闭卷")
+                                    startTime = jsonObject.optString("startTime", "09:00")
+                                    endTime = jsonObject.optString("endTime", "11:00")
+                                    remarkText = jsonObject.optString("remark", "")
+                                    val dateStr = jsonObject.optString("examDate")
+                                    if (dateStr.isNotEmpty()) examDate = LocalDate.parse(dateStr)
+                                    aiErrorHint = ""; showAiPanel = false
+                                    android.widget.Toast.makeText(context, "考务信息导入成功！", android.widget.Toast.LENGTH_SHORT).show()
+                                } catch (e: Exception) { aiErrorHint = "解析失败: ${e.localizedMessage}" }
+                            }, enabled = aiClipboardInput.isNotBlank(), modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer, contentColor = MaterialTheme.colorScheme.onSecondaryContainer)) { Text("解析并灌入考试表单", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold) }
+                        }
+                    }
+                }
+            }
 
             OutlinedTextField(
                 value = name, onValueChange = { name = it },
