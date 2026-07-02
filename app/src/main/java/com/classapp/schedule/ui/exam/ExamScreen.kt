@@ -13,10 +13,12 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Event
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -51,6 +53,7 @@ fun ExamScreen(
     showExamSchedule: Boolean = false,
     onShowExamScheduleChange: (Boolean) -> Unit = {},
     onExamLookaheadWeeksChange: (Int) -> Unit = {},
+    onAddExam: () -> Unit = {},
     getStartTime: (Int) -> String = { "" },
     getEndTime: (Int) -> String = { "" },
     currentWeek: Int = 1,
@@ -95,6 +98,11 @@ fun ExamScreen(
                     }
                 }
             )
+        },
+        floatingActionButton = {
+            FloatingActionButton(onClick = onAddExam, containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary) {
+                Icon(Icons.Default.Add, contentDescription = "添加考试")
+            }
         }
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
@@ -162,7 +170,14 @@ fun ExamScreen(
                     // Show exam schedule in timetable switch
                     HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
                     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("在课表页显示考试安排", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                            Icon(Icons.Default.GridView, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text("以课表形式显示考试安排", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                                Text("开启后考试日程将作为方块平铺在大盘网格中", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f))
+                            }
+                        }
                         Switch(
                             checked = showExamSchedule,
                             onCheckedChange = onShowExamScheduleChange,
@@ -179,8 +194,8 @@ fun ExamScreen(
                             Icon(Icons.Default.Event, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                             Spacer(modifier = Modifier.width(12.dp))
                             Column {
-                                Text("考试预览周数", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
-                                Text("今日页提前多少周显示考试", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text("考试预览周数", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                                Text("今日页提前多少周显示考试", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f))
                             }
                         }
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {

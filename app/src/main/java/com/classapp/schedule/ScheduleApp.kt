@@ -365,6 +365,7 @@ fun ScheduleApp(
                     getEndTime = { viewModel.getEndTime(it) },
                     currentWeek = selectedWeek,
                     diffColorPerWeek = diffColorPerWeek,
+                    onAddExam = { /* TODO: navigate to add exam */ },
                     onBack = { navController.popBackStack() }
                 )
             }
