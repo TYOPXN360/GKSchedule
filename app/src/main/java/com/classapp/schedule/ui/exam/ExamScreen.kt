@@ -215,7 +215,9 @@ fun ExamScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(sortedExams) { exam ->
-                        val examColor = CourseColors.getColorSync(colorGroupMode, exam.kcmc, exam.cdmc, week = currentWeek, diffColorPerWeek = diffColorPerWeek, isDark = isDark)
+                        val examDate = try { LocalDate.parse(exam.getExamDate()) } catch (_: Exception) { null }
+                        val examWeek = if (examDate != null) (ChronoUnit.DAYS.between(semesterStart, examDate).toInt() / 7) + 1 else currentWeek
+                        val examColor = CourseColors.getColorSync(colorGroupMode, exam.kcmc, exam.cdmc, week = examWeek, diffColorPerWeek = diffColorPerWeek, isDark = isDark)
                         ExamCard(
                             exam = exam,
                             examColor = examColor,
@@ -229,12 +231,11 @@ fun ExamScreen(
 
     // Detail sheet
     detailCourse?.let { course ->
-        val detailDotColor = CourseColors.getColorSync(mode = colorGroupMode, courseName = course.name, classroom = course.classroom, classroomIndex = course.colorIndex % 10, week = currentWeek, diffColorPerWeek = diffColorPerWeek, isDark = isDark).container
         com.classapp.schedule.ui.weekly.CourseDetailSheet(
             course = course, getStartTime = getStartTime, getEndTime = getEndTime,
             onDismiss = { detailCourse = null }, onEdit = {},
             colorGroupMode = colorGroupMode, colorIndex = course.colorIndex,
-            dotColor = detailDotColor, currentWeek = currentWeek, diffColorPerWeek = diffColorPerWeek
+            currentWeek = currentWeek, diffColorPerWeek = diffColorPerWeek
         )
     }
 
