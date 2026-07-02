@@ -55,7 +55,7 @@ fun ExamEditScreen(
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
 
-    var name by remember { mutableStateOf(course?.name ?: "") }
+    var name by remember { mutableStateOf(course?.name?.replace("[考试]", "")?.trim() ?: "") }
     var classroom by remember { mutableStateOf(course?.classroom ?: "") }
     var teacher by remember { mutableStateOf(course?.teacher ?: "") }
     var examMethod by remember { mutableStateOf(course?.remark?.split("\n")?.getOrNull(1) ?: "闭卷") }
@@ -133,15 +133,16 @@ fun ExamEditScreen(
                                     val parsedExams = mutableListOf<Course>()
                                     for (i in 0 until jsonArray.length()) {
                                         val obj = jsonArray.getJSONObject(i)
-                                        val eName = obj.optString("name"); val eClassroom = obj.optString("classroom"); val eTeacher = obj.optString("teacher"); val eMethod = obj.optString("examMethod", "闭卷"); val eStartTime = obj.optString("startTime", "09:00"); val eEndTime = obj.optString("endTime", "11:00"); val eRemark = obj.optString("remark"); val dateStr = obj.optString("examDate")
+                                        val eName = obj.optString("name")
+                                        val finalEName = if (eName.startsWith("[考试]")) eName else "[考试]$eName"; val eClassroom = obj.optString("classroom"); val eTeacher = obj.optString("teacher"); val eMethod = obj.optString("examMethod", "闭卷"); val eStartTime = obj.optString("startTime", "09:00"); val eEndTime = obj.optString("endTime", "11:00"); val eRemark = obj.optString("remark"); val dateStr = obj.optString("examDate")
                                         val parsedDate = if (dateStr.isNotEmpty()) LocalDate.parse(dateStr) else LocalDate.now()
                                         val daysDiff = ChronoUnit.DAYS.between(semesterStart, parsedDate).toInt(); val targetWeek = (daysDiff / 7) + 1; val dayOfWeek = parsedDate.dayOfWeek.value
                                         fun timeToPeriod(timeStr: String): Int { val hour = timeStr.split(":")[0].toIntOrNull() ?: 9; return when { hour < 10 -> 1; hour < 12 -> 3; hour < 16 -> 5; hour < 18 -> 7; else -> 9 } }
-                                        parsedExams.add(Course(id = course?.id ?: -abs(System.currentTimeMillis() % 1000000L + 2000000L + i), name = eName, teacher = eTeacher, classroom = eClassroom, dayOfWeek = dayOfWeek, startPeriod = timeToPeriod(eStartTime), periods = 2, weekRange = targetWeek.toString(), remark = "$eStartTime-$eEndTime\n$eMethod\n$eRemark".trimEnd(), isCustomTime = true, customStartTime = eStartTime, customEndTime = eEndTime, isManuallyEdited = true))
+                                        parsedExams.add(Course(id = course?.id ?: -abs(System.currentTimeMillis() % 1000000L + 2000000L + i), name = finalEName, teacher = eTeacher, classroom = eClassroom, dayOfWeek = dayOfWeek, startPeriod = timeToPeriod(eStartTime), periods = 2, weekRange = targetWeek.toString(), remark = "$eStartTime-$eEndTime\n$eMethod\n$eRemark".trimEnd(), isCustomTime = true, customStartTime = eStartTime, customEndTime = eEndTime, isManuallyEdited = true))
                                     }
                                     if (parsedExams.isNotEmpty()) {
                                         batchExams = parsedExams; selectedTabIndex = 0
-                                        val first = parsedExams[0]; name = first.name; classroom = first.classroom; teacher = first.teacher; startTime = first.customStartTime; endTime = first.customEndTime
+                                        val first = parsedExams[0]; name = first.name.replace("[考试]", "").trim(); classroom = first.classroom; teacher = first.teacher; startTime = first.customStartTime; endTime = first.customEndTime
                                         val remarkParts = first.remark.split("\n"); examMethod = remarkParts.getOrNull(1) ?: "闭卷"; remarkText = remarkParts.getOrNull(2) ?: ""
                                         val weekOffset = (first.weekRange.toIntOrNull() ?: 1) - 1; examDate = semesterStart.plusWeeks(weekOffset.toLong()).plusDays((first.dayOfWeek - 1).toLong())
                                         aiErrorHint = ""; showAiPanel = false
@@ -159,9 +160,10 @@ fun ExamEditScreen(
                 ScrollableTabRow(selectedTabIndex = selectedTabIndex, edgePadding = 0.dp, containerColor = Color.Transparent, modifier = Modifier.fillMaxWidth().clip(MaterialTheme.shapes.medium)) {
                     batchExams.forEachIndexed { index, _ ->
                         Tab(selected = selectedTabIndex == index, onClick = {
-                            val currentState = Course(id = course?.id ?: 0, name = name.trim(), teacher = teacher.trim(), classroom = classroom.trim(), dayOfWeek = examDate.dayOfWeek.value, startPeriod = 1, periods = 2, weekRange = ((ChronoUnit.DAYS.between(semesterStart, examDate).toInt() / 7) + 1).toString(), remark = "$startTime-$endTime\n$examMethod\n$remarkText".trimEnd(), isCustomTime = true, customStartTime = startTime, customEndTime = endTime, isManuallyEdited = true)
+                            val finalActiveName = if (name.startsWith("[考试]")) name.trim() else "[考试]${name.trim()}"
+                            val currentState = Course(id = course?.id ?: 0, name = finalActiveName, teacher = teacher.trim(), classroom = classroom.trim(), dayOfWeek = examDate.dayOfWeek.value, startPeriod = 1, periods = 2, weekRange = ((ChronoUnit.DAYS.between(semesterStart, examDate).toInt() / 7) + 1).toString(), remark = "$startTime-$endTime\n$examMethod\n$remarkText".trimEnd(), isCustomTime = true, customStartTime = startTime, customEndTime = endTime, isManuallyEdited = true)
                             batchExams = batchExams.toMutableList().apply { this[selectedTabIndex] = currentState }
-                            selectedTabIndex = index; val target = batchExams[index]; name = target.name; classroom = target.classroom; teacher = target.teacher; startTime = target.customStartTime; endTime = target.customEndTime
+                            selectedTabIndex = index; val target = batchExams[index]; name = target.name.replace("[考试]", "").trim(); classroom = target.classroom; teacher = target.teacher; startTime = target.customStartTime; endTime = target.customEndTime
                             val remarkParts = target.remark.split("\n"); examMethod = remarkParts.getOrNull(1) ?: "闭卷"; remarkText = remarkParts.getOrNull(2) ?: ""
                             val weekOffset = (target.weekRange.toIntOrNull() ?: 1) - 1; examDate = semesterStart.plusWeeks(weekOffset.toLong()).plusDays((target.dayOfWeek - 1).toLong())
                         }, text = { Text("考试 ${index + 1}", fontWeight = FontWeight.Bold) })
@@ -183,11 +185,12 @@ fun ExamEditScreen(
                 if (name.isBlank()) { android.util.Log.d("ExamEdit", "name is blank, returning"); return@Button }
                 val daysDiff = ChronoUnit.DAYS.between(semesterStart, examDate).toInt(); val targetWeek = (daysDiff / 7) + 1; val dayOfWeek = examDate.dayOfWeek.value
                 fun timeToPeriod(timeStr: String): Int { val hour = timeStr.split(":")[0].toInt(); return when { hour < 10 -> 1; hour < 12 -> 3; hour < 16 -> 5; hour < 18 -> 7; else -> 9 } }
-                val currentExam = Course(id = course?.id ?: 0L, name = name, teacher = teacher, classroom = classroom, dayOfWeek = dayOfWeek, startPeriod = timeToPeriod(startTime), periods = 2, weekRange = targetWeek.toString(), remark = "$startTime-$endTime\n$examMethod\n$remarkText\n[Exam]".trimEnd(), isCustomTime = true, customStartTime = startTime, customEndTime = endTime, isManuallyEdited = true)
+                val finalName = if (name.startsWith("[考试]")) name.trim() else "[考试]${name.trim()}"
+                val currentExam = Course(id = course?.id ?: 0L, name = finalName, teacher = teacher, classroom = classroom, dayOfWeek = dayOfWeek, startPeriod = timeToPeriod(startTime), periods = 2, weekRange = targetWeek.toString(), remark = "$startTime-$endTime\n$examMethod\n$remarkText".trimEnd(), isCustomTime = true, customStartTime = startTime, customEndTime = endTime, isManuallyEdited = true)
                 if (batchExams.isNotEmpty()) {
                     val finalBatch = batchExams.mapIndexed { index, cached ->
                         if (index == selectedTabIndex) currentExam
-                        else cached.copy(id = 0L, remark = if (cached.remark.contains("[Exam]")) cached.remark else "${cached.remark}\n[Exam]".trimEnd())
+                        else cached.copy(id = 0L, name = if (cached.name.startsWith("[考试]")) cached.name else "[考试]${cached.name}")
                     }
                     onSave(finalBatch)
                 } else { onSave(listOf(currentExam)) }

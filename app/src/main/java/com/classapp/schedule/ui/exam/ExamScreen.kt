@@ -255,7 +255,7 @@ fun ExamScreen(
                                 Box(modifier = Modifier.width(4.dp).height(48.dp).clip(RoundedCornerShape(2.dp)).background(if (isPast) examColor.container.copy(alpha = 0.2f) else examColor.container))
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Column(modifier = Modifier.weight(1f)) {
-                                    Text(course.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface.copy(alpha = if (isPast) 0.5f else 1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                    Text(course.name.replace("[考试]", "").trim(), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface.copy(alpha = if (isPast) 0.5f else 1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
                                     Spacer(modifier = Modifier.height(4.dp))
                                     Text(course.classroom, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }

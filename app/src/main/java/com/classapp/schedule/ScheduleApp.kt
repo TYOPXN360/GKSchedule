@@ -348,7 +348,7 @@ fun ScheduleApp(
                 val showExamReloginDialog by viewModel.showExamReloginDialog.collectAsState()
                 ExamScreen(
                     exams = examList,
-                    customExams = courses.filter { it.id < 0 || it.remark.contains("[Exam]") },
+                    customExams = courses.filter { it.id < 0 || it.name.contains("[考试]") || it.remark.contains("[Exam]") },
                     isLoading = examLoading,
                     semesterStart = semesterStart,
                     examYear = examYear,
