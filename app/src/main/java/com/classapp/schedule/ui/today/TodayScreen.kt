@@ -468,9 +468,28 @@ private fun timeToPeriod(time: String, timeProvider: (Int) -> String): Int {
 private fun ExamCard(exam: com.classapp.schedule.data.ExamEntity, examColor: com.classapp.schedule.util.CourseColors.CourseColorPair, onClick: () -> Unit = {}) {
     val examDate = try { java.time.LocalDate.parse(exam.examDate) } catch (_: Exception) { null }
     val now = java.time.LocalDate.now()
-    val isPast = examDate?.isBefore(now) == true
+    val today = examDate != null && examDate == now
+
+    // Parse exam time range for time-aware state
+    val timeParts = exam.examTimeRange.split("-")
+    val startMins = if (timeParts.size == 2) { val p = timeParts[0].trim().split(":"); p.getOrNull(0)?.toIntOrNull()?.let { h -> h * 60 + (p.getOrNull(1)?.toIntOrNull() ?: 0) } } else null
+    val endMins = if (timeParts.size == 2) { val p = timeParts[1].trim().split(":"); p.getOrNull(0)?.toIntOrNull()?.let { h -> h * 60 + (p.getOrNull(1)?.toIntOrNull() ?: 0) } } else null
+    val nowMins = java.time.LocalTime.now().hour * 60 + java.time.LocalTime.now().minute
+
+    val isPast = when {
+        examDate?.isBefore(now) == true -> true
+        today && endMins != null && nowMins > endMins -> true
+        else -> false
+    }
+    val isNow = today && startMins != null && endMins != null && nowMins in startMins..endMins
     val alpha = if (isPast) 0.5f else 1f
-    val daysLeft = if (examDate != null && !isPast) java.time.temporal.ChronoUnit.DAYS.between(now, examDate) else -1L
+    val daysLeft = if (examDate != null && !isPast && !isNow) java.time.temporal.ChronoUnit.DAYS.between(now, examDate) else -1L
+    val progress = when {
+        isPast -> 1f
+        isNow && startMins != null && endMins != null && endMins > startMins ->
+            ((nowMins - startMins).toFloat() / (endMins - startMins)).coerceIn(0f, 1f)
+        else -> 0f
+    }
 
     com.classapp.schedule.ui.theme.Md3Card(
         onClick = onClick,
@@ -478,35 +497,57 @@ private fun ExamCard(exam: com.classapp.schedule.data.ExamEntity, examColor: com
         variant = com.classapp.schedule.ui.theme.Md3CardVariant.Elevated,
         shape = MaterialTheme.shapes.small
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // 竖条使用课表方块同款底色 container
-            Box(
-                modifier = Modifier.width(4.dp).height(48.dp).clip(RoundedCornerShape(2.dp))
-                    .background(if (isPast) examColor.container.copy(alpha = 0.2f) else examColor.container)
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(exam.courseName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    if (isPast) { Spacer(modifier = Modifier.width(6.dp)); Surface(shape = CircleShape, color = MaterialTheme.colorScheme.surfaceVariant) { Text("已结束", modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) } }
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier.width(4.dp).height(48.dp).clip(RoundedCornerShape(2.dp))
+                        .background(if (isPast) examColor.container.copy(alpha = 0.2f) else examColor.container)
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(exam.courseName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        if (isPast) {
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Surface(shape = CircleShape, color = MaterialTheme.colorScheme.surfaceVariant) {
+                                Text("已结束", modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                    style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        } else if (isNow) {
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Surface(shape = CircleShape, color = examColor.container) {
+                                Text("进行中", modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                    style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = examColor.content)
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (exam.examDate.isNotEmpty()) { Text(exam.examDate + " " + exam.examTimeRange, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha)) }
+                        if (exam.classroom.isNotEmpty()) { Spacer(modifier = Modifier.width(8.dp)); Text(exam.classroom, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha)) }
+                    }
+                    if (exam.examMethod.isNotEmpty()) { Text(exam.examMethod, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha * 0.7f)) }
                 }
-                Spacer(modifier = Modifier.height(4.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (exam.examDate.isNotEmpty()) { Text(exam.examDate + " " + exam.examTimeRange, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha)) }
-                    if (exam.classroom.isNotEmpty()) { Spacer(modifier = Modifier.width(8.dp)); Text(exam.classroom, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha)) }
+                if (!isPast && !isNow && daysLeft >= 0) {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Surface(shape = CircleShape, color = if (daysLeft == 0L) MaterialTheme.colorScheme.errorContainer else examColor.container,
+                        contentColor = if (daysLeft == 0L) MaterialTheme.colorScheme.onErrorContainer else examColor.content) {
+                        Text(if (daysLeft == 0L) "今天" else "剩 ${daysLeft} 天", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
+                    }
                 }
-                if (exam.examMethod.isNotEmpty()) { Text(exam.examMethod, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha * 0.7f)) }
             }
-            if (!isPast && daysLeft >= 0) {
-                Spacer(modifier = Modifier.width(8.dp))
-                Surface(shape = CircleShape, color = if (daysLeft == 0L) MaterialTheme.colorScheme.errorContainer else examColor.container,
-                    contentColor = if (daysLeft == 0L) MaterialTheme.colorScheme.onErrorContainer else examColor.content) {
-                    Text(if (daysLeft == 0L) "今天" else "剩 ${daysLeft} 天", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
-                }
+            // Progress bar for in-progress or recently finished exams
+            if (isNow || (isPast && today)) {
+                LinearProgressIndicator(
+                    progress = { progress },
+                    modifier = Modifier.fillMaxWidth().height(3.dp).padding(horizontal = 12.dp).padding(bottom = 8.dp),
+                    color = examColor.container,
+                    trackColor = examColor.container.copy(alpha = 0.15f)
+                )
             }
         }
     }
