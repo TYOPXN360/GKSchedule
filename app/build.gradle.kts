@@ -14,12 +14,12 @@ kotlin {
 }
 
 android {
-    namespace = "com.ty.GDUST_Schedule"
+    namespace = "com.ty.gdust_schedule"
     compileSdk = 36
     buildToolsVersion = "36.0.0"
 
     defaultConfig {
-        applicationId = "com.ty.GDUST_Schedule"
+        applicationId = "com.ty.gdust_schedule"
         minSdk = 31
         targetSdk = 36
         versionCode = 1
