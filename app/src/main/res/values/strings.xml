@@ -122,6 +122,7 @@
     <string name="reminder_format">%1$d min before</string>
     <string name="reminder_live_update">Live Update</string>
     <string name="reminder_live_update_desc">Update progress percent while class or exam is in progress</string>
+    <string name="hidden_tag">Hidden</string>
     <!-- Auto Sync -->
     <string name="settings_category_sync">Auto Sync</string>
     <string name="settings_category_sync_desc">Sync on startup, scheduled sync</string>

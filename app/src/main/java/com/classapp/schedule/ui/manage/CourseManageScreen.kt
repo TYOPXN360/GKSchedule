@@ -37,8 +37,11 @@ fun CourseManageScreen(
     var showDeleteAllDialog by remember { mutableStateOf(false) }
     var courseToDelete by remember { mutableStateOf<Course?>(null) }
 
-    val uniqueCourses = remember(courses) {
-        courses.distinctBy { it.name }.sortedBy { it.name }
+    val courseGroups = remember(courses) {
+        courses.groupBy { it.name }
+    }
+    val uniqueCourses = remember(courseGroups) {
+        courseGroups.values.mapNotNull { it.firstOrNull() }.sortedBy { it.name }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -76,10 +79,13 @@ fun CourseManageScreen(
                 }
 
                 items(uniqueCourses) { course ->
-                    val count = courses.count { it.name == course.name }
+                    val group = courseGroups[course.name].orEmpty()
+                    val count = group.size
+                    val isHidden = group.any { it.isHidden }
                     CourseListItem(
                         course = course,
                         instanceCount = count,
+                        isHidden = isHidden,
                         colorEngine = colorEngine,
                         colorGroupMode = colorGroupMode,
                         onClick = { onCourseClick(course) },
@@ -122,6 +128,7 @@ fun CourseManageScreen(
 private fun CourseListItem(
     course: Course,
     instanceCount: Int = 1,
+    isHidden: Boolean = false,
     colorEngine: Int,
     colorGroupMode: Int,
     onClick: () -> Unit,
@@ -160,6 +167,21 @@ private fun CourseListItem(
                         color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.weight(1f, fill = false)
                     )
+                    if (isHidden) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Surface(
+                            shape = RoundedCornerShape(4.dp),
+                            color = MaterialTheme.colorScheme.surfaceVariant,
+                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        ) {
+                            Text(
+                                text = stringResource(R.string.hidden_tag),
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
                     if (instanceCount > 1) {
                         Spacer(modifier = Modifier.width(8.dp))
                         Surface(shape = CircleShape, color = courseColor.container) {

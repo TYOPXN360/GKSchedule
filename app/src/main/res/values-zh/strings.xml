@@ -118,6 +118,7 @@
     <string name="reminder_format">课前%1$d分钟</string>
     <string name="reminder_live_update">进度提醒</string>
     <string name="reminder_live_update_desc">上课或考试进行中时，持续更新进度百分比</string>
+    <string name="hidden_tag">已隐藏</string>
     <!-- Settings - Auto Sync -->
     <string name="settings_category_sync">自动同步</string>
     <string name="settings_category_sync_desc">启动时同步、定时同步</string>
