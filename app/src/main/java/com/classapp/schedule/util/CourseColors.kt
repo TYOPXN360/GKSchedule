@@ -106,12 +106,11 @@ object CourseColors {
      *
      * 黄金角 137.508° 是自然界最均匀的分布角度（向日葵种子排列），
      * 即使 hash 值相近，也能保证色相差异最大化。
+     * 规范化: (hash × goldenAngle) % 360 纯黄金角映射。
      */
     private fun stableHue(key: String): Double {
         val hash = key.hashCode().toLong() and 0xFFFFFFFFL
-        val goldenAngle = 137.50776405
-        val base = (hash % 36000) / 100.0
-        return (base + hash * goldenAngle) % 360.0
+        return (hash * 137.50776405) % 360.0
     }
 
     private enum class Role { Container, Content }
@@ -119,13 +118,13 @@ object CourseColors {
     /**
      * MD3 Tonal Color — HCT 色彩空间标准角色映射
      *
-     * Light: container=Tone90/Chroma42  content=Tone20/Chroma65
-     * Dark:  container=Tone30/Chroma30  content=Tone90/Chroma50
+     * Light: container=Tone90/Chroma42  content=Tone20/Chroma60
+     * Dark:  container=Tone30/Chroma30  content=Tone88/Chroma70（AMOLED 稳定）
      */
     private fun tonalColor(hue: Double, isDark: Boolean, role: Role): Color {
         val (chroma, tone) = when (role) {
             Role.Container -> if (isDark) 30.0 to 30.0 else 42.0 to 90.0
-            Role.Content   -> if (isDark) 50.0 to 90.0 else 65.0 to 20.0
+            Role.Content   -> if (isDark) 70.0 to 88.0 else 60.0 to 20.0
         }
         return Color(Hct.from(hue, chroma, tone).toInt())
     }
