@@ -11,7 +11,7 @@
 
     <application
         android:allowBackup="true"
-        android:name=".ClassApp"
+        android:name=".GDUSTScheduleApp"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
@@ -19,7 +19,7 @@
         android:supportsRtl="true"
         android:enableOnBackInvokedCallback="true"
         android:hardwareAccelerated="true"
-        android:theme="@style/Theme.ClassApp">
+        android:theme="@style/Theme.GDUSTSchedule">
         <activity
             android:name=".MainActivity"
             android:exported="true"

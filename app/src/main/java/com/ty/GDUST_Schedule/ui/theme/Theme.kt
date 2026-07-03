@@ -22,7 +22,7 @@ private val LightColorScheme = lightColorScheme()
 private val DarkColorScheme = darkColorScheme()
 
 @Composable
-fun ClassAppTheme(
+fun GDUSTScheduleTheme(
     darkTheme: String = "system",
     content: @Composable () -> Unit
 ) {

@@ -78,7 +78,7 @@ object IcsExport {
         val sb = StringBuilder()
         sb.appendLine("BEGIN:VCALENDAR")
         sb.appendLine("VERSION:2.0")
-        sb.appendLine("PRODID:-//ClassApp//Schedule//EN")
+        sb.appendLine("PRODID:-//GDUST-Schedule//Schedule//EN")
         sb.appendLine("CALSCALE:GREGORIAN")
 
         val dateFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")

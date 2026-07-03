@@ -26,7 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.ty.GDUST_Schedule.ui.theme.ClassAppTheme
+import com.ty.GDUST_Schedule.ui.theme.GDUSTScheduleTheme
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import java.util.Locale
@@ -97,7 +97,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
-            ClassAppTheme(darkTheme = darkMode) {
+            GDUSTScheduleTheme(darkTheme = darkMode) {
                 // Status bar: light mode = dark icons, dark mode = light icons
                 val view = LocalView.current
                 val isDark = when (darkMode) {

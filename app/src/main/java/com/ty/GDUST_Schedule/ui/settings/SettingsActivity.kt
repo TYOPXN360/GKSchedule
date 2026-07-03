@@ -13,7 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ty.GDUST_Schedule.R
 import com.ty.GDUST_Schedule.ScheduleViewModel
-import com.ty.GDUST_Schedule.ui.theme.ClassAppTheme
+import com.ty.GDUST_Schedule.ui.theme.GDUSTScheduleTheme
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -56,7 +56,7 @@ class SettingsActivity : AppCompatActivity() {
                 }
             }
 
-            ClassAppTheme(darkTheme = darkMode) {
+            GDUSTScheduleTheme(darkTheme = darkMode) {
                     // Collect all states
                     val semesterStart by vm.semesterStart.collectAsState(initial = java.time.LocalDate.now())
                     val totalWeeks by vm.totalWeeks.collectAsState(initial = 20)
