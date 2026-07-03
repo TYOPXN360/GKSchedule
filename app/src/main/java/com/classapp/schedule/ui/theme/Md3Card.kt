@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.google.android.material.color.utilities.Hct
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -121,7 +122,7 @@ fun SettingsIconBadge(
 @Composable
 fun monetCardColor(seedColor: Color): Color {
     val isDark = LocalAppIsDark.current
-    val hue = Hct.fromInt(seedColor.value.toInt()).hue
+    val hue = Hct.fromInt(seedColor.toArgb()).hue
     val tone = if (isDark) 30.0 else 90.0
     return Color(Hct.from(hue, 70.0, tone).toInt())
 }

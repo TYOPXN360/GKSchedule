@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -87,8 +88,8 @@ fun MonetIconBadgeTextColor(seedColor: Color): Color {
 
 @Composable
 private fun isHueClose(color: Color, target: Color): Boolean {
-    val colorHue = com.google.android.material.color.utilities.Hct.fromInt(color.value.toInt()).hue
-    val targetHue = com.google.android.material.color.utilities.Hct.fromInt(target.value.toInt()).hue
+    val colorHue = com.google.android.material.color.utilities.Hct.fromInt(color.toArgb()).hue
+    val targetHue = com.google.android.material.color.utilities.Hct.fromInt(target.toArgb()).hue
     val diff = kotlin.math.abs(colorHue - targetHue)
     return diff < 30 || diff > 330  // 30° 范围内视为同色相
 }
