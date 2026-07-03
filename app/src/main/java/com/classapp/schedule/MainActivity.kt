@@ -12,12 +12,17 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -31,6 +36,8 @@ class MainActivity : AppCompatActivity() {
     companion object {
         private const val PREF_NAME = "locale_prefs"
         private const val KEY_APPLIED_LANG = "applied_lang"
+        private const val DISCLAIMER_PREF = "disclaimer_prefs"
+        private const val KEY_DISCLAIMER_AGREED = "disclaimer_agreed"
     }
 
     override fun attachBaseContext(newBase: Context) {
@@ -77,6 +84,10 @@ class MainActivity : AppCompatActivity() {
             val darkMode by vm.darkMode.collectAsState(initial = "system")
             val language by vm.language.collectAsState(initial = savedLang)
 
+            // Disclaimer state
+            val disclaimerPrefs = getSharedPreferences(DISCLAIMER_PREF, Context.MODE_PRIVATE)
+            var disclaimerAgreed by remember { mutableStateOf(disclaimerPrefs.getBoolean(KEY_DISCLAIMER_AGREED, false)) }
+
             // Watch for language changes from settings UI
             LaunchedEffect(language) {
                 if (language != lastApplied) {
@@ -106,7 +117,44 @@ class MainActivity : AppCompatActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    ScheduleApp(viewModel = vm)
+                    // Disclaimer dialog
+                    if (!disclaimerAgreed) {
+                        AlertDialog(
+                            onDismissRequest = {},
+                            title = {
+                                Text(
+                                    text = stringResource(R.string.disclaimer_title),
+                                    style = MaterialTheme.typography.headlineSmall
+                                )
+                            },
+                            text = {
+                                Text(
+                                    text = stringResource(R.string.disclaimer_text),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    modifier = Modifier.verticalScroll(rememberScrollState())
+                                )
+                            },
+                            confirmButton = {
+                                Button(
+                                    onClick = {
+                                        disclaimerPrefs.edit().putBoolean(KEY_DISCLAIMER_AGREED, true).apply()
+                                        disclaimerAgreed = true
+                                    }
+                                ) {
+                                    Text(stringResource(R.string.disclaimer_agree))
+                                }
+                            },
+                            dismissButton = {
+                                OutlinedButton(
+                                    onClick = { finish() }
+                                ) {
+                                    Text(stringResource(R.string.disclaimer_exit))
+                                }
+                            }
+                        )
+                    } else {
+                        ScheduleApp(viewModel = vm)
+                    }
                 }
             }
         }

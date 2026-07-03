@@ -279,30 +279,26 @@ Column(
                     HorizontalDivider()
 
                     Text(stringResource(R.string.credits_title), style = MaterialTheme.typography.titleSmall)
-
-                    // AI
                     CreditItem(stringResource(R.string.credits_ai), "XiaoMi-MiMo-v2.5-pro")
-
-                    // Component library
                     CreditItem(stringResource(R.string.credits_component), "material-components-android")
-
-                    // Language
                     CreditItem(stringResource(R.string.credits_language), "Jetpack Compose (Kotlin)")
-
-                    // Design
                     CreditItem(stringResource(R.string.credits_design), "Material Design 3 Expressive")
 
                     HorizontalDivider()
 
                     Text(stringResource(R.string.credits_projects), style = MaterialTheme.typography.titleSmall)
-                    Text("• SchedU (github.com/gnahz77/SchedU)", style = MaterialTheme.typography.bodySmall)
-                    Text("• 拾光课程表 (github.com/XingHeYuZhuan/shiguangschedule)", style = MaterialTheme.typography.bodySmall)
-                    Text("• TimeFlow (github.com/Lyxot/TimeFlow)", style = MaterialTheme.typography.bodySmall)
+                    Text("• SchedU", style = MaterialTheme.typography.bodySmall)
+                    Text("• 拾光课程表", style = MaterialTheme.typography.bodySmall)
+                    Text("• TimeFlow", style = MaterialTheme.typography.bodySmall)
 
                     HorizontalDivider()
 
-                    Text(stringResource(R.string.about_school))
-                    Text("portal.gdust.edu.cn")
+                    Text(
+                        text = stringResource(R.string.disclaimer_text),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
                     Text(stringResource(R.string.about_copyright))
                 }
             },

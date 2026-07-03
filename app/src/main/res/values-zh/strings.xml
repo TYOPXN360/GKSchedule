@@ -153,6 +153,11 @@
     <string name="about_school">广科统一身份认证</string>
     <string name="about_copyright">© 2026 ClassApp</string>
     <string name="about_login_desc">使用校园账号登录，同步课程表</string>
+    <!-- Disclaimer -->
+    <string name="disclaimer_title">免责声明</string>
+    <string name="disclaimer_text">本应用为个人独立开发的课程表工具，与广东科技学院无任何隶属、授权或合作关系。\n\n课程数据通过学校统一身份认证系统获取，仅作为展示工具，不保证数据准确性。课程信息请教务系统为准。\n\n账号信息仅在本地设备加密存储，不会上传至任何第三方服务器。</string>
+    <string name="disclaimer_agree">同意并继续</string>
+    <string name="disclaimer_exit">退出</string>
     <string name="about_settings_desc">学期、外观、课表样式</string>
     <string name="credits_title">鸣谢</string>
     <string name="credits_ai">AI 助手</string>
