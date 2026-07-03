@@ -279,9 +279,16 @@ Column(
                     HorizontalDivider()
 
                     Text(stringResource(R.string.credits_title), style = MaterialTheme.typography.titleSmall)
-                    CreditItem(stringResource(R.string.credits_ai), "GPT-5.5, Deepseek-v4-pro, XiaoMi-Mimo-V2.5, Google-Gemini-v3.5-flash")
                     CreditItem(stringResource(R.string.credits_language), "Jetpack Compose (Kotlin)")
                     CreditItem(stringResource(R.string.credits_design), "Material Design 3 Expressive")
+
+                    HorizontalDivider()
+
+                    Text(stringResource(R.string.credits_ai), style = MaterialTheme.typography.titleSmall)
+                    Text("• GPT-5.5", style = MaterialTheme.typography.bodySmall)
+                    Text("• Deepseek-v4-pro", style = MaterialTheme.typography.bodySmall)
+                    Text("• XiaoMi-Mimo-V2.5", style = MaterialTheme.typography.bodySmall)
+                    Text("• Google-Gemini-v3.5-flash", style = MaterialTheme.typography.bodySmall)
 
                     HorizontalDivider()
 
