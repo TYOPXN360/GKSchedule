@@ -55,7 +55,14 @@ fun ExamEditScreen(
     var name by remember { mutableStateOf(exam?.courseName ?: "") }
     var classroom by remember { mutableStateOf(exam?.classroom ?: "") }
     var teacher by remember { mutableStateOf(exam?.teacherInfo ?: "") }
-    var examMethod by remember { mutableStateOf(exam?.examMethod ?: "闭卷") }
+    // Support multiple exam methods with exclusions
+    var selectedMethods by remember {
+        mutableStateOf(
+            exam?.examMethod?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() }?.toSet() ?: setOf("闭卷")
+        )
+    }
+    // Derived examMethod string for saving
+    val examMethod by remember(selectedMethods) { mutableStateOf(selectedMethods.joinToString(",")) }
     var remarkText by remember { mutableStateOf(exam?.customRemark ?: "") }
     var examDate by remember { mutableStateOf(if (exam?.examDate?.isNotEmpty() == true) { try { LocalDate.parse(exam.examDate) } catch (_: Exception) { LocalDate.now() } } else LocalDate.now()) }
     var startTime by remember { mutableStateOf(exam?.customStartTime?.ifEmpty { "09:00" } ?: "09:00") }
@@ -107,13 +114,19 @@ fun ExamEditScreen(
 
     fun normalizeExamMethod(method: String): String {
         val lower = method.lowercase()
-        return when {
-            lower.contains("机考") || lower.contains("机试") || lower.contains("上机") -> "机考"
-            lower.contains("半开卷") || lower.contains("开卷(半)") || lower.contains("半闭卷") -> "开卷(半)"
-            lower.contains("开卷") -> "开卷"
-            lower.contains("闭卷") || lower.contains("笔试") -> "闭卷"
-            else -> "闭卷" // 默认闭卷
-        }
+        // Check for combined methods first
+        if (lower.contains("闭卷") && lower.contains("机考")) return "闭卷,机考"
+        if (lower.contains("闭卷") && lower.contains("机试")) return "闭卷,机考"
+        if (lower.contains("开卷") && lower.contains("半")) return "开卷(半)"
+        if (lower.contains("半开卷")) return "开卷(半)"
+        if (lower.contains("开卷") && lower.contains("机考")) return "开卷,机考"
+        if (lower.contains("开卷") && lower.contains("机试")) return "开卷,机考"
+        // Single methods
+        if (lower.contains("机考") || lower.contains("机试") || lower.contains("上机")) return "机考"
+        if (lower.contains("半开卷") || lower.contains("开卷(半)") || lower.contains("半闭卷")) return "开卷(半)"
+        if (lower.contains("开卷")) return "开卷"
+        if (lower.contains("闭卷") || lower.contains("笔试")) return "闭卷"
+        return "闭卷"
     }
 
     Scaffold(containerColor = scaffoldBg, topBar = {
@@ -153,7 +166,9 @@ fun ExamEditScreen(
                                     if (parsedExams.isNotEmpty()) {
                                         batchExams = parsedExams; selectedTabIndex = 0
                                         val first = parsedExams[0]; name = first.courseName; classroom = first.classroom; teacher = first.teacherInfo; startTime = first.customStartTime; endTime = first.customEndTime
-                                        examMethod = first.examMethod; remarkText = first.customRemark
+                                        // Parse comma-separated methods
+                                        selectedMethods = first.examMethod.split(",").map { it.trim() }.filter { it.isNotEmpty() }.toSet()
+                                        remarkText = first.customRemark
                                         examDate = try { LocalDate.parse(first.examDate) } catch (_: Exception) { LocalDate.now() }
                                         aiErrorHint = ""; showAiPanel = false
                                         android.widget.Toast.makeText(context, "成功录入 ${parsedExams.size} 场考试，请通过多标签切换审核！", android.widget.Toast.LENGTH_SHORT).show()
@@ -173,7 +188,9 @@ fun ExamEditScreen(
                             val currentState = ExamEntity(id = batchExams[selectedTabIndex].id, courseName = name.trim(), examDate = examDate.toString(), examTimeRange = "$startTime-$endTime", classroom = classroom.trim(), examMethod = examMethod, teacherInfo = teacher.trim(), isLocal = true, customStartTime = startTime, customEndTime = endTime, customRemark = remarkText)
                             batchExams = batchExams.toMutableList().apply { this[selectedTabIndex] = currentState }
                             selectedTabIndex = index; val target = batchExams[index]; name = target.courseName; classroom = target.classroom; teacher = target.teacherInfo; startTime = target.customStartTime; endTime = target.customEndTime
-                            examMethod = target.examMethod; remarkText = target.customRemark
+                            // Parse comma-separated methods
+                            selectedMethods = target.examMethod.split(",").map { it.trim() }.filter { it.isNotEmpty() }.toSet()
+                            remarkText = target.customRemark
                             examDate = try { LocalDate.parse(target.examDate) } catch (_: Exception) { LocalDate.now() }
                         }, text = { Text("考试 ${index + 1}", fontWeight = FontWeight.Bold) })
                     }
@@ -186,7 +203,38 @@ fun ExamEditScreen(
             Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh), modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) { Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) { Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Default.AccessTime, null, tint = MaterialTheme.colorScheme.primary); Spacer(modifier = Modifier.width(16.dp)); Text("考试时间", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold) }; Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) { OutlinedButton(onClick = { showM3StartTimePicker = true }, modifier = Modifier.weight(1f)) { Text("开始: $startTime") }; OutlinedButton(onClick = { showM3EndTimePicker = true }, modifier = Modifier.weight(1f)) { Text("结束: $endTime") } } } }
             OutlinedTextField(value = classroom, onValueChange = { classroom = it }, label = { Text("考场 / 教室") }, leadingIcon = { Icon(Icons.Default.Room, null) }, modifier = Modifier.fillMaxWidth(), singleLine = true, shape = RoundedCornerShape(12.dp))
             OutlinedTextField(value = teacher, onValueChange = { teacher = it }, label = { Text("监考教师 (选填)") }, leadingIcon = { Icon(Icons.Default.Person, null) }, modifier = Modifier.fillMaxWidth(), singleLine = true, shape = RoundedCornerShape(12.dp))
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) { Text("考试方式", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant); Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) { listOf("闭卷", "开卷", "机考", "开卷(半)").forEach { method -> FilterChip(selected = examMethod == method, onClick = { examMethod = method }, label = { Text(method) }) } } }
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("考试方式", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                // Paper type selection (mutually exclusive)
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf("闭卷", "开卷", "开卷(半)").forEach { method ->
+                        val isSelected = selectedMethods.any { it == method }
+                        FilterChip(
+                            selected = isSelected,
+                            onClick = {
+                                selectedMethods = selectedMethods.filter { it != "闭卷" && it != "开卷" && it != "开卷(半)" && it != "机考" }.toMutableSet().apply {
+                                    add(method)
+                                }
+                            },
+                            label = { Text(method) }
+                        )
+                    }
+                }
+                // Exam format selection (can combine with paper type)
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilterChip(
+                        selected = selectedMethods.any { it == "机考" },
+                        onClick = {
+                            selectedMethods = if (selectedMethods.any { it == "机考" }) {
+                                selectedMethods.filter { it != "机考" }.toSet()
+                            } else {
+                                selectedMethods + "机考"
+                            }
+                        },
+                        label = { Text("机考") }
+                    )
+                }
+            }
             OutlinedTextField(value = remarkText, onValueChange = { remarkText = it }, label = { Text("其他备注 (选填)") }, leadingIcon = { Icon(Icons.AutoMirrored.Filled.Assignment, null) }, modifier = Modifier.fillMaxWidth(), minLines = 1, shape = RoundedCornerShape(12.dp))
             Spacer(modifier = Modifier.height(16.dp))
             Button(onClick = {
