@@ -17,6 +17,12 @@ interface ExamDao {
     @Query("DELETE FROM exam")
     suspend fun clearAll()
 
+    @Query("DELETE FROM exam WHERE isLocal = 0")
+    suspend fun deleteRemoteExams()
+
+    @Query("DELETE FROM exam WHERE id = :id")
+    suspend fun deleteExamById(id: Long)
+
     @Query("SELECT COUNT(*) FROM exam")
     suspend fun count(): Int
 }

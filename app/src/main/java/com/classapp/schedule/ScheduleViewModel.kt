@@ -671,7 +671,8 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                             teacherInfo = e.jsxx
                         )
                     }
-                    examDao.clearAll()
+                    // Only delete remote exams, preserve local (manually added) exams
+                    examDao.deleteRemoteExams()
                     examDao.insertAll(entities)
                     _messages.emit("已获取 ${entities.size} 条考试信息")
                 }.onFailure { e ->
@@ -704,10 +705,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     fun deleteExamById(id: Long) {
         viewModelScope.launch {
             kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                // Room doesn't have deleteById, so clear and re-insert without this one
-                val all = examDao.getAllExams().first()
-                examDao.clearAll()
-                examDao.insertAll(all.filter { it.id != id })
+                examDao.deleteExamById(id)
             }
         }
     }
