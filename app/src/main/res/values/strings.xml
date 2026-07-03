@@ -153,7 +153,7 @@
     <string name="version_format">Version %1$s</string>
     <!-- Disclaimer -->
     <string name="disclaimer_title">Disclaimer</string>
-    <string name="disclaimer_text">This app is an independently developed schedule tool and has no affiliation, authorization, or partnership with Guangdong University of Science and Technology.\n\nCourse data is obtained through the school\'s unified authentication system and is for display purposes only. Accuracy is not guaranteed. Please refer to the official academic system for course information.\n\nYour credentials are encrypted and stored locally only, and are never uploaded to any third-party servers.</string>
+    <string name="disclaimer_text">This app is an independently developed schedule tool and has no affiliation, authorization, or partnership with Guangdong University of Science and Technology.\n\nCourse data is obtained through the school\'s unified authentication system and is for display purposes only. Accuracy is not guaranteed. Please refer to the school\'s official mini-program/DingTalk for course information.\n\nYour credentials are encrypted and stored locally only, and are never uploaded to any third-party servers.</string>
     <string name="disclaimer_agree">Agree &amp; Continue</string>
     <string name="disclaimer_exit">Exit</string>
     <!-- Time Table -->
