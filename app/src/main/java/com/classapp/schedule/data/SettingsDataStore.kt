@@ -38,6 +38,7 @@ class SettingsDataStore(private val context: Context) {
         private val SHOW_DATE_IN_HEADER = booleanPreferencesKey("show_date_in_header")
         private val HIDE_EMPTY_WEEKS = booleanPreferencesKey("hide_empty_weeks")
         private val REMINDER_MINUTES = intPreferencesKey("reminder_minutes") // 0=off,5,10,15,30
+        private val REMINDER_LIVE_UPDATE = booleanPreferencesKey("reminder_live_update")
         private val AUTO_SYNC_ON_START = booleanPreferencesKey("auto_sync_on_start")
         private val AUTO_SYNC_INTERVAL_VALUE = intPreferencesKey("auto_sync_interval_value")
         private val AUTO_SYNC_INTERVAL_UNIT = stringPreferencesKey("auto_sync_interval_unit") // "min", "h", "d"
@@ -90,6 +91,7 @@ class SettingsDataStore(private val context: Context) {
     val showDateInHeader: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[SHOW_DATE_IN_HEADER] ?: false }
     val hideEmptyWeeks: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[HIDE_EMPTY_WEEKS] ?: false }
     val reminderMinutes: Flow<Int> = context.dataStore.data.map { prefs -> prefs[REMINDER_MINUTES] ?: 0 }
+    val reminderLiveUpdate: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[REMINDER_LIVE_UPDATE] ?: true }
     val autoSyncOnStart: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[AUTO_SYNC_ON_START] ?: true }
     val autoSyncIntervalValue: Flow<Int> = context.dataStore.data.map { prefs -> prefs[AUTO_SYNC_INTERVAL_VALUE] ?: 1 }
     val autoSyncIntervalUnit: Flow<String> = context.dataStore.data.map { prefs -> prefs[AUTO_SYNC_INTERVAL_UNIT] ?: "d" }
@@ -165,6 +167,7 @@ class SettingsDataStore(private val context: Context) {
     suspend fun setShowDateInHeader(show: Boolean) { context.dataStore.edit { it[SHOW_DATE_IN_HEADER] = show } }
     suspend fun setHideEmptyWeeks(hide: Boolean) { context.dataStore.edit { it[HIDE_EMPTY_WEEKS] = hide } }
     suspend fun setReminderMinutes(min: Int) { context.dataStore.edit { it[REMINDER_MINUTES] = min } }
+    suspend fun setReminderLiveUpdate(enabled: Boolean) { context.dataStore.edit { it[REMINDER_LIVE_UPDATE] = enabled } }
     suspend fun setAutoSyncOnStart(enabled: Boolean) { context.dataStore.edit { it[AUTO_SYNC_ON_START] = enabled } }
     suspend fun setAutoSyncIntervalValue(value: Int) { context.dataStore.edit { it[AUTO_SYNC_INTERVAL_VALUE] = value } }
     suspend fun setAutoSyncIntervalUnit(unit: String) { context.dataStore.edit { it[AUTO_SYNC_INTERVAL_UNIT] = unit } }

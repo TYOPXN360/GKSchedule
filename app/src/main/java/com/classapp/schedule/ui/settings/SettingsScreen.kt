@@ -47,6 +47,7 @@ fun SettingsScreen(
     hideEmptyWeeks: Boolean,
     showDateInHeader: Boolean,
     reminderMinutes: Int,
+    reminderLiveUpdate: Boolean,
     autoSyncOnStart: Boolean,
     autoSyncIntervalValue: Int,
     autoSyncIntervalUnit: String,
@@ -73,6 +74,7 @@ fun SettingsScreen(
     onHideEmptyWeeksChange: (Boolean) -> Unit,
     onShowDateInHeaderChange: (Boolean) -> Unit,
     onReminderMinutesChange: (Int) -> Unit,
+    onReminderLiveUpdateChange: (Boolean) -> Unit,
     onAutoSyncOnStartChange: (Boolean) -> Unit,
     onAutoSyncIntervalValueChange: (Int) -> Unit,
     onAutoSyncIntervalUnitChange: (String) -> Unit,
@@ -170,7 +172,9 @@ fun SettingsScreen(
             composable("notification") {
                 NotificationPage(
                     reminderMinutes = reminderMinutes,
+                    reminderLiveUpdate = reminderLiveUpdate,
                     onReminderMinutesChange = onReminderMinutesChange,
+                    onReminderLiveUpdateChange = onReminderLiveUpdateChange,
                     onBack = { navController.popBackStack() }
                 )
             }
@@ -487,12 +491,30 @@ private fun ScheduleStylePage(
 // === Notification ===
 
 @Composable
-private fun NotificationPage(reminderMinutes: Int, onReminderMinutesChange: (Int) -> Unit, onBack: () -> Unit) {
+private fun NotificationPage(
+    reminderMinutes: Int,
+    reminderLiveUpdate: Boolean,
+    onReminderMinutesChange: (Int) -> Unit,
+    onReminderLiveUpdateChange: (Boolean) -> Unit,
+    onBack: () -> Unit
+) {
     SubPage(stringResource(R.string.settings_category_notification), onBack) {
         SettingsCard {
             DropdownItem(Icons.Default.Notifications, stringResource(R.string.reminder),
                 listOf("0" to stringResource(R.string.reminder_off), "5" to stringResource(R.string.reminder_format, 5), "10" to stringResource(R.string.reminder_format, 10), "15" to stringResource(R.string.reminder_format, 15), "30" to stringResource(R.string.reminder_format, 30)),
                 reminderMinutes.toString(), onSelect = { onReminderMinutesChange(it.toInt()) })
+            AnimatedVisibility(visible = reminderMinutes > 0, enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) {
+                Column {
+                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
+                    SwitchItem(Icons.Default.Autorenew, stringResource(R.string.reminder_live_update), reminderLiveUpdate, onReminderLiveUpdateChange)
+                    Text(
+                        stringResource(R.string.reminder_live_update_desc),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    )
+                }
+            }
         }
     }
 }

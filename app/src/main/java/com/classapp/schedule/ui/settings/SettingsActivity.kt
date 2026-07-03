@@ -75,6 +75,7 @@ class SettingsActivity : AppCompatActivity() {
                     val hideEmptyWeeks by vm.hideEmptyWeeks.collectAsState(initial = false)
                     val showDateInHeader by vm.showDateInHeader.collectAsState(initial = false)
                     val reminderMinutes by vm.reminderMinutes.collectAsState(initial = 0)
+                    val reminderLiveUpdate by vm.reminderLiveUpdate.collectAsState(initial = true)
                     val autoSyncOnStart by vm.autoSyncOnStart.collectAsState(initial = true)
                     val autoSyncIntervalValue by vm.autoSyncIntervalValue.collectAsState(initial = 1)
                     val autoSyncIntervalUnit by vm.autoSyncIntervalUnit.collectAsState(initial = "d")
@@ -104,6 +105,7 @@ class SettingsActivity : AppCompatActivity() {
                         hideEmptyWeeks = hideEmptyWeeks,
                         showDateInHeader = showDateInHeader,
                         reminderMinutes = reminderMinutes,
+                        reminderLiveUpdate = reminderLiveUpdate,
                         autoSyncOnStart = autoSyncOnStart,
                         autoSyncIntervalValue = autoSyncIntervalValue,
                         autoSyncIntervalUnit = autoSyncIntervalUnit,
@@ -132,6 +134,7 @@ class SettingsActivity : AppCompatActivity() {
                         onHideEmptyWeeksChange = { vm.setHideEmptyWeeks(it) },
                         onShowDateInHeaderChange = { vm.setShowDateInHeader(it) },
                         onReminderMinutesChange = { vm.setReminderMinutes(it) },
+                        onReminderLiveUpdateChange = { vm.setReminderLiveUpdate(it) },
                         onAutoSyncOnStartChange = { vm.setAutoSyncOnStart(it) },
                         onAutoSyncIntervalValueChange = { vm.setAutoSyncIntervalValue(it) },
                         onAutoSyncIntervalUnitChange = { vm.setAutoSyncIntervalUnit(it) },

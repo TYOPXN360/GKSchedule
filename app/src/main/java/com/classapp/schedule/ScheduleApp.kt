@@ -91,7 +91,6 @@ fun ScheduleApp(
     val showDateInHeader by viewModel.showDateInHeader.collectAsState(initial = false)
     val hideEmptyWeeks by viewModel.hideEmptyWeeks.collectAsState(initial = false)
     val isRefreshing by viewModel.isRefreshing.collectAsState(initial = false)
-    val reminderMinutes by viewModel.reminderMinutes.collectAsState(initial = 0)
     val semesterStart by viewModel.semesterStart.collectAsState(initial = java.time.LocalDate.now())
     val darkMode by viewModel.darkMode.collectAsState(initial = "system")
     val language by viewModel.language.collectAsState(initial = "system")

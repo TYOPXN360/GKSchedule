@@ -18,14 +18,27 @@ class BootReceiver : BroadcastReceiver() {
 
         val semesterStart = runBlocking { settings.semesterStart.first() }
         val totalWeeks = runBlocking { settings.totalWeeks.first() }
+        val liveUpdate = runBlocking { settings.reminderLiveUpdate.first() }
+        val database = CourseDatabase.getDatabase(context)
         val courses = runBlocking {
-            CourseDatabase.getDatabase(context).courseDao().getAllCourses().first()
+            database.courseDao().getAllCourses().first()
+        }
+        val exams = runBlocking {
+            database.examDao().getAllExams().first()
         }
 
-        if (courses.isEmpty()) return
+        if (courses.isEmpty() && exams.isEmpty()) return
 
         ReminderScheduler.scheduleUpcomingReminders(
-            context, courses, semesterStart, totalWeeks, reminderMinutes
-        ) { period -> settings.getStartTime(period) }
+            context = context,
+            courses = courses,
+            exams = exams,
+            semesterStart = semesterStart,
+            totalWeeks = totalWeeks,
+            reminderMinutes = reminderMinutes,
+            liveUpdate = liveUpdate,
+            getStartTime = { period -> settings.getStartTime(period) },
+            getEndTime = { period -> settings.getEndTime(period) }
+        )
     }
 }

@@ -15,6 +15,7 @@ import com.classapp.schedule.data.Course
 import com.classapp.schedule.data.CourseDao
 import com.classapp.schedule.data.CourseDatabase
 import com.classapp.schedule.data.CredentialStore
+import com.classapp.schedule.data.ExamEntity
 import com.classapp.schedule.data.SettingsDataStore
 import com.classapp.schedule.notification.ReminderScheduler
 import com.classapp.schedule.util.IcsExport
@@ -27,7 +28,9 @@ import java.time.LocalDate
 
 private data class ReminderConfig(
     val courses: List<Course>,
+    val exams: List<ExamEntity>,
     val reminderMinutes: Int,
+    val liveUpdate: Boolean,
     val semesterStart: LocalDate,
     val totalWeeks: Int
 )
@@ -44,6 +47,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     val hasSavedCredentials: Flow<Boolean> = CredentialStore.hasCredentials(application)
 
     val courses: Flow<List<Course>> = courseDao.getAllCourses()
+    val examList: Flow<List<ExamEntity>> = examDao.getAllExams()
     val currentWeek: Flow<Int> = settings.getCurrentWeek()
     val totalWeeks: Flow<Int> = settings.totalWeeks
     val periodsPerDay: Flow<Int> = settings.periodsPerDay
@@ -67,6 +71,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     val hideEmptyWeeks: Flow<Boolean> = settings.hideEmptyWeeks
     val themeColorIndex: Flow<Int> = settings.themeColorIndex
     val reminderMinutes: Flow<Int> = settings.reminderMinutes
+    val reminderLiveUpdate: Flow<Boolean> = settings.reminderLiveUpdate
     val autoSyncOnStart: Flow<Boolean> = settings.autoSyncOnStart
     val autoSyncIntervalValue: Flow<Int> = settings.autoSyncIntervalValue
     val autoSyncIntervalUnit: Flow<String> = settings.autoSyncIntervalUnit
@@ -152,17 +157,28 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
         }
         // Schedule reminders when courses or settings change
         viewModelScope.launch {
-            combine(courses, settings.reminderMinutes, settings.semesterStart, settings.totalWeeks) { courseList, minutes, start, weeks ->
-                ReminderConfig(courseList, minutes, start, weeks)
+            combine(courses, examList, settings.reminderMinutes, settings.reminderLiveUpdate, settings.semesterStart, settings.totalWeeks) { values ->
+                @Suppress("UNCHECKED_CAST")
+                ReminderConfig(
+                    courses = values[0] as List<Course>,
+                    exams = values[1] as List<ExamEntity>,
+                    reminderMinutes = values[2] as Int,
+                    liveUpdate = values[3] as Boolean,
+                    semesterStart = values[4] as LocalDate,
+                    totalWeeks = values[5] as Int
+                )
             }.collect { config ->
                 if (config.reminderMinutes > 0) {
                     ReminderScheduler.scheduleUpcomingReminders(
                         context = getApplication(),
                         courses = config.courses,
+                        exams = config.exams,
                         semesterStart = config.semesterStart,
                         totalWeeks = config.totalWeeks,
                         reminderMinutes = config.reminderMinutes,
-                        getStartTime = ::getStartTime
+                        liveUpdate = config.liveUpdate,
+                        getStartTime = ::getStartTime,
+                        getEndTime = ::getEndTime
                     )
                 } else {
                     ReminderScheduler.cancelAll(getApplication(), config.courses)
@@ -243,6 +259,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     fun setHideEmptyWeeks(hide: Boolean) { viewModelScope.launch { settings.setHideEmptyWeeks(hide) } }
     fun setThemeColorIndex(idx: Int) { viewModelScope.launch { settings.setThemeColorIndex(idx) } }
     fun setReminderMinutes(min: Int) { viewModelScope.launch { settings.setReminderMinutes(min) } }
+    fun setReminderLiveUpdate(enabled: Boolean) { viewModelScope.launch { settings.setReminderLiveUpdate(enabled) } }
     fun setAutoSyncOnStart(enabled: Boolean) { viewModelScope.launch { settings.setAutoSyncOnStart(enabled) } }
     fun setAutoSyncIntervalValue(value: Int) {
         viewModelScope.launch {
@@ -636,7 +653,6 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     }
 
     // Exam schedule — backed by Room DB (single source of truth)
-    val examList: Flow<List<com.classapp.schedule.data.ExamEntity>> = examDao.getAllExams()
     private val _examLoading = MutableStateFlow(false)
     val examLoading: StateFlow<Boolean> = _examLoading
     private val _examYear = MutableStateFlow("")
