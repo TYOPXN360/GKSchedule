@@ -25,6 +25,8 @@ import com.ty.gdust_schedule.R
 fun AboutDetailPage(
     onBack: () -> Unit
 ) {
+    var showDisclaimerDialog by remember { mutableStateOf(false) }
+
     Scaffold(
         contentWindowInsets = WindowInsets.systemBars,
         containerColor = MaterialTheme.colorScheme.surface,
@@ -157,14 +159,13 @@ fun AboutDetailPage(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Disclaimer
-            Text(
-                text = stringResource(R.string.disclaimer_text),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 16.dp),
-                textAlign = TextAlign.Center
-            )
+            // Disclaimer button
+            OutlinedButton(
+                onClick = { showDisclaimerDialog = true },
+                modifier = Modifier.padding(horizontal = 16.dp)
+            ) {
+                Text(stringResource(R.string.disclaimer_title))
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -177,6 +178,25 @@ fun AboutDetailPage(
 
             Spacer(modifier = Modifier.height(32.dp))
         }
+    }
+
+    // Disclaimer dialog
+    if (showDisclaimerDialog) {
+        AlertDialog(
+            onDismissRequest = { showDisclaimerDialog = false },
+            title = { Text(stringResource(R.string.disclaimer_title)) },
+            text = {
+                Text(
+                    text = stringResource(R.string.disclaimer_text),
+                    style = MaterialTheme.typography.bodySmall
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { showDisclaimerDialog = false }) {
+                    Text("OK")
+                }
+            }
+        )
     }
 }
 
