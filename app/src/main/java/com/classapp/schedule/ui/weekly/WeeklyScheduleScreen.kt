@@ -2,7 +2,6 @@ package com.classapp.schedule.ui.weekly
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -31,21 +30,13 @@ import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -55,9 +46,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.classapp.schedule.R
 import com.classapp.schedule.data.Course
+import com.classapp.schedule.data.ScheduleResolver
 import com.classapp.schedule.data.ScheduleItem
 import com.classapp.schedule.util.CourseColors
-import kotlin.math.abs
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -109,58 +100,13 @@ fun WeeklyScheduleScreen(
 
     // Build unified schedule items (replaces id<0 hack)
     val scheduleItems = remember(courses, exams, showExamSchedule, semesterStart, getStartTime, getEndTime) {
-        val courseItems = courses.map { ScheduleItem.CourseItem(it) }
-        if (!showExamSchedule) courseItems
-        else courseItems + exams.mapNotNull { exam ->
-            ScheduleItem.fromExam(exam, semesterStart, getStartTime, getEndTime)
-        }
-    }
-
-    // Build render blocks with dynamic color assignment
-    val renderBlocks = remember(courses, currentWeek, mergeConsecutive, detailedSplit, colorGroupMode, scheduleItems) {
-        val weekItems = scheduleItems.filter { it.isInWeek(currentWeek) }
-        data class Block(val item: ScheduleItem, val day: Int, val start: Int, val span: Int, val colorIdx: Int)
-        val nameToIdx = mutableMapOf<String, Int>()
-        val keyToIdx = mutableMapOf<String, Int>()
-        var nextColor = 0
-        val blocks = mutableListOf<Block>()
-        weekItems.forEach { item ->
-            val ci = when (colorGroupMode) {
-                0 -> nameToIdx.getOrPut(item.name) { nextColor++ }
-                1 -> nameToIdx.getOrPut(item.name) { nextColor++ }
-                else -> keyToIdx.getOrPut("${item.name}|${item.classroom}") { nextColor++ }
-            }
-            if (item.isExam || mergeConsecutive) {
-                blocks.add(Block(item, item.dayOfWeek, item.startPeriod, item.periods, ci))
-            } else if (detailedSplit) {
-                for (p in item.startPeriod..item.endPeriod()) {
-                    blocks.add(Block(item, item.dayOfWeek, p, 1, ci))
-                }
-            } else {
-                var p = item.startPeriod
-                while (p <= item.endPeriod()) {
-                    val pairEnd = minOf(p + 1, item.endPeriod())
-                    blocks.add(Block(item, item.dayOfWeek, p, pairEnd - p + 1, ci))
-                    p = pairEnd + 1
-                }
-            }
-        }
-        blocks
+        ScheduleResolver.buildItems(courses, exams, showExamSchedule, semesterStart, getStartTime, getEndTime)
     }
 
     // Compute visible weeks (skip empty weeks if hideEmptyWeeks is on)
     // 🔥 防死锁：强制包含 currentWeek 和 realCurrentWeek，防止 indexOf 返回 -1
     val visibleWeeks = remember(scheduleItems, totalWeeks, hideEmptyWeeks, currentWeek, realCurrentWeek) {
-        if (!hideEmptyWeeks) (1..totalWeeks).toList()
-        else {
-            val nonEmpty = (1..totalWeeks).filter { week ->
-                scheduleItems.any { it.isInWeek(week) }
-            }.toMutableList()
-            if (!nonEmpty.contains(currentWeek) && currentWeek in 1..totalWeeks) nonEmpty.add(currentWeek)
-            if (!nonEmpty.contains(realCurrentWeek) && realCurrentWeek in 1..totalWeeks) nonEmpty.add(realCurrentWeek)
-            val finalWeeks = nonEmpty.distinct().sorted()
-            if (finalWeeks.isEmpty()) listOf(1) else finalWeeks
-        }
+        ScheduleResolver.visibleWeeks(scheduleItems, totalWeeks, hideEmptyWeeks, currentWeek, realCurrentWeek)
     }
 
     // Pager: maps visible index → actual week number
@@ -292,58 +238,17 @@ fun WeeklyScheduleScreen(
                     .onGloballyPositioned { cropBottomPx = it.positionInRoot().y.toInt() + it.size.height }
             ) { page ->
                 val week = visibleWeeks.getOrElse(page) { currentWeek }
-                val weekBlocks = remember(week, colorGroupMode, scheduleItems, mergeConsecutive, detailedSplit) {
-                    val weekItems = scheduleItems.filter { it.isInWeek(week) }
-                    data class B(
-                        val item: ScheduleItem,
-                        val day: Int,
-                        val start: Int,
-                        val span: Int,
-                        val colorIdx: Int,
-                        val startLine: Float,
-                        val endLine: Float
+                val weekBlocks = remember(week, colorGroupMode, scheduleItems, mergeConsecutive, detailedSplit, periodsPerDay, getStartTime, getEndTime) {
+                    ScheduleResolver.buildRenderBlocks(
+                        items = scheduleItems,
+                        week = week,
+                        colorGroupMode = colorGroupMode,
+                        mergeConsecutive = mergeConsecutive,
+                        detailedSplit = detailedSplit,
+                        periodsPerDay = periodsPerDay,
+                        getStartTime = getStartTime,
+                        getEndTime = getEndTime
                     )
-                    val blocks = mutableListOf<B>()
-                    val classroomCounters = mutableMapOf<String, Int>()
-                    weekItems.forEach { item ->
-                        val ci = when (colorGroupMode) {
-                            0 -> abs(item.name.hashCode()) % 8
-                            1 -> {
-                                val baseIdx = abs(item.name.hashCode()) % 8
-                                val classIdx = classroomCounters.getOrPut(item.name) { 0 }
-                                classroomCounters[item.name] = classIdx + 1
-                                baseIdx * 10 + classIdx
-                            }
-                            else -> abs("${item.name}|${item.classroom}".hashCode()) % 64
-                        }
-                        fun addBlock(si: ScheduleItem, start: Int, span: Int, colorIdx: Int) {
-                            val startLine = if (si.isExam) {
-                                timeToGridLine(si.customStartTime, getStartTime, getEndTime, periodsPerDay)
-                            } else {
-                                (start - 1).toFloat()
-                            }
-                            val endLine = if (si.isExam) {
-                                timeToGridLine(si.customEndTime, getStartTime, getEndTime, periodsPerDay)
-                                    .coerceAtLeast(startLine + 0.25f)
-                            } else {
-                                startLine + span
-                            }
-                            blocks.add(B(si, si.dayOfWeek, start, span, colorIdx, startLine, endLine))
-                        }
-                        if (item.isExam || mergeConsecutive) {
-                            addBlock(item, item.startPeriod, item.periods, ci)
-                        } else if (detailedSplit) {
-                            for (p in item.startPeriod..item.endPeriod()) addBlock(item, p, 1, ci)
-                        } else {
-                            var p = item.startPeriod
-                            while (p <= item.endPeriod()) {
-                                val pairEnd = minOf(p + 1, item.endPeriod())
-                                addBlock(item, p, pairEnd - p + 1, ci)
-                                p = pairEnd + 1
-                            }
-                        }
-                    }
-                    blocks
                 }
 
                 BoxWithConstraints(
@@ -657,55 +562,4 @@ private fun WeekPickerSheet(totalWeeks: Int, currentWeek: Int, onWeekSelected: (
         }
     }
 }
-}
-
-private fun timeToGridLine(
-    time: String,
-    getStartTime: (Int) -> String,
-    getEndTime: (Int) -> String,
-    periodsPerDay: Int
-): Float {
-    val target = parseMinutes(time) ?: return 0f
-    for (period in 1..periodsPerDay) {
-        val start = parseMinutes(getStartTime(period)) ?: continue
-        val end = parseMinutes(getEndTime(period)) ?: continue
-        if (target in start..end) {
-            val duration = (end - start).coerceAtLeast(1)
-            return (period - 1) + (target - start).toFloat() / duration.toFloat()
-        }
-        val nextStart = parseMinutes(getStartTime(period + 1))
-        if (nextStart != null && target >= end && target <= nextStart) {
-            return period.toFloat()
-        }
-    }
-    val firstStart = parseMinutes(getStartTime(1)) ?: return 0f
-    val lastEnd = parseMinutes(getEndTime(periodsPerDay)) ?: return periodsPerDay.toFloat()
-    return when {
-        target <= firstStart -> 0f
-        target >= lastEnd -> periodsPerDay.toFloat()
-        else -> timeToPeriod(time, getStartTime).let { if (it > 0) (it - 1).toFloat() else 0f }
-    }
-}
-
-private fun parseMinutes(time: String): Int? {
-    val parts = time.split(":")
-    val hour = parts.getOrNull(0)?.toIntOrNull() ?: return null
-    val minute = parts.getOrNull(1)?.toIntOrNull() ?: return null
-    return hour * 60 + minute
-}
-
-/** Map a time string like "14:20" to the closest period number. */
-private fun timeToPeriod(time: String, timeProvider: (Int) -> String): Int {
-    val targetMins = parseMinutes(time) ?: return 0
-    var bestPeriod = 0
-    var bestDiff = Int.MAX_VALUE
-    for (p in 1..14) {
-        val pMins = parseMinutes(timeProvider(p)) ?: continue
-        val diff = kotlin.math.abs(targetMins - pMins)
-        if (diff < bestDiff) {
-            bestDiff = diff
-            bestPeriod = p
-        }
-    }
-    return bestPeriod
 }

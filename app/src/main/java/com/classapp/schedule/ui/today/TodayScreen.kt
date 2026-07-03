@@ -21,13 +21,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.classapp.schedule.R
 import com.classapp.schedule.data.Course
-import com.classapp.schedule.data.ScheduleItem
-import com.classapp.schedule.ui.theme.LocalAppIsDark
+import com.classapp.schedule.data.ScheduleResolver
 import com.classapp.schedule.ui.theme.Md3Card
 import com.classapp.schedule.ui.theme.Md3CardVariant
 import com.classapp.schedule.util.CourseColors
 import kotlinx.coroutines.flow.first
-import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
 import androidx.compose.ui.text.style.TextOverflow
@@ -48,29 +46,21 @@ fun TodayScreen(
     diffColorPerWeek: Boolean = false
 ) {
     val today = LocalDate.now()
-    val tomorrow = today.plusDays(1)
     val todayDow = today.dayOfWeek.value
-    val tomorrowDow = tomorrow.dayOfWeek.value
 
-    // Calculate tomorrow's week (might be next week if today is Sunday)
-    val tomorrowWeek = if (todayDow == 7) currentWeek + 1 else currentWeek
+    val todayCourses = remember(courses, currentWeek, today) {
+        ScheduleResolver.todayCourses(courses, currentWeek, today)
+    }
 
-    val todayCourses = courses
-        .filter { it.dayOfWeek == todayDow && it.isInWeek(currentWeek) }
-        .sortedBy { it.startPeriod }
-
-    // Today's exam entities (direct, no Course conversion)
-    val todayExams = if (showExamSchedule) {
-        exams.filter { exam ->
-            try { java.time.LocalDate.parse(exam.examDate) == today } catch (_: Exception) { false }
-        }
-    } else emptyList()
+    val todayExams = remember(exams, showExamSchedule, today) {
+        ScheduleResolver.todayExams(exams, showExamSchedule, today)
+    }
 
     val allTodayCourses = todayCourses
 
-    val tomorrowCourses = courses
-        .filter { it.dayOfWeek == tomorrowDow && tomorrowWeek in 1..52 && it.isInWeek(tomorrowWeek) }
-        .sortedBy { it.startPeriod }
+    val tomorrowCourses = remember(courses, currentWeek, today) {
+        ScheduleResolver.tomorrowCourses(courses, currentWeek, today)
+    }
 
     val dayNames = mapOf(
         1 to stringResource(R.string.mon), 2 to stringResource(R.string.tue),
@@ -95,6 +85,9 @@ fun TodayScreen(
         }
     }
     val isDark = com.classapp.schedule.ui.theme.LocalAppIsDark.current
+    val upcomingExams = remember(exams, showExamSchedule, today, examLookaheadWeeks) {
+        ScheduleResolver.upcomingExams(exams, showExamSchedule, today, examLookaheadWeeks)
+    }
 
     LazyColumn(
         modifier = Modifier
@@ -189,8 +182,7 @@ fun TodayScreen(
                 Spacer(modifier = Modifier.height(4.dp))
             }
             items(todayExams) { exam ->
-                val examDate = try { java.time.LocalDate.parse(exam.examDate) } catch (_: Exception) { null }
-                val examWeek = if (examDate != null) (java.time.temporal.ChronoUnit.DAYS.between(semesterStart, examDate).toInt() / 7) + 1 else currentWeek
+                val examWeek = ScheduleResolver.examWeek(exam, semesterStart, currentWeek)
                 val examColor = CourseColors.getColorSync(colorGroupMode, exam.courseName, exam.classroom, week = examWeek, diffColorPerWeek = diffColorPerWeek, isDark = isDark)
                 ExamCard(exam = exam, examColor = examColor)
             }
@@ -238,43 +230,29 @@ fun TodayScreen(
         }
 
         // Upcoming exams section
-        if (showExamSchedule && exams.isNotEmpty()) {
-            val todayDate = LocalDate.now()
-            val latestExamDate = todayDate.plusWeeks(examLookaheadWeeks.toLong())
-            val upcomingExams = exams.filter { exam ->
-                try {
-                    val examDate = java.time.LocalDate.parse(exam.examDate)
-                    !examDate.isBefore(todayDate) && !examDate.isAfter(latestExamDate) && examDate != todayDate
-                } catch (_: Exception) { false }
-            }.sortedBy { it.examDate }.take(5)
-
-            if (upcomingExams.isNotEmpty()) {
-                item {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    HorizontalDivider()
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            Icons.Default.School, contentDescription = "考试",
-                            modifier = Modifier.size(20.dp),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "近期考试",
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(4.dp))
+        if (upcomingExams.isNotEmpty()) {
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+                HorizontalDivider()
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Default.School, contentDescription = "考试",
+                        modifier = Modifier.size(20.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "近期考试",
+                        style = MaterialTheme.typography.titleMedium
+                    )
                 }
-                items(upcomingExams) { exam ->
-                    val examDate = try { java.time.LocalDate.parse(exam.examDate) } catch (_: Exception) { null }
-                    val examWeek = if (examDate != null) {
-                        (java.time.temporal.ChronoUnit.DAYS.between(semesterStart, examDate).toInt() / 7) + 1
-                    } else currentWeek
-                    val examColor = CourseColors.getColorSync(colorGroupMode, exam.courseName, exam.classroom, week = examWeek, diffColorPerWeek = diffColorPerWeek, isDark = isDark)
-                    ExamCard(exam = exam, examColor = examColor)
-                }
+                Spacer(modifier = Modifier.height(4.dp))
+            }
+            items(upcomingExams) { exam ->
+                val examWeek = ScheduleResolver.examWeek(exam, semesterStart, currentWeek)
+                val examColor = CourseColors.getColorSync(colorGroupMode, exam.courseName, exam.classroom, week = examWeek, diffColorPerWeek = diffColorPerWeek, isDark = isDark)
+                ExamCard(exam = exam, examColor = examColor)
             }
         }
 
@@ -447,21 +425,6 @@ private fun findCurrentPeriod(
 private fun parseTime(time: String): Int {
     val parts = time.split(":")
     return (parts.getOrNull(0)?.toIntOrNull() ?: 0) * 60 + (parts.getOrNull(1)?.toIntOrNull() ?: 0)
-}
-
-private fun timeToPeriod(time: String, timeProvider: (Int) -> String): Int {
-    val targetMins = parseTime(time)
-    var bestPeriod = 0
-    var bestDiff = Int.MAX_VALUE
-    for (p in 1..14) {
-        val pMins = parseTime(timeProvider(p)) ?: continue
-        val diff = kotlin.math.abs(targetMins - pMins)
-        if (diff < bestDiff) {
-            bestDiff = diff
-            bestPeriod = p
-        }
-    }
-    return bestPeriod
 }
 
 @Composable
