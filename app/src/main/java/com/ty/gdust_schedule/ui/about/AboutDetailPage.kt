@@ -187,11 +187,17 @@ fun AboutDetailPage(
             onDismissRequest = { showDisclaimerDialog = false },
             title = { Text(stringResource(R.string.disclaimer_title)) },
             text = {
-                Text(
-                    text = stringResource(R.string.disclaimer_text),
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.verticalScroll(rememberScrollState())
-                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 400.dp)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    Text(
+                        text = stringResource(R.string.disclaimer_text),
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
             },
             confirmButton = {
                 TextButton(onClick = { showDisclaimerDialog = false }) {

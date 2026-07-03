@@ -128,11 +128,17 @@ class MainActivity : AppCompatActivity() {
                                 )
                             },
                             text = {
-                                Text(
-                                    text = stringResource(R.string.disclaimer_text),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    modifier = Modifier.verticalScroll(rememberScrollState())
-                                )
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .heightIn(max = 400.dp)
+                                        .verticalScroll(rememberScrollState())
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.disclaimer_text),
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                }
                             },
                             confirmButton = {
                                 Button(
