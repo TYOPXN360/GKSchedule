@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">课程表</string>
+    <string name="app_name">广科课程表</string>
     <!-- Navigation -->
     <string name="nav_today">今日</string>
     <string name="nav_schedule">课表</string>
