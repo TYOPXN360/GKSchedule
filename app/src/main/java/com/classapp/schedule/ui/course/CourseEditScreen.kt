@@ -37,6 +37,7 @@ import com.classapp.schedule.util.JsonImportExport
 @Composable
 fun CourseEditScreen(
     course: Course?,
+    allCourses: List<Course> = emptyList(),
     periodsPerDay: Int,
     onSave: (Course) -> Unit,
     onDelete: (Course) -> Unit,
@@ -67,6 +68,24 @@ fun CourseEditScreen(
 
     var batchCourses by remember { mutableStateOf<List<Course>>(emptyList()) }
     var selectedTabIndex by remember { mutableIntStateOf(0) }
+
+    // When editing an existing course, load all same-name courses as tabs
+    LaunchedEffect(course) {
+        if (course != null && allCourses.isNotEmpty()) {
+            val sameNameCourses = allCourses
+                .filter { it.name == course.name }
+                .sortedWith(compareBy({ it.dayOfWeek }, { it.startPeriod }))
+            if (sameNameCourses.size > 1) {
+                batchCourses = sameNameCourses
+                selectedTabIndex = sameNameCourses.indexOfFirst { it.id == course.id }.coerceAtLeast(0)
+                val target = sameNameCourses[selectedTabIndex]
+                teacher = target.teacher; classroom = target.classroom
+                dayOfWeek = target.dayOfWeek; startPeriod = target.startPeriod; periods = target.periods; remark = target.remark
+                if (target.weekRange != "all" && target.weekRange != "odd" && target.weekRange != "even") { weekRange = "custom"; customWeekRange = target.weekRange } else { weekRange = target.weekRange; customWeekRange = "" }
+                isCustomTime = target.isCustomTime; customStartTime = target.customStartTime; customEndTime = target.customEndTime; isHidden = target.isHidden
+            }
+        }
+    }
 
     var showAiPanel by remember { mutableStateOf(false) }
     var aiClipboardInput by remember { mutableStateOf("") }
@@ -177,7 +196,12 @@ fun CourseEditScreen(
                             name = target.name; teacher = target.teacher; classroom = target.classroom; dayOfWeek = target.dayOfWeek; startPeriod = target.startPeriod; periods = target.periods; remark = target.remark
                             if (target.weekRange != "all" && target.weekRange != "odd" && target.weekRange != "even") { weekRange = "custom"; customWeekRange = target.weekRange } else { weekRange = target.weekRange; customWeekRange = "" }
                             isCustomTime = target.isCustomTime; customStartTime = target.customStartTime; customEndTime = target.customEndTime; isHidden = target.isHidden
-                        }, text = { Text("课程 ${index + 1}", fontWeight = FontWeight.Bold) })
+                        }, text = {
+                            val target = batchCourses[index]
+                            val dayNames = listOf("一", "二", "三", "四", "五", "六", "日")
+                            val dayLabel = if (target.dayOfWeek in 1..7) dayNames[target.dayOfWeek - 1] else "${target.dayOfWeek}"
+                            Text("周${dayLabel} ${target.startPeriod}-${target.endPeriod()}节", fontWeight = FontWeight.Bold)
+                        })
                     }
                 }
             }

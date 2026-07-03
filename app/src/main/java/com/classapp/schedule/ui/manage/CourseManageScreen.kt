@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -34,16 +35,9 @@ fun CourseManageScreen(
     var showDeleteAllDialog by remember { mutableStateOf(false) }
     var courseToDelete by remember { mutableStateOf<Course?>(null) }
 
-    val groupedCourses = remember(courses) {
-        courses.groupBy { it.name }.toSortedMap()
+    val uniqueCourses = remember(courses) {
+        courses.distinctBy { it.name }.sortedBy { it.name }
     }
-
-    val dayNames = listOf(
-        "", stringResource(R.string.mon), stringResource(R.string.tue),
-        stringResource(R.string.wed), stringResource(R.string.thu),
-        stringResource(R.string.fri), stringResource(R.string.sat),
-        stringResource(R.string.sun)
-    )
 
     Box(modifier = Modifier.fillMaxSize()) {
         if (courses.isEmpty()) {
@@ -79,18 +73,14 @@ fun CourseManageScreen(
                     }
                 }
 
-                groupedCourses.forEach { (name, courseList) ->
-                    item {
-                        Text(text = name, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(vertical = 4.dp))
-                    }
-                    items(courseList) { course ->
-                        CourseListItem(
-                            course = course,
-                            dayName = dayNames[course.dayOfWeek],
-                            onClick = { onCourseClick(course) },
-                            onDelete = { courseToDelete = course }
-                        )
-                    }
+                items(uniqueCourses) { course ->
+                    val count = courses.count { it.name == course.name }
+                    CourseListItem(
+                        course = course,
+                        instanceCount = count,
+                        onClick = { onCourseClick(course) },
+                        onDelete = { courseToDelete = course }
+                    )
                 }
             }
         }
@@ -127,7 +117,7 @@ fun CourseManageScreen(
 @Composable
 private fun CourseListItem(
     course: Course,
-    dayName: String?,
+    instanceCount: Int = 1,
     onClick: () -> Unit,
     onDelete: () -> Unit
 ) {
@@ -155,12 +145,27 @@ private fun CourseListItem(
             )
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "$dayName  ${course.startPeriod}-${course.endPeriod()}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = course.name,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+                    if (instanceCount > 1) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Surface(shape = CircleShape, color = courseColor.container) {
+                            Text(
+                                text = "${instanceCount}节",
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = courseColor.content
+                            )
+                        }
+                    }
+                }
                 if (course.classroom.isNotEmpty() || course.teacher.isNotEmpty()) {
                     Text(
                         text = listOfNotNull(
