@@ -328,7 +328,7 @@ private fun ExamCard(exam: ExamEntity, examColor: CourseColors.CourseColorPair, 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(exam.courseName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    if (isPast) { Spacer(modifier = Modifier.width(6.dp)); Icon(Icons.Default.CheckCircle, null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)) }
+                    if (isPast) { Spacer(modifier = Modifier.width(6.dp)); Surface(shape = CircleShape, color = MaterialTheme.colorScheme.surfaceVariant) { Text("已结束", modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) } }
                 }
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
