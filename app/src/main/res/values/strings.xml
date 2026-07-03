@@ -200,7 +200,7 @@
     <string name="about_desc">A course schedule app designed for GDUST students.</string>
     <string name="about_settings_desc">Semester, appearance, schedule style</string>
     <string name="about_school">GDUST Schedule</string>
-    <string name="about_copyright">© 2026 GDUST-Schedule</string>
+    <string name="about_copyright">© 2026 GKSchedule</string>
     <string name="about_login_desc">Login with your campus account to sync courses</string>
     <string name="about_title">About</string>
     <string name="credits_title">Credits</string>
