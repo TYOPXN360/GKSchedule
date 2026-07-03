@@ -32,6 +32,9 @@ interface CourseDao {
     @Query("DELETE FROM courses")
     suspend fun deleteAllCourses()
 
+    @Query("DELETE FROM courses WHERE isManuallyEdited = 0")
+    suspend fun deleteRemoteCourses()
+
     @Query("SELECT COUNT(*) FROM courses")
     suspend fun getCourseCount(): Int
 

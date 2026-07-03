@@ -48,7 +48,7 @@ class AutoSyncWorker(
 
             val courses = CourseImporter.convertRemoteCourses(allCourses)
             val dao = CourseDatabase.getDatabase(applicationContext).courseDao()
-            dao.deleteAllCourses()
+            dao.deleteRemoteCourses()
             courses.forEach { dao.insertCourse(it) }
             Result.success()
         } catch (e: Exception) {

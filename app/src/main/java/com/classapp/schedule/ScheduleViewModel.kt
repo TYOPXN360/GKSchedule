@@ -424,23 +424,15 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
 
             // Convert and save — preserve manually edited courses
             val courses = CourseImporter.convertRemoteCourses(allRemoteCourses)
-            val manualCourses = courseDao.getAllCourses().first().filter { it.isManuallyEdited }
-            // Save hidden status before deleting
-            val hiddenNames = manualCourses.filter { it.isHidden }.map { it.name }.toSet()
-            courseDao.deleteAllCourses()
+            // Safe sync: only delete remote courses, preserve local (manually edited)
+            val hiddenNames = courseDao.getAllCourses().first().filter { it.isManuallyEdited && it.isHidden }.map { it.name }.toSet()
+            courseDao.deleteRemoteCourses()
             courses.forEach { c ->
                 val isHid = hiddenNames.contains(c.name)
                 courseDao.insertCourse(c.copy(isHidden = isHid))
             }
-            // Re-insert manually edited courses: exams (id<0) keep original ID, regular courses go through schoolKeys filter
-            val schoolKeys = courses.map { "${it.name}|${it.dayOfWeek}|${it.startPeriod}" }.toSet()
-            manualCourses.forEach { mc ->
-                if (mc.id < 0) {
-                    courseDao.insertCourse(mc) // Preserve exam negative ID
-                } else if ("${mc.name}|${mc.dayOfWeek}|${mc.startPeriod}" !in schoolKeys) {
-                    courseDao.insertCourse(mc.copy(id = 0))
-                }
-            }
+            // No longer need to re-insert manual courses — they were never deleted
+            // (deleteRemoteCourses only removes isManuallyEdited=0 rows)
 
             _loginState.value = LoginState.ImportResult(courses.size)
         } catch (e: Exception) {
@@ -517,22 +509,12 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                         }
                     
                     if (hasChanges) {
-                        // Save hidden status before deleting
-                        val hiddenNames = existingCourses.filter { it.isHidden }.map { it.name }.toSet()
-                        courseDao.deleteAllCourses()
-                        // Build a set of school course keys to skip duplicates from manualCourses
-                        val schoolKeys = newCourses.map { "${it.name}|${it.dayOfWeek}|${it.startPeriod}" }.toSet()
+                        // Safe sync: only delete remote courses, preserve local
+                        val hiddenNames = existingCourses.filter { it.isHidden && !it.isManuallyEdited }.map { it.name }.toSet()
+                        courseDao.deleteRemoteCourses()
                         newCourses.forEach { c ->
                             val isHid = hiddenNames.contains(c.name)
                             courseDao.insertCourse(c.copy(isHidden = isHid))
-                        }
-                        // Re-insert manual courses: exams (id<0) keep original ID, regular courses skip school duplicates
-                        manualCourses.forEach { mc ->
-                            if (mc.id < 0) {
-                                courseDao.insertCourse(mc) // Preserve exam negative ID
-                            } else if ("${mc.name}|${mc.dayOfWeek}|${mc.startPeriod}" !in schoolKeys) {
-                                courseDao.insertCourse(mc.copy(id = 0))
-                            }
                         }
                         _messages.emit("已更新 ${newCourses.size} 门课程")
                     } else {
