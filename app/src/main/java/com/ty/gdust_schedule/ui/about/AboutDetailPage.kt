@@ -129,6 +129,7 @@ fun AboutDetailPage(
                     AIItem("GPT-5.5")
                     AIItem("Deepseek-v4-pro")
                     AIItem("XiaoMi-Mimo-V2.5")
+                    AIItem("XiaoMi-Mimo-V2.5-pro")
                     AIItem("Google-Gemini-v3.5-flash")
                 }
             }
@@ -188,7 +189,8 @@ fun AboutDetailPage(
             text = {
                 Text(
                     text = stringResource(R.string.disclaimer_text),
-                    style = MaterialTheme.typography.bodySmall
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.verticalScroll(rememberScrollState())
                 )
             },
             confirmButton = {
