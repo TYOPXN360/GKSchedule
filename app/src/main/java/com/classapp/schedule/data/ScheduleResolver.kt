@@ -156,6 +156,13 @@ object ScheduleResolver {
         return (ChronoUnit.DAYS.between(semesterStart, examDate).toInt() / 7) + 1
     }
 
+    fun examItem(
+        exam: ExamEntity,
+        semesterStart: LocalDate,
+        getStartTime: (Int) -> String,
+        getEndTime: (Int) -> String
+    ): ScheduleItem.ExamItem? = ScheduleItem.fromExam(exam, semesterStart, getStartTime, getEndTime)
+
     private fun timeToGridLine(
         time: String,
         getStartTime: (Int) -> String,

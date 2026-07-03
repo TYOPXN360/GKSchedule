@@ -32,6 +32,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.classapp.schedule.data.Course
 import com.classapp.schedule.data.ExamEntity
+import com.classapp.schedule.data.ScheduleResolver
 import com.classapp.schedule.data.ScheduleItem
 import com.classapp.schedule.util.CourseColors
 import com.classapp.schedule.ui.theme.LocalAppIsDark
@@ -236,10 +237,13 @@ fun ExamScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(sortedExams) { exam ->
-                        val examDate = try { LocalDate.parse(exam.examDate) } catch (_: Exception) { null }
-                        val examWeek = if (examDate != null) (ChronoUnit.DAYS.between(semesterStart, examDate).toInt() / 7) + 1 else currentWeek
+                        val examWeek = ScheduleResolver.examWeek(exam, semesterStart, currentWeek)
                         val examColor = CourseColors.getColorSync(colorGroupMode, exam.courseName, exam.classroom, week = examWeek, diffColorPerWeek = diffColorPerWeek, isDark = isDark)
-                        ExamCard(exam = exam, examColor = examColor, onClick = { detailItem = ScheduleItem.fromExam(exam, semesterStart, getStartTime, getEndTime) })
+                        ExamCard(
+                            exam = exam,
+                            examColor = examColor,
+                            onClick = { detailItem = ScheduleResolver.examItem(exam, semesterStart, getStartTime, getEndTime) }
+                        )
                     }
 
                     // Custom exams from local DB
