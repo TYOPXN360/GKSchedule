@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.classapp.schedule.R
 import com.classapp.schedule.data.Course
+import com.classapp.schedule.data.ScheduleItem
 import com.classapp.schedule.ui.theme.LocalAppIsDark
 import com.classapp.schedule.ui.theme.Md3Card
 import com.classapp.schedule.ui.theme.Md3CardVariant
@@ -282,8 +283,8 @@ fun TodayScreen(
 
     // Detail sheet
     detailCourse?.let { course ->
-        com.classapp.schedule.ui.weekly.CourseDetailSheet(
-            course = course,
+        com.classapp.schedule.ui.weekly.ScheduleItemDetailSheet(
+            item = com.classapp.schedule.data.ScheduleItem.CourseItem(course),
             getStartTime = getStartTime,
             getEndTime = getEndTime,
             onDismiss = { detailCourse = null },

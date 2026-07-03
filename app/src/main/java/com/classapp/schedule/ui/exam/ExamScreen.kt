@@ -32,13 +32,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.classapp.schedule.data.Course
 import com.classapp.schedule.data.ExamEntity
+import com.classapp.schedule.data.ScheduleItem
 import com.classapp.schedule.util.CourseColors
 import com.classapp.schedule.ui.theme.LocalAppIsDark
 import com.classapp.schedule.ui.theme.Md3Card
 import com.classapp.schedule.ui.theme.Md3CardVariant
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
-import kotlin.math.abs
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -84,7 +84,7 @@ fun ExamScreen(
 
     val isDark = LocalAppIsDark.current
     val scaffoldBg = if (isDark) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainer
-    var detailCourse by remember { mutableStateOf<Course?>(null) }
+    var detailItem by remember { mutableStateOf<ScheduleItem.ExamItem?>(null) }
 
     Scaffold(
         contentWindowInsets = WindowInsets.systemBars,
@@ -239,7 +239,7 @@ fun ExamScreen(
                         val examDate = try { LocalDate.parse(exam.examDate) } catch (_: Exception) { null }
                         val examWeek = if (examDate != null) (ChronoUnit.DAYS.between(semesterStart, examDate).toInt() / 7) + 1 else currentWeek
                         val examColor = CourseColors.getColorSync(colorGroupMode, exam.courseName, exam.classroom, week = examWeek, diffColorPerWeek = diffColorPerWeek, isDark = isDark)
-                        ExamCard(exam = exam, examColor = examColor, onClick = { detailCourse = exam.toCourseObject(semesterStart, getStartTime, getEndTime) })
+                        ExamCard(exam = exam, examColor = examColor, onClick = { detailItem = ScheduleItem.fromExam(exam, semesterStart, getStartTime, getEndTime) })
                     }
 
                     // Custom exams from local DB
@@ -250,7 +250,7 @@ fun ExamScreen(
                         val isPast = examDate.isBefore(now)
                         val daysLeft = if (!isPast) ChronoUnit.DAYS.between(now, examDate) else -1L
                         val examColor = CourseColors.getColorSync(colorGroupMode, course.name, course.classroom, week = weekOffset + 1, diffColorPerWeek = diffColorPerWeek, isDark = isDark)
-                        Md3Card(onClick = { detailCourse = course }, modifier = Modifier.fillMaxWidth(), variant = Md3CardVariant.Elevated) {
+                        Md3Card(onClick = { /* Custom exams don't use the shared detail sheet */ }, modifier = Modifier.fillMaxWidth(), variant = Md3CardVariant.Elevated) {
                             Row(modifier = Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                                 Box(modifier = Modifier.width(4.dp).height(48.dp).clip(RoundedCornerShape(2.dp)).background(if (isPast) examColor.container.copy(alpha = 0.2f) else examColor.container))
                                 Spacer(modifier = Modifier.width(12.dp))
@@ -269,11 +269,11 @@ fun ExamScreen(
     }
 
     // Detail sheet
-    detailCourse?.let { course ->
-        com.classapp.schedule.ui.weekly.CourseDetailSheet(
-            course = course, getStartTime = getStartTime, getEndTime = getEndTime,
-            onDismiss = { detailCourse = null }, onEdit = {},
-            colorGroupMode = colorGroupMode, colorIndex = course.colorIndex,
+    detailItem?.let { item ->
+        com.classapp.schedule.ui.weekly.ScheduleItemDetailSheet(
+            item = item, getStartTime = getStartTime, getEndTime = getEndTime,
+            onDismiss = { detailItem = null }, onEdit = {},
+            colorGroupMode = colorGroupMode, colorIndex = item.colorIndex,
             currentWeek = currentWeek, diffColorPerWeek = diffColorPerWeek
         )
     }
@@ -346,37 +346,4 @@ private fun ExamCard(exam: ExamEntity, examColor: CourseColors.CourseColorPair, 
             }
         }
     }
-}
-
-// Helper: convert ExamEntity to Course for CourseDetailSheet
-private fun ExamEntity.toCourseObject(semesterStart: LocalDate, getStartTime: (Int) -> String, getEndTime: (Int) -> String): Course? {
-    return try {
-        val examDate = LocalDate.parse(examDate)
-        val daysDiff = ChronoUnit.DAYS.between(semesterStart, examDate).toInt()
-        val week = (daysDiff / 7) + 1
-        val timeParts = examTimeRange.split("-")
-        if (timeParts.size != 2) return null
-        fun timeToPeriodLocal(time: String, provider: (Int) -> String): Int {
-            val parts = time.split(":")
-            val targetMins = ((parts.getOrNull(0)?.toIntOrNull() ?: 0) * 60) + (parts.getOrNull(1)?.toIntOrNull() ?: 0)
-            var bestPeriod = 1; var bestDiff = Int.MAX_VALUE
-            for (p in 1..14) {
-                val pTime = provider(p); if (pTime.isEmpty()) continue
-                val pParts = pTime.split(":")
-                val pMins = ((pParts.getOrNull(0)?.toIntOrNull() ?: 0) * 60) + (pParts.getOrNull(1)?.toIntOrNull() ?: 0)
-                val diff = abs(targetMins - pMins); if (diff < bestDiff) { bestDiff = diff; bestPeriod = p }
-            }
-            return bestPeriod
-        }
-        val startPeriod = timeToPeriodLocal(timeParts[0].trim(), getStartTime)
-        val endPeriod = timeToPeriodLocal(timeParts[1].trim(), getEndTime)
-        Course(
-            id = -((courseCode.ifEmpty { "$courseName|$examDate|$classroom" }).hashCode().toLong().let { abs(it) } + 1L),
-            name = courseName, teacher = teacherInfo, classroom = classroom,
-            dayOfWeek = examDate.dayOfWeek.value, startPeriod = startPeriod,
-            periods = (endPeriod - startPeriod + 1).coerceAtLeast(1), weekRange = week.toString(),
-            remark = examMethod,
-            isCustomTime = true, customStartTime = timeParts[0].trim(), customEndTime = timeParts[1].trim()
-        )
-    } catch (_: Exception) { null }
 }

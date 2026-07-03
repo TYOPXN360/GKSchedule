@@ -35,6 +35,15 @@ interface CourseDao {
     @Query("DELETE FROM courses WHERE isManuallyEdited = 0")
     suspend fun deleteRemoteCourses()
 
+    @Query("DELETE FROM courses WHERE isManuallyEdited = 1")
+    suspend fun deleteManualCourses()
+
+    @Query("SELECT * FROM courses WHERE isManuallyEdited = 0 ORDER BY dayOfWeek, startPeriod")
+    fun getRemoteCourses(): Flow<List<Course>>
+
+    @Query("SELECT * FROM courses WHERE isManuallyEdited = 1 ORDER BY dayOfWeek, startPeriod")
+    fun getManualCourses(): Flow<List<Course>>
+
     @Query("SELECT COUNT(*) FROM courses")
     suspend fun getCourseCount(): Int
 

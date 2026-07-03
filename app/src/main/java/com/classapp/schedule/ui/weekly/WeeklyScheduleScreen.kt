@@ -55,6 +55,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.classapp.schedule.R
 import com.classapp.schedule.data.Course
+import com.classapp.schedule.data.ScheduleItem
 import com.classapp.schedule.util.CourseColors
 import kotlin.math.abs
 
@@ -101,44 +102,45 @@ fun WeeklyScheduleScreen(
         return ((courseDay - startDay + 7) % 7) + 1
     }
     var showWeekPicker by remember { mutableStateOf(false) }
-    var detailCourse by remember { mutableStateOf<Course?>(null) }
+    var detailItem by remember { mutableStateOf<ScheduleItem?>(null) }
     val hapticContext = androidx.compose.ui.platform.LocalContext.current
     val hapticView = androidx.compose.ui.platform.LocalView.current
     val labelWidthDp = if (showPeriodLabel) { if (showTimeLabel) 64.dp else 36.dp } else 0.dp
 
-    val examCourses = remember(exams, showExamSchedule, semesterStart, getStartTime, getEndTime) {
-        if (!showExamSchedule) emptyList() else exams.mapNotNull { exam ->
-            exam.toScheduleCourse(semesterStart, getStartTime, getEndTime)
+    // Build unified schedule items (replaces id<0 hack)
+    val scheduleItems = remember(courses, exams, showExamSchedule, semesterStart, getStartTime, getEndTime) {
+        val courseItems = courses.map { ScheduleItem.CourseItem(it) }
+        if (!showExamSchedule) courseItems
+        else courseItems + exams.mapNotNull { exam ->
+            ScheduleItem.fromExam(exam, semesterStart, getStartTime, getEndTime)
         }
     }
-    val scheduleCourses = remember(courses, examCourses) { courses + examCourses }
 
-    // Build render blocks
     // Build render blocks with dynamic color assignment
-    val renderBlocks = remember(courses, currentWeek, mergeConsecutive, detailedSplit, colorGroupMode) {
-        val weekCourses = scheduleCourses.filter { it.isInWeek(currentWeek) }
-        data class Block(val course: Course, val day: Int, val start: Int, val span: Int, val colorIdx: Int)
+    val renderBlocks = remember(courses, currentWeek, mergeConsecutive, detailedSplit, colorGroupMode, scheduleItems) {
+        val weekItems = scheduleItems.filter { it.isInWeek(currentWeek) }
+        data class Block(val item: ScheduleItem, val day: Int, val start: Int, val span: Int, val colorIdx: Int)
         val nameToIdx = mutableMapOf<String, Int>()
         val keyToIdx = mutableMapOf<String, Int>()
         var nextColor = 0
         val blocks = mutableListOf<Block>()
-        weekCourses.forEach { c ->
+        weekItems.forEach { item ->
             val ci = when (colorGroupMode) {
-                0 -> nameToIdx.getOrPut(c.name) { nextColor++ }
-                1 -> nameToIdx.getOrPut(c.name) { nextColor++ }
-                else -> keyToIdx.getOrPut("${c.name}|${c.classroom}") { nextColor++ }
+                0 -> nameToIdx.getOrPut(item.name) { nextColor++ }
+                1 -> nameToIdx.getOrPut(item.name) { nextColor++ }
+                else -> keyToIdx.getOrPut("${item.name}|${item.classroom}") { nextColor++ }
             }
-            if (mergeConsecutive) {
-                blocks.add(Block(c, c.dayOfWeek, c.startPeriod, c.periods, ci))
+            if (item.isExam || mergeConsecutive) {
+                blocks.add(Block(item, item.dayOfWeek, item.startPeriod, item.periods, ci))
             } else if (detailedSplit) {
-                for (p in c.startPeriod..c.endPeriod()) {
-                    blocks.add(Block(c, c.dayOfWeek, p, 1, ci))
+                for (p in item.startPeriod..item.endPeriod()) {
+                    blocks.add(Block(item, item.dayOfWeek, p, 1, ci))
                 }
             } else {
-                var p = c.startPeriod
-                while (p <= c.endPeriod()) {
-                    val pairEnd = minOf(p + 1, c.endPeriod())
-                    blocks.add(Block(c, c.dayOfWeek, p, pairEnd - p + 1, ci))
+                var p = item.startPeriod
+                while (p <= item.endPeriod()) {
+                    val pairEnd = minOf(p + 1, item.endPeriod())
+                    blocks.add(Block(item, item.dayOfWeek, p, pairEnd - p + 1, ci))
                     p = pairEnd + 1
                 }
             }
@@ -148,11 +150,11 @@ fun WeeklyScheduleScreen(
 
     // Compute visible weeks (skip empty weeks if hideEmptyWeeks is on)
     // 🔥 防死锁：强制包含 currentWeek 和 realCurrentWeek，防止 indexOf 返回 -1
-    val visibleWeeks = remember(scheduleCourses, totalWeeks, hideEmptyWeeks, currentWeek, realCurrentWeek) {
+    val visibleWeeks = remember(scheduleItems, totalWeeks, hideEmptyWeeks, currentWeek, realCurrentWeek) {
         if (!hideEmptyWeeks) (1..totalWeeks).toList()
         else {
             val nonEmpty = (1..totalWeeks).filter { week ->
-                scheduleCourses.any { it.isInWeek(week) }
+                scheduleItems.any { it.isInWeek(week) }
             }.toMutableList()
             if (!nonEmpty.contains(currentWeek) && currentWeek in 1..totalWeeks) nonEmpty.add(currentWeek)
             if (!nonEmpty.contains(realCurrentWeek) && realCurrentWeek in 1..totalWeeks) nonEmpty.add(realCurrentWeek)
@@ -290,10 +292,10 @@ fun WeeklyScheduleScreen(
                     .onGloballyPositioned { cropBottomPx = it.positionInRoot().y.toInt() + it.size.height }
             ) { page ->
                 val week = visibleWeeks.getOrElse(page) { currentWeek }
-                val weekBlocks = remember(week, colorGroupMode, scheduleCourses, mergeConsecutive, detailedSplit) {
-                    val weekCourses = scheduleCourses.filter { it.isInWeek(week) }
+                val weekBlocks = remember(week, colorGroupMode, scheduleItems, mergeConsecutive, detailedSplit) {
+                    val weekItems = scheduleItems.filter { it.isInWeek(week) }
                     data class B(
-                        val course: Course,
+                        val item: ScheduleItem,
                         val day: Int,
                         val start: Int,
                         val span: Int,
@@ -303,40 +305,40 @@ fun WeeklyScheduleScreen(
                     )
                     val blocks = mutableListOf<B>()
                     val classroomCounters = mutableMapOf<String, Int>()
-                    weekCourses.forEach { c ->
+                    weekItems.forEach { item ->
                         val ci = when (colorGroupMode) {
-                            0 -> abs(c.name.hashCode()) % 8
+                            0 -> abs(item.name.hashCode()) % 8
                             1 -> {
-                                val baseIdx = abs(c.name.hashCode()) % 8
-                                val classIdx = classroomCounters.getOrPut(c.name) { 0 }
-                                classroomCounters[c.name] = classIdx + 1
+                                val baseIdx = abs(item.name.hashCode()) % 8
+                                val classIdx = classroomCounters.getOrPut(item.name) { 0 }
+                                classroomCounters[item.name] = classIdx + 1
                                 baseIdx * 10 + classIdx
                             }
-                            else -> abs("${c.name}|${c.classroom}".hashCode()) % 64
+                            else -> abs("${item.name}|${item.classroom}".hashCode()) % 64
                         }
-                        fun addBlock(course: Course, start: Int, span: Int, colorIdx: Int) {
-                            val startLine = if (course.isExamCourse()) {
-                                timeToGridLine(course.customStartTime, getStartTime, getEndTime, periodsPerDay)
+                        fun addBlock(si: ScheduleItem, start: Int, span: Int, colorIdx: Int) {
+                            val startLine = if (si.isExam) {
+                                timeToGridLine(si.customStartTime, getStartTime, getEndTime, periodsPerDay)
                             } else {
                                 (start - 1).toFloat()
                             }
-                            val endLine = if (course.isExamCourse()) {
-                                timeToGridLine(course.customEndTime, getStartTime, getEndTime, periodsPerDay)
+                            val endLine = if (si.isExam) {
+                                timeToGridLine(si.customEndTime, getStartTime, getEndTime, periodsPerDay)
                                     .coerceAtLeast(startLine + 0.25f)
                             } else {
                                 startLine + span
                             }
-                            blocks.add(B(course, course.dayOfWeek, start, span, colorIdx, startLine, endLine))
+                            blocks.add(B(si, si.dayOfWeek, start, span, colorIdx, startLine, endLine))
                         }
-                        if (c.isExamCourse() || mergeConsecutive) {
-                            addBlock(c, c.startPeriod, c.periods, ci)
+                        if (item.isExam || mergeConsecutive) {
+                            addBlock(item, item.startPeriod, item.periods, ci)
                         } else if (detailedSplit) {
-                            for (p in c.startPeriod..c.endPeriod()) addBlock(c, p, 1, ci)
+                            for (p in item.startPeriod..item.endPeriod()) addBlock(item, p, 1, ci)
                         } else {
-                            var p = c.startPeriod
-                            while (p <= c.endPeriod()) {
-                                val pairEnd = minOf(p + 1, c.endPeriod())
-                                addBlock(c, p, pairEnd - p + 1, ci)
+                            var p = item.startPeriod
+                            while (p <= item.endPeriod()) {
+                                val pairEnd = minOf(p + 1, item.endPeriod())
+                                addBlock(item, p, pairEnd - p + 1, ci)
                                 p = pairEnd + 1
                             }
                         }
@@ -389,7 +391,7 @@ fun WeeklyScheduleScreen(
                             weekBlocks.map { block ->
                                 val realClassroomIdx = if (colorGroupMode == 1) block.colorIdx % 10 else 0
                                 com.classapp.schedule.util.CourseColors.getColorSync(
-                                    colorGroupMode, block.course.name, block.course.classroom, realClassroomIdx, week = week, diffColorPerWeek = diffColorPerWeek, isDark = isDark
+                                    colorGroupMode, block.item.name, block.item.classroom, realClassroomIdx, week = week, diffColorPerWeek = diffColorPerWeek, isDark = isDark
                                 ).container
                             }
                         }
@@ -450,19 +452,19 @@ fun WeeklyScheduleScreen(
                                     .size(width = w.coerceAtLeast(24.dp), height = h.coerceAtLeast(24.dp))
                                     .clickable {
                                         com.classapp.schedule.util.HapticFeedback.medium(hapticView)
-                                        detailCourse = block.course
+                                        detailItem = block.item
                                     }
-                                    .semantics { contentDescription = block.course.name }
+                                    .semantics { contentDescription = block.item.name }
                                     .padding(4.dp)
                             ) {
                                 val textColor = remember(block, colorGroupMode, isDark) {
                                     val realClassroomIdx = if (colorGroupMode == 1) block.colorIdx % 10 else 0
                                     com.classapp.schedule.util.CourseColors.getColorSync(
-                                        colorGroupMode, block.course.name, block.course.classroom, realClassroomIdx, week = week, diffColorPerWeek = diffColorPerWeek, isDark = isDark
+                                        colorGroupMode, block.item.name, block.item.classroom, realClassroomIdx, week = week, diffColorPerWeek = diffColorPerWeek, isDark = isDark
                                     ).content
                                 }
                                 Column {
-                                    if (block.course.isExamCourse()) {
+                                    if (block.item.isExam) {
                                         Box(
                                             modifier = Modifier.padding(bottom = 2.dp).clip(RoundedCornerShape(4.dp)).background(textColor.copy(alpha = 0.2f)).padding(horizontal = 4.dp, vertical = 1.dp),
                                             contentAlignment = Alignment.Center
@@ -470,7 +472,8 @@ fun WeeklyScheduleScreen(
                                             Text("考试", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = textColor, maxLines = 1)
                                         }
                                     }
-                                    if (block.course.isHidden) {
+                                    val isHidden = block.item.let { it is ScheduleItem.CourseItem && it.course.isHidden }
+                                    if (isHidden) {
                                         Box(
                                             modifier = Modifier.padding(bottom = 2.dp).clip(RoundedCornerShape(4.dp)).background(textColor.copy(alpha = 0.2f)).padding(horizontal = 4.dp, vertical = 1.dp),
                                             contentAlignment = Alignment.Center
@@ -478,9 +481,9 @@ fun WeeklyScheduleScreen(
                                             Text("隐藏", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = textColor, maxLines = 1)
                                         }
                                     }
-                                    Text(block.course.name, style = MaterialTheme.typography.labelMedium, color = textColor, overflow = TextOverflow.Ellipsis)
-                                    if (block.course.classroom.isNotEmpty()) {
-                                        Text(block.course.classroom, style = MaterialTheme.typography.labelSmall, color = textColor.copy(alpha = 0.7f), overflow = TextOverflow.Ellipsis)
+                                    Text(block.item.name, style = MaterialTheme.typography.labelMedium, color = textColor, overflow = TextOverflow.Ellipsis)
+                                    if (block.item.classroom.isNotEmpty()) {
+                                        Text(block.item.classroom, style = MaterialTheme.typography.labelSmall, color = textColor.copy(alpha = 0.7f), overflow = TextOverflow.Ellipsis)
                                     }
                                 }
                             }
@@ -547,14 +550,18 @@ fun WeeklyScheduleScreen(
     } // PullToRefreshBox
 
     // Detail sheet — 🔥 归一：无论是否考试课，统一走 HCT 动态分配
-    detailCourse?.let { course ->
+    detailItem?.let { item ->
         val isDark = com.classapp.schedule.ui.theme.LocalAppIsDark.current
-        val targetWeek = if (course.id < 0) course.weekRange.toIntOrNull() ?: currentWeek else currentWeek
-        CourseDetailSheet(course = course, getStartTime = getStartTime, getEndTime = getEndTime,
-            onDismiss = { detailCourse = null }, onEdit = { detailCourse = null; onCourseLongPress(course) },
+        val targetWeek = if (item.isExam) item.weekRange.toIntOrNull() ?: currentWeek else currentWeek
+        ScheduleItemDetailSheet(item = item, getStartTime = getStartTime, getEndTime = getEndTime,
+            onDismiss = { detailItem = null }, onEdit = {
+                detailItem = null
+                val course = (item as? ScheduleItem.CourseItem)?.course ?: return@ScheduleItemDetailSheet
+                onCourseLongPress(course)
+            },
             courseColors = CourseColors.getColors(colorEngine, count = 8),
             colorGroupMode = colorGroupMode,
-            colorIndex = course.colorIndex,
+            colorIndex = item.colorIndex,
             currentWeek = targetWeek,
             diffColorPerWeek = diffColorPerWeek)
     }
@@ -566,18 +573,18 @@ fun WeeklyScheduleScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CourseDetailSheet(course: Course, getStartTime: (Int) -> String, getEndTime: (Int) -> String, onDismiss: () -> Unit, onEdit: () -> Unit, courseColors: List<Pair<Color, Color>> = CourseColors.getColors(0, count = 8), colorGroupMode: Int = 0, colorIndex: Int = course.colorIndex, dotColor: Color? = null, currentWeek: Int = 0, diffColorPerWeek: Boolean = false) {
+fun ScheduleItemDetailSheet(item: ScheduleItem, getStartTime: (Int) -> String, getEndTime: (Int) -> String, onDismiss: () -> Unit, onEdit: () -> Unit, courseColors: List<Pair<Color, Color>> = CourseColors.getColors(0, count = 8), colorGroupMode: Int = 0, colorIndex: Int = item.colorIndex, dotColor: Color? = null, currentWeek: Int = 0, diffColorPerWeek: Boolean = false) {
     val isDark = com.classapp.schedule.ui.theme.LocalAppIsDark.current
-    val hctColors = remember(course, colorGroupMode, currentWeek, diffColorPerWeek, isDark) {
-        val realClassroomIdx = if (colorGroupMode == 1) course.colorIndex % 10 else 0
-        val targetWeek = if (course.id < 0) course.weekRange.toIntOrNull() ?: currentWeek else currentWeek
-        com.classapp.schedule.util.CourseColors.getColorSync(colorGroupMode, course.name, course.classroom, classroomIndex = realClassroomIdx, week = targetWeek, diffColorPerWeek = diffColorPerWeek, isDark = isDark)
+    val hctColors = remember(item, colorGroupMode, currentWeek, diffColorPerWeek, isDark) {
+        val realClassroomIdx = if (colorGroupMode == 1) item.colorIndex % 10 else 0
+        val targetWeek = if (item.isExam) item.weekRange.toIntOrNull() ?: currentWeek else currentWeek
+        com.classapp.schedule.util.CourseColors.getColorSync(colorGroupMode, item.name, item.classroom, classroomIndex = realClassroomIdx, week = targetWeek, diffColorPerWeek = diffColorPerWeek, isDark = isDark)
     }
 
     // Smart remark cleaner: filter time lines + strip "考试" text
-    val cleanedRemark = remember(course.remark, course.id) {
-        if (course.id >= 0) course.remark
-        else course.remark.split("\n")
+    val cleanedRemark = remember(item.remark, item.isExam) {
+        if (!item.isExam) item.remark
+        else item.remark.split("\n")
             .filter { line -> !line.contains(":") && !line.contains("时间") && line.isNotBlank() }
             .map { it.replace("考试", "").trim() }
             .filter { it.isNotBlank() }
@@ -590,7 +597,7 @@ fun CourseDetailSheet(course: Course, getStartTime: (Int) -> String, getEndTime:
                 val detailDotColor = dotColor ?: hctColors.container
                 Box(modifier = Modifier.size(12.dp).clip(RoundedCornerShape(50)).background(detailDotColor))
                 Spacer(modifier = Modifier.width(12.dp))
-                if (course.id < 0) {
+                if (item.isExam) {
                     Box(
                         modifier = Modifier.padding(end = 8.dp).clip(RoundedCornerShape(4.dp)).background(hctColors.content.copy(alpha = 0.2f)).padding(horizontal = 4.dp, vertical = 1.dp),
                         contentAlignment = Alignment.Center
@@ -598,20 +605,20 @@ fun CourseDetailSheet(course: Course, getStartTime: (Int) -> String, getEndTime:
                         Text("考试", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = hctColors.content, maxLines = 1)
                     }
                 }
-                Text(course.name, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f, fill = false), maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text(item.name, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f, fill = false), maxLines = 2, overflow = TextOverflow.Ellipsis)
             }
             Spacer(modifier = Modifier.height(16.dp))
             val dayNames = listOf("", "周一", "周二", "周三", "周四", "周五", "周六", "周日")
-            DetailRow("星期", dayNames.getOrElse(course.dayOfWeek) { "" })
-            if (course.isCustomTime) {
-                DetailRow("时间", "${course.customStartTime} - ${course.customEndTime}")
+            DetailRow("星期", dayNames.getOrElse(item.dayOfWeek) { "" })
+            if (item.isCustomTime) {
+                DetailRow("时间", "${item.customStartTime} - ${item.customEndTime}")
             } else {
-                DetailRow("节次", "${course.startPeriod}-${course.endPeriod()}节")
-                DetailRow("时间", "${getStartTime(course.startPeriod)} - ${getEndTime(course.endPeriod())}")
+                DetailRow("节次", "${item.startPeriod}-${item.endPeriod()}节")
+                DetailRow("时间", "${getStartTime(item.startPeriod)} - ${getEndTime(item.endPeriod())}")
             }
-            if (course.teacher.isNotEmpty()) DetailRow("教师", course.teacher)
-            if (course.classroom.isNotEmpty()) DetailRow("教室", course.classroom)
-            DetailRow("周次", course.weekRange)
+            if (item.teacher.isNotEmpty()) DetailRow("教师", item.teacher)
+            if (item.classroom.isNotEmpty()) DetailRow("教室", item.classroom)
+            DetailRow("周次", item.weekRange)
             if (cleanedRemark.isNotEmpty()) DetailRow("备注", cleanedRemark)
         }
     }
@@ -650,44 +657,6 @@ private fun WeekPickerSheet(totalWeeks: Int, currentWeek: Int, onWeekSelected: (
         }
     }
 }
-}
-
-private fun Course.isExamCourse(): Boolean = id < 0
-
-private fun com.classapp.schedule.data.ExamEntity.toScheduleCourse(
-    semesterStart: java.time.LocalDate,
-    getStartTime: (Int) -> String,
-    getEndTime: (Int) -> String
-): Course? {
-    return try {
-        val examDate = java.time.LocalDate.parse(examDate)
-        val daysDiff = java.time.temporal.ChronoUnit.DAYS.between(semesterStart, examDate).toInt()
-        val week = (daysDiff / 7) + 1
-        if (week <= 0) return null
-
-        val timeParts = examTimeRange.split("-")
-        if (timeParts.size != 2) return null
-        val startPeriod = timeToPeriod(timeParts[0].trim(), getStartTime)
-        val endPeriod = timeToPeriod(timeParts[1].trim(), getEndTime)
-        if (startPeriod <= 0 || endPeriod < startPeriod) return null
-
-        Course(
-            id = -((courseCode.ifEmpty { "$courseName|$examDate|$classroom" }).hashCode().toLong().let { kotlin.math.abs(it) } + 1L),
-            name = courseName,
-            teacher = teacherInfo,
-            classroom = classroom,
-            dayOfWeek = examDate.dayOfWeek.value,
-            startPeriod = startPeriod,
-            periods = endPeriod - startPeriod + 1,
-            weekRange = week.toString(),
-            remark = examMethod,
-            isCustomTime = true,
-            customStartTime = timeParts[0].trim(),
-            customEndTime = timeParts[1].trim()
-        )
-    } catch (_: Exception) {
-        null
-    }
 }
 
 private fun timeToGridLine(
