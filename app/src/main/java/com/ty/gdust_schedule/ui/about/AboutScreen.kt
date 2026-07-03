@@ -48,7 +48,6 @@ fun AboutScreen(
     onOpenAbout: () -> Unit,
     onOpenExam: () -> Unit = {}
 ) {
-    var showAboutDialog by remember { mutableStateOf(false) }
     var showReloginDialog by remember { mutableStateOf(false) }
 
 Column(
@@ -251,7 +250,7 @@ Column(
                     supportingContent = { Text(stringResource(R.string.about_school)) },
                     leadingContent = { val bc = com.ty.gdust_schedule.util.CourseColors.getSettingsBadgeColor(5); Surface(modifier = Modifier.size(40.dp), shape = MaterialTheme.shapes.small, color = bc.container, contentColor = bc.content) { Box(contentAlignment = Alignment.Center) { Icon(Icons.AutoMirrored.Filled.Article, null, modifier = Modifier.size(22.dp)) } } },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                    modifier = Modifier.clickable { showAboutDialog = true }
+                    modifier = Modifier.clickable { onOpenAbout() }
                 )
             }
         }
@@ -263,54 +262,6 @@ Column(
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
             modifier = Modifier.padding(bottom = 16.dp)
-        )
-    }
-
-    // About dialog
-    if (showAboutDialog) {
-        AlertDialog(
-            onDismissRequest = { showAboutDialog = false },
-            title = { Text(stringResource(R.string.about_title)) },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("GDUST-Schedule v1.0.0")
-                    Text(stringResource(R.string.about_desc))
-
-                    HorizontalDivider()
-
-                    Text(stringResource(R.string.credits_title), style = MaterialTheme.typography.titleSmall)
-                    CreditItem(stringResource(R.string.credits_language), "Jetpack Compose (Kotlin)")
-                    CreditItem(stringResource(R.string.credits_design), "Material Design 3 Expressive")
-
-                    HorizontalDivider()
-
-                    Text(stringResource(R.string.credits_ai), style = MaterialTheme.typography.titleSmall)
-                    Text("• GPT-5.5", style = MaterialTheme.typography.bodySmall)
-                    Text("• Deepseek-v4-pro", style = MaterialTheme.typography.bodySmall)
-                    Text("• XiaoMi-Mimo-V2.5", style = MaterialTheme.typography.bodySmall)
-                    Text("• Google-Gemini-v3.5-flash", style = MaterialTheme.typography.bodySmall)
-
-                    HorizontalDivider()
-
-                    Text(stringResource(R.string.credits_projects), style = MaterialTheme.typography.titleSmall)
-                    Text("• SchedU", style = MaterialTheme.typography.bodySmall)
-                    Text("• 拾光课程表", style = MaterialTheme.typography.bodySmall)
-                    Text("• TimeFlow", style = MaterialTheme.typography.bodySmall)
-
-                    HorizontalDivider()
-
-                    Text(
-                        text = stringResource(R.string.disclaimer_text),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-
-                    Text(stringResource(R.string.about_copyright))
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { showAboutDialog = false }) { Text("OK") }
-            }
         )
     }
 

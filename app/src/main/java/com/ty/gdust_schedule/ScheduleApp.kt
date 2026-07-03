@@ -50,6 +50,7 @@ sealed class Screen(val route: String) {
     data object Weekly : Screen("weekly")
     data object Courses : Screen("courses")
     data object About : Screen("about")
+    data object AboutDetail : Screen("about_detail")
     data object Login : Screen("login")
     data object WebViewLogin : Screen("webview_login")
     data object Exam : Screen("exam")
@@ -292,8 +293,14 @@ fun ScheduleApp(
                     onOpenSettings = {
                         context.startActivity(android.content.Intent(context, com.ty.gdust_schedule.ui.settings.SettingsActivity::class.java))
                     },
-                    onOpenAbout = { },
+                    onOpenAbout = { navController.navigate(Screen.AboutDetail.route) },
                     onOpenExam = { navController.navigate(Screen.Exam.route) }
+                )
+            }
+
+            composable(Screen.AboutDetail.route) {
+                com.ty.gdust_schedule.ui.about.AboutDetailPage(
+                    onBack = { navController.popBackStack() }
                 )
             }
 
