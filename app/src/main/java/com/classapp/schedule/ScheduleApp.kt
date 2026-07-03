@@ -400,7 +400,7 @@ fun ScheduleApp(
 
                 CourseEditScreen(
                     course = currentCourse, allCourses = courses, periodsPerDay = periodsPerDay,
-                    onSave = { viewModel.saveCourse(it); navController.popBackStack() },
+                    onSave = { savedCourse, hiddenScopeName -> viewModel.saveCourse(savedCourse, hiddenScopeName); navController.popBackStack() },
                     onDelete = { viewModel.deleteCourse(it); navController.popBackStack() },
                     onBack = { navController.popBackStack() }
                 )

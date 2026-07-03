@@ -50,6 +50,9 @@ interface CourseDao {
     @Query("SELECT * FROM courses WHERE name = :name ORDER BY dayOfWeek, startPeriod")
     fun getCoursesByName(name: String): Flow<List<Course>>
 
+    @Query("SELECT * FROM courses WHERE name = :name ORDER BY dayOfWeek, startPeriod")
+    suspend fun getCoursesByNameOnce(name: String): List<Course>
+
     @Query("SELECT DISTINCT name FROM courses ORDER BY name")
     fun getAllCourseNames(): Flow<List<String>>
 }

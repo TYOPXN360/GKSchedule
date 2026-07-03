@@ -185,10 +185,22 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
 
     suspend fun getCourseById(id: Long): Course? = courseDao.getCourseById(id)
 
-    fun saveCourse(course: Course) {
+    fun saveCourse(course: Course, hiddenScopeName: String? = null) {
         viewModelScope.launch {
             if (course.id == 0L) courseDao.insertCourse(course)
             else courseDao.updateCourse(course)
+            if (hiddenScopeName != null) {
+                courseDao.getCoursesByNameOnce(hiddenScopeName)
+                    .filter { it.id != course.id }
+                    .forEach { sibling ->
+                        courseDao.updateCourse(
+                            sibling.copy(
+                                isHidden = course.isHidden,
+                                isManuallyEdited = true
+                            )
+                        )
+                    }
+            }
         }
     }
 

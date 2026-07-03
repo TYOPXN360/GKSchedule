@@ -39,11 +39,12 @@ fun CourseEditScreen(
     course: Course?,
     allCourses: List<Course> = emptyList(),
     periodsPerDay: Int,
-    onSave: (Course) -> Unit,
+    onSave: (Course, String?) -> Unit,
     onDelete: (Course) -> Unit,
     onBack: () -> Unit
 ) {
     val isEditing = course != null
+    val hiddenScopeName = course?.name
     val context = LocalContext.current
     val clipboardManager = remember(context) { context.getSystemService(ClipboardManager::class.java) }
 
@@ -82,7 +83,8 @@ fun CourseEditScreen(
                 teacher = target.teacher; classroom = target.classroom
                 dayOfWeek = target.dayOfWeek; startPeriod = target.startPeriod; periods = target.periods; remark = target.remark
                 if (target.weekRange != "all" && target.weekRange != "odd" && target.weekRange != "even") { weekRange = "custom"; customWeekRange = target.weekRange } else { weekRange = target.weekRange; customWeekRange = "" }
-                isCustomTime = target.isCustomTime; customStartTime = target.customStartTime; customEndTime = target.customEndTime; isHidden = target.isHidden
+                isCustomTime = target.isCustomTime; customStartTime = target.customStartTime; customEndTime = target.customEndTime
+                isHidden = sameNameCourses.any { it.isHidden }
             }
         }
     }
@@ -173,7 +175,7 @@ fun CourseEditScreen(
                                         name = first.name; teacher = first.teacher; classroom = first.classroom
                                         dayOfWeek = first.dayOfWeek; startPeriod = first.startPeriod; periods = first.periods; remark = first.remark
                                         if (first.weekRange != "all" && first.weekRange != "odd" && first.weekRange != "even") { weekRange = "custom"; customWeekRange = first.weekRange } else { weekRange = first.weekRange; customWeekRange = "" }
-                                        isCustomTime = first.isCustomTime; customStartTime = first.customStartTime; customEndTime = first.customEndTime
+                                        isCustomTime = first.isCustomTime; customStartTime = first.customStartTime; customEndTime = first.customEndTime; isHidden = false
                                         aiErrorHint = ""; showAiPanel = false
                                         android.widget.Toast.makeText(context, "成功识别到 ${mappedCourses.size} 门课程，请通过多标签页进行切换核对！", android.widget.Toast.LENGTH_SHORT).show()
                                     } else { aiErrorHint = "未在 JSON 数组中发现有效的课程节点。" }
@@ -184,18 +186,22 @@ fun CourseEditScreen(
                 }
             }
 
+            CourseHiddenSwitch(isHidden = isHidden, onHiddenChange = { isHidden = it })
+            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
+
             // Multi-tab review rail
             if (batchCourses.size > 1) {
                 PrimaryScrollableTabRow(selectedTabIndex = selectedTabIndex, edgePadding = 0.dp, containerColor = Color.Transparent, modifier = Modifier.fillMaxWidth().clip(MaterialTheme.shapes.medium)) {
                     batchCourses.forEachIndexed { index, _ ->
                         Tab(selected = selectedTabIndex == index, onClick = {
-                            val currentState = Course(id = course?.id ?: 0, name = name.trim(), teacher = teacher.trim(), classroom = classroom.trim(), dayOfWeek = dayOfWeek, startPeriod = startPeriod, periods = periods, colorIndex = colorIndex, weekRange = if (weekRange == "custom") customWeekRange.ifEmpty { "all" } else weekRange, remark = remark.trim(), isCustomTime = isCustomTime, customStartTime = customStartTime, customEndTime = customEndTime, isManuallyEdited = true, isHidden = isHidden)
+                            val currentId = batchCourses.getOrNull(selectedTabIndex)?.id ?: course?.id ?: 0L
+                            val currentState = Course(id = currentId, name = name.trim(), teacher = teacher.trim(), classroom = classroom.trim(), dayOfWeek = dayOfWeek, startPeriod = startPeriod, periods = periods, colorIndex = colorIndex, weekRange = if (weekRange == "custom") customWeekRange.ifEmpty { "all" } else weekRange, remark = remark.trim(), isCustomTime = isCustomTime, customStartTime = customStartTime, customEndTime = customEndTime, isManuallyEdited = true, isHidden = isHidden)
                             batchCourses = batchCourses.toMutableList().apply { this[selectedTabIndex] = currentState }
                             selectedTabIndex = index
                             val target = batchCourses[index]
                             name = target.name; teacher = target.teacher; classroom = target.classroom; dayOfWeek = target.dayOfWeek; startPeriod = target.startPeriod; periods = target.periods; remark = target.remark
                             if (target.weekRange != "all" && target.weekRange != "odd" && target.weekRange != "even") { weekRange = "custom"; customWeekRange = target.weekRange } else { weekRange = target.weekRange; customWeekRange = "" }
-                            isCustomTime = target.isCustomTime; customStartTime = target.customStartTime; customEndTime = target.customEndTime; isHidden = target.isHidden
+                            isCustomTime = target.isCustomTime; customStartTime = target.customStartTime; customEndTime = target.customEndTime
                         }, text = {
                             val target = batchCourses[index]
                             val dayNames = listOf("一", "二", "三", "四", "五", "六", "日")
@@ -213,9 +219,6 @@ fun CourseEditScreen(
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) { dayNames.forEachIndexed { index, dn -> FilterChip(selected = dayOfWeek == index + 1, onClick = { dayOfWeek = index + 1 }, label = { Text(dn, style = MaterialTheme.typography.labelSmall) }, modifier = Modifier.weight(1f)) } }
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) { Text(stringResource(R.string.custom_time), style = MaterialTheme.typography.labelLarge); Switch(checked = isCustomTime, onCheckedChange = { isCustomTime = it }, thumbContent = if (isCustomTime) { { Icon(Icons.Default.Check, null, modifier = Modifier.size(SwitchDefaults.IconSize)) } } else null) }
             if (isCustomTime) { Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) { OutlinedButton(onClick = { showM3StartTimePicker = true }, modifier = Modifier.weight(1f)) { Text("${stringResource(R.string.custom_start_time)}: $customStartTime") }; OutlinedButton(onClick = { showM3EndTimePicker = true }, modifier = Modifier.weight(1f)) { Text("${stringResource(R.string.custom_end_time)}: $customEndTime") } } } else { Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) { Text(stringResource(R.string.start_period), style = MaterialTheme.typography.labelLarge); Spacer(modifier = Modifier.weight(1f)); Stepper(value = startPeriod, min = 1, max = periodsPerDay, onChange = { startPeriod = it }) }; Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) { Text(stringResource(R.string.duration), style = MaterialTheme.typography.labelLarge); Spacer(modifier = Modifier.weight(1f)); Stepper(value = periods, min = 1, max = (periodsPerDay - startPeriod + 1).coerceAtLeast(1), onChange = { periods = it }) } }
-            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
-            Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) { Column(modifier = Modifier.weight(1f)) { Text("在课表中隐藏", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold); Text("勾选后此节课将不再显示在今日和课表主页中", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }; Switch(checked = isHidden, onCheckedChange = { isHidden = it }, thumbContent = if (isHidden) { { Icon(Icons.Default.Check, null, modifier = Modifier.size(SwitchDefaults.IconSize)) } } else null) }
-            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
             Text(stringResource(R.string.week_range), style = MaterialTheme.typography.labelLarge)
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) { weekRangeOptions.forEach { (key, label) -> FilterChip(selected = weekRange == key || (key == "custom" && weekRange !in listOf("all", "odd", "even")), onClick = { weekRange = key }, label = { Text(label, style = MaterialTheme.typography.labelSmall) }) } }
             if (weekRange == "custom") { OutlinedTextField(value = customWeekRange, onValueChange = { customWeekRange = it }, label = { Text(stringResource(R.string.week_range_hint)) }, modifier = Modifier.fillMaxWidth(), singleLine = true) }
@@ -223,13 +226,41 @@ fun CourseEditScreen(
             Spacer(modifier = Modifier.height(8.dp))
             Button(onClick = {
                 val finalWeekRange = when (weekRange) { "all", "odd", "even" -> weekRange; else -> customWeekRange.ifEmpty { weekRange } }
-                onSave(Course(id = course?.id ?: 0, name = name.trim(), teacher = teacher.trim(), classroom = classroom.trim(), dayOfWeek = dayOfWeek, startPeriod = startPeriod, periods = periods, colorIndex = colorIndex, weekRange = finalWeekRange, remark = remark.trim(), isCustomTime = isCustomTime, customStartTime = customStartTime, customEndTime = customEndTime, isManuallyEdited = true, isHidden = isHidden))
+                val currentId = batchCourses.getOrNull(selectedTabIndex)?.id ?: course?.id ?: 0L
+                onSave(Course(id = currentId, name = name.trim(), teacher = teacher.trim(), classroom = classroom.trim(), dayOfWeek = dayOfWeek, startPeriod = startPeriod, periods = periods, colorIndex = colorIndex, weekRange = finalWeekRange, remark = remark.trim(), isCustomTime = isCustomTime, customStartTime = customStartTime, customEndTime = customEndTime, isManuallyEdited = true, isHidden = isHidden), hiddenScopeName)
             }, modifier = Modifier.fillMaxWidth(), enabled = name.isNotBlank()) { Text(if (batchCourses.size > 1) "保存当前标签课程 (${selectedTabIndex + 1}/${batchCourses.size})" else stringResource(R.string.save)) }
         }
     }
     if (showDeleteDialog && course != null) { AlertDialog(onDismissRequest = { showDeleteDialog = false }, title = { Text(stringResource(R.string.confirm_delete)) }, text = { Text(stringResource(R.string.confirm_delete_msg)) }, confirmButton = { TextButton(onClick = { onDelete(course); showDeleteDialog = false }) { Text(stringResource(R.string.delete)) } }, dismissButton = { TextButton(onClick = { showDeleteDialog = false }) { Text(stringResource(R.string.cancel)) } }) }
     if (showM3StartTimePicker) { val startParts = customStartTime.split(":"); val timePickerState = rememberTimePickerState(initialHour = startParts.getOrNull(0)?.toIntOrNull() ?: 8, initialMinute = startParts.getOrNull(1)?.toIntOrNull() ?: 0, is24Hour = true); AlertDialog(onDismissRequest = { showM3StartTimePicker = false }, confirmButton = { TextButton(onClick = { customStartTime = String.format("%02d:%02d", timePickerState.hour, timePickerState.minute); showM3StartTimePicker = false }) { Text("确定") } }, dismissButton = { TextButton(onClick = { showM3StartTimePicker = false }) { Text("取消") } }, title = { Text(stringResource(R.string.custom_start_time), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }, text = { Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { TimePicker(state = timePickerState) } }) }
     if (showM3EndTimePicker) { val endParts = customEndTime.split(":"); val timePickerState = rememberTimePickerState(initialHour = endParts.getOrNull(0)?.toIntOrNull() ?: 9, initialMinute = endParts.getOrNull(1)?.toIntOrNull() ?: 0, is24Hour = true); AlertDialog(onDismissRequest = { showM3EndTimePicker = false }, confirmButton = { TextButton(onClick = { customEndTime = String.format("%02d:%02d", timePickerState.hour, timePickerState.minute); showM3EndTimePicker = false }) { Text("确定") } }, dismissButton = { TextButton(onClick = { showM3EndTimePicker = false }) { Text("取消") } }, title = { Text(stringResource(R.string.custom_end_time), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }, text = { Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { TimePicker(state = timePickerState) } }) }
+}
+
+@Composable
+private fun CourseHiddenSwitch(isHidden: Boolean, onHiddenChange: (Boolean) -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text("隐藏该课程", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+            Text(
+                "勾选后该课程的所有排课实例都不再显示在今日和课表主页中",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Switch(
+            checked = isHidden,
+            onCheckedChange = onHiddenChange,
+            thumbContent = if (isHidden) {
+                { Icon(Icons.Default.Check, null, modifier = Modifier.size(SwitchDefaults.IconSize)) }
+            } else {
+                null
+            }
+        )
+    }
 }
 
 @Composable
