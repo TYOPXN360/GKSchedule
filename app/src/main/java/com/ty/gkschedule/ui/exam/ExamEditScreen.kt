@@ -75,6 +75,12 @@ fun ExamEditScreen(
         1. 必须使用标准的 ```json ... ``` 代码块包裹返回的 JSON 数据。
         2. 如果同一场考试分布在多个不同的考场/教室，请务必将其合并为单场考试对象，并将考场合并为一个字符串，用逗号隔开（例如: "classroom": "某某考场101, 某某考场102"）。
         3. 即使只有一场考试，也必须返回一个包裹着对象的标准的 JSON 数组。
+        4. examMethod 字段必须从以下类型中选择，不能使用其他表述：
+           - "闭卷"：笔试闭卷、闭卷笔试、闭卷考试等
+           - "开卷"：笔试开卷、开卷笔试、开卷考试等
+           - "机考"：计算机考试、闭卷机试、机试、上机考试等
+           - "开卷(半)"：半开卷、开卷半等
+           如果无法确定，默认使用"闭卷"。
         标准 JSON 格式示例：
         ```json
         [
@@ -97,6 +103,17 @@ fun ExamEditScreen(
         val start = input.indexOf('['); val end = input.lastIndexOf(']')
         if (start != -1 && end != -1 && end > start) return input.substring(start, end + 1)
         return input
+    }
+
+    fun normalizeExamMethod(method: String): String {
+        val lower = method.lowercase()
+        return when {
+            lower.contains("机考") || lower.contains("机试") || lower.contains("上机") -> "机考"
+            lower.contains("半开卷") || lower.contains("开卷(半)") || lower.contains("半闭卷") -> "开卷(半)"
+            lower.contains("开卷") -> "开卷"
+            lower.contains("闭卷") || lower.contains("笔试") -> "闭卷"
+            else -> "闭卷" // 默认闭卷
+        }
     }
 
     Scaffold(containerColor = scaffoldBg, topBar = {
@@ -130,7 +147,7 @@ fun ExamEditScreen(
                                     val parsedExams = mutableListOf<ExamEntity>()
                                     for (i in 0 until jsonArray.length()) {
                                         val obj = jsonArray.getJSONObject(i)
-                                        val eName = obj.optString("name"); val eClassroom = obj.optString("classroom"); val eTeacher = obj.optString("teacher"); val eMethod = obj.optString("examMethod", "闭卷"); val eStartTime = obj.optString("startTime", "09:00"); val eEndTime = obj.optString("endTime", "11:00"); val eRemark = obj.optString("remark"); val dateStr = obj.optString("examDate")
+                                        val eName = obj.optString("name"); val eClassroom = obj.optString("classroom"); val eTeacher = obj.optString("teacher"); val eMethod = normalizeExamMethod(obj.optString("examMethod", "闭卷")); val eStartTime = obj.optString("startTime", "09:00"); val eEndTime = obj.optString("endTime", "11:00"); val eRemark = obj.optString("remark"); val dateStr = obj.optString("examDate")
                                         parsedExams.add(ExamEntity(courseName = eName, examDate = dateStr, examTimeRange = "$eStartTime-$eEndTime", classroom = eClassroom, examMethod = eMethod, teacherInfo = eTeacher, isLocal = true, customStartTime = eStartTime, customEndTime = eEndTime, customRemark = eRemark))
                                     }
                                     if (parsedExams.isNotEmpty()) {
