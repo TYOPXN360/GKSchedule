@@ -69,7 +69,20 @@
 
 - JDK 17
 - Android SDK（compileSdk 36，minSdk 31）
-- Gradle 9.3.1
+- Gradle 8.13
+
+项目默认使用本地 `source/` 工具链。首次拉取或清理过 `source/` 后，先执行：
+
+```bash
+./scripts/provision-source-toolchain.sh
+```
+
+该脚本会安装/更新：
+
+- `source/jdk-17`
+- `source/android-sdk`
+- `source/gradle-8.13-bin.zip`
+- `source/src` 源码硬链接镜像
 
 ```bash
 export JAVA_HOME="$PWD/source/jdk-17"
