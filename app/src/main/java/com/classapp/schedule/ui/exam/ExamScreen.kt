@@ -340,11 +340,15 @@ private fun ExamCard(exam: ExamEntity, examColor: CourseColors.CourseColorPair, 
     val isNow = today && startMins != null && endMins != null && nowMins in startMins..endMins
     val alpha = if (isPast) 0.5f else 1f
     val daysLeft = if (examDate != null && !isPast && !isNow) ChronoUnit.DAYS.between(now, examDate) else -1L
-    val progress = when {
-        isPast -> 1f
-        isNow && startMins != null && endMins != null && endMins > startMins ->
-            ((nowMins - startMins).toFloat() / (endMins - startMins)).coerceIn(0f, 1f)
-        else -> 0f
+    val progress = if (isPast) {
+        1f
+    } else if (isNow) {
+        val start = startMins ?: 0
+        val end = endMins ?: start
+        val duration = end - start
+        if (duration > 0) ((nowMins - start).toFloat() / duration).coerceIn(0f, 1f) else 0f
+    } else {
+        0f
     }
 
     Md3Card(onClick = onClick, modifier = Modifier.fillMaxWidth(), variant = Md3CardVariant.Elevated) {
