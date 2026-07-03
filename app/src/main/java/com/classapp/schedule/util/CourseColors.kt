@@ -3,129 +3,174 @@ package com.classapp.schedule.util
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import com.classapp.schedule.ui.theme.LocalAppIsDark
 import com.google.android.material.color.utilities.Hct
 
-/**
- * MD3 Expressive Industrial — 课程颜色引擎 v2
- *
- * 架构: Course Identity → Stable Hue Engine (360° + Golden Angle) → MD3 Tonal Palette (HCT) → Semantic Roles
- * - 360° 连续色相空间（彻底消除 8-seed 鸽巢撞色）
- * - 黄金角 137.508° 分布（视觉均匀，防聚类）
- * - MD3 tonal roles: container / content
- * - 多维稳定 key（course / classroom / week）
- * - 暗色/亮色自适应
- */
 object CourseColors {
-
-    /** MD3 Expressive Seed Palette — 仅用于 Settings badge 等固定场景 */
-    private val seeds = intArrayOf(
-        0x6750A4, 0x006A6A, 0x386A20, 0x8C4A2F,
-        0x7D5260, 0x525F79, 0x984061, 0x7C4DFF
-    )
-
-    /** 颜色对: container=背景色  content=文字色 */
     data class CourseColorPair(val container: Color, val content: Color)
 
-    // ─── Public API ──────────────────────────────────────────────
+    private const val GOLDEN_ANGLE = 137.50776405
+    private const val DEFAULT_THEME_HUE = 270.0
+
+    private val classicHues = doubleArrayOf(
+        8.0, 32.0, 54.0, 92.0, 136.0, 176.0, 212.0, 248.0, 286.0, 326.0
+    )
 
     @Composable
-    fun getColor(mode: Int, courseName: String, classroom: String = "", classroomIndex: Int = 0): CourseColorPair {
-        return getColorSync(mode, courseName, classroom, classroomIndex, isDark = LocalAppIsDark.current)
-    }
-
-    fun getColorSync(
-        mode: Int,
+    fun getColor(
+        engine: Int,
+        groupMode: Int,
         courseName: String,
         classroom: String = "",
         classroomIndex: Int = 0,
+        colorIndex: Int? = null,
+        week: Int = 0,
+        diffColorPerWeek: Boolean = false
+    ): CourseColorPair {
+        val isDark = LocalAppIsDark.current
+        val themeHue = Hct.fromInt(MaterialTheme.colorScheme.primary.toArgb()).hue
+        return getColorSync(
+            engine = engine,
+            groupMode = groupMode,
+            courseName = courseName,
+            classroom = classroom,
+            classroomIndex = classroomIndex,
+            colorIndex = colorIndex,
+            week = week,
+            diffColorPerWeek = diffColorPerWeek,
+            isDark = isDark,
+            themeHue = themeHue
+        )
+    }
+
+    fun getColorSync(
+        engine: Int,
+        groupMode: Int,
+        courseName: String,
+        classroom: String = "",
+        classroomIndex: Int = 0,
+        colorIndex: Int? = null,
         week: Int = 0,
         diffColorPerWeek: Boolean = false,
-        isDark: Boolean = false
+        isDark: Boolean = false,
+        themeHue: Double = DEFAULT_THEME_HUE
     ): CourseColorPair {
-        val key = buildKey(courseName, classroom, week, mode, classroomIndex, diffColorPerWeek)
-        val hue = stableHue(key)
-        // accent hue 偏移 18°，保持同色系但有区分度
+        val normalizedGroupMode = groupMode.coerceIn(0, 2)
+        val normalizedEngine = engine.coerceIn(0, 3)
+        val hueKey = hueKey(courseName, classroom, week, normalizedGroupMode, diffColorPerWeek)
+        val slot = colorIndex ?: stableSlot(hueKey)
+        val variant = variantIndex(classroom, classroomIndex, normalizedGroupMode)
+        val hue = hueForEngine(normalizedEngine, hueKey, slot, themeHue)
+
         return CourseColorPair(
-            container = tonalColor(hue, isDark, Role.Container),
-            content = tonalColor(hue, isDark, Role.Content)
+            container = tonalColor(hue, normalizedEngine, isDark, Role.Container, variant),
+            content = tonalColor(hue, normalizedEngine, isDark, Role.Content, variant)
         )
     }
 
     @Composable
     fun getSettingsBadgeColor(index: Int): CourseColorPair {
         val isDark = LocalAppIsDark.current
-        // 固定 8 色 seed 循环，但用黄金角偏移色相避免聚集
-        val hue = (index * 137.50776405) % 360.0
+        val themeHue = Hct.fromInt(MaterialTheme.colorScheme.primary.toArgb()).hue
+        val hue = hueForEngine(engine = 0, key = "settings|$index", slot = index, themeHue = themeHue)
         return CourseColorPair(
-            container = tonalColor(hue, isDark, Role.Container),
-            content = tonalColor(hue, isDark, Role.Content)
+            container = tonalColor(hue, engine = 0, isDark = isDark, role = Role.Container, variant = 0),
+            content = tonalColor(hue, engine = 0, isDark = isDark, role = Role.Content, variant = 0)
         )
     }
 
-    @Composable
-    fun getColors(engine: Int, count: Int = 16): List<Pair<Color, Color>> {
-        val isDark = LocalAppIsDark.current
-        val primary = MaterialTheme.colorScheme.primary
-        val primaryHue = Hct.fromInt(primary.value.toInt()).hue
-        val step = 360.0 / count
-        return (0 until count).map { i ->
-            val hue = when (engine) {
-                1 -> (primaryHue + i * step) % 360.0
-                else -> i * step
-            }
-            tonalColor(hue, isDark, Role.Container) to tonalColor(hue, isDark, Role.Content)
-        }
-    }
-
-    // ─── Core Engine ─────────────────────────────────────────────
-
-    /**
-     * 多维稳定 key — 根据 colorGroupMode 构建不同粒度的身份标识
-     * mode 0/1: 课程名（或 + classroom）
-     * mode 2:   课程名 + 教室（+ week if diffColorPerWeek）
-     */
-    private fun buildKey(
+    fun colorIdentityKey(
+        groupMode: Int,
         courseName: String,
         classroom: String,
         week: Int,
-        mode: Int,
-        classroomIndex: Int,
+        diffColorPerWeek: Boolean
+    ): String = hueKey(courseName, classroom, week, groupMode.coerceIn(0, 2), diffColorPerWeek)
+
+    private fun hueKey(
+        courseName: String,
+        classroom: String,
+        week: Int,
+        groupMode: Int,
         diffColorPerWeek: Boolean
     ): String {
-        return when (mode) {
-            1 -> "$courseName|$classroom|$classroomIndex"
-            2 -> if (diffColorPerWeek) "$courseName|$classroom|$week"
-                 else "$courseName|$classroom"
-            else -> if (diffColorPerWeek) "$courseName|$week" else courseName
+        val base = when (groupMode) {
+            2 -> "$courseName|$classroom"
+            else -> courseName
+        }
+        return if (diffColorPerWeek) "$base|week:$week" else base
+    }
+
+    private fun variantIndex(classroom: String, classroomIndex: Int, groupMode: Int): Int {
+        if (groupMode != 1) return 0
+        if (classroom.isBlank()) return 0
+        if (classroomIndex > 0) return classroomIndex.coerceAtMost(5)
+        return (positiveHash(classroom) % 5).toInt() + 1
+    }
+
+    private fun stableSlot(key: String): Int = (positiveHash(key) % 360).toInt()
+
+    private fun hueForEngine(engine: Int, key: String, slot: Int, themeHue: Double): Double {
+        val safeSlot = if (slot < 0) -slot.toLong() else slot.toLong()
+        return when (engine) {
+            0 -> normalizeHue(themeHue + safeSlot * GOLDEN_ANGLE)
+            1 -> normalizeHue(18.0 + safeSlot * GOLDEN_ANGLE)
+            2 -> classicHues[(safeSlot % classicHues.size).toInt()]
+            else -> stableHue(key)
         }
     }
 
-    /**
-     * 黄金角 hue engine — 360° 连续空间，消除鸽巢原理撞色
-     *
-     * 黄金角 137.508° 是自然界最均匀的分布角度（向日葵种子排列），
-     * 即使 hash 值相近，也能保证色相差异最大化。
-     * 规范化: (hash × goldenAngle) % 360 纯黄金角映射。
-     */
-    private fun stableHue(key: String): Double {
-        val hash = key.hashCode().toLong() and 0xFFFFFFFFL
-        return (hash * 137.50776405) % 360.0
+    private fun stableHue(key: String): Double =
+        normalizeHue(positiveHash(key) * GOLDEN_ANGLE)
+
+    private fun positiveHash(key: String): Long = key.hashCode().toLong() and 0xFFFFFFFFL
+
+    private fun normalizeHue(hue: Double): Double {
+        val normalized = hue % 360.0
+        return if (normalized < 0) normalized + 360.0 else normalized
     }
 
     private enum class Role { Container, Content }
 
-    /**
-     * MD3 Tonal Color — HCT 色彩空间标准角色映射
-     *
-     * Light: container=Tone90/Chroma42  content=Tone20/Chroma60
-     * Dark:  container=Tone30/Chroma30  content=Tone88/Chroma70（AMOLED 稳定）
-     */
-    private fun tonalColor(hue: Double, isDark: Boolean, role: Role): Color {
-        val (chroma, tone) = when (role) {
-            Role.Container -> if (isDark) 30.0 to 30.0 else 42.0 to 90.0
-            Role.Content   -> if (isDark) 70.0 to 88.0 else 60.0 to 20.0
+    private fun tonalColor(
+        hue: Double,
+        engine: Int,
+        isDark: Boolean,
+        role: Role,
+        variant: Int
+    ): Color {
+        val variantBoost = variant.coerceIn(0, 5).toDouble()
+        val (baseChroma, baseTone) = when (engine) {
+            1 -> when (role) {
+                Role.Container -> if (isDark) 44.0 to 30.0 else 58.0 to 86.0
+                Role.Content -> if (isDark) 78.0 to 90.0 else 70.0 to 20.0
+            }
+            2 -> when (role) {
+                Role.Container -> if (isDark) 24.0 to 32.0 else 30.0 to 91.0
+                Role.Content -> if (isDark) 50.0 to 88.0 else 48.0 to 24.0
+            }
+            3 -> when (role) {
+                Role.Container -> if (isDark) 36.0 to 30.0 else 46.0 to 88.0
+                Role.Content -> if (isDark) 68.0 to 89.0 else 62.0 to 21.0
+            }
+            else -> when (role) {
+                Role.Container -> if (isDark) 30.0 to 30.0 else 42.0 to 90.0
+                Role.Content -> if (isDark) 64.0 to 88.0 else 58.0 to 20.0
+            }
         }
+
+        val chroma = when (role) {
+            Role.Container -> baseChroma + variantBoost * 7.0
+            Role.Content -> baseChroma + variantBoost * 5.0
+        }.coerceIn(16.0, 88.0)
+        val tone = when {
+            variant == 0 -> baseTone
+            isDark && role == Role.Container -> baseTone + variantBoost * 3.0
+            !isDark && role == Role.Container -> baseTone - variantBoost * 2.5
+            else -> baseTone
+        }.coerceIn(18.0, 92.0)
+
         return Color(Hct.from(hue, chroma, tone).toInt())
     }
 }

@@ -154,6 +154,15 @@ fun TodayScreen(
                 }
                 val isNext = !isCurrent && !isPast && isFuture && firstFuture?.id == course.id
 
+                val courseColor = CourseColors.getColorSync(
+                    engine = colorEngine,
+                    groupMode = colorGroupMode,
+                    courseName = course.name,
+                    classroom = course.classroom,
+                    week = currentWeek,
+                    diffColorPerWeek = diffColorPerWeek,
+                    isDark = isDark
+                )
                 CourseCard(
                     course = course,
                     startTime = course.getActualStartTime(getStartTime),
@@ -163,8 +172,8 @@ fun TodayScreen(
                     isPast = isPast,
                     animDelay = if (animationPlayed) 0L else staggerMap[course.id] ?: 0L,
                     skipAnim = animationPlayed,
-                    barColor = CourseColors.getColorSync(colorGroupMode, course.name, course.classroom, week = currentWeek, diffColorPerWeek = diffColorPerWeek, isDark = isDark).container,
-                    indicatorColor = CourseColors.getColorSync(colorGroupMode, course.name, course.classroom, week = currentWeek, diffColorPerWeek = diffColorPerWeek, isDark = isDark).content,
+                    barColor = courseColor.container,
+                    indicatorColor = courseColor.content,
                     onClick = { detailCourse = course }
                 )
             }
@@ -185,7 +194,15 @@ fun TodayScreen(
             }
             items(todayExams) { exam ->
                 val examWeek = ScheduleResolver.examWeek(exam, semesterStart, currentWeek)
-                val examColor = CourseColors.getColorSync(colorGroupMode, exam.courseName, exam.classroom, week = examWeek, diffColorPerWeek = diffColorPerWeek, isDark = isDark)
+                val examColor = CourseColors.getColorSync(
+                    engine = colorEngine,
+                    groupMode = colorGroupMode,
+                    courseName = exam.courseName,
+                    classroom = exam.classroom,
+                    week = examWeek,
+                    diffColorPerWeek = diffColorPerWeek,
+                    isDark = isDark
+                )
                 ExamCard(
                     exam = exam,
                     examColor = examColor,
@@ -221,14 +238,23 @@ fun TodayScreen(
                 }
             } else {
                 items(tomorrowCourses) { course ->
+                    val courseColor = CourseColors.getColorSync(
+                        engine = colorEngine,
+                        groupMode = colorGroupMode,
+                        courseName = course.name,
+                        classroom = course.classroom,
+                        week = currentWeek,
+                        diffColorPerWeek = diffColorPerWeek,
+                        isDark = isDark
+                    )
                     CourseCard(
                         course = course,
                         startTime = course.getActualStartTime(getStartTime),
                         endTime = course.getActualEndTime(getEndTime),
                         isCurrent = false,
                         isNext = false,
-                    barColor = CourseColors.getColorSync(colorGroupMode, course.name, course.classroom, week = currentWeek, diffColorPerWeek = diffColorPerWeek, isDark = isDark).container,
-                    indicatorColor = CourseColors.getColorSync(colorGroupMode, course.name, course.classroom, week = currentWeek, diffColorPerWeek = diffColorPerWeek, isDark = isDark).content,
+                        barColor = courseColor.container,
+                        indicatorColor = courseColor.content,
                         onClick = { detailCourse = course }
                     )
                 }
@@ -257,7 +283,15 @@ fun TodayScreen(
             }
             items(upcomingExams) { exam ->
                 val examWeek = ScheduleResolver.examWeek(exam, semesterStart, currentWeek)
-                val examColor = CourseColors.getColorSync(colorGroupMode, exam.courseName, exam.classroom, week = examWeek, diffColorPerWeek = diffColorPerWeek, isDark = isDark)
+                val examColor = CourseColors.getColorSync(
+                    engine = colorEngine,
+                    groupMode = colorGroupMode,
+                    courseName = exam.courseName,
+                    classroom = exam.classroom,
+                    week = examWeek,
+                    diffColorPerWeek = diffColorPerWeek,
+                    isDark = isDark
+                )
                 ExamCard(
                     exam = exam,
                     examColor = examColor,
@@ -277,7 +311,7 @@ fun TodayScreen(
             getEndTime = getEndTime,
             onDismiss = { detailCourse = null },
             onEdit = { detailCourse = null; onCourseLongPress(course) },
-            courseColors = CourseColors.getColors(colorEngine, count = 8),
+            colorEngine = colorEngine,
             colorGroupMode = colorGroupMode,
             currentWeek = currentWeek,
             diffColorPerWeek = diffColorPerWeek
@@ -294,9 +328,8 @@ fun TodayScreen(
                 detailExam = null
                 onExamEdit(item.exam)
             },
-            courseColors = CourseColors.getColors(colorEngine, count = 8),
+            colorEngine = colorEngine,
             colorGroupMode = colorGroupMode,
-            colorIndex = 0,
             currentWeek = item.weekRange.toIntOrNull() ?: currentWeek,
             diffColorPerWeek = diffColorPerWeek
         )

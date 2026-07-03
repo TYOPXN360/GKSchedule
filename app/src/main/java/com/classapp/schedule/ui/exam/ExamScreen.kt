@@ -50,6 +50,7 @@ fun ExamScreen(
     semesterStart: LocalDate,
     examYear: String,
     examSemester: String,
+    colorEngine: Int = 0,
     colorGroupMode: Int = 2,
     examLookaheadWeeks: Int = 1,
     showExamSchedule: Boolean = false,
@@ -239,7 +240,15 @@ fun ExamScreen(
                 ) {
                     items(sortedExams) { exam ->
                         val examWeek = ScheduleResolver.examWeek(exam, semesterStart, currentWeek)
-                        val examColor = CourseColors.getColorSync(colorGroupMode, exam.courseName, exam.classroom, week = examWeek, diffColorPerWeek = diffColorPerWeek, isDark = isDark)
+                        val examColor = CourseColors.getColorSync(
+                            engine = colorEngine,
+                            groupMode = colorGroupMode,
+                            courseName = exam.courseName,
+                            classroom = exam.classroom,
+                            week = examWeek,
+                            diffColorPerWeek = diffColorPerWeek,
+                            isDark = isDark
+                        )
                         ExamCard(
                             exam = exam,
                             examColor = examColor,
@@ -254,7 +263,15 @@ fun ExamScreen(
                         val now = LocalDate.now()
                         val isPast = examDate.isBefore(now)
                         val daysLeft = if (!isPast) ChronoUnit.DAYS.between(now, examDate) else -1L
-                        val examColor = CourseColors.getColorSync(colorGroupMode, course.name, course.classroom, week = weekOffset + 1, diffColorPerWeek = diffColorPerWeek, isDark = isDark)
+                        val examColor = CourseColors.getColorSync(
+                            engine = colorEngine,
+                            groupMode = colorGroupMode,
+                            courseName = course.name,
+                            classroom = course.classroom,
+                            week = weekOffset + 1,
+                            diffColorPerWeek = diffColorPerWeek,
+                            isDark = isDark
+                        )
                         Md3Card(onClick = { /* Custom exams don't use the shared detail sheet */ }, modifier = Modifier.fillMaxWidth(), variant = Md3CardVariant.Elevated) {
                             Row(modifier = Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                                 Box(modifier = Modifier.width(4.dp).height(48.dp).clip(RoundedCornerShape(2.dp)).background(if (isPast) examColor.container.copy(alpha = 0.2f) else examColor.container))
@@ -282,7 +299,8 @@ fun ExamScreen(
                 detailItem = null
                 onEditExam(item.exam)
             },
-            colorGroupMode = colorGroupMode, colorIndex = 0,
+            colorEngine = colorEngine,
+            colorGroupMode = colorGroupMode,
             currentWeek = currentWeek, diffColorPerWeek = diffColorPerWeek
         )
     }

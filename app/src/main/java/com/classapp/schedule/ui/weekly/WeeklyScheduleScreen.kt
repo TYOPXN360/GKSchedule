@@ -95,6 +95,7 @@ fun WeeklyScheduleScreen(
     var showWeekPicker by remember { mutableStateOf(false) }
     var detailItem by remember { mutableStateOf<ScheduleItem?>(null) }
     var detailColorIndex by remember { mutableIntStateOf(0) }
+    var detailClassroomColorIndex by remember { mutableIntStateOf(0) }
     val hapticContext = androidx.compose.ui.platform.LocalContext.current
     val hapticView = androidx.compose.ui.platform.LocalView.current
     val labelWidthDp = if (showPeriodLabel) { if (showTimeLabel) 64.dp else 36.dp } else 0.dp
@@ -239,11 +240,12 @@ fun WeeklyScheduleScreen(
                     .onGloballyPositioned { cropBottomPx = it.positionInRoot().y.toInt() + it.size.height }
             ) { page ->
                 val week = visibleWeeks.getOrElse(page) { currentWeek }
-                val weekBlocks = remember(week, colorGroupMode, scheduleItems, mergeConsecutive, detailedSplit, periodsPerDay, getStartTime, getEndTime) {
+                val weekBlocks = remember(week, colorGroupMode, diffColorPerWeek, scheduleItems, mergeConsecutive, detailedSplit, periodsPerDay, getStartTime, getEndTime) {
                     ScheduleResolver.buildRenderBlocks(
                         items = scheduleItems,
                         week = week,
                         colorGroupMode = colorGroupMode,
+                        diffColorPerWeek = diffColorPerWeek,
                         mergeConsecutive = mergeConsecutive,
                         detailedSplit = detailedSplit,
                         periodsPerDay = periodsPerDay,
@@ -293,11 +295,18 @@ fun WeeklyScheduleScreen(
                         }
 
                         // Layer 2: Canvas for course block colors
-                        val blockBaseColors = remember(weekBlocks, colorGroupMode, isDark) {
+                        val blockBaseColors = remember(weekBlocks, colorEngine, colorGroupMode, diffColorPerWeek, isDark) {
                             weekBlocks.map { block ->
-                                val realClassroomIdx = if (colorGroupMode == 1) block.colorIdx % 10 else 0
                                 com.classapp.schedule.util.CourseColors.getColorSync(
-                                    colorGroupMode, block.item.name, block.item.classroom, realClassroomIdx, week = week, diffColorPerWeek = diffColorPerWeek, isDark = isDark
+                                    engine = colorEngine,
+                                    groupMode = colorGroupMode,
+                                    courseName = block.item.name,
+                                    classroom = block.item.classroom,
+                                    classroomIndex = block.classroomColorIdx,
+                                    colorIndex = block.colorIdx,
+                                    week = week,
+                                    diffColorPerWeek = diffColorPerWeek,
+                                    isDark = isDark
                                 ).container
                             }
                         }
@@ -360,14 +369,22 @@ fun WeeklyScheduleScreen(
                                         com.classapp.schedule.util.HapticFeedback.medium(hapticView)
                                         detailItem = block.item
                                         detailColorIndex = block.colorIdx
+                                        detailClassroomColorIndex = block.classroomColorIdx
                                     }
                                     .semantics { contentDescription = block.item.name }
                                     .padding(4.dp)
                             ) {
-                                val textColor = remember(block, colorGroupMode, isDark) {
-                                    val realClassroomIdx = if (colorGroupMode == 1) block.colorIdx % 10 else 0
+                                val textColor = remember(block, colorEngine, colorGroupMode, diffColorPerWeek, isDark) {
                                     com.classapp.schedule.util.CourseColors.getColorSync(
-                                        colorGroupMode, block.item.name, block.item.classroom, realClassroomIdx, week = week, diffColorPerWeek = diffColorPerWeek, isDark = isDark
+                                        engine = colorEngine,
+                                        groupMode = colorGroupMode,
+                                        courseName = block.item.name,
+                                        classroom = block.item.classroom,
+                                        classroomIndex = block.classroomColorIdx,
+                                        colorIndex = block.colorIdx,
+                                        week = week,
+                                        diffColorPerWeek = diffColorPerWeek,
+                                        isDark = isDark
                                     ).content
                                 }
                                 Column {
@@ -466,9 +483,10 @@ fun WeeklyScheduleScreen(
                 val course = (item as? ScheduleItem.CourseItem)?.course ?: return@ScheduleItemDetailSheet
                 onCourseLongPress(course)
             },
-            courseColors = CourseColors.getColors(colorEngine, count = 8),
+            colorEngine = colorEngine,
             colorGroupMode = colorGroupMode,
             colorIndex = detailColorIndex,
+            classroomColorIndex = detailClassroomColorIndex,
             currentWeek = targetWeek,
             diffColorPerWeek = diffColorPerWeek)
     }
@@ -480,12 +498,21 @@ fun WeeklyScheduleScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ScheduleItemDetailSheet(item: ScheduleItem, getStartTime: (Int) -> String, getEndTime: (Int) -> String, onDismiss: () -> Unit, onEdit: () -> Unit, courseColors: List<Pair<Color, Color>> = CourseColors.getColors(0, count = 8), colorGroupMode: Int = 0, colorIndex: Int = item.colorIndex, dotColor: Color? = null, currentWeek: Int = 0, diffColorPerWeek: Boolean = false) {
+fun ScheduleItemDetailSheet(item: ScheduleItem, getStartTime: (Int) -> String, getEndTime: (Int) -> String, onDismiss: () -> Unit, onEdit: () -> Unit, colorEngine: Int = 0, colorGroupMode: Int = 0, colorIndex: Int? = item.colorIndex, classroomColorIndex: Int = 0, dotColor: Color? = null, currentWeek: Int = 0, diffColorPerWeek: Boolean = false) {
     val isDark = com.classapp.schedule.ui.theme.LocalAppIsDark.current
-    val hctColors = remember(item, colorGroupMode, colorIndex, currentWeek, diffColorPerWeek, isDark) {
-        val realClassroomIdx = if (colorGroupMode == 1) colorIndex % 10 else 0
+    val hctColors = remember(item, colorEngine, colorGroupMode, colorIndex, classroomColorIndex, currentWeek, diffColorPerWeek, isDark) {
         val targetWeek = if (item.isExam) item.weekRange.toIntOrNull() ?: currentWeek else currentWeek
-        com.classapp.schedule.util.CourseColors.getColorSync(colorGroupMode, item.name, item.classroom, classroomIndex = realClassroomIdx, week = targetWeek, diffColorPerWeek = diffColorPerWeek, isDark = isDark)
+        com.classapp.schedule.util.CourseColors.getColorSync(
+            engine = colorEngine,
+            groupMode = colorGroupMode,
+            courseName = item.name,
+            classroom = item.classroom,
+            classroomIndex = classroomColorIndex,
+            colorIndex = colorIndex,
+            week = targetWeek,
+            diffColorPerWeek = diffColorPerWeek,
+            isDark = isDark
+        )
     }
 
     // Smart remark cleaner: filter time lines + strip "考试" text

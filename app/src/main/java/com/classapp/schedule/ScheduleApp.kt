@@ -257,6 +257,8 @@ fun ScheduleApp(
             composable(Screen.Courses.route) {
                 CourseManageScreen(
                     courses = courses,
+                    colorEngine = colorEngine,
+                    colorGroupMode = colorGroupMode,
                     onCourseClick = { navController.navigate(Screen.CourseEdit.createRoute(it.id)) },
                     onAddCourse = { navController.navigate(Screen.CourseEdit.createRoute()) },
                     onDeleteCourse = { viewModel.deleteCourse(it) },
@@ -362,6 +364,7 @@ fun ScheduleApp(
                     onDismissRelogin = { viewModel.dismissExamReloginDialog() },
                     onRefreshCaptcha = { viewModel.refreshCaptcha() },
                     onQuickRelogin = { cap -> viewModel.quickRelogin(cap) },
+                    colorEngine = colorEngine,
                     colorGroupMode = colorGroupMode,
                     examLookaheadWeeks = examLookaheadWeeks,
                     onExamLookaheadWeeksChange = { viewModel.setExamLookaheadWeeks(it) },

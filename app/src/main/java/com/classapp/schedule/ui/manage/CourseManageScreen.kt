@@ -27,6 +27,8 @@ import com.classapp.schedule.util.CourseColors
 @Composable
 fun CourseManageScreen(
     courses: List<Course>,
+    colorEngine: Int = 0,
+    colorGroupMode: Int = 0,
     onCourseClick: (Course) -> Unit,
     onAddCourse: () -> Unit,
     onDeleteCourse: (Course) -> Unit,
@@ -78,6 +80,8 @@ fun CourseManageScreen(
                     CourseListItem(
                         course = course,
                         instanceCount = count,
+                        colorEngine = colorEngine,
+                        colorGroupMode = colorGroupMode,
                         onClick = { onCourseClick(course) },
                         onDelete = { courseToDelete = course }
                     )
@@ -118,11 +122,14 @@ fun CourseManageScreen(
 private fun CourseListItem(
     course: Course,
     instanceCount: Int = 1,
+    colorEngine: Int,
+    colorGroupMode: Int,
     onClick: () -> Unit,
     onDelete: () -> Unit
 ) {
     val courseColor = CourseColors.getColor(
-        mode = 0,
+        engine = colorEngine,
+        groupMode = colorGroupMode,
         courseName = course.name,
         classroom = course.classroom
     )

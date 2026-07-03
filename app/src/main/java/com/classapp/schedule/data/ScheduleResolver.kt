@@ -1,5 +1,6 @@
 package com.classapp.schedule.data
 
+import com.classapp.schedule.util.CourseColors
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 import kotlin.math.abs
@@ -10,6 +11,7 @@ data class ScheduleRenderBlock(
     val start: Int,
     val span: Int,
     val colorIdx: Int,
+    val classroomColorIdx: Int,
     val startLine: Float,
     val endLine: Float
 )
@@ -56,6 +58,7 @@ object ScheduleResolver {
         items: List<ScheduleItem>,
         week: Int,
         colorGroupMode: Int,
+        diffColorPerWeek: Boolean,
         mergeConsecutive: Boolean,
         detailedSplit: Boolean,
         periodsPerDay: Int,
@@ -63,18 +66,45 @@ object ScheduleResolver {
         getEndTime: (Int) -> String
     ): List<ScheduleRenderBlock> {
         val blocks = mutableListOf<ScheduleRenderBlock>()
-        val classroomCounters = mutableMapOf<String, Int>()
+        val weekItems = itemsForWeek(items, week)
+        val colorSlots = weekItems
+            .map { item ->
+                CourseColors.colorIdentityKey(
+                    groupMode = colorGroupMode,
+                    courseName = item.name,
+                    classroom = item.classroom,
+                    week = week,
+                    diffColorPerWeek = diffColorPerWeek
+                )
+            }
+            .distinct()
+            .sorted()
+            .mapIndexed { index, key -> key to index }
+            .toMap()
+        val classroomSlots = weekItems
+            .groupBy { it.name }
+            .mapValues { (_, subjectItems) ->
+                subjectItems.map { it.classroom }
+                    .filter { it.isNotBlank() }
+                    .distinct()
+                    .sorted()
+                    .mapIndexed { index, classroom -> classroom to index }
+                    .toMap()
+            }
 
-        itemsForWeek(items, week).forEach { item ->
-            val colorIdx = when (colorGroupMode) {
-                0 -> abs(item.name.hashCode()) % 8
-                1 -> {
-                    val baseIdx = abs(item.name.hashCode()) % 8
-                    val classIdx = classroomCounters.getOrPut(item.name) { 0 }
-                    classroomCounters[item.name] = classIdx + 1
-                    baseIdx * 10 + classIdx
-                }
-                else -> abs("${item.name}|${item.classroom}".hashCode()) % 64
+        weekItems.forEach { item ->
+            val colorKey = CourseColors.colorIdentityKey(
+                groupMode = colorGroupMode,
+                courseName = item.name,
+                classroom = item.classroom,
+                week = week,
+                diffColorPerWeek = diffColorPerWeek
+            )
+            val colorIdx = colorSlots[colorKey] ?: 0
+            val classroomColorIdx = if (colorGroupMode == 1) {
+                classroomSlots[item.name]?.get(item.classroom) ?: 0
+            } else {
+                0
             }
 
             fun addBlock(start: Int, span: Int) {
@@ -96,6 +126,7 @@ object ScheduleResolver {
                         start = start,
                         span = span,
                         colorIdx = colorIdx,
+                        classroomColorIdx = classroomColorIdx,
                         startLine = startLine,
                         endLine = endLine
                     )
