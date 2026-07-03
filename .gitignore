@@ -16,6 +16,7 @@
 /build.sh
 *.har
 *.png
+!app/src/main/res/mipmap-*/*.png
 *.db
 *.db-wal
 *.db-shm
