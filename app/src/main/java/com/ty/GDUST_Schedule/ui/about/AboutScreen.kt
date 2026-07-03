@@ -273,14 +273,13 @@ Column(
             title = { Text(stringResource(R.string.about_title)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("${stringResource(R.string.app_name)} v1.0.0")
+                    Text("GDUST-Schedule v1.0.0")
                     Text(stringResource(R.string.about_desc))
 
                     HorizontalDivider()
 
                     Text(stringResource(R.string.credits_title), style = MaterialTheme.typography.titleSmall)
-                    CreditItem(stringResource(R.string.credits_ai), "XiaoMi-MiMo-v2.5-pro")
-                    CreditItem(stringResource(R.string.credits_component), "material-components-android")
+                    CreditItem(stringResource(R.string.credits_ai), "GPT-5.5, Deepseek-v4-pro, XiaoMi-Mimo-V2.5, Google-Gemini-v3.5-flash")
                     CreditItem(stringResource(R.string.credits_language), "Jetpack Compose (Kotlin)")
                     CreditItem(stringResource(R.string.credits_design), "Material Design 3 Expressive")
 
