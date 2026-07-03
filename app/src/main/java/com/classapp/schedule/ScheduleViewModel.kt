@@ -460,7 +460,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
             // Convert and save — preserve manually edited courses
             val courses = CourseImporter.convertRemoteCourses(allRemoteCourses)
             // Safe sync: only delete remote courses, preserve local (manually edited)
-            val hiddenNames = courseDao.getAllCourses().first().filter { it.isManuallyEdited && it.isHidden }.map { it.name }.toSet()
+            val hiddenNames = courseDao.getAllCourses().first().filter { it.isHidden }.map { it.name }.toSet()
             courseDao.deleteRemoteCourses()
             courses.forEach { c ->
                 val isHid = hiddenNames.contains(c.name)
@@ -545,7 +545,8 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                     
                     if (hasChanges) {
                         // Safe sync: only delete remote courses, preserve local
-                        val hiddenNames = existingCourses.filter { it.isHidden && !it.isManuallyEdited }.map { it.name }.toSet()
+                        // Capture ALL hidden course names (both manual and remote)
+                        val hiddenNames = existingCourses.filter { it.isHidden }.map { it.name }.toSet()
                         courseDao.deleteRemoteCourses()
                         newCourses.forEach { c ->
                             val isHid = hiddenNames.contains(c.name)
