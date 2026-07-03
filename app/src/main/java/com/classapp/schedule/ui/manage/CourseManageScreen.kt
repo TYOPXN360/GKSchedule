@@ -37,12 +37,8 @@ fun CourseManageScreen(
     var showDeleteAllDialog by remember { mutableStateOf(false) }
     var courseToDelete by remember { mutableStateOf<Course?>(null) }
 
-    val courseGroups = remember(courses) {
-        courses.groupBy { it.name }
-    }
-    val uniqueCourses = remember(courseGroups) {
-        courseGroups.values.mapNotNull { it.firstOrNull() }.sortedBy { it.name }
-    }
+    val courseGroups = remember(courses) { courses.groupBy { it.name } }
+    val uniqueCourses = remember(courseGroups) { courseGroups.values.map { it.first() }.sortedBy { it.name } }
 
     Box(modifier = Modifier.fillMaxSize()) {
         if (courses.isEmpty()) {
@@ -79,13 +75,10 @@ fun CourseManageScreen(
                 }
 
                 items(uniqueCourses) { course ->
-                    val group = courseGroups[course.name].orEmpty()
-                    val count = group.size
-                    val isHidden = group.any { it.isHidden }
+                    val count = courseGroups[course.name].orEmpty().size
                     CourseListItem(
                         course = course,
                         instanceCount = count,
-                        isHidden = isHidden,
                         colorEngine = colorEngine,
                         colorGroupMode = colorGroupMode,
                         onClick = { onCourseClick(course) },
@@ -128,7 +121,6 @@ fun CourseManageScreen(
 private fun CourseListItem(
     course: Course,
     instanceCount: Int = 1,
-    isHidden: Boolean = false,
     colorEngine: Int,
     colorGroupMode: Int,
     onClick: () -> Unit,
@@ -167,7 +159,19 @@ private fun CourseListItem(
                         color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.weight(1f, fill = false)
                     )
-                    if (isHidden) {
+                    if (instanceCount > 1) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Surface(shape = CircleShape, color = courseColor.container) {
+                            Text(
+                                text = "${instanceCount}节",
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = courseColor.content
+                            )
+                        }
+                    }
+                    if (course.isHidden) {
                         Spacer(modifier = Modifier.width(8.dp))
                         Surface(
                             shape = RoundedCornerShape(4.dp),
@@ -179,18 +183,6 @@ private fun CourseListItem(
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
-                    if (instanceCount > 1) {
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Surface(shape = CircleShape, color = courseColor.container) {
-                            Text(
-                                text = "${instanceCount}节",
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = courseColor.content
                             )
                         }
                     }
