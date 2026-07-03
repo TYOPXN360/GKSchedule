@@ -25,6 +25,13 @@ import kotlinx.coroutines.launch
 import java.io.File
 import java.time.LocalDate
 
+private data class ReminderConfig(
+    val courses: List<Course>,
+    val reminderMinutes: Int,
+    val semesterStart: LocalDate,
+    val totalWeeks: Int
+)
+
 class ScheduleViewModel(application: Application) : AndroidViewModel(application) {
 
     private val courseDao: CourseDao = CourseDatabase.getDatabase(application).courseDao()
@@ -145,13 +152,20 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
         }
         // Schedule reminders when courses or settings change
         viewModelScope.launch {
-            combine(courses, settings.reminderMinutes, settings.semesterStart) { courseList, minutes, start ->
-                Triple(courseList, minutes, start)
-            }.collect { (courseList, minutes, start) ->
-                if (minutes > 0 && canScheduleExactAlarms()) {
-                    ReminderScheduler.scheduleDailyReminders(
-                        getApplication(), courseList, start, minutes, ::getStartTime
+            combine(courses, settings.reminderMinutes, settings.semesterStart, settings.totalWeeks) { courseList, minutes, start, weeks ->
+                ReminderConfig(courseList, minutes, start, weeks)
+            }.collect { config ->
+                if (config.reminderMinutes > 0) {
+                    ReminderScheduler.scheduleUpcomingReminders(
+                        context = getApplication(),
+                        courses = config.courses,
+                        semesterStart = config.semesterStart,
+                        totalWeeks = config.totalWeeks,
+                        reminderMinutes = config.reminderMinutes,
+                        getStartTime = ::getStartTime
                     )
+                } else {
+                    ReminderScheduler.cancelAll(getApplication(), config.courses)
                 }
             }
         }
@@ -168,14 +182,6 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                 com.classapp.schedule.sync.HeartbeatWorker.schedule(app)
             }
         }
-    }
-
-    private fun canScheduleExactAlarms(): Boolean {
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-            val alarmManager = app.getSystemService(android.app.AlarmManager::class.java)
-            return alarmManager.canScheduleExactAlarms()
-        }
-        return true
     }
 
     fun setWeek(week: Int) { _selectedWeek.value = week }

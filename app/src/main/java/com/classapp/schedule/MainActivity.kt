@@ -1,7 +1,10 @@
 package com.classapp.schedule
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.os.Build
 import android.os.Bundle
 import android.os.LocaleList
 import android.view.WindowManager
@@ -16,6 +19,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.classapp.schedule.ui.theme.ClassAppTheme
 import kotlinx.coroutines.flow.first
@@ -61,6 +65,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         enableEdgeToEdge()
+        requestNotificationPermissionIfNeeded()
 
         // Request high refresh rate without changing resolution
         window.attributes = window.attributes.apply {
@@ -105,5 +110,11 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    private fun requestNotificationPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) return
+        requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1001)
     }
 }

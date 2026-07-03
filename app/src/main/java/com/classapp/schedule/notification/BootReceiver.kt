@@ -17,14 +17,15 @@ class BootReceiver : BroadcastReceiver() {
         if (reminderMinutes <= 0) return
 
         val semesterStart = runBlocking { settings.semesterStart.first() }
+        val totalWeeks = runBlocking { settings.totalWeeks.first() }
         val courses = runBlocking {
             CourseDatabase.getDatabase(context).courseDao().getAllCourses().first()
         }
 
         if (courses.isEmpty()) return
 
-        ReminderScheduler.scheduleDailyReminders(
-            context, courses, semesterStart, reminderMinutes
+        ReminderScheduler.scheduleUpcomingReminders(
+            context, courses, semesterStart, totalWeeks, reminderMinutes
         ) { period -> settings.getStartTime(period) }
     }
 }
