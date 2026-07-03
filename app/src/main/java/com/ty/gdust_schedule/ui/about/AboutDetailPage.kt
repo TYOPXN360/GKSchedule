@@ -57,7 +57,7 @@ fun AboutDetailPage(
                 modifier = Modifier
                     .size(96.dp)
                     .clip(RoundedCornerShape(24.dp)),
-                contentScale = ContentScale.Fit
+                contentScale = ContentScale.Crop
             )
 
             Spacer(modifier = Modifier.height(16.dp))
