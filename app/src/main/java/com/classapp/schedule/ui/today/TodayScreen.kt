@@ -43,6 +43,7 @@ fun TodayScreen(
     getStartTime: (Int) -> String,
     getEndTime: (Int) -> String,
     onCourseLongPress: (Course) -> Unit,
+    onExamEdit: (com.classapp.schedule.data.ExamEntity) -> Unit = {},
     diffColorPerWeek: Boolean = false
 ) {
     val today = LocalDate.now()
@@ -73,6 +74,7 @@ fun TodayScreen(
     val currentTimeMinutes = now.hour * 60 + now.minute
     val currentPeriod = findCurrentPeriod(allTodayCourses, getStartTime, getEndTime, currentTimeMinutes)
     var detailCourse by remember { mutableStateOf<Course?>(null) }
+    var detailExam by remember { mutableStateOf<com.classapp.schedule.data.ScheduleItem.ExamItem?>(null) }
     // Only trigger animation once per app session, not on course refresh
     var animationPlayed by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     val maxStagger = (allTodayCourses.size - 1) * 200L
@@ -184,7 +186,11 @@ fun TodayScreen(
             items(todayExams) { exam ->
                 val examWeek = ScheduleResolver.examWeek(exam, semesterStart, currentWeek)
                 val examColor = CourseColors.getColorSync(colorGroupMode, exam.courseName, exam.classroom, week = examWeek, diffColorPerWeek = diffColorPerWeek, isDark = isDark)
-                ExamCard(exam = exam, examColor = examColor)
+                ExamCard(
+                    exam = exam,
+                    examColor = examColor,
+                    onClick = { detailExam = ScheduleResolver.examItem(exam, semesterStart, getStartTime, getEndTime) }
+                )
             }
         }
 
@@ -252,7 +258,11 @@ fun TodayScreen(
             items(upcomingExams) { exam ->
                 val examWeek = ScheduleResolver.examWeek(exam, semesterStart, currentWeek)
                 val examColor = CourseColors.getColorSync(colorGroupMode, exam.courseName, exam.classroom, week = examWeek, diffColorPerWeek = diffColorPerWeek, isDark = isDark)
-                ExamCard(exam = exam, examColor = examColor)
+                ExamCard(
+                    exam = exam,
+                    examColor = examColor,
+                    onClick = { detailExam = ScheduleResolver.examItem(exam, semesterStart, getStartTime, getEndTime) }
+                )
             }
         }
 
@@ -270,6 +280,23 @@ fun TodayScreen(
             courseColors = CourseColors.getColors(colorEngine, count = 8),
             colorGroupMode = colorGroupMode,
             currentWeek = currentWeek,
+            diffColorPerWeek = diffColorPerWeek
+        )
+    }
+
+    detailExam?.let { item ->
+        com.classapp.schedule.ui.weekly.ScheduleItemDetailSheet(
+            item = item,
+            getStartTime = getStartTime,
+            getEndTime = getEndTime,
+            onDismiss = { detailExam = null },
+            onEdit = {
+                detailExam = null
+                onExamEdit(item.exam)
+            },
+            courseColors = CourseColors.getColors(colorEngine, count = 8),
+            colorGroupMode = colorGroupMode,
+            currentWeek = item.weekRange.toIntOrNull() ?: currentWeek,
             diffColorPerWeek = diffColorPerWeek
         )
     }

@@ -219,6 +219,7 @@ fun ScheduleApp(
                     getStartTime = { viewModel.getStartTime(it) },
                     getEndTime = { viewModel.getEndTime(it) },
                     onCourseLongPress = { navController.navigate(Screen.CourseEdit.createRoute(it.id)) },
+                    onExamEdit = { navController.navigate(Screen.ExamEdit.createRoute(it.id)) },
                     diffColorPerWeek = diffColorPerWeek
                 )
             }
