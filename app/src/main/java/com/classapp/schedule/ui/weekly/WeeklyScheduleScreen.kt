@@ -77,6 +77,7 @@ fun WeeklyScheduleScreen(
     onWeekChange: (Int) -> Unit,
     onCourseClick: (Course) -> Unit,
     onCourseLongPress: (Course) -> Unit,
+    onExamEdit: (com.classapp.schedule.data.ExamEntity) -> Unit = {},
     onAddCourse: () -> Unit,
     onRefresh: () -> Unit,
     realCurrentWeek: Int = currentWeek,
@@ -488,8 +489,10 @@ fun WeeklyScheduleScreen(
         ScheduleItemDetailSheet(item = item, getStartTime = getStartTime, getEndTime = getEndTime,
             onDismiss = { detailItem = null }, onEdit = {
                 detailItem = null
-                val course = (item as? ScheduleItem.CourseItem)?.course ?: return@ScheduleItemDetailSheet
-                onCourseLongPress(course)
+                when (item) {
+                    is ScheduleItem.CourseItem -> onCourseLongPress(item.course)
+                    is ScheduleItem.ExamItem -> onExamEdit(item.exam)
+                }
             },
             colorEngine = colorEngine,
             colorGroupMode = colorGroupMode,

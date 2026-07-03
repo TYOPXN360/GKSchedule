@@ -245,6 +245,7 @@ fun ScheduleApp(
                     onWeekChange = { viewModel.setWeek(it.coerceIn(1, totalWeeks)) },
                     onCourseClick = { },
                     onCourseLongPress = { navController.navigate(Screen.CourseEdit.createRoute(it.id)) },
+                    onExamEdit = { navController.navigate(Screen.ExamEdit.createRoute(it.id)) },
                     onAddCourse = { navController.navigate(Screen.CourseEdit.createRoute()) },
                     onRefresh = { viewModel.refreshFromSchool() },
                     getStartTime = { viewModel.getStartTime(it) },
