@@ -210,7 +210,7 @@ fun ScheduleApp(
         ) {
             composable(Screen.Today.route) {
                 TodayScreen(
-                    courses = displayCourses, currentWeek = realCurrentWeek,
+                    courses = displayCourses, colorCourses = courses, currentWeek = realCurrentWeek,
                     colorEngine = colorEngine, colorGroupMode = colorGroupMode,
                     exams = examList,
                     showExamSchedule = showExamSchedule,
@@ -226,7 +226,7 @@ fun ScheduleApp(
 
             composable(Screen.Weekly.route) {
                 WeeklyScheduleScreen(
-                    courses = displayCourses, currentWeek = selectedWeek,
+                    courses = displayCourses, colorCourses = courses, currentWeek = selectedWeek,
                     totalWeeks = totalWeeks, periodsPerDay = periodsPerDay,
                     gridHeight = gridHeight, gridCorner = gridCorner,
                     gridSpacing = gridSpacing, showPeriodLabel = showPeriodLabel,
@@ -351,6 +351,7 @@ fun ScheduleApp(
                 val showExamReloginDialog by viewModel.showExamReloginDialog.collectAsState()
                 ExamScreen(
                     exams = examList,
+                    colorCourses = courses,
                     customExams = emptyList(),
                     isLoading = examLoading,
                     semesterStart = semesterStart,

@@ -18,6 +18,9 @@ object CourseColors {
     )
 
     @Composable
+    fun currentThemeHue(): Double = Hct.fromInt(MaterialTheme.colorScheme.primary.toArgb()).hue
+
+    @Composable
     fun getColor(
         engine: Int,
         groupMode: Int,
@@ -29,7 +32,7 @@ object CourseColors {
         diffColorPerWeek: Boolean = false
     ): CourseColorPair {
         val isDark = LocalAppIsDark.current
-        val themeHue = Hct.fromInt(MaterialTheme.colorScheme.primary.toArgb()).hue
+        val themeHue = currentThemeHue()
         return getColorSync(
             engine = engine,
             groupMode = groupMode,
@@ -88,6 +91,8 @@ object CourseColors {
         diffColorPerWeek: Boolean
     ): String = hueKey(courseName, classroom, week, groupMode.coerceIn(0, 2), diffColorPerWeek)
 
+    fun stableColorIndex(key: String): Int = stableSlot(key)
+
     private fun hueKey(
         courseName: String,
         classroom: String,
@@ -109,14 +114,18 @@ object CourseColors {
         return (positiveHash(classroom) % 5).toInt() + 1
     }
 
-    private fun stableSlot(key: String): Int = (positiveHash(key) % 360).toInt()
+    private fun stableSlot(key: String): Int = (positiveHash(key) % 4096).toInt()
 
     private fun hueForEngine(engine: Int, key: String, slot: Int, themeHue: Double): Double {
         val safeSlot = if (slot < 0) -slot.toLong() else slot.toLong()
         return when (engine) {
             0 -> normalizeHue(themeHue + safeSlot * GOLDEN_ANGLE)
             1 -> normalizeHue(18.0 + safeSlot * GOLDEN_ANGLE)
-            2 -> classicHues[(safeSlot % classicHues.size).toInt()]
+            2 -> {
+                val baseIndex = (safeSlot % classicHues.size).toInt()
+                val cycle = safeSlot / classicHues.size
+                normalizeHue(classicHues[baseIndex] + cycle * 11.0)
+            }
             else -> stableHue(key)
         }
     }

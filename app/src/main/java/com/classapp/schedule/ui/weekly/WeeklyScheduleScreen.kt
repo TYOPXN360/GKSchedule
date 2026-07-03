@@ -54,6 +54,7 @@ import com.classapp.schedule.util.CourseColors
 @Composable
 fun WeeklyScheduleScreen(
     courses: List<Course>,
+    colorCourses: List<Course> = courses,
     currentWeek: Int,
     totalWeeks: Int,
     periodsPerDay: Int,
@@ -94,7 +95,7 @@ fun WeeklyScheduleScreen(
     }
     var showWeekPicker by remember { mutableStateOf(false) }
     var detailItem by remember { mutableStateOf<ScheduleItem?>(null) }
-    var detailColorIndex by remember { mutableIntStateOf(0) }
+    var detailColorIndex by remember { mutableStateOf<Int?>(null) }
     var detailClassroomColorIndex by remember { mutableIntStateOf(0) }
     val hapticContext = androidx.compose.ui.platform.LocalContext.current
     val hapticView = androidx.compose.ui.platform.LocalView.current
@@ -103,6 +104,9 @@ fun WeeklyScheduleScreen(
     // Build unified schedule items (replaces id<0 hack)
     val scheduleItems = remember(courses, exams, showExamSchedule, semesterStart, getStartTime, getEndTime) {
         ScheduleResolver.buildItems(courses, exams, showExamSchedule, semesterStart, getStartTime, getEndTime)
+    }
+    val colorScheduleItems = remember(colorCourses, exams, semesterStart, getStartTime, getEndTime) {
+        ScheduleResolver.buildItems(colorCourses, exams, true, semesterStart, getStartTime, getEndTime)
     }
 
     // Compute visible weeks (skip empty weeks if hideEmptyWeeks is on)
@@ -234,13 +238,14 @@ fun WeeklyScheduleScreen(
 
             // 🔥 Fix: 使用 LocalAppIsDark 统一暗色模式判定源头（提到 Pager 外部供 detail sheet 使用）
             val isDark = com.classapp.schedule.ui.theme.LocalAppIsDark.current
+            val themeHue = CourseColors.currentThemeHue()
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier.weight(1f).fillMaxWidth()
                     .onGloballyPositioned { cropBottomPx = it.positionInRoot().y.toInt() + it.size.height }
             ) { page ->
                 val week = visibleWeeks.getOrElse(page) { currentWeek }
-                val weekBlocks = remember(week, colorGroupMode, diffColorPerWeek, scheduleItems, mergeConsecutive, detailedSplit, periodsPerDay, getStartTime, getEndTime) {
+                val weekBlocks = remember(week, colorGroupMode, diffColorPerWeek, scheduleItems, colorScheduleItems, mergeConsecutive, detailedSplit, periodsPerDay, getStartTime, getEndTime) {
                     ScheduleResolver.buildRenderBlocks(
                         items = scheduleItems,
                         week = week,
@@ -250,7 +255,8 @@ fun WeeklyScheduleScreen(
                         detailedSplit = detailedSplit,
                         periodsPerDay = periodsPerDay,
                         getStartTime = getStartTime,
-                        getEndTime = getEndTime
+                        getEndTime = getEndTime,
+                        colorItems = colorScheduleItems
                     )
                 }
 
@@ -295,9 +301,9 @@ fun WeeklyScheduleScreen(
                         }
 
                         // Layer 2: Canvas for course block colors
-                        val blockBaseColors = remember(weekBlocks, colorEngine, colorGroupMode, diffColorPerWeek, isDark) {
+                        val blockBaseColors = remember(weekBlocks, colorEngine, colorGroupMode, diffColorPerWeek, isDark, themeHue) {
                             weekBlocks.map { block ->
-                                com.classapp.schedule.util.CourseColors.getColorSync(
+                                CourseColors.getColorSync(
                                     engine = colorEngine,
                                     groupMode = colorGroupMode,
                                     courseName = block.item.name,
@@ -306,7 +312,8 @@ fun WeeklyScheduleScreen(
                                     colorIndex = block.colorIdx,
                                     week = week,
                                     diffColorPerWeek = diffColorPerWeek,
-                                    isDark = isDark
+                                    isDark = isDark,
+                                    themeHue = themeHue
                                 ).container
                             }
                         }
@@ -374,8 +381,8 @@ fun WeeklyScheduleScreen(
                                     .semantics { contentDescription = block.item.name }
                                     .padding(4.dp)
                             ) {
-                                val textColor = remember(block, colorEngine, colorGroupMode, diffColorPerWeek, isDark) {
-                                    com.classapp.schedule.util.CourseColors.getColorSync(
+                                val textColor = remember(block, colorEngine, colorGroupMode, diffColorPerWeek, isDark, themeHue) {
+                                    CourseColors.getColorSync(
                                         engine = colorEngine,
                                         groupMode = colorGroupMode,
                                         courseName = block.item.name,
@@ -384,7 +391,8 @@ fun WeeklyScheduleScreen(
                                         colorIndex = block.colorIdx,
                                         week = week,
                                         diffColorPerWeek = diffColorPerWeek,
-                                        isDark = isDark
+                                        isDark = isDark,
+                                        themeHue = themeHue
                                     ).content
                                 }
                                 Column {
@@ -498,11 +506,12 @@ fun WeeklyScheduleScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ScheduleItemDetailSheet(item: ScheduleItem, getStartTime: (Int) -> String, getEndTime: (Int) -> String, onDismiss: () -> Unit, onEdit: () -> Unit, colorEngine: Int = 0, colorGroupMode: Int = 0, colorIndex: Int? = item.colorIndex, classroomColorIndex: Int = 0, dotColor: Color? = null, currentWeek: Int = 0, diffColorPerWeek: Boolean = false) {
+fun ScheduleItemDetailSheet(item: ScheduleItem, getStartTime: (Int) -> String, getEndTime: (Int) -> String, onDismiss: () -> Unit, onEdit: () -> Unit, colorEngine: Int = 0, colorGroupMode: Int = 0, colorIndex: Int? = null, classroomColorIndex: Int = 0, dotColor: Color? = null, currentWeek: Int = 0, diffColorPerWeek: Boolean = false) {
     val isDark = com.classapp.schedule.ui.theme.LocalAppIsDark.current
-    val hctColors = remember(item, colorEngine, colorGroupMode, colorIndex, classroomColorIndex, currentWeek, diffColorPerWeek, isDark) {
+    val themeHue = CourseColors.currentThemeHue()
+    val hctColors = remember(item, colorEngine, colorGroupMode, colorIndex, classroomColorIndex, currentWeek, diffColorPerWeek, isDark, themeHue) {
         val targetWeek = if (item.isExam) item.weekRange.toIntOrNull() ?: currentWeek else currentWeek
-        com.classapp.schedule.util.CourseColors.getColorSync(
+        CourseColors.getColorSync(
             engine = colorEngine,
             groupMode = colorGroupMode,
             courseName = item.name,
@@ -511,7 +520,8 @@ fun ScheduleItemDetailSheet(item: ScheduleItem, getStartTime: (Int) -> String, g
             colorIndex = colorIndex,
             week = targetWeek,
             diffColorPerWeek = diffColorPerWeek,
-            isDark = isDark
+            isDark = isDark,
+            themeHue = themeHue
         )
     }
 

@@ -45,6 +45,7 @@ import java.time.temporal.ChronoUnit
 @Composable
 fun ExamScreen(
     exams: List<ExamEntity>,
+    colorCourses: List<Course> = emptyList(),
     customExams: List<Course> = emptyList(),
     isLoading: Boolean,
     semesterStart: LocalDate,
@@ -86,6 +87,14 @@ fun ExamScreen(
     }
 
     val isDark = LocalAppIsDark.current
+    val themeHue = CourseColors.currentThemeHue()
+    val colorScheduleItems = remember(colorCourses, exams, customExams, semesterStart, getStartTime, getEndTime) {
+        ScheduleResolver.buildItems(colorCourses, exams, true, semesterStart, getStartTime, getEndTime) +
+            customExams.map { ScheduleItem.CourseItem(it) }
+    }
+    val colorAssignments = remember(colorScheduleItems, colorGroupMode, diffColorPerWeek) {
+        ScheduleResolver.buildColorAssignments(colorScheduleItems, colorGroupMode, diffColorPerWeek)
+    }
     val scaffoldBg = if (isDark) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainer
     var detailItem by remember { mutableStateOf<ScheduleItem.ExamItem?>(null) }
 
@@ -240,14 +249,24 @@ fun ExamScreen(
                 ) {
                     items(sortedExams) { exam ->
                         val examWeek = ScheduleResolver.examWeek(exam, semesterStart, currentWeek)
+                        val colorAssignment = colorAssignments.get(
+                            courseName = exam.courseName,
+                            classroom = exam.classroom,
+                            week = examWeek,
+                            colorGroupMode = colorGroupMode,
+                            diffColorPerWeek = diffColorPerWeek
+                        )
                         val examColor = CourseColors.getColorSync(
                             engine = colorEngine,
                             groupMode = colorGroupMode,
                             courseName = exam.courseName,
                             classroom = exam.classroom,
+                            classroomIndex = colorAssignment.classroomColorIndex,
+                            colorIndex = colorAssignment.colorIndex,
                             week = examWeek,
                             diffColorPerWeek = diffColorPerWeek,
-                            isDark = isDark
+                            isDark = isDark,
+                            themeHue = themeHue
                         )
                         ExamCard(
                             exam = exam,
@@ -263,14 +282,24 @@ fun ExamScreen(
                         val now = LocalDate.now()
                         val isPast = examDate.isBefore(now)
                         val daysLeft = if (!isPast) ChronoUnit.DAYS.between(now, examDate) else -1L
+                        val colorAssignment = colorAssignments.get(
+                            courseName = course.name,
+                            classroom = course.classroom,
+                            week = weekOffset + 1,
+                            colorGroupMode = colorGroupMode,
+                            diffColorPerWeek = diffColorPerWeek
+                        )
                         val examColor = CourseColors.getColorSync(
                             engine = colorEngine,
                             groupMode = colorGroupMode,
                             courseName = course.name,
                             classroom = course.classroom,
+                            classroomIndex = colorAssignment.classroomColorIndex,
+                            colorIndex = colorAssignment.colorIndex,
                             week = weekOffset + 1,
                             diffColorPerWeek = diffColorPerWeek,
-                            isDark = isDark
+                            isDark = isDark,
+                            themeHue = themeHue
                         )
                         Md3Card(onClick = { /* Custom exams don't use the shared detail sheet */ }, modifier = Modifier.fillMaxWidth(), variant = Md3CardVariant.Elevated) {
                             Row(modifier = Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -292,6 +321,13 @@ fun ExamScreen(
 
     // Detail sheet
     detailItem?.let { item ->
+        val detailWeek = item.weekRange.toIntOrNull() ?: currentWeek
+        val colorAssignment = colorAssignments.get(
+            item = item,
+            week = detailWeek,
+            colorGroupMode = colorGroupMode,
+            diffColorPerWeek = diffColorPerWeek
+        )
         com.classapp.schedule.ui.weekly.ScheduleItemDetailSheet(
             item = item, getStartTime = getStartTime, getEndTime = getEndTime,
             onDismiss = { detailItem = null },
@@ -301,7 +337,9 @@ fun ExamScreen(
             },
             colorEngine = colorEngine,
             colorGroupMode = colorGroupMode,
-            currentWeek = currentWeek, diffColorPerWeek = diffColorPerWeek
+            colorIndex = colorAssignment.colorIndex,
+            classroomColorIndex = colorAssignment.classroomColorIndex,
+            currentWeek = detailWeek, diffColorPerWeek = diffColorPerWeek
         )
     }
 

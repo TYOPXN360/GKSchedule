@@ -10,13 +10,64 @@ data class ScheduleRenderBlock(
     val day: Int,
     val start: Int,
     val span: Int,
-    val colorIdx: Int,
+    val colorIdx: Int?,
     val classroomColorIdx: Int,
     val startLine: Float,
     val endLine: Float
 )
 
+data class ScheduleColorAssignment(
+    val colorIndex: Int?,
+    val classroomColorIndex: Int
+)
+
+data class ScheduleColorAssignments(
+    val colorSlots: Map<String, Int>,
+    val classroomSlots: Map<String, Map<String, Int>>
+) {
+    fun get(
+        courseName: String,
+        classroom: String,
+        week: Int,
+        colorGroupMode: Int,
+        diffColorPerWeek: Boolean
+    ): ScheduleColorAssignment {
+        val normalizedGroupMode = colorGroupMode.coerceIn(0, 2)
+        val colorKey = CourseColors.colorIdentityKey(
+            groupMode = normalizedGroupMode,
+            courseName = courseName,
+            classroom = classroom,
+            week = week,
+            diffColorPerWeek = diffColorPerWeek
+        )
+        val classroomIndex = if (normalizedGroupMode == 1 && classroom.isNotBlank()) {
+            classroomSlots[courseName]?.get(classroom) ?: 0
+        } else {
+            0
+        }
+        return ScheduleColorAssignment(
+            colorIndex = colorSlots[colorKey] ?: CourseColors.stableColorIndex(colorKey),
+            classroomColorIndex = classroomIndex
+        )
+    }
+
+    fun get(
+        item: ScheduleItem,
+        week: Int,
+        colorGroupMode: Int,
+        diffColorPerWeek: Boolean
+    ): ScheduleColorAssignment = get(
+        courseName = item.name,
+        classroom = item.classroom,
+        week = week,
+        colorGroupMode = colorGroupMode,
+        diffColorPerWeek = diffColorPerWeek
+    )
+}
+
 object ScheduleResolver {
+    private const val COLOR_WEEK_LIMIT = 52
+
     fun buildItems(
         courses: List<Course>,
         exams: List<ExamEntity>,
@@ -35,6 +86,49 @@ object ScheduleResolver {
 
     fun itemsForWeek(items: List<ScheduleItem>, week: Int): List<ScheduleItem> =
         items.filter { it.isInWeek(week) }
+
+    fun buildColorAssignments(
+        items: List<ScheduleItem>,
+        colorGroupMode: Int,
+        diffColorPerWeek: Boolean
+    ): ScheduleColorAssignments {
+        val normalizedGroupMode = colorGroupMode.coerceIn(0, 2)
+        val colorSlots = items
+            .flatMap { item ->
+                colorWeeks(item, diffColorPerWeek).map { week ->
+                    CourseColors.colorIdentityKey(
+                        groupMode = normalizedGroupMode,
+                        courseName = item.name,
+                        classroom = item.classroom,
+                        week = week,
+                        diffColorPerWeek = diffColorPerWeek
+                    )
+                }
+            }
+            .distinct()
+            .sorted()
+            .mapIndexed { index, key -> key to index }
+            .toMap()
+
+        val classroomSlots = if (normalizedGroupMode == 1) {
+            items.groupBy { it.name }
+                .mapValues { (_, subjectItems) ->
+                    subjectItems.map { it.classroom }
+                        .filter { it.isNotBlank() }
+                        .distinct()
+                        .sorted()
+                        .mapIndexed { index, classroom -> classroom to index + 1 }
+                        .toMap()
+                }
+        } else {
+            emptyMap()
+        }
+
+        return ScheduleColorAssignments(
+            colorSlots = colorSlots,
+            classroomSlots = classroomSlots
+        )
+    }
 
     fun visibleWeeks(
         items: List<ScheduleItem>,
@@ -63,49 +157,15 @@ object ScheduleResolver {
         detailedSplit: Boolean,
         periodsPerDay: Int,
         getStartTime: (Int) -> String,
-        getEndTime: (Int) -> String
+        getEndTime: (Int) -> String,
+        colorItems: List<ScheduleItem> = items
     ): List<ScheduleRenderBlock> {
         val blocks = mutableListOf<ScheduleRenderBlock>()
         val weekItems = itemsForWeek(items, week)
-        val colorSlots = weekItems
-            .map { item ->
-                CourseColors.colorIdentityKey(
-                    groupMode = colorGroupMode,
-                    courseName = item.name,
-                    classroom = item.classroom,
-                    week = week,
-                    diffColorPerWeek = diffColorPerWeek
-                )
-            }
-            .distinct()
-            .sorted()
-            .mapIndexed { index, key -> key to index }
-            .toMap()
-        val classroomSlots = weekItems
-            .groupBy { it.name }
-            .mapValues { (_, subjectItems) ->
-                subjectItems.map { it.classroom }
-                    .filter { it.isNotBlank() }
-                    .distinct()
-                    .sorted()
-                    .mapIndexed { index, classroom -> classroom to index }
-                    .toMap()
-            }
+        val colorAssignments = buildColorAssignments(colorItems, colorGroupMode, diffColorPerWeek)
 
         weekItems.forEach { item ->
-            val colorKey = CourseColors.colorIdentityKey(
-                groupMode = colorGroupMode,
-                courseName = item.name,
-                classroom = item.classroom,
-                week = week,
-                diffColorPerWeek = diffColorPerWeek
-            )
-            val colorIdx = colorSlots[colorKey] ?: 0
-            val classroomColorIdx = if (colorGroupMode == 1) {
-                classroomSlots[item.name]?.get(item.classroom) ?: 0
-            } else {
-                0
-            }
+            val colorAssignment = colorAssignments.get(item, week, colorGroupMode, diffColorPerWeek)
 
             fun addBlock(start: Int, span: Int) {
                 val startLine = if (item.isExam) {
@@ -125,8 +185,8 @@ object ScheduleResolver {
                         day = item.dayOfWeek,
                         start = start,
                         span = span,
-                        colorIdx = colorIdx,
-                        classroomColorIdx = classroomColorIdx,
+                        colorIdx = colorAssignment.colorIndex,
+                        classroomColorIdx = colorAssignment.classroomColorIndex,
                         startLine = startLine,
                         endLine = endLine
                     )
@@ -246,5 +306,15 @@ object ScheduleResolver {
         LocalDate.parse(value)
     } catch (_: Exception) {
         null
+    }
+
+    private fun colorWeeks(item: ScheduleItem, diffColorPerWeek: Boolean): List<Int> {
+        if (!diffColorPerWeek) return listOf(0)
+        return when (item.weekRange) {
+            "all" -> (1..COLOR_WEEK_LIMIT).toList()
+            "odd" -> (1..COLOR_WEEK_LIMIT step 2).toList()
+            "even" -> (2..COLOR_WEEK_LIMIT step 2).toList()
+            else -> item.getWeekList().filter { it > 0 }.ifEmpty { listOf(0) }
+        }
     }
 }
