@@ -56,6 +56,7 @@ fun ExamScreen(
     onShowExamScheduleChange: (Boolean) -> Unit = {},
     onExamLookaheadWeeksChange: (Int) -> Unit = {},
     onAddExam: () -> Unit = {},
+    onEditExam: (ExamEntity) -> Unit = {},
     getStartTime: (Int) -> String = { "" },
     getEndTime: (Int) -> String = { "" },
     currentWeek: Int = 1,
@@ -276,7 +277,11 @@ fun ExamScreen(
     detailItem?.let { item ->
         com.classapp.schedule.ui.weekly.ScheduleItemDetailSheet(
             item = item, getStartTime = getStartTime, getEndTime = getEndTime,
-            onDismiss = { detailItem = null }, onEdit = {},
+            onDismiss = { detailItem = null },
+            onEdit = {
+                detailItem = null
+                onEditExam(item.exam)
+            },
             colorGroupMode = colorGroupMode, colorIndex = item.colorIndex,
             currentWeek = currentWeek, diffColorPerWeek = diffColorPerWeek
         )

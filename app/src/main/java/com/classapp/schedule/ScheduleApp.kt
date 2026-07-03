@@ -57,9 +57,9 @@ sealed class Screen(val route: String) {
         fun createRoute(courseId: Long? = null, isExam: Boolean = false): String =
             "course_edit?courseId=${courseId ?: -1L}&isExam=$isExam"
     }
-    data object ExamEdit : Screen("exam_edit?courseId={courseId}") {
-        fun createRoute(courseId: Long? = null): String =
-            "exam_edit?courseId=${courseId ?: -1L}"
+    data object ExamEdit : Screen("exam_edit?examId={examId}") {
+        fun createRoute(examId: Long? = null): String =
+            "exam_edit?examId=${examId ?: -1L}"
     }
 }
 
@@ -371,6 +371,7 @@ fun ScheduleApp(
                     currentWeek = selectedWeek,
                     diffColorPerWeek = diffColorPerWeek,
                     onAddExam = { navController.navigate(Screen.ExamEdit.createRoute()) },
+                    onEditExam = { navController.navigate(Screen.ExamEdit.createRoute(it.id)) },
                     onBack = { navController.popBackStack() }
                 )
             }

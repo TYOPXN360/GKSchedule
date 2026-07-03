@@ -525,6 +525,14 @@ fun ScheduleItemDetailSheet(item: ScheduleItem, getStartTime: (Int) -> String, g
             if (item.classroom.isNotEmpty()) DetailRow("教室", item.classroom)
             DetailRow("周次", item.weekRange)
             if (cleanedRemark.isNotEmpty()) DetailRow("备注", cleanedRemark)
+            Spacer(modifier = Modifier.height(16.dp))
+            FilledTonalButton(
+                onClick = onEdit,
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.medium
+            ) {
+                Text("编辑")
+            }
         }
     }
 }
