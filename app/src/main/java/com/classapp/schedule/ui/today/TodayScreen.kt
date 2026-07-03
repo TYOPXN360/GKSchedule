@@ -296,6 +296,7 @@ fun TodayScreen(
             },
             courseColors = CourseColors.getColors(colorEngine, count = 8),
             colorGroupMode = colorGroupMode,
+            colorIndex = 0,
             currentWeek = item.weekRange.toIntOrNull() ?: currentWeek,
             diffColorPerWeek = diffColorPerWeek
         )

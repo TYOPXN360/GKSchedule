@@ -94,6 +94,7 @@ fun WeeklyScheduleScreen(
     }
     var showWeekPicker by remember { mutableStateOf(false) }
     var detailItem by remember { mutableStateOf<ScheduleItem?>(null) }
+    var detailColorIndex by remember { mutableIntStateOf(0) }
     val hapticContext = androidx.compose.ui.platform.LocalContext.current
     val hapticView = androidx.compose.ui.platform.LocalView.current
     val labelWidthDp = if (showPeriodLabel) { if (showTimeLabel) 64.dp else 36.dp } else 0.dp
@@ -358,6 +359,7 @@ fun WeeklyScheduleScreen(
                                     .clickable {
                                         com.classapp.schedule.util.HapticFeedback.medium(hapticView)
                                         detailItem = block.item
+                                        detailColorIndex = block.colorIdx
                                     }
                                     .semantics { contentDescription = block.item.name }
                                     .padding(4.dp)
@@ -466,7 +468,7 @@ fun WeeklyScheduleScreen(
             },
             courseColors = CourseColors.getColors(colorEngine, count = 8),
             colorGroupMode = colorGroupMode,
-            colorIndex = item.colorIndex,
+            colorIndex = detailColorIndex,
             currentWeek = targetWeek,
             diffColorPerWeek = diffColorPerWeek)
     }
@@ -480,8 +482,8 @@ fun WeeklyScheduleScreen(
 @Composable
 fun ScheduleItemDetailSheet(item: ScheduleItem, getStartTime: (Int) -> String, getEndTime: (Int) -> String, onDismiss: () -> Unit, onEdit: () -> Unit, courseColors: List<Pair<Color, Color>> = CourseColors.getColors(0, count = 8), colorGroupMode: Int = 0, colorIndex: Int = item.colorIndex, dotColor: Color? = null, currentWeek: Int = 0, diffColorPerWeek: Boolean = false) {
     val isDark = com.classapp.schedule.ui.theme.LocalAppIsDark.current
-    val hctColors = remember(item, colorGroupMode, currentWeek, diffColorPerWeek, isDark) {
-        val realClassroomIdx = if (colorGroupMode == 1) item.colorIndex % 10 else 0
+    val hctColors = remember(item, colorGroupMode, colorIndex, currentWeek, diffColorPerWeek, isDark) {
+        val realClassroomIdx = if (colorGroupMode == 1) colorIndex % 10 else 0
         val targetWeek = if (item.isExam) item.weekRange.toIntOrNull() ?: currentWeek else currentWeek
         com.classapp.schedule.util.CourseColors.getColorSync(colorGroupMode, item.name, item.classroom, classroomIndex = realClassroomIdx, week = targetWeek, diffColorPerWeek = diffColorPerWeek, isDark = isDark)
     }

@@ -282,7 +282,7 @@ fun ExamScreen(
                 detailItem = null
                 onEditExam(item.exam)
             },
-            colorGroupMode = colorGroupMode, colorIndex = item.colorIndex,
+            colorGroupMode = colorGroupMode, colorIndex = 0,
             currentWeek = currentWeek, diffColorPerWeek = diffColorPerWeek
         )
     }
