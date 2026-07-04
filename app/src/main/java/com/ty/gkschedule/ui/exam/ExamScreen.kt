@@ -1,4 +1,5 @@
 package com.ty.gkschedule.ui.exam
+import com.ty.gkschedule.ui.theme.GKSwitch
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -196,12 +197,9 @@ fun ExamScreen(
                                 Text("开启后考试日程将作为方块平铺在大盘网格中", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f))
                             }
                         }
-                        Switch(
+                        GKSwitch(
                             checked = showExamSchedule,
-                            onCheckedChange = onShowExamScheduleChange,
-                            thumbContent = if (showExamSchedule) {
-                                { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(SwitchDefaults.IconSize)) }
-                            } else null
+                            onCheckedChange = onShowExamScheduleChange
                         )
                     }
 

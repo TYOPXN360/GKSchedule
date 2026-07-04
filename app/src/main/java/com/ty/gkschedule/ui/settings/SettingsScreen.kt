@@ -1,4 +1,5 @@
 package com.ty.gkschedule.ui.settings
+import com.ty.gkschedule.ui.theme.GKSwitch
 
 import android.app.DatePickerDialog
 import androidx.compose.animation.*
@@ -649,12 +650,9 @@ private fun SyncPage(
                         IconButton(onClick = { showHeartbeatInfo = true }) {
                             Icon(Icons.Default.Info, "Info", tint = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
-                        Switch(
+                        GKSwitch(
                             checked = tokenHeartbeat,
-                            onCheckedChange = onTokenHeartbeatChange,
-                            thumbContent = if (tokenHeartbeat) {
-                                { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(SwitchDefaults.IconSize)) }
-                            } else null
+                            onCheckedChange = onTokenHeartbeatChange
                         )
                     }
                 },
@@ -733,12 +731,9 @@ private fun SwitchItem(icon: androidx.compose.ui.graphics.vector.ImageVector, ti
         headlineContent = { Text(title) },
         leadingContent = { Icon(icon, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
         trailingContent = {
-            Switch(
+            GKSwitch(
                 checked = checked,
-                onCheckedChange = onChange,
-                thumbContent = if (checked) {
-                    { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(SwitchDefaults.IconSize)) }
-                } else null
+                onCheckedChange = onChange
             )
         },
         colors = ListItemDefaults.colors(containerColor = Color.Transparent)

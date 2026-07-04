@@ -1,4 +1,5 @@
 package com.ty.gkschedule.ui.course
+import com.ty.gkschedule.ui.theme.GKSwitch
 
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -217,7 +218,7 @@ fun CourseEditScreen(
             OutlinedTextField(value = classroom, onValueChange = { classroom = it }, label = { Text(stringResource(R.string.course_classroom)) }, modifier = Modifier.fillMaxWidth(), singleLine = true)
             Text(stringResource(R.string.day_of_week), style = MaterialTheme.typography.labelLarge)
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) { dayNames.forEachIndexed { index, dn -> FilterChip(selected = dayOfWeek == index + 1, onClick = { dayOfWeek = index + 1 }, label = { Text(dn, style = MaterialTheme.typography.labelSmall) }, modifier = Modifier.weight(1f)) } }
-            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) { Text(stringResource(R.string.custom_time), style = MaterialTheme.typography.labelLarge); Switch(checked = isCustomTime, onCheckedChange = { isCustomTime = it }, thumbContent = if (isCustomTime) { { Icon(Icons.Default.Check, null, modifier = Modifier.size(SwitchDefaults.IconSize)) } } else null) }
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) { Text(stringResource(R.string.custom_time), style = MaterialTheme.typography.labelLarge); GKSwitch(checked = isCustomTime, onCheckedChange = { isCustomTime = it }) }
             if (isCustomTime) { Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) { OutlinedButton(onClick = { showM3StartTimePicker = true }, modifier = Modifier.weight(1f)) { Text("${stringResource(R.string.custom_start_time)}: $customStartTime") }; OutlinedButton(onClick = { showM3EndTimePicker = true }, modifier = Modifier.weight(1f)) { Text("${stringResource(R.string.custom_end_time)}: $customEndTime") } } } else { Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) { Text(stringResource(R.string.start_period), style = MaterialTheme.typography.labelLarge); Spacer(modifier = Modifier.weight(1f)); Stepper(value = startPeriod, min = 1, max = periodsPerDay, onChange = { startPeriod = it }) }; Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) { Text(stringResource(R.string.duration), style = MaterialTheme.typography.labelLarge); Spacer(modifier = Modifier.weight(1f)); Stepper(value = periods, min = 1, max = (periodsPerDay - startPeriod + 1).coerceAtLeast(1), onChange = { periods = it }) } }
             Text(stringResource(R.string.week_range), style = MaterialTheme.typography.labelLarge)
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) { weekRangeOptions.forEach { (key, label) -> FilterChip(selected = weekRange == key || (key == "custom" && weekRange !in listOf("all", "odd", "even")), onClick = { weekRange = key }, label = { Text(label, style = MaterialTheme.typography.labelSmall) }) } }
@@ -251,14 +252,9 @@ private fun CourseHiddenSwitch(isHidden: Boolean, onHiddenChange: (Boolean) -> U
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        Switch(
+        GKSwitch(
             checked = isHidden,
-            onCheckedChange = onHiddenChange,
-            thumbContent = if (isHidden) {
-                { Icon(Icons.Default.Check, null, modifier = Modifier.size(SwitchDefaults.IconSize)) }
-            } else {
-                null
-            }
+            onCheckedChange = onHiddenChange
         )
     }
 }
