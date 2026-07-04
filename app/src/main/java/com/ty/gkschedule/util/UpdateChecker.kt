@@ -136,8 +136,7 @@ object UpdateChecker {
         if (!downloadDir.exists()) downloadDir.mkdirs()
 
         val file = File(downloadDir, fileName)
-        // 删除已存在的文件
-        if (file.exists()) file.delete()
+        val tempFile = File(downloadDir, "$fileName.tmp")
 
         android.util.Log.d("UpdateChecker", "Downloading from: $url")
 
@@ -186,7 +185,7 @@ object UpdateChecker {
         var downloadedBytes = 0L
 
         body.byteStream().use { input ->
-            file.outputStream().use { output ->
+            tempFile.outputStream().use { output ->
                 val buffer = ByteArray(8192)
                 var bytesRead: Int
                 var lastProgressUpdate = 0L
@@ -213,6 +212,10 @@ object UpdateChecker {
                 }
             }
         }
+
+        // Rename temp file to final file
+        if (file.exists()) file.delete()
+        tempFile.renameTo(file)
 
         // Download complete
         builder.setContentText("下载完成，点击安装")
