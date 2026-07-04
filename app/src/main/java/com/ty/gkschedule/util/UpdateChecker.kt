@@ -79,11 +79,14 @@ object UpdateChecker {
             val latestVersion = release.tag_name.removePrefix("v")
 
             val apkAsset = release.assets.find { it.name.endsWith(".apk") }
-            val downloadUrl = apkAsset?.browser_download_url?.let { url ->
+            val rawUrl = apkAsset?.browser_download_url ?: ""
+            val downloadUrl = rawUrl.let { url ->
                 // 使用 ghfast.top 加速
                 url.replace("https://github.com", GHFAST_BASE)
-                    .replace("https://raw.githubusercontent.com", GHFAST_BASE)
-            } ?: ""
+            }
+
+            android.util.Log.d("UpdateChecker", "Raw URL: $rawUrl")
+            android.util.Log.d("UpdateChecker", "Download URL: $downloadUrl")
 
             val isUpdateAvailable = isNewerVersion(currentVersion, latestVersion)
 
@@ -122,11 +125,15 @@ object UpdateChecker {
 
         val file = File(downloadDir, fileName)
 
+        android.util.Log.d("UpdateChecker", "Downloading from: $url")
+
         val request = Request.Builder()
             .url(url)
             .build()
 
         val response = client.newCall(request).execute()
+        android.util.Log.d("UpdateChecker", "Download response: ${response.code}")
+
         if (!response.isSuccessful) {
             throw Exception("Download failed: ${response.code}")
         }
