@@ -7,25 +7,41 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.ty.gkschedule.R
+import com.ty.gkschedule.util.UpdateChecker
+import com.ty.gkschedule.util.UpdateInfo
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AboutDetailPage(
     onBack: () -> Unit
 ) {
+    val context = LocalContext.current
     var showDisclaimerDialog by remember { mutableStateOf(false) }
+    var updateInfo by remember { mutableStateOf<UpdateInfo?>(null) }
+    var isCheckingUpdate by remember { mutableStateOf(false) }
+    var updateError by remember { mutableStateOf<String?>(null) }
+    var isDownloading by remember { mutableStateOf(false) }
+
+    val currentVersion = remember { UpdateChecker.getCurrentVersion(context) }
 
     Scaffold(
         contentWindowInsets = WindowInsets.systemBars,
@@ -170,6 +186,210 @@ fun AboutDetailPage(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Update check section
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    // Current version
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = stringResource(R.string.update_current_version),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = currentVersion,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Check update button
+                    Button(
+                        onClick = {
+                            if (!isCheckingUpdate) {
+                                isCheckingUpdate = true
+                                updateError = null
+                                GlobalScope.launch(Dispatchers.IO) {
+                                    UpdateChecker.checkForUpdate(context)
+                                        .onSuccess { info ->
+                                            withContext(Dispatchers.Main) {
+                                                updateInfo = info
+                                                isCheckingUpdate = false
+                                            }
+                                        }
+                                        .onFailure { e ->
+                                            withContext(Dispatchers.Main) {
+                                                updateError = e.message
+                                                isCheckingUpdate = false
+                                            }
+                                        }
+                                }
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !isCheckingUpdate
+                    ) {
+                        if (isCheckingUpdate) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp,
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                        } else {
+                            Icon(Icons.Default.Refresh, null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                        }
+                        Text(stringResource(R.string.settings_category_update))
+                    }
+
+                    // Update status
+                    if (updateInfo != null) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        if (updateInfo!!.isUpdateAvailable) {
+                            // New version available
+                            Surface(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(8.dp),
+                                color = MaterialTheme.colorScheme.primaryContainer
+                            ) {
+                                Column(modifier = Modifier.padding(12.dp)) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(Icons.Default.SystemUpdate, null, tint = MaterialTheme.colorScheme.primary)
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = stringResource(R.string.update_available),
+                                            style = MaterialTheme.typography.titleSmall,
+                                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = "${stringResource(R.string.update_latest_version)}: ${updateInfo!!.latestVersion}",
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                    if (updateInfo!!.fileSize > 0) {
+                                        Text(
+                                            text = "${stringResource(R.string.update_size)}: ${formatFileSize(updateInfo!!.fileSize)}",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                                        )
+                                    }
+                                    if (updateInfo!!.releaseNotes.isNotEmpty()) {
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Text(
+                                            text = updateInfo!!.releaseNotes,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                                        )
+                                    }
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            // Download button
+                            Button(
+                                onClick = {
+                                    if (!isDownloading) {
+                                        isDownloading = true
+                                        GlobalScope.launch(Dispatchers.IO) {
+                                            try {
+                                                val file = UpdateChecker.downloadApk(
+                                                    context,
+                                                    updateInfo!!.downloadUrl,
+                                                    "GKSchedule-v${updateInfo!!.latestVersion}.apk"
+                                                )
+                                                withContext(Dispatchers.Main) {
+                                                    isDownloading = false
+                                                    UpdateChecker.installApk(context, file)
+                                                }
+                                            } catch (e: Exception) {
+                                                withContext(Dispatchers.Main) {
+                                                    isDownloading = false
+                                                    updateError = e.message
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                enabled = !isDownloading && updateInfo?.downloadUrl?.isNotEmpty() == true
+                            ) {
+                                if (isDownloading) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(20.dp),
+                                        strokeWidth = 2.dp,
+                                        color = MaterialTheme.colorScheme.onPrimary
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(stringResource(R.string.update_downloading))
+                                } else {
+                                    Icon(Icons.Default.Download, null)
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(stringResource(R.string.update_download))
+                                }
+                            }
+                        } else {
+                            // No update available
+                            Surface(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(8.dp),
+                                color = MaterialTheme.colorScheme.surfaceContainerHighest
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(Icons.Default.CheckCircle, null, tint = MaterialTheme.colorScheme.primary)
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = stringResource(R.string.update_not_available),
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // Error message
+                    if (updateError != null) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(8.dp),
+                            color = MaterialTheme.colorScheme.errorContainer
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(Icons.Default.Error, null, tint = MaterialTheme.colorScheme.error)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = updateError!!,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onErrorContainer
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             // Copyright
             Text(
                 text = stringResource(R.string.about_copyright),
@@ -239,5 +459,13 @@ private fun AIItem(name: String) {
             text = name,
             style = MaterialTheme.typography.bodyMedium
         )
+    }
+}
+
+private fun formatFileSize(bytes: Long): String {
+    return when {
+        bytes < 1024 -> "$bytes B"
+        bytes < 1024 * 1024 -> "${bytes / 1024} KB"
+        else -> "${"%.1f".format(bytes / (1024.0 * 1024.0))} MB"
     }
 }
