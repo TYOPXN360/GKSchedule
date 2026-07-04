@@ -72,12 +72,27 @@ class ReminderReceiver : BroadcastReceiver() {
         if (eventType == EVENT_PROGRESS) {
             val percent = progressPercent(startEpoch, endEpoch)
             val titlePrefix = if (itemType == "exam") "正在考试" else "正在上课"
-            builder
-                .setContentTitle("$titlePrefix：$courseName")
-                .setContentText("${percent}% · ${body.ifEmpty { "进行中" }}")
-                .setProgress(100, percent, false)
-                .setOngoing(true)
-                .setAutoCancel(false)
+
+            // 尝试使用 ProgressStyle (Live Update API)
+            try {
+                val progressStyle = NotificationCompat.ProgressStyle()
+                    .setProgress(percent)
+                builder
+                    .setContentTitle("$titlePrefix：$courseName")
+                    .setContentText("${percent}% · ${body.ifEmpty { "进行中" }}")
+                    .setStyle(progressStyle)
+                    .setOngoing(true)
+                    .setAutoCancel(false)
+                    .setRequestPromotedOngoing(true)
+            } catch (e: Exception) {
+                // Fallback: 标准进度条
+                builder
+                    .setContentTitle("$titlePrefix：$courseName")
+                    .setContentText("${percent}% · ${body.ifEmpty { "进行中" }}")
+                    .setProgress(100, percent, false)
+                    .setOngoing(true)
+                    .setAutoCancel(false)
+            }
         } else {
             val titlePrefix = if (itemType == "exam") "考前提醒" else "课前提醒"
             val fallback = if (itemType == "exam") "即将考试" else "即将上课"

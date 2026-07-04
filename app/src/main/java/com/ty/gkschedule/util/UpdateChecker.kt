@@ -142,7 +142,7 @@ object UpdateChecker {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         createNotificationChannel(notificationManager)
 
-        // 标准进度通知 (兼容所有版本)
+        // 尝试使用 ProgressStyle (Live Update API)
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentTitle("正在下载更新")
@@ -150,7 +150,16 @@ object UpdateChecker {
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
-            .setProgress(100, 0, false)
+
+        try {
+            val progressStyle = NotificationCompat.ProgressStyle()
+                .setProgress(0)
+            builder.setStyle(progressStyle)
+            builder.setRequestPromotedOngoing(true)
+        } catch (e: Exception) {
+            // Fallback: 标准进度条
+            builder.setProgress(100, 0, false)
+        }
 
         notificationManager.notify(NOTIFICATION_ID, builder.build())
 
@@ -189,7 +198,13 @@ object UpdateChecker {
                     if (now - lastProgressUpdate > 500 && totalBytes > 0) {
                         lastProgressUpdate = now
                         val progress = (downloadedBytes * 100 / totalBytes).toInt()
-                        builder.setProgress(100, progress, false)
+                        try {
+                            val progressStyle = NotificationCompat.ProgressStyle()
+                                .setProgress(progress)
+                            builder.setStyle(progressStyle)
+                        } catch (e: Exception) {
+                            builder.setProgress(100, progress, false)
+                        }
                         builder.setContentText("${formatFileSize(downloadedBytes)} / ${formatFileSize(totalBytes)}")
                         notificationManager.notify(NOTIFICATION_ID, builder.build())
                     }
@@ -200,7 +215,6 @@ object UpdateChecker {
         // Download complete
         builder.setContentText("下载完成，点击安装")
             .setStyle(NotificationCompat.BigTextStyle().bigText("GKSchedule v$version 下载完成"))
-            .setProgress(0, 0, false)
             .setOngoing(false)
             .setAutoCancel(true)
 
