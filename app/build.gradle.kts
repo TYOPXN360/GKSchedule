@@ -28,10 +28,10 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = file("/mnt/TY/android/android-project/classapp/.android/debug.keystore")
-            storePassword = "android"
-            keyAlias = "androiddebugkey"
-            keyPassword = "android"
+            storeFile = file("/mnt/TY/android/android-project/WIfikeyXposed/wifikeyxposed.keystore")
+            storePassword = "tyopxn360"
+            keyAlias = "tyopxn360"
+            keyPassword = "tyopxn360"
         }
     }
 
