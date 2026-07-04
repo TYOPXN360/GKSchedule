@@ -41,9 +41,8 @@ data class UpdateInfo(
 
 object UpdateChecker {
     private const val GITHUB_API = "https://api.github.com/repos/TYOPXN360/GKSchedule/releases/latest"
-    private const val GITHUB_RAW = "https://raw.githubusercontent.com/TYOPXN360/GKSchedule/releases/download"
-    // ghfast.top 加速链接
-    private const val GHFAST_BASE = "https://ghfast.top/https://github.com/TYOPXN360/GKSchedule/releases/download"
+    // ghfast.top 加速前缀
+    private const val GHFAST_PREFIX = "https://ghfast.top/"
 
     private val json = Json { ignoreUnknownKeys = true }
 
@@ -80,10 +79,8 @@ object UpdateChecker {
 
             val apkAsset = release.assets.find { it.name.endsWith(".apk") }
             val rawUrl = apkAsset?.browser_download_url ?: ""
-            val downloadUrl = rawUrl.let { url ->
-                // 使用 ghfast.top 加速
-                url.replace("https://github.com", GHFAST_BASE)
-            }
+            // 使用 ghfast.top 加速：直接在原始 URL 前加前缀
+            val downloadUrl = if (rawUrl.isNotEmpty()) GHFAST_PREFIX + rawUrl else ""
 
             android.util.Log.d("UpdateChecker", "Raw URL: $rawUrl")
             android.util.Log.d("UpdateChecker", "Download URL: $downloadUrl")
