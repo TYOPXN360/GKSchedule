@@ -136,6 +136,8 @@ object UpdateChecker {
         if (!downloadDir.exists()) downloadDir.mkdirs()
 
         val file = File(downloadDir, fileName)
+        // 删除已存在的文件
+        if (file.exists()) file.delete()
 
         android.util.Log.d("UpdateChecker", "Downloading from: $url")
 
