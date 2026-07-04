@@ -42,6 +42,11 @@ fun AboutDetailPage(
     var updateError by remember { mutableStateOf<String?>(null) }
     var isDownloading by remember { mutableStateOf(false) }
 
+    // Force update: 1 min 内点击超过 3 次强制弹窗
+    var clickCount by remember { mutableIntStateOf(0) }
+    var firstClickTime by remember { mutableLongStateOf(0L) }
+    var forceShowDialog by remember { mutableStateOf(false) }
+
     val currentVersion = remember { UpdateChecker.getCurrentVersion(context) }
 
     Scaffold(
@@ -140,6 +145,20 @@ fun AboutDetailPage(
                     Button(
                         onClick = {
                             if (!isCheckingUpdate) {
+                                // Track clicks for force update
+                                val now = System.currentTimeMillis()
+                                if (now - firstClickTime > 60_000) {
+                                    clickCount = 1
+                                    firstClickTime = now
+                                } else {
+                                    clickCount++
+                                }
+                                // 1 min 内超过 3 次，强制弹窗
+                                if (clickCount >= 3) {
+                                    clickCount = 0
+                                    forceShowDialog = true
+                                }
+
                                 isCheckingUpdate = true
                                 updateError = null
                                 GlobalScope.launch(Dispatchers.IO) {
@@ -148,8 +167,9 @@ fun AboutDetailPage(
                                             withContext(Dispatchers.Main) {
                                                 updateInfo = info
                                                 isCheckingUpdate = false
-                                                if (info.isUpdateAvailable) {
+                                                if (info.isUpdateAvailable || forceShowDialog) {
                                                     showUpdateDialog = true
+                                                    forceShowDialog = false
                                                 }
                                             }
                                         }
