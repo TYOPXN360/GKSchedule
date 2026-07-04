@@ -107,85 +107,6 @@ fun AboutDetailPage(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Credits section
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = stringResource(R.string.credits_title),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    CreditItem(stringResource(R.string.credits_language), "Jetpack Compose (Kotlin)")
-                    CreditItem(stringResource(R.string.credits_design), "Material Design 3 Expressive")
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // AI Assistants section
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = stringResource(R.string.credits_ai),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    AIItem("GPT-5.5")
-                    AIItem("Deepseek-v4-pro")
-                    AIItem("XiaoMi-Mimo-V2.5")
-                    AIItem("XiaoMi-Mimo-V2.5-pro")
-                    AIItem("Google-Gemini-v3.5-flash")
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Reference projects section
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = stringResource(R.string.credits_projects),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text("• SchedU", style = MaterialTheme.typography.bodyMedium)
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text("• 拾光课程表", style = MaterialTheme.typography.bodyMedium)
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text("• TimeFlow", style = MaterialTheme.typography.bodyMedium)
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Disclaimer button
-            OutlinedButton(
-                onClick = { showDisclaimerDialog = true },
-                modifier = Modifier.padding(horizontal = 16.dp)
-            ) {
-                Text(stringResource(R.string.disclaimer_title))
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
             // Update check section
             Card(
                 modifier = Modifier
@@ -386,6 +307,85 @@ fun AboutDetailPage(
                         }
                     }
                 }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Credits section
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = stringResource(R.string.credits_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    CreditItem(stringResource(R.string.credits_language), "Jetpack Compose (Kotlin)")
+                    CreditItem(stringResource(R.string.credits_design), "Material Design 3 Expressive")
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // AI Assistants section
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = stringResource(R.string.credits_ai),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    AIItem("GPT-5.5")
+                    AIItem("Deepseek-v4-pro")
+                    AIItem("XiaoMi-Mimo-V2.5")
+                    AIItem("XiaoMi-Mimo-V2.5-pro")
+                    AIItem("Google-Gemini-v3.5-flash")
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Reference projects section
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = stringResource(R.string.credits_projects),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text("• SchedU", style = MaterialTheme.typography.bodyMedium)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text("• 拾光课程表", style = MaterialTheme.typography.bodyMedium)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text("• TimeFlow", style = MaterialTheme.typography.bodyMedium)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Disclaimer button
+            OutlinedButton(
+                onClick = { showDisclaimerDialog = true },
+                modifier = Modifier.padding(horizontal = 16.dp)
+            ) {
+                Text(stringResource(R.string.disclaimer_title))
             }
 
             Spacer(modifier = Modifier.height(16.dp))
