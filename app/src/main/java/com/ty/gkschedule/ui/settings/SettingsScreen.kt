@@ -24,6 +24,10 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.ty.gkschedule.R
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -207,6 +211,11 @@ fun SettingsScreen(
                     onBack = { navController.popBackStack() }
                 )
             }
+            composable("update") {
+                UpdatePage(
+                    onBack = { navController.popBackStack() }
+                )
+            }
         }
     }
 
@@ -250,16 +259,18 @@ private fun SettingsMainPage(onOpenPage: (String) -> Unit, onExit: () -> Unit) {
                 com.ty.gkschedule.ui.theme.BadgeColorPalette.Secondary,   // 课表样式 = 次色
                 com.ty.gkschedule.ui.theme.BadgeColorPalette.Tertiary,    // 通知 = 粉紫
                 com.ty.gkschedule.ui.theme.BadgeColorPalette.Secondary,   // 同步 = 次色
-                com.ty.gkschedule.ui.theme.BadgeColorPalette.Primary      // 数据 = 主色
+                com.ty.gkschedule.ui.theme.BadgeColorPalette.Primary,     // 数据 = 主色
+                com.ty.gkschedule.ui.theme.BadgeColorPalette.Tertiary     // 更新 = 粉紫
             )
-            val catIcons = listOf(Icons.Default.CalendarMonth, Icons.Default.Palette, Icons.Default.GridOn, Icons.Default.Notifications, Icons.Default.Sync, Icons.Default.Storage)
+            val catIcons = listOf(Icons.Default.CalendarMonth, Icons.Default.Palette, Icons.Default.GridOn, Icons.Default.Notifications, Icons.Default.Sync, Icons.Default.Storage, Icons.Default.SystemUpdate)
             val catTitles = listOf(
                 stringResource(R.string.settings_category_semester),
                 stringResource(R.string.settings_category_appearance),
                 stringResource(R.string.settings_category_schedule),
                 stringResource(R.string.settings_category_notification),
                 stringResource(R.string.settings_category_sync),
-                stringResource(R.string.settings_category_data)
+                stringResource(R.string.settings_category_data),
+                stringResource(R.string.settings_category_update)
             )
             val catDescs = listOf(
                 stringResource(R.string.settings_category_semester_desc),
@@ -267,7 +278,8 @@ private fun SettingsMainPage(onOpenPage: (String) -> Unit, onExit: () -> Unit) {
                 stringResource(R.string.settings_category_schedule_desc),
                 stringResource(R.string.settings_category_notification_desc),
                 stringResource(R.string.settings_category_sync_desc),
-                stringResource(R.string.settings_category_data_desc)
+                stringResource(R.string.settings_category_data_desc),
+                stringResource(R.string.settings_category_update_desc)
             )
             val catCallbacks = listOf<() -> Unit>(
                 { onOpenPage("semester") },
@@ -275,7 +287,8 @@ private fun SettingsMainPage(onOpenPage: (String) -> Unit, onExit: () -> Unit) {
                 { onOpenPage("schedule_style") },
                 { onOpenPage("notification") },
                 { onOpenPage("sync") },
-                { onOpenPage("data") }
+                { onOpenPage("data") },
+                { onOpenPage("update") }
             )
 
             // Group 1: 课程管理
@@ -311,7 +324,7 @@ private fun SettingsMainPage(onOpenPage: (String) -> Unit, onExit: () -> Unit) {
                 variant = com.ty.gkschedule.ui.theme.Md3CardVariant.Elevated
             ) {
                 Column {
-                    listOf(3, 4, 5).forEach { index ->
+                    listOf(3, 4, 5, 6).forEach { index ->
                         val badgeColor = com.ty.gkschedule.util.CourseColors.getSettingsBadgeColor(index)
                         ListItem(
                             headlineContent = { Text(catTitles[index], style = MaterialTheme.typography.titleMedium) },
@@ -325,7 +338,7 @@ private fun SettingsMainPage(onOpenPage: (String) -> Unit, onExit: () -> Unit) {
                             colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                             modifier = Modifier.clickable(onClick = catCallbacks[index])
                         )
-                        if (index < 5) {
+                        if (index < 6) {
                             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
                         }
                     }
@@ -766,5 +779,202 @@ private fun DropdownItem(icon: androidx.compose.ui.graphics.vector.ImageVector, 
             colors = ListItemDefaults.colors(containerColor = Color.Transparent),
             modifier = if (enabled) Modifier.clickable { expanded = true } else Modifier
         )
+    }
+}
+
+// === Update Page ===
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun UpdatePage(onBack: () -> Unit) {
+    val context = LocalContext.current
+    var updateInfo by remember { mutableStateOf<com.ty.gkschedule.util.UpdateInfo?>(null) }
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var isDownloading by remember { mutableStateOf(false) }
+    var downloadProgress by remember { mutableStateOf(0f) }
+
+    val currentVersion = remember { com.ty.gkschedule.util.UpdateChecker.getCurrentVersion(context) }
+
+    LaunchedEffect(Unit) {
+        isLoading = true
+        com.ty.gkschedule.util.UpdateChecker.checkForUpdate(context)
+            .onSuccess { info ->
+                updateInfo = info
+                errorMessage = null
+            }
+            .onFailure { e ->
+                errorMessage = e.message ?: context.getString(R.string.update_error)
+            }
+        isLoading = false
+    }
+
+    SubPage(title = stringResource(R.string.settings_category_update), onBack = onBack) {
+        // Current version
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
+        ) {
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.update_current_version)) },
+                supportingContent = { Text(currentVersion, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium) },
+                leadingContent = { Icon(Icons.Default.Info, null, tint = MaterialTheme.colorScheme.primary) },
+                colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Loading state
+        if (isLoading) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
+            ) {
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.update_checking)) },
+                    leadingContent = {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            strokeWidth = 2.dp
+                        )
+                    },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+                )
+            }
+        }
+
+        // Error state
+        if (errorMessage != null) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
+            ) {
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.update_error)) },
+                    supportingContent = { Text(errorMessage!!, color = MaterialTheme.colorScheme.onErrorContainer) },
+                    leadingContent = { Icon(Icons.Default.Error, null, tint = MaterialTheme.colorScheme.error) },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+                )
+            }
+        }
+
+        // Update available
+        if (updateInfo?.isUpdateAvailable == true) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.SystemUpdate, null, tint = MaterialTheme.colorScheme.primary)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = stringResource(R.string.update_available),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "${stringResource(R.string.update_latest_version)}: ${updateInfo!!.latestVersion}",
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium
+                    )
+                    if (updateInfo!!.fileSize > 0) {
+                        Text(
+                            text = "${stringResource(R.string.update_size)}: ${formatFileSize(updateInfo!!.fileSize)}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                        )
+                    }
+                    if (updateInfo!!.releaseName.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = updateInfo!!.releaseName,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                        )
+                    }
+                    if (updateInfo!!.releaseNotes.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = updateInfo!!.releaseNotes,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Download button
+            Button(
+                onClick = {
+                    if (!isDownloading) {
+                        isDownloading = true
+                        // Download in background
+                        kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                            try {
+                                val file = com.ty.gkschedule.util.UpdateChecker.downloadApk(
+                                    context,
+                                    updateInfo!!.downloadUrl,
+                                    "GKSchedule-v${updateInfo!!.latestVersion}.apk"
+                                )
+                                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                                    isDownloading = false
+                                    com.ty.gkschedule.util.UpdateChecker.installApk(context, file)
+                                }
+                            } catch (e: Exception) {
+                                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                                    isDownloading = false
+                                    errorMessage = e.message
+                                }
+                            }
+                        }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !isDownloading && updateInfo?.downloadUrl?.isNotEmpty() == true
+            ) {
+                if (isDownloading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(R.string.update_downloading))
+                } else {
+                    Icon(Icons.Default.Download, null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(R.string.update_download))
+                }
+            }
+        }
+
+        // No update available
+        if (!isLoading && errorMessage == null && updateInfo?.isUpdateAvailable == false) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
+            ) {
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.update_not_available)) },
+                    supportingContent = { Text("${stringResource(R.string.update_current_version)}: $currentVersion") },
+                    leadingContent = { Icon(Icons.Default.CheckCircle, null, tint = MaterialTheme.colorScheme.primary) },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+                )
+            }
+        }
+    }
+}
+
+private fun formatFileSize(bytes: Long): String {
+    return when {
+        bytes < 1024 -> "$bytes B"
+        bytes < 1024 * 1024 -> "${bytes / 1024} KB"
+        else -> "${"%.1f".format(bytes / (1024.0 * 1024.0))} MB"
     }
 }

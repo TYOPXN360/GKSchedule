@@ -209,4 +209,17 @@
     <string name="credits_language">Language</string>
     <string name="credits_design">Design Style</string>
     <string name="credits_projects">Referenced Projects</string>
+    <!-- Update -->
+    <string name="settings_category_update">Check for Updates</string>
+    <string name="settings_category_update_desc">Check for new versions and download</string>
+    <string name="update_checking">Checking for updates…</string>
+    <string name="update_available">New version available</string>
+    <string name="update_not_available">You\'re up to date</string>
+    <string name="update_current_version">Current version</string>
+    <string name="update_latest_version">Latest version</string>
+    <string name="update_download">Download Update</string>
+    <string name="update_downloading">Downloading…</string>
+    <string name="update_install">Install</string>
+    <string name="update_error">Failed to check for updates</string>
+    <string name="update_size">File size</string>
 </resources>
