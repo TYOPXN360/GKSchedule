@@ -53,9 +53,17 @@ object UpdateChecker {
 
     private val json = Json { ignoreUnknownKeys = true }
 
+    // API 请求客户端
     private val client = OkHttpClient.Builder()
         .connectTimeout(15, TimeUnit.SECONDS)
         .readTimeout(15, TimeUnit.SECONDS)
+        .build()
+
+    // 下载客户端 - 更长超时
+    private val downloadClient = OkHttpClient.Builder()
+        .connectTimeout(30, TimeUnit.SECONDS)
+        .readTimeout(60, TimeUnit.SECONDS)
+        .retryOnConnectionFailure(true)
         .build()
 
     fun getCurrentVersion(context: Context): String {
@@ -124,7 +132,7 @@ object UpdateChecker {
     }
 
     fun downloadApk(context: Context, url: String, fileName: String, version: String): File {
-        val downloadDir = File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), "updates")
+        val downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
         if (!downloadDir.exists()) downloadDir.mkdirs()
 
         val file = File(downloadDir, fileName)
@@ -149,7 +157,7 @@ object UpdateChecker {
             .url(url)
             .build()
 
-        val response = client.newCall(request).execute()
+        val response = downloadClient.newCall(request).execute()
         android.util.Log.d("UpdateChecker", "Download response: ${response.code}")
 
         if (!response.isSuccessful) {
@@ -190,6 +198,7 @@ object UpdateChecker {
 
         // Download complete
         builder.setContentText("下载完成，点击安装")
+            .setStyle(NotificationCompat.BigTextStyle().bigText("GKSchedule v$version 下载完成"))
             .setProgress(0, 0, false)
             .setOngoing(false)
             .setAutoCancel(true)
