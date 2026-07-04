@@ -28,10 +28,8 @@ fun GKSwitch(
         modifier = modifier,
         enabled = enabled,
         colors = SwitchDefaults.colors(
-            checkedThumbColor = MaterialTheme.colorScheme.primary,
-            uncheckedThumbColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-            checkedTrackColor = MaterialTheme.colorScheme.primaryContainer,
-            uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
+            checkedIconColor = MaterialTheme.colorScheme.primary,
+            uncheckedIconColor = MaterialTheme.colorScheme.surfaceContainerHighest
         ),
         thumbContent = {
             Icon(
