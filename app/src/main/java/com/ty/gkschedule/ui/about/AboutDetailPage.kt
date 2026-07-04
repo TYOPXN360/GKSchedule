@@ -413,7 +413,8 @@ fun AboutDetailPage(
                                     val file = UpdateChecker.downloadApk(
                                         context,
                                         updateInfo!!.downloadUrl,
-                                        "GKSchedule-v${updateInfo!!.latestVersion}.apk"
+                                        "GKSchedule-v${updateInfo!!.latestVersion}.apk",
+                                        updateInfo!!.latestVersion
                                     )
                                     withContext(Dispatchers.Main) {
                                         isDownloading = false
