@@ -64,60 +64,6 @@ sealed class Screen(val route: String) {
     }
 }
 
-/**
- * 主页级 Scaffold - 包含底栏和 Snackbar
- * 作为 NavHost 动效的子节点，预测性返回时底栏跟随页面一起动画
- */
-@Composable
-fun MainScaffold(
-    navController: androidx.navigation.NavController,
-    currentRoute: String?,
-    snackbarHostState: SnackbarHostState,
-    containerColor: Color,
-    navView: android.view.View,
-    content: @Composable (PaddingValues) -> Unit
-) {
-    Scaffold(
-        containerColor = containerColor,
-        snackbarHost = {
-            SnackbarHost(snackbarHostState) { snackbarData ->
-                Snackbar(
-                    snackbarData = snackbarData,
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    contentColor = MaterialTheme.colorScheme.onSurface,
-                    shape = MaterialTheme.shapes.small
-                )
-            }
-        },
-        bottomBar = {
-            NavigationBar {
-                listOf(
-                    Screen.Today to Triple(Icons.Default.Today, "今日", "today"),
-                    Screen.Weekly to Triple(Icons.Default.DateRange, "课表", "weekly"),
-                    Screen.Courses to Triple(Icons.AutoMirrored.Filled.LibraryBooks, "课程", "courses"),
-                    Screen.About to Triple(Icons.Default.Person, "我的", "about")
-                ).forEach { (screen, triple) ->
-                    NavigationBarItem(
-                        icon = { Icon(triple.first, contentDescription = triple.second) },
-                        label = { Text(triple.second) },
-                        selected = currentRoute == screen.route,
-                        onClick = {
-                            com.ty.gkschedule.util.HapticFeedback.light(navView)
-                            if (currentRoute != screen.route) {
-                                navController.navigate(screen.route) {
-                                    popUpTo(Screen.Today.route) { saveState = true }
-                                    launchSingleTop = true; restoreState = true
-                                }
-                            }
-                        }
-                    )
-                }
-            }
-        },
-        content = content
-    )
-}
-
 @Composable
 fun ScheduleApp(
     viewModel: ScheduleViewModel = viewModel()
@@ -154,19 +100,16 @@ fun ScheduleApp(
     val examLookaheadWeeks by viewModel.examLookaheadWeeks.collectAsState(initial = 1)
     val diffColorPerWeek by viewModel.diffColorPerWeek.collectAsState(initial = false)
     val showHiddenCourses by viewModel.showHiddenCourses.collectAsState(initial = false)
-    // Gemini Fix: displayCourses 在 NavHost 外面，作为活的 State 随数据变化实时更新
     val displayCourses = if (showHiddenCourses) courses else courses.filter { !it.isHidden }
     val examList by viewModel.examList.collectAsState(initial = emptyList())
     val showExamSchedule by viewModel.showExamSchedule.collectAsState(initial = false)
 
-    // Show snackbar messages
     LaunchedEffect(Unit) {
         viewModel.messages.collect { message ->
             snackbarHostState.showSnackbar(message, duration = SnackbarDuration.Short)
         }
     }
 
-    // File picker for JSON import
     val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let {
             try {
@@ -178,28 +121,49 @@ fun ScheduleApp(
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
-
-    val bottomBarScreens = listOf(Screen.Today, Screen.Weekly, Screen.Courses, Screen.About)
-    val showBottomBar = currentRoute in bottomBarScreens.map { it.route } && currentRoute != Screen.Login.route
-
+    val bottomBarScreens = listOf("today", "weekly", "courses", "about")
+    val showBottomBar = currentRoute in bottomBarScreens
     val navView = androidx.compose.ui.platform.LocalView.current
-
     val mainScaffoldBg = if (com.ty.gkschedule.ui.theme.LocalAppIsDark.current) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainer
 
-    // Tab index for directional animation
-    val tabIndex = mapOf(
-        "today" to 0, "weekly" to 1, "courses" to 2, "about" to 3
-    )
-    fun tabIndexOf(route: String?): Int = tabIndex.entries
-        .firstOrNull { route?.startsWith(it.key) == true }?.value ?: 0
+    val tabIndex = mapOf("today" to 0, "weekly" to 1, "courses" to 2, "about" to 3)
+    fun tabIndexOf(route: String?): Int = tabIndex.entries.firstOrNull { route?.startsWith(it.key) == true }?.value ?: 0
 
-    // 主页面共享 Scaffold（底栏持久）
-    MainScaffold(
-        navController = navController,
-        currentRoute = currentRoute,
-        snackbarHostState = snackbarHostState,
+    // Simple approach: NavHost with conditional bottom bar
+    Scaffold(
         containerColor = mainScaffoldBg,
-        navView = navView
+        snackbarHost = {
+            SnackbarHost(snackbarHostState) { snackbarData ->
+                Snackbar(snackbarData = snackbarData, containerColor = MaterialTheme.colorScheme.surfaceContainerHigh, contentColor = MaterialTheme.colorScheme.onSurface, shape = MaterialTheme.shapes.small)
+            }
+        },
+        bottomBar = {
+            if (showBottomBar) {
+                NavigationBar {
+                    listOf(
+                        Screen.Today to Triple(Icons.Default.Today, "今日", "today"),
+                        Screen.Weekly to Triple(Icons.Default.DateRange, "课表", "weekly"),
+                        Screen.Courses to Triple(Icons.AutoMirrored.Filled.LibraryBooks, "课程", "courses"),
+                        Screen.About to Triple(Icons.Default.Person, "我的", "about")
+                    ).forEach { (screen, triple) ->
+                        NavigationBarItem(
+                            icon = { Icon(triple.first, contentDescription = triple.second) },
+                            label = { Text(triple.second) },
+                            selected = currentRoute == screen.route,
+                            onClick = {
+                                com.ty.gkschedule.util.HapticFeedback.light(navView)
+                                if (currentRoute != screen.route) {
+                                    navController.navigate(screen.route) {
+                                        popUpTo(Screen.Today.route) { saveState = true }
+                                        launchSingleTop = true; restoreState = true
+                                    }
+                                }
+                            }
+                        )
+                    }
+                }
+            }
+        }
     ) { innerPadding ->
         NavHost(
             navController = navController,
@@ -208,20 +172,14 @@ fun ScheduleApp(
             enterTransition = {
                 val from = tabIndexOf(initialState.destination.route)
                 val to = tabIndexOf(targetState.destination.route)
-                if (to >= from) {
-                    slideInHorizontally(initialOffsetX = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideInSpec()) + fadeIn(com.ty.gkschedule.ui.theme.M3Motion.fadeInSpec())
-                } else {
-                    slideInHorizontally(initialOffsetX = { -it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideInSpec()) + fadeIn(com.ty.gkschedule.ui.theme.M3Motion.fadeInSpec())
-                }
+                if (to >= from) slideInHorizontally(initialOffsetX = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideInSpec()) + fadeIn(com.ty.gkschedule.ui.theme.M3Motion.fadeInSpec())
+                else slideInHorizontally(initialOffsetX = { -it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideInSpec()) + fadeIn(com.ty.gkschedule.ui.theme.M3Motion.fadeInSpec())
             },
             exitTransition = {
                 val from = tabIndexOf(initialState.destination.route)
                 val to = tabIndexOf(targetState.destination.route)
-                if (to >= from) {
-                    slideOutHorizontally(targetOffsetX = { -it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideOutSpec()) + fadeOut(com.ty.gkschedule.ui.theme.M3Motion.fadeOutSpec())
-                } else {
-                    slideOutHorizontally(targetOffsetX = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideOutSpec()) + fadeOut(com.ty.gkschedule.ui.theme.M3Motion.fadeOutSpec())
-                }
+                if (to >= from) slideOutHorizontally(targetOffsetX = { -it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideOutSpec()) + fadeOut(com.ty.gkschedule.ui.theme.M3Motion.fadeOutSpec())
+                else slideOutHorizontally(targetOffsetX = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideOutSpec()) + fadeOut(com.ty.gkschedule.ui.theme.M3Motion.fadeOutSpec())
             },
             popEnterTransition = {
                 slideInHorizontally(initialOffsetX = { -it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideInSpec()) + fadeIn(com.ty.gkschedule.ui.theme.M3Motion.fadeInSpec())
@@ -230,294 +188,56 @@ fun ScheduleApp(
                 slideOutHorizontally(targetOffsetX = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideOutSpec()) + fadeOut(com.ty.gkschedule.ui.theme.M3Motion.fadeOutSpec())
             }
         ) {
-        composable(Screen.Today.route) {
-            TodayScreen(
-                courses = displayCourses, colorCourses = courses, currentWeek = realCurrentWeek,
-                colorEngine = colorEngine, colorGroupMode = colorGroupMode,
-                exams = examList,
-                showExamSchedule = showExamSchedule,
-                examLookaheadWeeks = examLookaheadWeeks,
-                semesterStart = semesterStart,
-                getStartTime = { viewModel.getStartTime(it) },
-                getEndTime = { viewModel.getEndTime(it) },
-                onCourseLongPress = { navController.navigate(Screen.CourseEdit.createRoute(it.id)) },
-                onExamEdit = { navController.navigate(Screen.ExamEdit.createRoute(it.id)) },
-                diffColorPerWeek = diffColorPerWeek
-            )
-        }
-
-        composable(Screen.Weekly.route) {
-            WeeklyScheduleScreen(
-                courses = displayCourses, colorCourses = courses, currentWeek = selectedWeek,
-                totalWeeks = totalWeeks, periodsPerDay = periodsPerDay,
-                gridHeight = gridHeight, gridCorner = gridCorner,
-                gridSpacing = gridSpacing, showPeriodLabel = showPeriodLabel,
-                autoGridHeight = autoGridHeight, firstDayOfWeek = firstDayOfWeek,
-                mergeConsecutive = mergeConsecutive,
-                showTimeLabel = showTimeLabel,
-                detailedSplit = detailedSplit,
-                colorEngine = colorEngine,
-                colorGroupMode = colorGroupMode,
-                showDateInHeader = showDateInHeader,
-                hideEmptyWeeks = hideEmptyWeeks,
-                semesterStart = semesterStart,
-                exams = examList,
-                showExamSchedule = showExamSchedule,
-                realCurrentWeek = realCurrentWeek,
-                isRefreshing = isRefreshing,
-                onWeekChange = { viewModel.setWeek(it.coerceIn(1, totalWeeks)) },
-                onCourseClick = { },
-                onCourseLongPress = { navController.navigate(Screen.CourseEdit.createRoute(it.id)) },
-                onExamEdit = { navController.navigate(Screen.ExamEdit.createRoute(it.id)) },
-                onAddCourse = { navController.navigate(Screen.CourseEdit.createRoute()) },
-                onRefresh = { viewModel.refreshFromSchool() },
-                getStartTime = { viewModel.getStartTime(it) },
-                getEndTime = { viewModel.getEndTime(it) },
-                diffColorPerWeek = diffColorPerWeek
-            )
-        }
-
-        composable(Screen.Courses.route) {
-            CourseManageScreen(
-                courses = courses,
-                colorEngine = colorEngine,
-                colorGroupMode = colorGroupMode,
-                onCourseClick = { navController.navigate(Screen.CourseEdit.createRoute(it.id)) },
-                onAddCourse = { navController.navigate(Screen.CourseEdit.createRoute()) },
-                onDeleteCourse = { viewModel.deleteCourse(it) },
-                onDeleteAll = { viewModel.deleteAllCourses() }
-            )
-        }
-
-        composable(Screen.About.route) {
-            val savedStudentId by viewModel.savedStudentIdFlow.collectAsState()
-            val savedRealName by viewModel.savedRealName.collectAsState(initial = "")
-            val savedDeptName by viewModel.savedDeptName.collectAsState(initial = "")
-            val totalWeeksVal by viewModel.totalWeeks.collectAsState(initial = 20)
-            val periodsPerDayVal by viewModel.periodsPerDay.collectAsState(initial = 10)
-            val displayWeeks = if (hideEmptyWeeks && courses.isNotEmpty()) {
-                val weeksWithCourses = courses.flatMap { course -> (1..totalWeeksVal).filter { course.isInWeek(it) } }.toSet()
-                weeksWithCourses.size.coerceAtLeast(1)
-            } else totalWeeksVal
-            AboutScreen(
-                loginState = loginState,
-                savedStudentId = savedStudentId,
-                savedRealName = savedRealName,
-                savedDeptName = savedDeptName,
-                semesterStart = semesterStart,
-                totalWeeks = displayWeeks,
-                periodsPerDay = periodsPerDayVal,
-                captchaImageBase64 = captchaImage,
-                onLogin = { navController.navigate(Screen.Login.route) },
-                onLogout = { viewModel.logout() },
-                onQuickRelogin = { cap -> viewModel.quickRelogin(cap) },
-                onRefreshCaptcha = { viewModel.refreshCaptcha() },
-                onOpenSettings = {
-                    context.startActivity(android.content.Intent(context, com.ty.gkschedule.ui.settings.SettingsActivity::class.java))
-                },
-                onOpenAbout = { navController.navigate(Screen.AboutDetail.route) },
-                onOpenExam = { navController.navigate(Screen.Exam.route) }
-            )
-        }
-
-            composable(Screen.AboutDetail.route) {
-                com.ty.gkschedule.ui.about.AboutDetailPage(
-                    onBack = { navController.popBackStack() }
-                )
+            composable(Screen.Today.route) { TodayScreen(courses = displayCourses, colorCourses = courses, currentWeek = realCurrentWeek, colorEngine = colorEngine, colorGroupMode = colorGroupMode, exams = examList, showExamSchedule = showExamSchedule, examLookaheadWeeks = examLookaheadWeeks, semesterStart = semesterStart, getStartTime = { viewModel.getStartTime(it) }, getEndTime = { viewModel.getEndTime(it) }, onCourseLongPress = { navController.navigate(Screen.CourseEdit.createRoute(it.id)) }, onExamEdit = { navController.navigate(Screen.ExamEdit.createRoute(it.id)) }, diffColorPerWeek = diffColorPerWeek) }
+            composable(Screen.Weekly.route) { WeeklyScheduleScreen(courses = displayCourses, colorCourses = courses, currentWeek = selectedWeek, totalWeeks = totalWeeks, periodsPerDay = periodsPerDay, gridHeight = gridHeight, gridCorner = gridCorner, gridSpacing = gridSpacing, showPeriodLabel = showPeriodLabel, autoGridHeight = autoGridHeight, firstDayOfWeek = firstDayOfWeek, mergeConsecutive = mergeConsecutive, showTimeLabel = showTimeLabel, detailedSplit = detailedSplit, colorEngine = colorEngine, colorGroupMode = colorGroupMode, showDateInHeader = showDateInHeader, hideEmptyWeeks = hideEmptyWeeks, semesterStart = semesterStart, exams = examList, showExamSchedule = showExamSchedule, realCurrentWeek = realCurrentWeek, isRefreshing = isRefreshing, onWeekChange = { viewModel.setWeek(it.coerceIn(1, totalWeeks)) }, onCourseClick = { }, onCourseLongPress = { navController.navigate(Screen.CourseEdit.createRoute(it.id)) }, onExamEdit = { navController.navigate(Screen.ExamEdit.createRoute(it.id)) }, onAddCourse = { navController.navigate(Screen.CourseEdit.createRoute()) }, onRefresh = { viewModel.refreshFromSchool() }, getStartTime = { viewModel.getStartTime(it) }, getEndTime = { viewModel.getEndTime(it) }, diffColorPerWeek = diffColorPerWeek) }
+            composable(Screen.Courses.route) { CourseManageScreen(courses = courses, colorEngine = colorEngine, colorGroupMode = colorGroupMode, onCourseClick = { navController.navigate(Screen.CourseEdit.createRoute(it.id)) }, onAddCourse = { navController.navigate(Screen.CourseEdit.createRoute()) }, onDeleteCourse = { viewModel.deleteCourse(it) }, onDeleteAll = { viewModel.deleteAllCourses() }) }
+            composable(Screen.About.route) {
+                val savedStudentId by viewModel.savedStudentIdFlow.collectAsState()
+                val savedRealName by viewModel.savedRealName.collectAsState(initial = "")
+                val savedDeptName by viewModel.savedDeptName.collectAsState(initial = "")
+                val totalWeeksVal by viewModel.totalWeeks.collectAsState(initial = 20)
+                val periodsPerDayVal by viewModel.periodsPerDay.collectAsState(initial = 10)
+                val displayWeeks = if (hideEmptyWeeks && courses.isNotEmpty()) { val weeksWithCourses = courses.flatMap { course -> (1..totalWeeksVal).filter { course.isInWeek(it) } }.toSet(); weeksWithCourses.size.coerceAtLeast(1) } else totalWeeksVal
+                AboutScreen(loginState = loginState, savedStudentId = savedStudentId, savedRealName = savedRealName, savedDeptName = savedDeptName, semesterStart = semesterStart, totalWeeks = displayWeeks, periodsPerDay = periodsPerDayVal, captchaImageBase64 = captchaImage, onLogin = { navController.navigate(Screen.Login.route) }, onLogout = { viewModel.logout() }, onQuickRelogin = { cap -> viewModel.quickRelogin(cap) }, onRefreshCaptcha = { viewModel.refreshCaptcha() }, onOpenSettings = { context.startActivity(Intent(context, com.ty.gkschedule.ui.settings.SettingsActivity::class.java)) }, onOpenAbout = { navController.navigate(Screen.AboutDetail.route) }, onOpenExam = { navController.navigate(Screen.Exam.route) })
             }
-
+            composable(Screen.AboutDetail.route) { com.ty.gkschedule.ui.about.AboutDetailPage(onBack = { navController.popBackStack() }) }
             composable(Screen.Login.route) {
                 val hasSavedCredentials by viewModel.hasSavedCredentials.collectAsState(initial = false)
-                LoginScreen(
-                    loginState = loginState,
-                    captchaImageBase64 = captchaImage,
-                    hasSavedCredentials = hasSavedCredentials,
-                    onRefreshCaptcha = { viewModel.refreshCaptcha() },
-                    onLogin = { sid, pwd, cap -> viewModel.login(sid, pwd, cap) },
-                    onQuickRelogin = { cap -> viewModel.quickRelogin(cap) },
-                    onWebViewLogin = { navController.navigate(Screen.WebViewLogin.route) },
-                    onBack = { viewModel.clearLoginError(); navController.popBackStack() }
-                )
-
-                // Auto-refresh captcha on first visit
-                LaunchedEffect(Unit) {
-                    viewModel.clearLoginError()
-                    if (captchaImage == null) viewModel.refreshCaptcha()
-                }
-
-                // Navigate back on login success or import result
-                LaunchedEffect(loginState) {
-                    if (loginState is LoginState.Success || loginState is LoginState.ImportResult) {
-                        kotlinx.coroutines.delay(500)
-                        navController.popBackStack()
-                    }
-                }
+                LoginScreen(loginState = loginState, captchaImageBase64 = captchaImage, hasSavedCredentials = hasSavedCredentials, onRefreshCaptcha = { viewModel.refreshCaptcha() }, onLogin = { sid, pwd, cap -> viewModel.login(sid, pwd, cap) }, onQuickRelogin = { cap -> viewModel.quickRelogin(cap) }, onWebViewLogin = { navController.navigate(Screen.WebViewLogin.route) }, onBack = { viewModel.clearLoginError(); navController.popBackStack() })
+                LaunchedEffect(Unit) { viewModel.clearLoginError(); if (captchaImage == null) viewModel.refreshCaptcha() }
+                LaunchedEffect(loginState) { if (loginState is LoginState.Success || loginState is LoginState.ImportResult) { kotlinx.coroutines.delay(500); navController.popBackStack() } }
             }
-
-            // WebView login route
-            composable(Screen.WebViewLogin.route) {
-                WebViewLoginScreen(
-                    api = viewModel.api,
-                    onLoginSuccess = { loginCode ->
-                        viewModel.webViewLogin(loginCode)
-                    },
-                    onBack = { navController.popBackStack() }
-                )
-
-                // Auto-navigate back on success
-                LaunchedEffect(loginState) {
-                    if (loginState is LoginState.Success || loginState is LoginState.ImportResult) {
-                        kotlinx.coroutines.delay(500)
-                        navController.popBackStack()
-                    }
-                }
-            }
-
+            composable(Screen.WebViewLogin.route) { WebViewLoginScreen(api = viewModel.api, onLoginSuccess = { loginCode -> viewModel.webViewLogin(loginCode) }, onBack = { navController.popBackStack() }) }
             composable(Screen.Exam.route) {
                 val examLoading by viewModel.examLoading.collectAsState()
                 val examYear by viewModel.examYear.collectAsState()
                 val examSemester by viewModel.examSemester.collectAsState()
                 val showExamReloginDialog by viewModel.showExamReloginDialog.collectAsState()
-                ExamScreen(
-                    exams = examList,
-                    colorCourses = courses,
-                    customExams = emptyList(),
-                    isLoading = examLoading,
-                    semesterStart = semesterStart,
-                    examYear = examYear,
-                    examSemester = examSemester,
-                    showReloginDialog = showExamReloginDialog,
-                    captchaImageBase64 = captchaImage,
-                    onYearChange = { viewModel.setExamYear(it) },
-                    onSemesterChange = { viewModel.setExamSemester(it) },
-                    onRefresh = { viewModel.refreshExamSchedule() },
-                    onDismissRelogin = { viewModel.dismissExamReloginDialog() },
-                    onRefreshCaptcha = { viewModel.refreshCaptcha() },
-                    onQuickRelogin = { cap -> viewModel.quickRelogin(cap) },
-                    colorEngine = colorEngine,
-                    colorGroupMode = colorGroupMode,
-                    examLookaheadWeeks = examLookaheadWeeks,
-                    onExamLookaheadWeeksChange = { viewModel.setExamLookaheadWeeks(it) },
-                    showExamSchedule = showExamSchedule,
-                    onShowExamScheduleChange = { viewModel.setShowExamSchedule(it) },
-                    getStartTime = { viewModel.getStartTime(it) },
-                    getEndTime = { viewModel.getEndTime(it) },
-                    currentWeek = selectedWeek,
-                    diffColorPerWeek = diffColorPerWeek,
-                    onAddExam = { navController.navigate(Screen.ExamEdit.createRoute()) },
-                    onEditExam = { navController.navigate(Screen.ExamEdit.createRoute(it.id)) },
-                    onBack = { navController.popBackStack() }
-                )
+                ExamScreen(exams = examList, colorCourses = courses, customExams = emptyList(), isLoading = examLoading, semesterStart = semesterStart, examYear = examYear, examSemester = examSemester, showReloginDialog = showExamReloginDialog, captchaImageBase64 = captchaImage, onYearChange = { viewModel.setExamYear(it) }, onSemesterChange = { viewModel.setExamSemester(it) }, onRefresh = { viewModel.refreshExamSchedule() }, onDismissRelogin = { viewModel.dismissExamReloginDialog() }, onRefreshCaptcha = { viewModel.refreshCaptcha() }, onQuickRelogin = { cap -> viewModel.quickRelogin(cap) }, colorEngine = colorEngine, colorGroupMode = colorGroupMode, examLookaheadWeeks = examLookaheadWeeks, onExamLookaheadWeeksChange = { viewModel.setExamLookaheadWeeks(it) }, showExamSchedule = showExamSchedule, onShowExamScheduleChange = { viewModel.setShowExamSchedule(it) }, getStartTime = { viewModel.getStartTime(it) }, getEndTime = { viewModel.getEndTime(it) }, currentWeek = selectedWeek, diffColorPerWeek = diffColorPerWeek, onAddExam = { navController.navigate(Screen.ExamEdit.createRoute()) }, onEditExam = { navController.navigate(Screen.ExamEdit.createRoute(it.id)) }, onBack = { navController.popBackStack() })
             }
-
-            composable(
-                route = Screen.CourseEdit.route,
-                arguments = listOf(
-                    navArgument("courseId") { type = NavType.LongType; defaultValue = -1L },
-                    navArgument("isExam") { type = NavType.BoolType; defaultValue = false }
-                )
-            ) { backStackEntry ->
+            composable(route = Screen.CourseEdit.route, arguments = listOf(navArgument("courseId") { type = NavType.LongType; defaultValue = -1L }, navArgument("isExam") { type = NavType.BoolType; defaultValue = false })) { backStackEntry ->
                 val courseId = backStackEntry.arguments?.getLong("courseId") ?: -1L
                 val isExam = backStackEntry.arguments?.getBoolean("isExam") ?: false
                 var currentCourse by remember { mutableStateOf(if (courseId > 0) courses.find { it.id == courseId } else null) }
-
-                LaunchedEffect(courseId) {
-                    if (courseId > 0 && currentCourse == null) {
-                        currentCourse = viewModel.getCourseById(courseId)
-                    }
-                }
-
-                CourseEditScreen(
-                    course = currentCourse, allCourses = courses, periodsPerDay = periodsPerDay,
-                    onSave = { savedCourse, hiddenScopeName -> viewModel.saveCourse(savedCourse, hiddenScopeName); navController.popBackStack() },
-                    onDelete = { viewModel.deleteCourse(it); navController.popBackStack() },
-                    onBack = { navController.popBackStack() }
-                )
+                LaunchedEffect(courseId) { if (courseId > 0 && currentCourse == null) { currentCourse = viewModel.getCourseById(courseId) } }
+                CourseEditScreen(course = currentCourse, allCourses = courses, periodsPerDay = periodsPerDay, onSave = { savedCourse, hiddenScopeName -> viewModel.saveCourse(savedCourse, hiddenScopeName); navController.popBackStack() }, onDelete = { viewModel.deleteCourse(it); navController.popBackStack() }, onBack = { navController.popBackStack() })
             }
-
-            composable(
-                route = Screen.ExamEdit.route,
-                arguments = listOf(navArgument("examId") { type = NavType.LongType; defaultValue = -1L })
-            ) { backStackEntry ->
+            composable(route = Screen.ExamEdit.route, arguments = listOf(navArgument("examId") { type = NavType.LongType; defaultValue = -1L })) { backStackEntry ->
                 val examId = backStackEntry.arguments?.getLong("examId") ?: -1L
-                val currentExam = remember(examId, examList) {
-                    if (examId != -1L) examList.find { it.id == examId } else null
-                }
-                com.ty.gkschedule.ui.exam.ExamEditScreen(
-                    exam = currentExam,
-                    semesterStart = semesterStart,
-                    onSave = { examEntities ->
-                        viewModel.saveExams(examEntities)
-                        android.widget.Toast.makeText(context, "成功导入 ${examEntities.size} 场考试！", android.widget.Toast.LENGTH_SHORT).show()
-                        navController.popBackStack()
-                    },
-                    onDelete = { entity ->
-                        viewModel.deleteExamById(entity.id)
-                        navController.popBackStack()
-                    },
-                    onBack = { navController.popBackStack() }
-                )
-            }
-        }
-    }
-
-/**
- * 简化的课程表网格 - 用于图片导出
- */
-@Composable
-fun ScheduleGridForExport(
-    courses: List<Course>,
-    periodsPerDay: Int,
-    gridHeight: Int,
-    gridCorner: Int,
-    gridSpacing: Int
-) {
-    val daysOfWeek = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
-    val courseMap = mutableMapOf<String, Course>()
-    courses.forEach { course ->
-        for (p in course.startPeriod..course.endPeriod()) {
-            courseMap["${course.dayOfWeek}_$p"] = course
-        }
-    }
-
-    Column(modifier = Modifier.padding(8.dp)) {
-        Row {
-            Box(modifier = Modifier.weight(1f))
-            daysOfWeek.forEach { day ->
-                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                    Text(day, style = MaterialTheme.typography.labelSmall)
-                }
-            }
-        }
-        (1..periodsPerDay).forEach { period ->
-            Row {
-                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                    Text("$period", style = MaterialTheme.typography.labelSmall)
-                }
-                for (day in 1..7) {
-                    val course = courseMap["${day}_$period"]
-                    if (course != null && course.startPeriod == period) {
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .padding(gridSpacing.dp)
-                                .height((gridHeight * course.periods).dp)
-                                .clip(RoundedCornerShape(gridCorner.dp))
-                                .background(androidx.compose.ui.graphics.Color(0xFFE8F5E9))
-                                .padding(4.dp)
-                        ) {
-                            Text(
-                                course.name,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = androidx.compose.ui.graphics.Color(0xFF2E7D32)
-                            )
-                        }
-                    } else if (course == null) {
-                        Spacer(modifier = Modifier.weight(1f).padding(gridSpacing.dp).height(gridHeight.dp))
-                    }
-                }
+                val currentExam = remember(examId, examList) { if (examId != -1L) examList.find { it.id == examId } else null }
+                com.ty.gkschedule.ui.exam.ExamEditScreen(exam = currentExam, semesterStart = semesterStart, onSave = { examEntities -> viewModel.saveExams(examEntities); navController.popBackStack() }, onDelete = { entity -> viewModel.deleteExamById(entity.id); navController.popBackStack() }, onBack = { navController.popBackStack() })
             }
         }
     }
 }
+
+@Composable
+fun ScheduleGridForExport(courses: List<Course>, periodsPerDay: Int, gridHeight: Int, gridCorner: Int, gridSpacing: Int) {
+    val daysOfWeek = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+    val courseMap = mutableMapOf<String, Course>()
+    courses.forEach { course -> for (p in course.startPeriod..course.endPeriod()) { courseMap["${course.dayOfWeek}_$p"] = course } }
+    Column(modifier = Modifier.padding(8.dp)) {
+        Row { Box(modifier = Modifier.weight(1f)); daysOfWeek.forEach { day -> Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) { Text(day, style = MaterialTheme.typography.labelSmall) } } }
+        (1..periodsPerDay).forEach { period -> Row { Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) { Text("$period", style = MaterialTheme.typography.labelSmall) }; for (day in 1..7) { val course = courseMap["${day}_$period"]; if (course != null && course.startPeriod == period) { Box(modifier = Modifier.weight(1f).padding(gridSpacing.dp).height((gridHeight * course.periods).dp).clip(RoundedCornerShape(gridCorner.dp)).background(androidx.compose.ui.graphics.Color(0xFFE8F5E9)).padding(4.dp)) { Text(course.name, style = MaterialTheme.typography.labelSmall, color = androidx.compose.ui.graphics.Color(0xFF2E7D32)) } } else if (course == null) { Spacer(modifier = Modifier.weight(1f).padding(gridSpacing.dp).height(gridHeight.dp)) } } } }
+    }
 }
