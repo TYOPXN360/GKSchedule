@@ -182,7 +182,7 @@ fun ScheduleApp(
         var backOffsetX by remember { mutableFloatStateOf(0f) }
         val scope = rememberCoroutineScope()
 
-        PredictiveBackHandler(enabled = navController.previousBackStackEntry != null) { progressFlow ->
+        PredictiveBackHandler { progressFlow ->
             try {
                 progressFlow.collectLatest { backEvent ->
                     // 根据手势进度缩放和位移
@@ -190,7 +190,10 @@ fun ScheduleApp(
                     backOffsetX = backEvent.progress * 50f       // 向右偏移 50dp
                 }
                 // 完成手势 - 执行返回
-                navController.popBackStack()
+                if (!navController.popBackStack()) {
+                    // 没有 back stack 了，让系统处理
+                    (context as? android.app.Activity)?.onBackPressed()
+                }
             } catch (e: CancellationException) {
                 // 取消手势 - 恢复动画
                 scope.launch {
