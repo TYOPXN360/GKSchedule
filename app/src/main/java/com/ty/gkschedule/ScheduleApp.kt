@@ -64,6 +64,60 @@ sealed class Screen(val route: String) {
     }
 }
 
+/**
+ * 主页级 Scaffold - 包含底栏和 Snackbar
+ * 作为 NavHost 动效的子节点，预测性返回时底栏跟随页面一起动画
+ */
+@Composable
+fun MainScaffold(
+    navController: androidx.navigation.NavController,
+    currentRoute: String?,
+    snackbarHostState: SnackbarHostState,
+    containerColor: Color,
+    navView: android.view.View,
+    content: @Composable (PaddingValues) -> Unit
+) {
+    Scaffold(
+        containerColor = containerColor,
+        snackbarHost = {
+            SnackbarHost(snackbarHostState) { snackbarData ->
+                Snackbar(
+                    snackbarData = snackbarData,
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    contentColor = MaterialTheme.colorScheme.onSurface,
+                    shape = MaterialTheme.shapes.small
+                )
+            }
+        },
+        bottomBar = {
+            NavigationBar {
+                listOf(
+                    Screen.Today to Triple(Icons.Default.Today, "今日", "today"),
+                    Screen.Weekly to Triple(Icons.Default.DateRange, "课表", "weekly"),
+                    Screen.Courses to Triple(Icons.AutoMirrored.Filled.LibraryBooks, "课程", "courses"),
+                    Screen.About to Triple(Icons.Default.Person, "我的", "about")
+                ).forEach { (screen, triple) ->
+                    NavigationBarItem(
+                        icon = { Icon(triple.first, contentDescription = triple.second) },
+                        label = { Text(triple.second) },
+                        selected = currentRoute == screen.route,
+                        onClick = {
+                            com.ty.gkschedule.util.HapticFeedback.light(navView)
+                            if (currentRoute != screen.route) {
+                                navController.navigate(screen.route) {
+                                    popUpTo(Screen.Today.route) { saveState = true }
+                                    launchSingleTop = true; restoreState = true
+                                }
+                            }
+                        }
+                    )
+                }
+            }
+        },
+        content = content
+    )
+}
+
 @Composable
 fun ScheduleApp(
     viewModel: ScheduleViewModel = viewModel()
@@ -132,84 +186,51 @@ fun ScheduleApp(
 
     val mainScaffoldBg = if (com.ty.gkschedule.ui.theme.LocalAppIsDark.current) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainer
 
-    Scaffold(
-        containerColor = mainScaffoldBg,
-        snackbarHost = {
-            SnackbarHost(snackbarHostState) { snackbarData ->
-                Snackbar(
-                    snackbarData = snackbarData,
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    contentColor = MaterialTheme.colorScheme.onSurface,
-                    shape = MaterialTheme.shapes.small
-                )
+    // Tab index for directional animation
+    val tabIndex = mapOf(
+        "today" to 0, "weekly" to 1, "courses" to 2, "about" to 3
+    )
+    fun tabIndexOf(route: String?): Int = tabIndex.entries
+        .firstOrNull { route?.startsWith(it.key) == true }?.value ?: 0
+
+    // 外层轻量化容器 - 只负责路由分发
+    NavHost(
+        navController = navController,
+        startDestination = Screen.Today.route,
+        enterTransition = {
+            val from = tabIndexOf(initialState.destination.route)
+            val to = tabIndexOf(targetState.destination.route)
+            if (to >= from) {
+                slideInHorizontally(initialOffsetX = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideInSpec()) + fadeIn(com.ty.gkschedule.ui.theme.M3Motion.fadeInSpec())
+            } else {
+                slideInHorizontally(initialOffsetX = { -it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideInSpec()) + fadeIn(com.ty.gkschedule.ui.theme.M3Motion.fadeInSpec())
             }
         },
-        bottomBar = {
-            if (showBottomBar) {
-                NavigationBar {
-                    listOf(
-                        Screen.Today to Triple(Icons.Default.Today, stringResource(R.string.nav_today), "today"),
-                        Screen.Weekly to Triple(Icons.Default.DateRange, stringResource(R.string.nav_schedule), "weekly"),
-                        Screen.Courses to Triple(Icons.AutoMirrored.Filled.LibraryBooks, stringResource(R.string.nav_courses), "courses"),
-                        Screen.About to Triple(Icons.Default.Person, stringResource(R.string.nav_about), "about")
-                    ).forEach { (screen, triple) ->
-                        NavigationBarItem(
-                            icon = { Icon(triple.first, contentDescription = triple.second) },
-                            label = { Text(triple.second) },
-                            selected = currentRoute == screen.route,
-                            onClick = {
-                                com.ty.gkschedule.util.HapticFeedback.light(navView)
-                                if (currentRoute != screen.route) {
-                                    navController.navigate(screen.route) {
-                                        popUpTo(Screen.Today.route) { saveState = true }
-                                        launchSingleTop = true; restoreState = true
-                                    }
-                                }
-                            }
-                        )
-                    }
-                }
-            }
-        }
-    ) { innerPadding ->
-        // Tab index for directional animation
-        val tabIndex = mapOf(
-            "today" to 0, "weekly" to 1, "courses" to 2, "about" to 3
-        )
-        fun tabIndexOf(route: String?): Int = tabIndex.entries
-            .firstOrNull { route?.startsWith(it.key) == true }?.value ?: 0
-
-        NavHost(
-            navController = navController,
-            startDestination = Screen.Today.route,
-            modifier = Modifier
-                .padding(if (showBottomBar) innerPadding else PaddingValues(0.dp)),
-            enterTransition = {
-                val from = tabIndexOf(initialState.destination.route)
-                val to = tabIndexOf(targetState.destination.route)
-                if (to >= from) {
-                    slideInHorizontally(initialOffsetX = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideInSpec()) + fadeIn(com.ty.gkschedule.ui.theme.M3Motion.fadeInSpec())
-                } else {
-                    slideInHorizontally(initialOffsetX = { -it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideInSpec()) + fadeIn(com.ty.gkschedule.ui.theme.M3Motion.fadeInSpec())
-                }
-            },
-            exitTransition = {
-                val from = tabIndexOf(initialState.destination.route)
-                val to = tabIndexOf(targetState.destination.route)
-                if (to >= from) {
-                    slideOutHorizontally(targetOffsetX = { -it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideOutSpec()) + fadeOut(com.ty.gkschedule.ui.theme.M3Motion.fadeOutSpec())
-                } else {
-                    slideOutHorizontally(targetOffsetX = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideOutSpec()) + fadeOut(com.ty.gkschedule.ui.theme.M3Motion.fadeOutSpec())
-                }
-            },
-            popEnterTransition = {
-                slideInHorizontally(initialOffsetX = { -it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideInSpec()) + fadeIn(com.ty.gkschedule.ui.theme.M3Motion.fadeInSpec())
-            },
-            popExitTransition = {
+        exitTransition = {
+            val from = tabIndexOf(initialState.destination.route)
+            val to = tabIndexOf(targetState.destination.route)
+            if (to >= from) {
+                slideOutHorizontally(targetOffsetX = { -it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideOutSpec()) + fadeOut(com.ty.gkschedule.ui.theme.M3Motion.fadeOutSpec())
+            } else {
                 slideOutHorizontally(targetOffsetX = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideOutSpec()) + fadeOut(com.ty.gkschedule.ui.theme.M3Motion.fadeOutSpec())
             }
-        ) {
-            composable(Screen.Today.route) {
+        },
+        popEnterTransition = {
+            slideInHorizontally(initialOffsetX = { -it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideInSpec()) + fadeIn(com.ty.gkschedule.ui.theme.M3Motion.fadeInSpec())
+        },
+        popExitTransition = {
+            slideOutHorizontally(targetOffsetX = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideOutSpec()) + fadeOut(com.ty.gkschedule.ui.theme.M3Motion.fadeOutSpec())
+        }
+    ) {
+        composable(Screen.Today.route) {
+            // 主页自带底栏 - 作为 NavHost 动效的子节点
+            MainScaffold(
+                navController = navController,
+                currentRoute = currentRoute,
+                snackbarHostState = snackbarHostState,
+                containerColor = mainScaffoldBg,
+                navView = navView
+            ) { innerPadding ->
                 TodayScreen(
                     courses = displayCourses, colorCourses = courses, currentWeek = realCurrentWeek,
                     colorEngine = colorEngine, colorGroupMode = colorGroupMode,
@@ -223,10 +244,18 @@ fun ScheduleApp(
                     onExamEdit = { navController.navigate(Screen.ExamEdit.createRoute(it.id)) },
                     diffColorPerWeek = diffColorPerWeek
                 )
+                }
             }
 
             composable(Screen.Weekly.route) {
-                WeeklyScheduleScreen(
+                MainScaffold(
+                    navController = navController,
+                    currentRoute = currentRoute,
+                    snackbarHostState = snackbarHostState,
+                    containerColor = mainScaffoldBg,
+                    navView = navView
+                ) { innerPadding ->
+                    WeeklyScheduleScreen(
                     courses = displayCourses, colorCourses = courses, currentWeek = selectedWeek,
                     totalWeeks = totalWeeks, periodsPerDay = periodsPerDay,
                     gridHeight = gridHeight, gridCorner = gridCorner,
@@ -254,10 +283,18 @@ fun ScheduleApp(
                     getEndTime = { viewModel.getEndTime(it) },
                     diffColorPerWeek = diffColorPerWeek
                 )
+                }
             }
 
             composable(Screen.Courses.route) {
-                CourseManageScreen(
+                MainScaffold(
+                    navController = navController,
+                    currentRoute = currentRoute,
+                    snackbarHostState = snackbarHostState,
+                    containerColor = mainScaffoldBg,
+                    navView = navView
+                ) { innerPadding ->
+                    CourseManageScreen(
                     courses = courses,
                     colorEngine = colorEngine,
                     colorGroupMode = colorGroupMode,
@@ -266,6 +303,7 @@ fun ScheduleApp(
                     onDeleteCourse = { viewModel.deleteCourse(it) },
                     onDeleteAll = { viewModel.deleteAllCourses() }
                 )
+                }
             }
 
             composable(Screen.About.route) {
@@ -278,7 +316,14 @@ fun ScheduleApp(
                     val weeksWithCourses = courses.flatMap { course -> (1..totalWeeksVal).filter { course.isInWeek(it) } }.toSet()
                     weeksWithCourses.size.coerceAtLeast(1)
                 } else totalWeeksVal
-                AboutScreen(
+                MainScaffold(
+                    navController = navController,
+                    currentRoute = currentRoute,
+                    snackbarHostState = snackbarHostState,
+                    containerColor = mainScaffoldBg,
+                    navView = navView
+                ) { innerPadding ->
+                    AboutScreen(
                     loginState = loginState,
                     savedStudentId = savedStudentId,
                     savedRealName = savedRealName,
@@ -297,6 +342,7 @@ fun ScheduleApp(
                     onOpenAbout = { navController.navigate(Screen.AboutDetail.route) },
                     onOpenExam = { navController.navigate(Screen.Exam.route) }
                 )
+                }
             }
 
             composable(Screen.AboutDetail.route) {
@@ -439,9 +485,10 @@ fun ScheduleApp(
             }
         }
     }
-}
 
-/** Simplified schedule grid for image export */
+/**
+ * 简化的课程表网格 - 用于图片导出
+ */
 @Composable
 fun ScheduleGridForExport(
     courses: List<Course>,
