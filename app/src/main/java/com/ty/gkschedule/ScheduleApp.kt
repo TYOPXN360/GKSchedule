@@ -177,28 +177,28 @@ fun ScheduleApp(
             }
         }
     ) { innerPadding ->
-        // Predictive Back Animation
-        var backScale by remember { mutableFloatStateOf(1f) }
-        var backOffsetX by remember { mutableFloatStateOf(0f) }
+        // Predictive Back Animation (AOSP style)
+        var backProgress by remember { mutableFloatStateOf(0f) }
+        var backTouchY by remember { mutableFloatStateOf(0.5f) }
         val scope = rememberCoroutineScope()
 
         PredictiveBackHandler { progressFlow ->
             try {
                 progressFlow.collectLatest { backEvent ->
-                    // 根据手势进度缩放和位移
-                    backScale = 1f - backEvent.progress * 0.1f  // 缩小到 0.9
-                    backOffsetX = backEvent.progress * 50f       // 向右偏移 50dp
+                    backProgress = backEvent.progress
+                    // 记录触摸 Y 位置 (0~1)
+                    if (backEvent.swipeEdge == 0) { // EDGE_LEFT
+                        backTouchY = backEvent.touchY
+                    }
                 }
                 // 完成手势 - 执行返回
                 if (!navController.popBackStack()) {
-                    // 没有 back stack 了，让系统处理
                     (context as? android.app.Activity)?.onBackPressed()
                 }
             } catch (e: CancellationException) {
                 // 取消手势 - 恢复动画
                 scope.launch {
-                    launch { animate(backScale, 1f) { value, _ -> backScale = value } }
-                    launch { animate(backOffsetX, 0f) { value, _ -> backOffsetX = value } }
+                    animate(backProgress, 0f) { value, _ -> backProgress = value }
                 }
             }
         }
@@ -216,10 +216,16 @@ fun ScheduleApp(
             modifier = Modifier
                 .padding(if (showBottomBar) innerPadding else PaddingValues(0.dp))
                 .graphicsLayer {
-                    scaleX = backScale
-                    scaleY = backScale
-                    translationX = backOffsetX.dp.toPx()
-                },
+                    // AOSP style: scale down + translate + rounded corners
+                    val maxScale = 0.85f
+                    val scale = 1f - (1f - maxScale) * backProgress
+                    scaleX = scale
+                    scaleY = scale
+                    translationX = backProgress * 100.dp.toPx()  // 跟随手势平移
+                    // 根据触摸位置设置 pivot
+                    transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0.8f, backTouchY.coerceIn(0.1f, 0.9f))
+                }
+                .clip(RoundedCornerShape(if (backProgress > 0f) 28.dp else 0.dp)),
             enterTransition = {
                 val from = tabIndexOf(initialState.destination.route)
                 val to = tabIndexOf(targetState.destination.route)
