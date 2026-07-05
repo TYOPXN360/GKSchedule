@@ -165,7 +165,7 @@ fun LoginScreen(
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(modifier = Modifier.size(24.dp),
-                        color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp)
+                        color = MaterialTheme.colorScheme.onPrimary)
                     Spacer(modifier = Modifier.width(8.dp))
                 }
                 Text(stringResource(R.string.login_button))

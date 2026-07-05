@@ -101,16 +101,16 @@ fun SettingsScreen(
             navController = navController,
             startDestination = "main",
                 enterTransition = {
-                    slideInHorizontally(tween(400, easing = androidx.compose.animation.core.FastOutSlowInEasing)) { it } + fadeIn(tween(300))
+                    slideInHorizontally(com.ty.gkschedule.ui.theme.M3Motion.tabSlideInSpec()) { it } + fadeIn(com.ty.gkschedule.ui.theme.M3Motion.fadeInSpec())
                 },
                 exitTransition = {
-                    slideOutHorizontally(tween(200, easing = androidx.compose.animation.core.FastOutLinearInEasing)) { -it } + fadeOut(tween(150))
+                    slideOutHorizontally(com.ty.gkschedule.ui.theme.M3Motion.tabSlideOutSpec()) { -it } + fadeOut(com.ty.gkschedule.ui.theme.M3Motion.fadeOutSpec())
                 },
                 popEnterTransition = {
-                    slideInHorizontally(tween(400, easing = androidx.compose.animation.core.FastOutSlowInEasing)) { -it } + fadeIn(tween(300))
+                    slideInHorizontally(com.ty.gkschedule.ui.theme.M3Motion.tabSlideInSpec()) { -it } + fadeIn(com.ty.gkschedule.ui.theme.M3Motion.fadeInSpec())
                 },
                 popExitTransition = {
-                    slideOutHorizontally(tween(200, easing = androidx.compose.animation.core.FastOutLinearInEasing)) { it } + fadeOut(tween(150))
+                    slideOutHorizontally(com.ty.gkschedule.ui.theme.M3Motion.tabSlideOutSpec()) { it } + fadeOut(com.ty.gkschedule.ui.theme.M3Motion.fadeOutSpec())
             }
         ) {
             composable("main") {

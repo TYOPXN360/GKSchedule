@@ -177,7 +177,7 @@ fun ExamScreen(
                             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp)
                         ) {
                             if (isLoading) {
-                                CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onPrimary)
+                                CircularProgressIndicator(modifier = Modifier.size(18.dp), color = MaterialTheme.colorScheme.onPrimary)
                             } else {
                                 Icon(Icons.Default.Refresh, null, modifier = Modifier.size(18.dp))
                                 Spacer(modifier = Modifier.width(6.dp))

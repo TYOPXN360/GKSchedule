@@ -187,25 +187,25 @@ fun ScheduleApp(
                 val from = tabIndexOf(initialState.destination.route)
                 val to = tabIndexOf(targetState.destination.route)
                 if (to >= from) {
-                    slideInHorizontally(initialOffsetX = { it }, animationSpec = tween(400, easing = androidx.compose.animation.core.FastOutSlowInEasing)) + fadeIn(tween(300))
+                    slideInHorizontally(initialOffsetX = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideInSpec()) + fadeIn(com.ty.gkschedule.ui.theme.M3Motion.fadeInSpec())
                 } else {
-                    slideInHorizontally(initialOffsetX = { -it }, animationSpec = tween(400, easing = androidx.compose.animation.core.FastOutSlowInEasing)) + fadeIn(tween(300))
+                    slideInHorizontally(initialOffsetX = { -it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideInSpec()) + fadeIn(com.ty.gkschedule.ui.theme.M3Motion.fadeInSpec())
                 }
             },
             exitTransition = {
                 val from = tabIndexOf(initialState.destination.route)
                 val to = tabIndexOf(targetState.destination.route)
                 if (to >= from) {
-                    slideOutHorizontally(targetOffsetX = { -it }, animationSpec = tween(200, easing = androidx.compose.animation.core.FastOutLinearInEasing)) + fadeOut(tween(150))
+                    slideOutHorizontally(targetOffsetX = { -it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideOutSpec()) + fadeOut(com.ty.gkschedule.ui.theme.M3Motion.fadeOutSpec())
                 } else {
-                    slideOutHorizontally(targetOffsetX = { it }, animationSpec = tween(200, easing = androidx.compose.animation.core.FastOutLinearInEasing)) + fadeOut(tween(150))
+                    slideOutHorizontally(targetOffsetX = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideOutSpec()) + fadeOut(com.ty.gkschedule.ui.theme.M3Motion.fadeOutSpec())
                 }
             },
             popEnterTransition = {
-                slideInHorizontally(initialOffsetX = { -it }, animationSpec = tween(400, easing = androidx.compose.animation.core.FastOutSlowInEasing)) + fadeIn(tween(300))
+                slideInHorizontally(initialOffsetX = { -it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideInSpec()) + fadeIn(com.ty.gkschedule.ui.theme.M3Motion.fadeInSpec())
             },
             popExitTransition = {
-                slideOutHorizontally(targetOffsetX = { it }, animationSpec = tween(200, easing = androidx.compose.animation.core.FastOutLinearInEasing)) + fadeOut(tween(150))
+                slideOutHorizontally(targetOffsetX = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideOutSpec()) + fadeOut(com.ty.gkschedule.ui.theme.M3Motion.fadeOutSpec())
             }
         ) {
             composable(Screen.Today.route) {

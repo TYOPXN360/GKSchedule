@@ -451,7 +451,7 @@ fun WeeklyScheduleScreen(
             ) {
                 AnimatedVisibility(visible = fabExpanded, enter = slideInVertically(initialOffsetY = { it }) + fadeIn(), exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()) {
                     FloatingActionButton(onClick = { com.ty.gkschedule.util.HapticFeedback.medium(hapticView); onRefresh() }, containerColor = MaterialTheme.colorScheme.secondaryContainer, contentColor = MaterialTheme.colorScheme.onSecondaryContainer) {
-                        if (isRefreshing) CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp) else Icon(Icons.Default.Refresh, "Refresh")
+                                                if (isRefreshing)  CircularProgressIndicator(modifier = Modifier.size(24.dp)) else Icon(Icons.Default.Refresh, "Refresh")
                     }
                 }
                 AnimatedVisibility(visible = fabExpanded, enter = slideInVertically(initialOffsetY = { it }) + fadeIn(), exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()) {
