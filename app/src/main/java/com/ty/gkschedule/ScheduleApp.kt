@@ -3,18 +3,15 @@ package com.ty.gkschedule
 import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.BackHandler
-import androidx.activity.compose.PredictiveBackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
-import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
@@ -46,8 +43,6 @@ import com.ty.gkschedule.ui.manage.CourseManageScreen
 import com.ty.gkschedule.ui.settings.SettingsScreen
 import com.ty.gkschedule.ui.today.TodayScreen
 import com.ty.gkschedule.ui.weekly.WeeklyScheduleScreen
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 sealed class Screen(val route: String) {
@@ -177,32 +172,6 @@ fun ScheduleApp(
             }
         }
     ) { innerPadding ->
-        // Predictive Back Animation (AOSP style)
-        var backProgress by remember { mutableFloatStateOf(0f) }
-        var backTouchY by remember { mutableFloatStateOf(0.5f) }
-        val scope = rememberCoroutineScope()
-
-        PredictiveBackHandler { progressFlow ->
-            try {
-                progressFlow.collectLatest { backEvent ->
-                    backProgress = backEvent.progress
-                    // 记录触摸 Y 位置 (0~1)
-                    if (backEvent.swipeEdge == 0) { // EDGE_LEFT
-                        backTouchY = backEvent.touchY
-                    }
-                }
-                // 完成手势 - 执行返回
-                if (!navController.popBackStack()) {
-                    (context as? android.app.Activity)?.onBackPressed()
-                }
-            } catch (e: CancellationException) {
-                // 取消手势 - 恢复动画
-                scope.launch {
-                    animate(backProgress, 0f) { value, _ -> backProgress = value }
-                }
-            }
-        }
-
         // Tab index for directional animation
         val tabIndex = mapOf(
             "today" to 0, "weekly" to 1, "courses" to 2, "about" to 3
@@ -214,18 +183,7 @@ fun ScheduleApp(
             navController = navController,
             startDestination = Screen.Today.route,
             modifier = Modifier
-                .padding(if (showBottomBar) innerPadding else PaddingValues(0.dp))
-                .graphicsLayer {
-                    // AOSP style: scale down + translate + rounded corners
-                    val maxScale = 0.85f
-                    val scale = 1f - (1f - maxScale) * backProgress
-                    scaleX = scale
-                    scaleY = scale
-                    translationX = backProgress * 100.dp.toPx()  // 跟随手势平移
-                    // 根据触摸位置设置 pivot
-                    transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0.8f, backTouchY.coerceIn(0.1f, 0.9f))
-                }
-                .clip(RoundedCornerShape(if (backProgress > 0f) 28.dp else 0.dp)),
+                .padding(if (showBottomBar) innerPadding else PaddingValues(0.dp)),
             enterTransition = {
                 val from = tabIndexOf(initialState.destination.route)
                 val to = tabIndexOf(targetState.destination.route)
