@@ -3,15 +3,18 @@ package com.ty.gkschedule
 import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.PredictiveBackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
+import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
@@ -43,6 +46,8 @@ import com.ty.gkschedule.ui.manage.CourseManageScreen
 import com.ty.gkschedule.ui.settings.SettingsScreen
 import com.ty.gkschedule.ui.today.TodayScreen
 import com.ty.gkschedule.ui.weekly.WeeklyScheduleScreen
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 sealed class Screen(val route: String) {
@@ -172,6 +177,29 @@ fun ScheduleApp(
             }
         }
     ) { innerPadding ->
+        // Predictive Back Animation
+        var backScale by remember { mutableFloatStateOf(1f) }
+        var backOffsetX by remember { mutableFloatStateOf(0f) }
+        val scope = rememberCoroutineScope()
+
+        PredictiveBackHandler(enabled = navController.previousBackStackEntry != null) { progressFlow ->
+            try {
+                progressFlow.collectLatest { backEvent ->
+                    // 根据手势进度缩放和位移
+                    backScale = 1f - backEvent.progress * 0.1f  // 缩小到 0.9
+                    backOffsetX = backEvent.progress * 50f       // 向右偏移 50dp
+                }
+                // 完成手势 - 执行返回
+                navController.popBackStack()
+            } catch (e: CancellationException) {
+                // 取消手势 - 恢复动画
+                scope.launch {
+                    launch { animate(backScale, 1f) { value, _ -> backScale = value } }
+                    launch { animate(backOffsetX, 0f) { value, _ -> backOffsetX = value } }
+                }
+            }
+        }
+
         // Tab index for directional animation
         val tabIndex = mapOf(
             "today" to 0, "weekly" to 1, "courses" to 2, "about" to 3
@@ -182,7 +210,13 @@ fun ScheduleApp(
         NavHost(
             navController = navController,
             startDestination = Screen.Today.route,
-            modifier = Modifier.padding(if (showBottomBar) innerPadding else PaddingValues(0.dp)),
+            modifier = Modifier
+                .padding(if (showBottomBar) innerPadding else PaddingValues(0.dp))
+                .graphicsLayer {
+                    scaleX = backScale
+                    scaleY = backScale
+                    translationX = backOffsetX.dp.toPx()
+                },
             enterTransition = {
                 val from = tabIndexOf(initialState.destination.route)
                 val to = tabIndexOf(targetState.destination.route)
