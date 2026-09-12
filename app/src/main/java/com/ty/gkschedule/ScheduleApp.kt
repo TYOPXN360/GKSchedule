@@ -140,7 +140,12 @@ fun ScheduleApp(
             }
         },
         bottomBar = {
-            if (showBottomBar) {
+            // ponytail: 底栏常驻，用位移动画藏/显；之前按路由if挪走，返回tab页时底栏是凭空蹦出来的
+            androidx.compose.animation.AnimatedVisibility(
+                visible = showBottomBar,
+                enter = slideInVertically(initialOffsetY = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideInSpec()),
+                exit = slideOutVertically(targetOffsetY = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideOutSpec())
+            ) {
                 NavigationBar {
                     listOf(
                         Screen.Today to Triple(Icons.Default.Today, "今日", "today"),
@@ -170,7 +175,8 @@ fun ScheduleApp(
         NavHost(
             navController = navController,
             startDestination = startPage,
-            modifier = Modifier.padding(if (showBottomBar) innerPadding else PaddingValues(0.dp)),
+            // ponytail: 底栏槽位常驻（AnimatedVisibility只做位移），内容区padding恒定，返回时布局不跳
+            modifier = Modifier.padding(innerPadding),
             // ponytail: tab↔tab按左右方向滑；进子页统一右进；返回统一镜像左出（预测返回手势方向）
             enterTransition = {
                 val from = initialState.destination.route
