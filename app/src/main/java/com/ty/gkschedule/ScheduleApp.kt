@@ -17,6 +17,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ChevronLeft
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.automirrored.filled.LibraryBooks
@@ -37,7 +39,6 @@ import androidx.navigation.navArgument
 import com.ty.gkschedule.data.Course
 import com.ty.gkschedule.ui.about.AboutScreen
 import com.ty.gkschedule.ui.course.CourseEditScreen
-import com.ty.gkschedule.ui.exam.ExamScreen
 import com.ty.gkschedule.ui.login.LoginScreen
 import com.ty.gkschedule.ui.login.WebViewLoginScreen
 import com.ty.gkschedule.ui.manage.CourseManageScreen
@@ -51,17 +52,11 @@ sealed class Screen(val route: String) {
     data object Weekly : Screen("weekly")
     data object Courses : Screen("courses")
     data object About : Screen("about")
-    data object AboutDetail : Screen("about_detail")
     data object Login : Screen("login")
     data object WebViewLogin : Screen("webview_login")
-    data object Exam : Screen("exam")
     data object CourseEdit : Screen("course_edit?courseId={courseId}&isExam={isExam}") {
         fun createRoute(courseId: Long? = null, isExam: Boolean = false): String =
             "course_edit?courseId=${courseId ?: -1L}&isExam=$isExam"
-    }
-    data object ExamEdit : Screen("exam_edit?examId={examId}") {
-        fun createRoute(examId: Long? = null): String =
-            "exam_edit?examId=${examId ?: -1L}"
     }
 }
 
@@ -74,12 +69,14 @@ private fun navItemList(): List<Pair<Screen, Triple<androidx.compose.ui.graphics
         Screen.About to Triple(Icons.Default.Person, "我的", "about")
     )
 
-// 悬浮药丸底栏：屏幕中下方覆盖层，未选中纯图标，选中横展名称
+// 悬浮药丸底栏：屏幕中下方覆盖层，默认横展名称，点击后缩成纯图标
 @Composable
 private fun FloatingPillNavBar(
     currentRoute: String?,
     onNavigate: (Screen) -> Unit
 ) {
+    // ponytail: 收起态只剩一个小圆钮，点即展开；展开态每项默认带名，点当前项缩名
+    var collapsed by remember { mutableStateOf(false) }
     Row(
         modifier = Modifier
             .padding(horizontal = 48.dp)
@@ -91,27 +88,65 @@ private fun FloatingPillNavBar(
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically
     ) {
+        if (collapsed) {
+            Row(
+                modifier = Modifier
+                    .clip(androidx.compose.foundation.shape.CircleShape)
+                    .clickable(onClick = { collapsed = false })
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    Icons.Default.ChevronRight, contentDescription = "展开",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+            return@Row
+        }
         navItemList().forEach { (screen, triple) ->
+            var expanded by remember(screen.route) { mutableStateOf(true) }
             val selected = currentRoute == screen.route
-            // ponytail: 选中才横展label；pill底用surfaceContainerHigh，选中块用secondaryContainer
             val bg = if (selected) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent
             val fg = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
             Row(
                 modifier = Modifier
                     .clip(androidx.compose.foundation.shape.CircleShape)
                     .background(bg)
-                    .clickable(onClick = { onNavigate(screen) })
-                    .padding(horizontal = if (selected) 16.dp else 12.dp, vertical = 10.dp),
+                    .clickable(onClick = {
+                        if (selected) expanded = !expanded
+                        else onNavigate(screen)
+                    })
+                    .padding(horizontal = if (expanded) 16.dp else 12.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(triple.first, contentDescription = triple.second, tint = fg, modifier = Modifier.size(24.dp))
-                androidx.compose.animation.AnimatedVisibility(visible = selected) {
+                androidx.compose.animation.AnimatedVisibility(visible = expanded) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(triple.second, style = MaterialTheme.typography.labelLarge, color = fg, maxLines = 1)
                     }
                 }
             }
+        }
+        HorizontalDivider(
+            modifier = Modifier
+                .height(24.dp)
+                .width(1.dp),
+            color = MaterialTheme.colorScheme.outlineVariant
+        )
+        Row(
+            modifier = Modifier
+                .clip(androidx.compose.foundation.shape.CircleShape)
+                .clickable(onClick = { collapsed = true })
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                Icons.Default.ChevronLeft, contentDescription = "收起",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(24.dp)
+            )
         }
     }
 }
@@ -264,8 +299,8 @@ fun ScheduleApp(
                 slideOutHorizontally(targetOffsetX = { (it * 0.15f).toInt() }, animationSpec = tween(300)) + fadeOut(animationSpec = tween(150))
             }
         ) {
-            composable(Screen.Today.route) { TodayScreen(courses = displayCourses, colorCourses = courses, currentWeek = realCurrentWeek, colorEngine = colorEngine, colorGroupMode = colorGroupMode, exams = examList, showExamSchedule = showExamSchedule, examLookaheadWeeks = examLookaheadWeeks, semesterStart = semesterStart, getStartTime = { viewModel.getStartTime(it) }, getEndTime = { viewModel.getEndTime(it) }, onCourseLongPress = { navController.navigate(Screen.CourseEdit.createRoute(it.id)) }, onExamEdit = { navController.navigate(Screen.ExamEdit.createRoute(it.id)) }, diffColorPerWeek = diffColorPerWeek) }
-            composable(Screen.Weekly.route) { WeeklyScheduleScreen(courses = displayCourses, colorCourses = courses, currentWeek = selectedWeek, totalWeeks = totalWeeks, periodsPerDay = periodsPerDay, gridHeight = gridHeight, gridCorner = gridCorner, gridSpacing = gridSpacing, showPeriodLabel = showPeriodLabel, autoGridHeight = autoGridHeight, firstDayOfWeek = firstDayOfWeek, mergeConsecutive = mergeConsecutive, showTimeLabel = showTimeLabel, detailedSplit = detailedSplit, colorEngine = colorEngine, colorGroupMode = colorGroupMode, showDateInHeader = showDateInHeader, hideEmptyWeeks = hideEmptyWeeks, semesterStart = semesterStart, exams = examList, showExamSchedule = showExamSchedule, realCurrentWeek = realCurrentWeek, isRefreshing = isRefreshing, onWeekChange = { viewModel.setWeek(it.coerceIn(1, totalWeeks)) }, onCourseClick = { }, onCourseLongPress = { navController.navigate(Screen.CourseEdit.createRoute(it.id)) }, onExamEdit = { navController.navigate(Screen.ExamEdit.createRoute(it.id)) }, onAddCourse = { navController.navigate(Screen.CourseEdit.createRoute()) }, onRefresh = { viewModel.refreshFromSchool() }, getStartTime = { viewModel.getStartTime(it) }, getEndTime = { viewModel.getEndTime(it) }, diffColorPerWeek = diffColorPerWeek) }
+            composable(Screen.Today.route) { TodayScreen(courses = displayCourses, colorCourses = courses, currentWeek = realCurrentWeek, colorEngine = colorEngine, colorGroupMode = colorGroupMode, exams = examList, showExamSchedule = showExamSchedule, examLookaheadWeeks = examLookaheadWeeks, semesterStart = semesterStart, getStartTime = { viewModel.getStartTime(it) }, getEndTime = { viewModel.getEndTime(it) }, onCourseLongPress = { navController.navigate(Screen.CourseEdit.createRoute(it.id)) }, onExamEdit = { context.startActivity(Intent(context, com.ty.gkschedule.ui.exam.ExamActivity::class.java).apply { putExtra("examId", it.id) }) }, diffColorPerWeek = diffColorPerWeek) }
+            composable(Screen.Weekly.route) { WeeklyScheduleScreen(courses = displayCourses, colorCourses = courses, currentWeek = selectedWeek, totalWeeks = totalWeeks, periodsPerDay = periodsPerDay, gridHeight = gridHeight, gridCorner = gridCorner, gridSpacing = gridSpacing, showPeriodLabel = showPeriodLabel, autoGridHeight = autoGridHeight, firstDayOfWeek = firstDayOfWeek, mergeConsecutive = mergeConsecutive, showTimeLabel = showTimeLabel, detailedSplit = detailedSplit, colorEngine = colorEngine, colorGroupMode = colorGroupMode, showDateInHeader = showDateInHeader, hideEmptyWeeks = hideEmptyWeeks, semesterStart = semesterStart, exams = examList, showExamSchedule = showExamSchedule, realCurrentWeek = realCurrentWeek, isRefreshing = isRefreshing, onWeekChange = { viewModel.setWeek(it.coerceIn(1, totalWeeks)) }, onCourseClick = { }, onCourseLongPress = { navController.navigate(Screen.CourseEdit.createRoute(it.id)) }, onExamEdit = { context.startActivity(Intent(context, com.ty.gkschedule.ui.exam.ExamActivity::class.java).apply { putExtra("examId", it.id) }) }, onAddCourse = { navController.navigate(Screen.CourseEdit.createRoute()) }, onRefresh = { viewModel.refreshFromSchool() }, getStartTime = { viewModel.getStartTime(it) }, getEndTime = { viewModel.getEndTime(it) }, diffColorPerWeek = diffColorPerWeek) }
             composable(Screen.Courses.route) { CourseManageScreen(courses = courses, colorEngine = colorEngine, colorGroupMode = colorGroupMode, onCourseClick = { navController.navigate(Screen.CourseEdit.createRoute(it.id)) }, onAddCourse = { navController.navigate(Screen.CourseEdit.createRoute()) }, onDeleteCourse = { viewModel.deleteCourse(it) }, onDeleteAll = { viewModel.deleteAllCourses() }) }
             composable(Screen.About.route) {
                 val savedStudentId by viewModel.savedStudentIdFlow.collectAsState()
@@ -274,9 +309,8 @@ fun ScheduleApp(
                 val totalWeeksVal by viewModel.totalWeeks.collectAsState(initial = 20)
                 val periodsPerDayVal by viewModel.periodsPerDay.collectAsState(initial = 10)
                 val displayWeeks = if (hideEmptyWeeks && courses.isNotEmpty()) { val weeksWithCourses = courses.flatMap { course -> (1..totalWeeksVal).filter { course.isInWeek(it) } }.toSet(); weeksWithCourses.size.coerceAtLeast(1) } else totalWeeksVal
-                AboutScreen(loginState = loginState, savedStudentId = savedStudentId, savedRealName = savedRealName, savedDeptName = savedDeptName, semesterStart = semesterStart, totalWeeks = displayWeeks, periodsPerDay = periodsPerDayVal, captchaImageBase64 = captchaImage, onLogin = { navController.navigate(Screen.Login.route) }, onLogout = { viewModel.logout() }, onQuickRelogin = { cap -> viewModel.quickRelogin(cap) }, onRefreshCaptcha = { viewModel.refreshCaptcha() }, onOpenSettings = { context.startActivity(Intent(context, com.ty.gkschedule.ui.settings.SettingsActivity::class.java)) }, onOpenAbout = { navController.navigate(Screen.AboutDetail.route) }, onOpenExam = { navController.navigate(Screen.Exam.route) })
+                AboutScreen(loginState = loginState, savedStudentId = savedStudentId, savedRealName = savedRealName, savedDeptName = savedDeptName, semesterStart = semesterStart, totalWeeks = displayWeeks, periodsPerDay = periodsPerDayVal, captchaImageBase64 = captchaImage, onLogin = { navController.navigate(Screen.Login.route) }, onLogout = { viewModel.logout() }, onQuickRelogin = { cap -> viewModel.quickRelogin(cap) }, onRefreshCaptcha = { viewModel.refreshCaptcha() }, onOpenSettings = { context.startActivity(Intent(context, com.ty.gkschedule.ui.settings.SettingsActivity::class.java)) }, onOpenAbout = { context.startActivity(Intent(context, com.ty.gkschedule.ui.about.AboutActivity::class.java)) }, onOpenExam = { context.startActivity(Intent(context, com.ty.gkschedule.ui.exam.ExamActivity::class.java)) })
             }
-            composable(Screen.AboutDetail.route) { com.ty.gkschedule.ui.about.AboutDetailPage(onBack = { navController.popBackStack() }) }
             composable(Screen.Login.route) {
                 val hasSavedCredentials by viewModel.hasSavedCredentials.collectAsState(initial = false)
                 LoginScreen(loginState = loginState, captchaImageBase64 = captchaImage, hasSavedCredentials = hasSavedCredentials, onRefreshCaptcha = { viewModel.refreshCaptcha() }, onLogin = { sid, pwd, cap -> viewModel.login(sid, pwd, cap) }, onQuickRelogin = { cap -> viewModel.quickRelogin(cap) }, onWebViewLogin = { navController.navigate(Screen.WebViewLogin.route) }, onBack = { viewModel.clearLoginError(); navController.popBackStack() })
@@ -287,13 +321,6 @@ fun ScheduleApp(
                 // ponytail: 扫码成功直接回我的页，跳过中间账号密码页
                 LaunchedEffect(loginState) { if (loginState is LoginState.Success || loginState is LoginState.ImportResult) { kotlinx.coroutines.delay(1200); navController.popBackStack(Screen.Login.route, inclusive = true) } }
             }
-            composable(Screen.Exam.route) {
-                val examLoading by viewModel.examLoading.collectAsState()
-                val examYear by viewModel.examYear.collectAsState()
-                val examSemester by viewModel.examSemester.collectAsState()
-                val showExamReloginDialog by viewModel.showExamReloginDialog.collectAsState()
-                ExamScreen(exams = examList, colorCourses = courses, customExams = emptyList(), isLoading = examLoading, semesterStart = semesterStart, examYear = examYear, examSemester = examSemester, showReloginDialog = showExamReloginDialog, captchaImageBase64 = captchaImage, onYearChange = { viewModel.setExamYear(it) }, onSemesterChange = { viewModel.setExamSemester(it) }, onRefresh = { viewModel.refreshExamSchedule() }, onDismissRelogin = { viewModel.dismissExamReloginDialog() }, onRefreshCaptcha = { viewModel.refreshCaptcha() }, onQuickRelogin = { cap -> viewModel.quickRelogin(cap) }, colorEngine = colorEngine, colorGroupMode = colorGroupMode, examLookaheadWeeks = examLookaheadWeeks, onExamLookaheadWeeksChange = { viewModel.setExamLookaheadWeeks(it) }, showExamSchedule = showExamSchedule, onShowExamScheduleChange = { viewModel.setShowExamSchedule(it) }, getStartTime = { viewModel.getStartTime(it) }, getEndTime = { viewModel.getEndTime(it) }, currentWeek = selectedWeek, diffColorPerWeek = diffColorPerWeek, onAddExam = { navController.navigate(Screen.ExamEdit.createRoute()) }, onEditExam = { navController.navigate(Screen.ExamEdit.createRoute(it.id)) }, onBack = { navController.popBackStack() })
-            }
             composable(route = Screen.CourseEdit.route, arguments = listOf(navArgument("courseId") { type = NavType.LongType; defaultValue = -1L }, navArgument("isExam") { type = NavType.BoolType; defaultValue = false })) { backStackEntry ->
                 val courseId = backStackEntry.arguments?.getLong("courseId") ?: -1L
                 val isExam = backStackEntry.arguments?.getBoolean("isExam") ?: false
@@ -301,12 +328,7 @@ fun ScheduleApp(
                 LaunchedEffect(courseId) { if (courseId > 0 && currentCourse == null) { currentCourse = viewModel.getCourseById(courseId) } }
                 CourseEditScreen(course = currentCourse, allCourses = courses, periodsPerDay = periodsPerDay, onSave = { savedCourse, hiddenScopeName -> viewModel.saveCourse(savedCourse, hiddenScopeName); navController.popBackStack() }, onDelete = { viewModel.deleteCourse(it); navController.popBackStack() }, onBack = { navController.popBackStack() })
             }
-            composable(route = Screen.ExamEdit.route, arguments = listOf(navArgument("examId") { type = NavType.LongType; defaultValue = -1L })) { backStackEntry ->
-                val examId = backStackEntry.arguments?.getLong("examId") ?: -1L
-                val currentExam = remember(examId, examList) { if (examId != -1L) examList.find { it.id == examId } else null }
-                com.ty.gkschedule.ui.exam.ExamEditScreen(exam = currentExam, semesterStart = semesterStart, onSave = { examEntities -> viewModel.saveExams(examEntities); navController.popBackStack() }, onDelete = { entity -> viewModel.deleteExamById(entity.id); navController.popBackStack() }, onBack = { navController.popBackStack() })
-            }
-            }
+        }
         }
         // 悬浮pill覆盖层：Box作用域内，屏幕中下方，不占NavHost位置
         if (compactNavBar) {
