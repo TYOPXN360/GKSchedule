@@ -3,7 +3,6 @@ import com.ty.gkschedule.ui.theme.GKSwitch
 
 import android.app.DatePickerDialog
 import androidx.compose.animation.*
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
