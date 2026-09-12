@@ -31,6 +31,7 @@ private data class ReminderConfig(
     val exams: List<ExamEntity>,
     val reminderMinutes: Int,
     val liveUpdate: Boolean,
+    val examLiveUpdate: Boolean,
     val semesterStart: LocalDate,
     val totalWeeks: Int
 )
@@ -72,6 +73,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     val themeColorIndex: Flow<Int> = settings.themeColorIndex
     val reminderMinutes: Flow<Int> = settings.reminderMinutes
     val reminderLiveUpdate: Flow<Boolean> = settings.reminderLiveUpdate
+    val reminderExamLiveUpdate: Flow<Boolean> = settings.reminderExamLiveUpdate
     val autoSyncOnStart: Flow<Boolean> = settings.autoSyncOnStart
     val autoSyncIntervalValue: Flow<Int> = settings.autoSyncIntervalValue
     val autoSyncIntervalUnit: Flow<String> = settings.autoSyncIntervalUnit
@@ -156,16 +158,18 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
             }
         }
         // Schedule reminders when courses or settings change
-        viewModelScope.launch {
-            combine(courses, examList, settings.reminderMinutes, settings.reminderLiveUpdate, settings.semesterStart, settings.totalWeeks) { values ->
+        // ponytail: 一天≤30个闹钟，IO线程排；<=0时只删不排
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            combine(courses, examList, settings.reminderMinutes, settings.reminderLiveUpdate, settings.reminderExamLiveUpdate, settings.semesterStart, settings.totalWeeks) { values ->
                 @Suppress("UNCHECKED_CAST")
                 ReminderConfig(
                     courses = values[0] as List<Course>,
                     exams = values[1] as List<ExamEntity>,
                     reminderMinutes = values[2] as Int,
                     liveUpdate = values[3] as Boolean,
-                    semesterStart = values[4] as LocalDate,
-                    totalWeeks = values[5] as Int
+                    examLiveUpdate = values[4] as Boolean,
+                    semesterStart = values[5] as LocalDate,
+                    totalWeeks = values[6] as Int
                 )
             }.collect { config ->
                 if (config.reminderMinutes > 0) {
@@ -177,6 +181,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                         totalWeeks = config.totalWeeks,
                         reminderMinutes = config.reminderMinutes,
                         liveUpdate = config.liveUpdate,
+                        examLiveUpdate = config.examLiveUpdate,
                         getStartTime = ::getStartTime,
                         getEndTime = ::getEndTime
                     )
@@ -260,6 +265,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     fun setThemeColorIndex(idx: Int) { viewModelScope.launch { settings.setThemeColorIndex(idx) } }
     fun setReminderMinutes(min: Int) { viewModelScope.launch { settings.setReminderMinutes(min) } }
     fun setReminderLiveUpdate(enabled: Boolean) { viewModelScope.launch { settings.setReminderLiveUpdate(enabled) } }
+    fun setReminderExamLiveUpdate(enabled: Boolean) { viewModelScope.launch { settings.setReminderExamLiveUpdate(enabled) } }
     fun setAutoSyncOnStart(enabled: Boolean) { viewModelScope.launch { settings.setAutoSyncOnStart(enabled) } }
     fun setAutoSyncIntervalValue(value: Int) {
         viewModelScope.launch {

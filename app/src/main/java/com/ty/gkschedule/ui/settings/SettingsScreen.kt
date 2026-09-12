@@ -53,6 +53,7 @@ fun SettingsScreen(
     showDateInHeader: Boolean,
     reminderMinutes: Int,
     reminderLiveUpdate: Boolean,
+    reminderExamLiveUpdate: Boolean,
     autoSyncOnStart: Boolean,
     autoSyncIntervalValue: Int,
     autoSyncIntervalUnit: String,
@@ -80,6 +81,7 @@ fun SettingsScreen(
     onShowDateInHeaderChange: (Boolean) -> Unit,
     onReminderMinutesChange: (Int) -> Unit,
     onReminderLiveUpdateChange: (Boolean) -> Unit,
+    onReminderExamLiveUpdateChange: (Boolean) -> Unit,
     onAutoSyncOnStartChange: (Boolean) -> Unit,
     onAutoSyncIntervalValueChange: (Int) -> Unit,
     onAutoSyncIntervalUnitChange: (String) -> Unit,
@@ -178,8 +180,10 @@ fun SettingsScreen(
                 NotificationPage(
                     reminderMinutes = reminderMinutes,
                     reminderLiveUpdate = reminderLiveUpdate,
+                    reminderExamLiveUpdate = reminderExamLiveUpdate,
                     onReminderMinutesChange = onReminderMinutesChange,
                     onReminderLiveUpdateChange = onReminderLiveUpdateChange,
+                    onReminderExamLiveUpdateChange = onReminderExamLiveUpdateChange,
                     onBack = { navController.popBackStack() }
                 )
             }
@@ -499,8 +503,10 @@ private fun ScheduleStylePage(
 private fun NotificationPage(
     reminderMinutes: Int,
     reminderLiveUpdate: Boolean,
+    reminderExamLiveUpdate: Boolean,
     onReminderMinutesChange: (Int) -> Unit,
     onReminderLiveUpdateChange: (Boolean) -> Unit,
+    onReminderExamLiveUpdateChange: (Boolean) -> Unit,
     onBack: () -> Unit
 ) {
     SubPage(stringResource(R.string.settings_category_notification), onBack) {
@@ -518,6 +524,12 @@ private fun NotificationPage(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                     )
+                    AnimatedVisibility(visible = reminderLiveUpdate, enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) {
+                        Column {
+                            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
+                            SwitchItem(Icons.Default.Event, stringResource(R.string.reminder_exam_live_update), reminderExamLiveUpdate, onReminderExamLiveUpdateChange)
+                        }
+                    }
                 }
             }
         }

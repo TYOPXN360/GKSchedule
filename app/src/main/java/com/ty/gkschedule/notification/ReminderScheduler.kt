@@ -7,6 +7,8 @@ import android.content.Intent
 import android.os.Build
 import com.ty.gkschedule.data.Course
 import com.ty.gkschedule.data.ExamEntity
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -16,8 +18,7 @@ import java.time.temporal.ChronoUnit
 object ReminderScheduler {
     private const val PREF_NAME = "course_reminder_alarms"
     private const val KEY_REQUEST_CODES = "request_codes"
-    private const val SCHEDULE_LOOKAHEAD_DAYS = 14
-    private const val PROGRESS_UPDATE_INTERVAL_MINUTES = 5L
+    // ponytail: 只排当天，每节≤3个(课前+首帧+解散)+午夜重排×1，远离500上限
     private const val KIND_COURSE = "course"
     private const val KIND_EXAM = "exam"
 
@@ -39,9 +40,44 @@ object ReminderScheduler {
         totalWeeks: Int,
         reminderMinutes: Int,
         liveUpdate: Boolean,
+        examLiveUpdate: Boolean,
+        getStartTime: (Int) -> String,
+        getEndTime: (Int) -> String
+    ) = scheduleToday(context, courses, exams, semesterStart, totalWeeks, reminderMinutes, liveUpdate, examLiveUpdate, getStartTime, getEndTime)
+
+    // 午夜重排入口：读DB排当天，不依赖调用方传参
+    fun scheduleTodayFromStore(context: Context) {
+        val settings = com.ty.gkschedule.data.SettingsDataStore(context)
+        val courses: List<Course>
+        val db = com.ty.gkschedule.data.CourseDatabase.getDatabase(context)
+        courses = runBlocking { db.courseDao().getAllCourses().first() }
+        // ponytail: 关闭时也要先删残留闹钟再return，否则午夜重排会留下当天的旧闹钟
+        val reminderMinutes = runBlocking { settings.reminderMinutes.first() }
+        if (reminderMinutes <= 0) {
+            cancelAll(context, courses)
+            return
+        }
+        val semesterStart = runBlocking { settings.semesterStart.first() }
+        val totalWeeks = runBlocking { settings.totalWeeks.first() }
+        val liveUpdate = runBlocking { settings.reminderLiveUpdate.first() }
+        val examLiveUpdate = runBlocking { settings.reminderExamLiveUpdate.first() }
+        val exams = runBlocking { db.examDao().getAllExams().first() }
+        scheduleToday(context, courses, exams, semesterStart, totalWeeks, reminderMinutes, liveUpdate, examLiveUpdate, { p -> settings.getStartTime(p) }, { p -> settings.getEndTime(p) })
+    }
+
+    private fun scheduleToday(
+        context: Context,
+        courses: List<Course>,
+        exams: List<ExamEntity>,
+        semesterStart: LocalDate,
+        totalWeeks: Int,
+        reminderMinutes: Int,
+        liveUpdate: Boolean,
+        examLiveUpdate: Boolean,
         getStartTime: (Int) -> String,
         getEndTime: (Int) -> String
     ) {
+        // ponytail: 先删后排；关闭(<=0)时直接return，残留闹钟已在上面删掉
         cancelAll(context, courses)
         if (reminderMinutes <= 0) return
 
@@ -50,29 +86,64 @@ object ReminderScheduler {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val newRequestCodes = mutableSetOf<Int>()
 
-        val sessions = buildCourseSessions(
+        val sessions = buildTodayCourseSessions(
             courses = courses,
             semesterStart = semesterStart,
             totalWeeks = totalWeeks,
             today = today,
             getStartTime = getStartTime,
             getEndTime = getEndTime
-        ) + buildExamSessions(exams, today)
+        ) + buildTodayExamSessions(exams, today)
 
         sessions
             .filter { it.end.isAfter(now) }
             .forEach { session ->
-                scheduleSession(
-                    context = context,
-                    alarmManager = alarmManager,
-                    session = session,
-                    reminderMinutes = reminderMinutes,
-                    liveUpdate = liveUpdate,
-                    now = now,
-                    requestCodes = newRequestCodes
-                )
+                val notificationId = notificationId(session)
+                val reminderTime = session.start.minusMinutes(reminderMinutes.toLong())
+                if (reminderTime.isAfter(now)) {
+                    scheduleEvent(
+                        context = context,
+                        alarmManager = alarmManager,
+                        session = session,
+                        eventType = ReminderReceiver.EVENT_REMINDER,
+                        triggerAt = reminderTime,
+                        notificationId = notificationId,
+                        reminderMinutes = reminderMinutes,
+                        requestCodes = newRequestCodes
+                    )
+                }
+                // ponytail: Live进度只在开关开时排；考试另受考试子开关控制
+                val liveOn = liveUpdate && (session.kind == KIND_COURSE || examLiveUpdate)
+                if (liveOn) {
+                    val progressTime = if (now.isAfter(session.start) && now.isBefore(session.end)) now.plusSeconds(2) else session.start
+                    if (progressTime.isAfter(now) && progressTime.isBefore(session.end)) {
+                        scheduleEvent(
+                            context = context,
+                            alarmManager = alarmManager,
+                            session = session,
+                            eventType = ReminderReceiver.EVENT_PROGRESS,
+                            triggerAt = progressTime,
+                            notificationId = notificationId,
+                            reminderMinutes = reminderMinutes,
+                            requestCodes = newRequestCodes
+                        )
+                    }
+                    if (session.end.isAfter(now)) {
+                        scheduleEvent(
+                            context = context,
+                            alarmManager = alarmManager,
+                            session = session,
+                            eventType = ReminderReceiver.EVENT_END,
+                            triggerAt = session.end,
+                            notificationId = notificationId,
+                            reminderMinutes = reminderMinutes,
+                            requestCodes = newRequestCodes
+                        )
+                    }
+                }
             }
 
+        scheduleMidnightRollover(context, alarmManager, newRequestCodes)
         saveRequestCodes(context, newRequestCodes)
     }
 
@@ -111,7 +182,7 @@ object ReminderScheduler {
         }
     }
 
-    private fun buildCourseSessions(
+    private fun buildTodayCourseSessions(
         courses: List<Course>,
         semesterStart: LocalDate,
         totalWeeks: Int,
@@ -119,11 +190,11 @@ object ReminderScheduler {
         getStartTime: (Int) -> String,
         getEndTime: (Int) -> String
     ): List<ReminderSession> {
+        // ponytail: 只排当天，1节=课前×1+首帧×1+解散×1，撞500上限是历史问题；跨天重排靠午夜闹钟
+        val date = today
         val sessions = mutableListOf<ReminderSession>()
-        for (dayOffset in 0 until SCHEDULE_LOOKAHEAD_DAYS) {
-            val date = today.plusDays(dayOffset.toLong())
-            val week = weekForDate(semesterStart, date)
-            if (week !in 1..totalWeeks) continue
+        val week = weekForDate(semesterStart, date)
+        if (week in 1..totalWeeks) {
 
             courses.asSequence()
                 .filter { !it.isHidden }
@@ -151,18 +222,17 @@ object ReminderScheduler {
         return sessions.sortedWith(compareBy({ it.start }, { it.name }))
     }
 
-    private fun buildExamSessions(
+    private fun buildTodayExamSessions(
         exams: List<ExamEntity>,
         today: LocalDate
     ): List<ReminderSession> {
-        val latestDate = today.plusDays((SCHEDULE_LOOKAHEAD_DAYS - 1).toLong())
         return exams.mapNotNull { exam ->
             val date = try {
                 LocalDate.parse(exam.examDate)
             } catch (_: Exception) {
                 return@mapNotNull null
             }
-            if (date.isBefore(today) || date.isAfter(latestDate)) return@mapNotNull null
+            if (date != today) return@mapNotNull null
             val (startTime, endTime) = examTimeRange(exam) ?: return@mapNotNull null
             val start = LocalDateTime.of(date, startTime)
             val end = LocalDateTime.of(date, endTime)
@@ -179,65 +249,26 @@ object ReminderScheduler {
         }.sortedWith(compareBy({ it.start }, { it.name }))
     }
 
-    private fun scheduleSession(
+    // 午夜重排闹钟：每天 00:01 触发 ReminderReceiver 重排当天
+    private fun scheduleMidnightRollover(
         context: Context,
         alarmManager: AlarmManager,
-        session: ReminderSession,
-        reminderMinutes: Int,
-        liveUpdate: Boolean,
-        now: LocalDateTime,
         requestCodes: MutableSet<Int>
     ) {
-        val notificationId = notificationId(session)
-        val reminderTime = session.start.minusMinutes(reminderMinutes.toLong())
-        if (reminderTime.isAfter(now)) {
-            scheduleEvent(
-                context = context,
-                alarmManager = alarmManager,
-                session = session,
-                eventType = ReminderReceiver.EVENT_REMINDER,
-                triggerAt = reminderTime,
-                notificationId = notificationId,
-                reminderMinutes = reminderMinutes,
-                requestCodes = requestCodes
-            )
+        val triggerAt = LocalDate.now().plusDays(1).atStartOfDay().plusMinutes(1)
+        val triggerTime = triggerAt.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+        val requestCode = "rollover|${LocalDate.now()}".hashCode()
+        val intent = Intent(context, ReminderReceiver::class.java).apply {
+            putExtra(ReminderReceiver.EXTRA_EVENT_TYPE, ReminderReceiver.EVENT_ROLLOVER)
         }
-
-        if (!liveUpdate) return
-
-        var progressTime = if (now.isAfter(session.start) && now.isBefore(session.end)) {
-            now.plusSeconds(2)
-        } else {
-            session.start
-        }
-        while (progressTime.isBefore(session.end)) {
-            if (progressTime.isAfter(now)) {
-                scheduleEvent(
-                    context = context,
-                    alarmManager = alarmManager,
-                    session = session,
-                    eventType = ReminderReceiver.EVENT_PROGRESS,
-                    triggerAt = progressTime,
-                    notificationId = notificationId,
-                    reminderMinutes = reminderMinutes,
-                    requestCodes = requestCodes
-                )
-            }
-            progressTime = progressTime.plusMinutes(PROGRESS_UPDATE_INTERVAL_MINUTES)
-        }
-
-        if (session.end.isAfter(now)) {
-            scheduleEvent(
-                context = context,
-                alarmManager = alarmManager,
-                session = session,
-                eventType = ReminderReceiver.EVENT_END,
-                triggerAt = session.end,
-                notificationId = notificationId,
-                reminderMinutes = reminderMinutes,
-                requestCodes = requestCodes
-            )
-        }
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            requestCode,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        scheduleAlarm(alarmManager, triggerTime, pendingIntent)
+        requestCodes.add(requestCode)
     }
 
     private fun scheduleEvent(
@@ -290,11 +321,15 @@ object ReminderScheduler {
                     pendingIntent
                 )
                 return
-            } catch (_: SecurityException) {
-                // Fall back below.
+            } catch (_: RuntimeException) {
+                // Fall back below. ponytail: 超500上限抛IllegalStateException也走这里，不能崩
             }
         }
-        alarmManager.set(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent)
+        try {
+            alarmManager.set(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent)
+        } catch (_: RuntimeException) {
+            // ponytail: 配额满时单个闹钟排不上就丢掉，总比全崩强
+        }
     }
 
     private fun weekForDate(semesterStart: LocalDate, date: LocalDate): Int {

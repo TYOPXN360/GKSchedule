@@ -17,6 +17,7 @@ class ReminderReceiver : BroadcastReceiver() {
         const val EVENT_REMINDER = "reminder"
         const val EVENT_PROGRESS = "progress"
         const val EVENT_END = "end"
+        const val EVENT_ROLLOVER = "rollover"
         const val EXTRA_EVENT_TYPE = "event_type"
         const val EXTRA_ITEM_TYPE = "item_type"
         const val EXTRA_COURSE_NAME = "course_name"
@@ -31,6 +32,20 @@ class ReminderReceiver : BroadcastReceiver() {
     }
 
     override fun onReceive(context: Context, intent: Intent) {
+        val eventType = intent.getStringExtra(EXTRA_EVENT_TYPE) ?: EVENT_REMINDER
+        // 午夜重排：不检查通知权限、不读notification extras，直接重排当天后返回
+        if (eventType == EVENT_ROLLOVER) {
+            val pending = goAsync()
+            kotlin.concurrent.thread {
+                try {
+                    ReminderScheduler.scheduleTodayFromStore(context)
+                } catch (_: Exception) {
+                } finally {
+                    pending.finish()
+                }
+            }
+            return
+        }
         if (
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
@@ -40,7 +55,6 @@ class ReminderReceiver : BroadcastReceiver() {
         createNotificationChannel(context)
 
         val courseName = intent.getStringExtra(EXTRA_COURSE_NAME) ?: return
-        val eventType = intent.getStringExtra(EXTRA_EVENT_TYPE) ?: EVENT_REMINDER
         val itemType = intent.getStringExtra(EXTRA_ITEM_TYPE) ?: "course"
         val classroom = intent.getStringExtra(EXTRA_CLASSROOM) ?: ""
         val teacher = intent.getStringExtra(EXTRA_TEACHER) ?: ""
@@ -84,8 +98,8 @@ class ReminderReceiver : BroadcastReceiver() {
                     .setOngoing(true)
                     .setAutoCancel(false)
                     .setRequestPromotedOngoing(true)
-            } catch (e: Exception) {
-                // Fallback: 标准进度条
+            } catch (_: Throwable) {
+                // Fallback: 标准进度条（ponytail: Error如NoClassDefFoundError也得接住，否则一响就崩）
                 builder
                     .setContentTitle("$titlePrefix：$courseName")
                     .setContentText("${percent}% · ${body.ifEmpty { "进行中" }}")

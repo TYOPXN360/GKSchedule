@@ -76,6 +76,7 @@ class SettingsActivity : AppCompatActivity() {
                     val showDateInHeader by vm.showDateInHeader.collectAsState(initial = false)
                     val reminderMinutes by vm.reminderMinutes.collectAsState(initial = 0)
                     val reminderLiveUpdate by vm.reminderLiveUpdate.collectAsState(initial = true)
+                    val reminderExamLiveUpdate by vm.reminderExamLiveUpdate.collectAsState(initial = false)
                     val autoSyncOnStart by vm.autoSyncOnStart.collectAsState(initial = true)
                     val autoSyncIntervalValue by vm.autoSyncIntervalValue.collectAsState(initial = 1)
                     val autoSyncIntervalUnit by vm.autoSyncIntervalUnit.collectAsState(initial = "d")
@@ -106,6 +107,7 @@ class SettingsActivity : AppCompatActivity() {
                         showDateInHeader = showDateInHeader,
                         reminderMinutes = reminderMinutes,
                         reminderLiveUpdate = reminderLiveUpdate,
+                        reminderExamLiveUpdate = reminderExamLiveUpdate,
                         autoSyncOnStart = autoSyncOnStart,
                         autoSyncIntervalValue = autoSyncIntervalValue,
                         autoSyncIntervalUnit = autoSyncIntervalUnit,
@@ -135,6 +137,7 @@ class SettingsActivity : AppCompatActivity() {
                         onShowDateInHeaderChange = { vm.setShowDateInHeader(it) },
                         onReminderMinutesChange = { vm.setReminderMinutes(it) },
                         onReminderLiveUpdateChange = { vm.setReminderLiveUpdate(it) },
+                        onReminderExamLiveUpdateChange = { vm.setReminderExamLiveUpdate(it) },
                         onAutoSyncOnStartChange = { vm.setAutoSyncOnStart(it) },
                         onAutoSyncIntervalValueChange = { vm.setAutoSyncIntervalValue(it) },
                         onAutoSyncIntervalUnitChange = { vm.setAutoSyncIntervalUnit(it) },
