@@ -315,8 +315,11 @@ class GdustApi {
     fun setToken(token: String) { authToken = token }
     fun hasToken(): Boolean = authToken.isNotEmpty()
 
+    // SSE 事件：命名事件(event:)+data:成对出现；扫码结果只认 LOGIN_SUCCESS_TICKET
+    private val SSE_EVENT_LOGIN_TICKET = "LOGIN_SUCCESS_TICKET"
+
     /**
-     * Open SSE connection, read first event to get clientId.
+     * Open SSE connection, read HELLO event to get clientId.
      * Returns (clientId, inputStream) — caller must keep reading inputStream for scan result.
      */
     fun openSseConnection(): Pair<String?, java.io.InputStream?> {
@@ -329,26 +332,25 @@ class GdustApi {
                 .build()
             val response = client.newCall(request).execute()
             val stream = response.body?.byteStream() ?: return null to null
-            val buffer = ByteArray(4096)
-            val sb = StringBuilder()
-            var clientId: String? = null
+            val reader = stream.bufferedReader()
+            var pendingEvent = ""
 
-            // Read until we get the first data event (clientId)
+            // Read until HELLO event's data (clientId)
             while (true) {
-                val bytesRead = stream.read(buffer)
-                if (bytesRead == -1) break
-                sb.append(String(buffer, 0, bytesRead))
-                for (line in sb.toString().lines()) {
-                    if (line.startsWith("data:")) {
-                        val data = line.removePrefix("data:").trim()
-                        if (data.isNotEmpty() && data != "[DONE]") {
-                            clientId = data
-                            android.util.Log.d("GdustApi", "SSE clientId: $clientId")
-                            return clientId to stream
-                        }
+                val line = reader.readLine() ?: break
+                val trimmed = line.trim()
+                if (trimmed.startsWith("event:")) {
+                    pendingEvent = trimmed.removePrefix("event:").trim()
+                } else if (trimmed.startsWith("data:")) {
+                    val data = trimmed.removePrefix("data:").trim()
+                    if (data.isNotEmpty() && data != "[DONE]" && pendingEvent == "HELLO") {
+                        android.util.Log.d("GdustApi", "SSE clientId: $data")
+                        return data to SseStream(stream, reader)
                     }
+                    pendingEvent = ""
+                } else if (trimmed.isEmpty()) {
+                    pendingEvent = ""
                 }
-                if (sb.length > 16384) break
             }
             null to null
         } catch (e: Exception) {
@@ -358,34 +360,31 @@ class GdustApi {
     }
 
     /**
-     * Keep reading SSE stream for scan result (second data event).
-     * Blocks until result arrives or stream closes.
+     * Keep reading SSE stream for LOGIN_SUCCESS_TICKET (blocks until scan or timeout).
+     * ponytail: 曾把HELLO重连/心跳的data也当ticket，扫码永远登不上；现只认命名事件
      */
     fun readSseResult(stream: java.io.InputStream): String? {
+        // openSseConnection返回的已是SseStream包装，直接读；兼容裸流则包一层
+        val reader = (stream as? SseStream)?.reader ?: stream.bufferedReader()
         return try {
-            val buffer = ByteArray(4096)
-            val sb = StringBuilder()
-            val startTime = System.currentTimeMillis()
-            val timeoutMs = 5 * 60 * 1000L // 5 minutes
-
-            while (System.currentTimeMillis() - startTime < timeoutMs) {
-                val available = stream.available()
-                if (available > 0) {
-                    val bytesRead = stream.read(buffer, 0, minOf(available, buffer.size))
-                    if (bytesRead == -1) break
-                    sb.append(String(buffer, 0, bytesRead))
-                    android.util.Log.d("GdustApi", "SSE chunk: ${String(buffer, 0, bytesRead).trim()}")
-                    for (line in sb.toString().lines()) {
-                        if (line.startsWith("data:")) {
-                            val data = line.removePrefix("data:").trim()
-                            if (data.isNotEmpty() && data != "[DONE]") {
-                                android.util.Log.d("GdustApi", "SSE scan result: $data")
-                                return data
-                            }
+            var pendingEvent = ""
+            val deadline = System.currentTimeMillis() + 5 * 60 * 1000L // 5 minutes
+            while (System.currentTimeMillis() < deadline) {
+                val line = reader.readLine() ?: break
+                val trimmed = line.trim()
+                when {
+                    trimmed.startsWith("event:") ->
+                        pendingEvent = trimmed.removePrefix("event:").trim()
+                    trimmed.startsWith("data:") -> {
+                        val data = trimmed.removePrefix("data:").trim()
+                        android.util.Log.d("GdustApi", "SSE event=$pendingEvent data=${data.take(60)}")
+                        if (data.isNotEmpty() && data != "[DONE]" && pendingEvent == SSE_EVENT_LOGIN_TICKET) {
+                            android.util.Log.d("GdustApi", "SSE scan ticket OK")
+                            return data
                         }
+                        pendingEvent = ""
                     }
-                } else {
-                    Thread.sleep(500)
+                    trimmed.isEmpty() -> pendingEvent = ""
                 }
             }
             android.util.Log.d("GdustApi", "SSE timeout or closed")
@@ -395,6 +394,20 @@ class GdustApi {
             null
         } finally {
             try { stream.close() } catch (_: Exception) {}
+        }
+    }
+
+    // ponytail: OkHttp流不可重读，reader/stream共用一个包装透传
+    private class SseStream(
+        private val raw: java.io.InputStream,
+        val reader: java.io.BufferedReader
+    ) : java.io.InputStream() {
+        override fun read(): Int = raw.read()
+        override fun read(b: ByteArray, off: Int, len: Int): Int = raw.read(b, off, len)
+        override fun available(): Int = raw.available()
+        override fun close() {
+            try { reader.close() } catch (_: Exception) { }
+            try { raw.close() } catch (_: Exception) { }
         }
     }
 
