@@ -69,8 +69,8 @@ private fun navItemList(): List<Pair<Screen, Triple<androidx.compose.ui.graphics
         Screen.About to Triple(Icons.Default.Person, "我的", "about")
     )
 
-// 悬浮药丸底栏：展开居中底部；收起缩到屏幕左边只剩箭头书签
-// ponytail: 收/展是两套AnimatedVisibility左右对滑，不是同一条Row的if/else，位置变化才有动画
+// 悬浮药丸底栏：展开居中底部；收起整条左滑，只剩左边书签
+// ponytail: 选中补全不用AnimatedVisibility，用静态if——图标出现不占位变化，无涟漪抖动
 @Composable
 private fun FloatingPillNavBar(
     currentRoute: String?,
@@ -78,14 +78,19 @@ private fun FloatingPillNavBar(
     onNavigate: (Screen) -> Unit
 ) {
     var collapsed by remember { mutableStateOf(false) }
+    // ponytail: 书签与药丸同高同底边，视觉上是同一条滑走的
+    val barBottom = 24.dp
     Box(modifier = Modifier.fillMaxSize()) {
         androidx.compose.animation.AnimatedVisibility(
             visible = !collapsed,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(start = 24.dp, end = 24.dp, bottom = 24.dp),
+                .padding(start = 24.dp, end = 24.dp, bottom = barBottom),
             enter = slideInVertically(initialOffsetY = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideInSpec()) + fadeIn(com.ty.gkschedule.ui.theme.M3Motion.fadeInSpec()),
-            exit = slideOutHorizontally(targetOffsetX = { -it / 2 }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideOutSpec()) + fadeOut(com.ty.gkschedule.ui.theme.M3Motion.fadeOutSpec())
+            exit = slideOutHorizontally(
+                targetOffsetX = { -(it + 48) },
+                animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideOutSpec()
+            ) + fadeOut(com.ty.gkschedule.ui.theme.M3Motion.fadeOutSpec())
         ) {
             Row(
                 modifier = Modifier
@@ -93,7 +98,6 @@ private fun FloatingPillNavBar(
                         color = MaterialTheme.colorScheme.surfaceContainerHigh,
                         shape = androidx.compose.foundation.shape.CircleShape
                     )
-                    .animateContentSize(animationSpec = tween(300))
                     .padding(horizontal = 6.dp, vertical = 6.dp),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
@@ -101,11 +105,11 @@ private fun FloatingPillNavBar(
                 navItemList().forEach { (screen, triple) ->
                     var expanded by remember(screen.route) { mutableStateOf(true) }
                     val selected = currentRoute == screen.route
-                    // ponytail: 设置项定默认显示；点选中项切换展开/收起；选中项在仅图标/仅名字模式下补全另一半
                     val showBoth = pillContentMode == 0
                     val showText = if (showBoth) true else pillContentMode == 2
                     val showIcon = if (showBoth) true else pillContentMode == 1
-                    val visibleText = (showText || selected) && expanded
+                    // 选中项强制补全另一半；expanded只管收起，不参与补全
+                    val visibleText = (showText || selected) && (expanded || selected)
                     val visibleIcon = showIcon || selected || !visibleText
                     val bg = if (selected) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent
                     val fg = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
@@ -121,13 +125,8 @@ private fun FloatingPillNavBar(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         if (visibleIcon) Icon(triple.first, contentDescription = triple.second, tint = fg, modifier = Modifier.size(20.dp))
-                        androidx.compose.animation.AnimatedVisibility(visible = visibleText && visibleIcon) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(triple.second, style = MaterialTheme.typography.labelMedium, color = fg, maxLines = 1)
-                            }
-                        }
-                        androidx.compose.animation.AnimatedVisibility(visible = visibleText && !visibleIcon) {
+                        if (visibleText) {
+                            if (visibleIcon) Spacer(modifier = Modifier.width(4.dp))
                             Text(triple.second, style = MaterialTheme.typography.labelMedium, color = fg, maxLines = 1)
                         }
                     }
@@ -153,32 +152,30 @@ private fun FloatingPillNavBar(
                 }
             }
         }
-        // 书签：贴屏幕左边，只露箭头
+        // 书签：贴屏幕左边，与药丸同底同高，只露箭头
         androidx.compose.animation.AnimatedVisibility(
             visible = collapsed,
             modifier = Modifier
                 .align(Alignment.BottomStart)
-                .padding(bottom = 48.dp),
-            enter = slideInHorizontally(initialOffsetX = { -it / 2 }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideInSpec()) + fadeIn(com.ty.gkschedule.ui.theme.M3Motion.fadeInSpec()),
-            exit = slideOutHorizontally(targetOffsetX = { -it / 2 }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideOutSpec()) + fadeOut(com.ty.gkschedule.ui.theme.M3Motion.fadeOutSpec())
+                .padding(bottom = barBottom),
+            enter = slideInHorizontally(
+                initialOffsetX = { -(it + 48) },
+                animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideInSpec()
+            ) + fadeIn(com.ty.gkschedule.ui.theme.M3Motion.fadeInSpec()),
+            exit = slideOutHorizontally(
+                targetOffsetX = { -(it + 48) },
+                animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideOutSpec()
+            ) + fadeOut(com.ty.gkschedule.ui.theme.M3Motion.fadeOutSpec())
         ) {
             Row(
                 modifier = Modifier
                     .background(
                         color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(
-                            topStart = 0.dp, bottomStart = 0.dp,
-                            topEnd = 16.dp, bottomEnd = 16.dp
-                        )
+                        shape = androidx.compose.foundation.shape.CircleShape
                     )
-                    .clip(
-                        androidx.compose.foundation.shape.RoundedCornerShape(
-                            topStart = 0.dp, bottomStart = 0.dp,
-                            topEnd = 16.dp, bottomEnd = 16.dp
-                        )
-                    )
+                    .clip(androidx.compose.foundation.shape.CircleShape)
                     .clickable(onClick = { collapsed = false })
-                    .padding(start = 4.dp, end = 10.dp, top = 12.dp, bottom = 12.dp),
+                    .padding(horizontal = 8.dp, vertical = 14.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
