@@ -219,9 +219,8 @@
     <string name="update_not_available">You\'re up to date</string>
     <string name="update_current_version">Current version</string>
     <string name="update_latest_version">Latest version</string>
-    <string name="update_download">Download Update</string>
-    <string name="update_downloading">Downloading…</string>
-    <string name="update_install">Install</string>
+    <string name="update_download">Download</string>
+    <string name="update_browser">Browser</string>
     <string name="update_error">Failed to check for updates</string>
     <string name="update_size">File size</string>
 </resources>

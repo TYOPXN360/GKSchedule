@@ -176,9 +176,8 @@
     <string name="update_not_available">已是最新版本</string>
     <string name="update_current_version">当前版本</string>
     <string name="update_latest_version">最新版本</string>
-    <string name="update_download">下载更新</string>
-    <string name="update_downloading">正在下载…</string>
-    <string name="update_install">安装</string>
+    <string name="update_download">下载</string>
+    <string name="update_browser">浏览器</string>
     <string name="update_error">检查更新失败</string>
     <string name="update_size">文件大小</string>
     <!-- Login -->

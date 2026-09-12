@@ -40,7 +40,6 @@ fun AboutDetailPage(
     var updateInfo by remember { mutableStateOf<UpdateInfo?>(null) }
     var isCheckingUpdate by remember { mutableStateOf(false) }
     var updateError by remember { mutableStateOf<String?>(null) }
-    var isDownloading by remember { mutableStateOf(false) }
 
     // Force update: 1 min 内点击超过 3 次强制弹窗
     var clickCount by remember { mutableIntStateOf(0) }
@@ -405,47 +404,35 @@ fun AboutDetailPage(
                 Button(
                     onClick = {
                         showUpdateDialog = false
-                        if (!isDownloading) {
-                            isDownloading = true
-                            GlobalScope.launch(Dispatchers.IO) {
-                                try {
-                                    val file = UpdateChecker.downloadApk(
-                                        context,
-                                        updateInfo!!.downloadUrl,
-                                        "GKSchedule-v${updateInfo!!.latestVersion}.apk",
-                                        updateInfo!!.latestVersion
-                                    )
-                                    withContext(Dispatchers.Main) {
-                                        isDownloading = false
-                                        UpdateChecker.installApk(context, file)
-                                    }
-                                } catch (e: Exception) {
-                                    withContext(Dispatchers.Main) {
-                                        isDownloading = false
-                                        updateError = e.message
-                                    }
-                                }
-                            }
+                        val url = updateInfo?.downloadUrl.orEmpty()
+                        if (url.isNotEmpty()) {
+                            // ponytail: 下载走系统DownloadManager（通知栏/断点/完成安装全托管）
+                            UpdateChecker.enqueueDownload(
+                                context, url,
+                                "GKSchedule-v${updateInfo!!.latestVersion}.apk"
+                            )
+                            android.widget.Toast.makeText(context, "已开始下载，可在通知栏查看进度", android.widget.Toast.LENGTH_SHORT).show()
                         }
                     },
-                    enabled = !isDownloading && updateInfo?.downloadUrl?.isNotEmpty() == true
+                    enabled = updateInfo?.downloadUrl?.isNotEmpty() == true
                 ) {
-                    if (isDownloading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(18.dp),
-                            color = MaterialTheme.colorScheme.onPrimary
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                    } else {
-                        Icon(Icons.Default.Download, null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                    }
+                    Icon(Icons.Default.Download, null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
                     Text(stringResource(R.string.update_download))
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showUpdateDialog = false }) {
-                    Text(stringResource(R.string.cancel))
+                Row {
+                    TextButton(onClick = {
+                        showUpdateDialog = false
+                        val url = updateInfo?.downloadUrl.orEmpty()
+                        if (url.isNotEmpty()) UpdateChecker.openInBrowser(context, url)
+                    }) {
+                        Text(stringResource(R.string.update_browser))
+                    }
+                    TextButton(onClick = { showUpdateDialog = false }) {
+                        Text(stringResource(R.string.cancel))
+                    }
                 }
             }
         )

@@ -1,15 +1,11 @@
 package com.ty.gkschedule.util
 
-import android.app.NotificationChannel
-import android.app.NotificationManager
+import android.app.DownloadManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
 import android.os.Environment
-import androidx.core.app.NotificationCompat
 import androidx.core.content.FileProvider
-import com.ty.gkschedule.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
@@ -48,8 +44,6 @@ object UpdateChecker {
     private const val GITHUB_API = "https://api.github.com/repos/TYOPXN360/GKSchedule/releases/latest"
     // ghfast.top 加速前缀
     private const val GHFAST_PREFIX = "https://ghfast.top/"
-    private const val CHANNEL_ID = "app_update"
-    private const val NOTIFICATION_ID = 1001
 
     private val json = Json { ignoreUnknownKeys = true }
 
@@ -57,13 +51,6 @@ object UpdateChecker {
     private val client = OkHttpClient.Builder()
         .connectTimeout(15, TimeUnit.SECONDS)
         .readTimeout(15, TimeUnit.SECONDS)
-        .build()
-
-    // 下载客户端 - 更长超时
-    private val downloadClient = OkHttpClient.Builder()
-        .connectTimeout(30, TimeUnit.SECONDS)
-        .readTimeout(60, TimeUnit.SECONDS)
-        .retryOnConnectionFailure(true)
         .build()
 
     fun getCurrentVersion(context: Context): String {
@@ -131,126 +118,25 @@ object UpdateChecker {
         return false
     }
 
-    fun downloadApk(context: Context, url: String, fileName: String, version: String): File {
-        val downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-        if (!downloadDir.exists()) downloadDir.mkdirs()
-
-        val file = File(downloadDir, fileName)
-        val tempFile = File(downloadDir, "$fileName.tmp")
-
-        android.util.Log.d("UpdateChecker", "Downloading from: $url")
-
-        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        createNotificationChannel(notificationManager)
-
-        // 尝试使用 ProgressStyle (Live Update API)
-        val builder = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentTitle("正在下载更新")
-            .setContentText("GKSchedule v$version")
-            .setPriority(NotificationCompat.PRIORITY_LOW)
-            .setOngoing(true)
-            .setOnlyAlertOnce(true)
-
-        try {
-            val progressStyle = NotificationCompat.ProgressStyle()
-                .setProgress(0)
-            builder.setStyle(progressStyle)
-            builder.setRequestPromotedOngoing(true)
-        } catch (e: Exception) {
-            // Fallback: 标准进度条
-            builder.setProgress(100, 0, false)
-        }
-
-        notificationManager.notify(NOTIFICATION_ID, builder.build())
-
-        val request = Request.Builder()
-            .url(url)
-            .build()
-
-        val response = downloadClient.newCall(request).execute()
-        android.util.Log.d("UpdateChecker", "Download response: ${response.code}")
-
-        if (!response.isSuccessful) {
-            notificationManager.cancel(NOTIFICATION_ID)
-            throw Exception("Download failed: ${response.code}")
-        }
-
-        val body = response.body ?: run {
-            notificationManager.cancel(NOTIFICATION_ID)
-            throw Exception("Empty response body")
-        }
-
-        val totalBytes = body.contentLength()
-        var downloadedBytes = 0L
-
-        body.byteStream().use { input ->
-            tempFile.outputStream().use { output ->
-                val buffer = ByteArray(8192)
-                var bytesRead: Int
-                var lastProgressUpdate = 0L
-
-                while (input.read(buffer).also { bytesRead = it } != -1) {
-                    output.write(buffer, 0, bytesRead)
-                    downloadedBytes += bytesRead
-
-                    // Update notification every 500ms
-                    val now = System.currentTimeMillis()
-                    if (now - lastProgressUpdate > 500 && totalBytes > 0) {
-                        lastProgressUpdate = now
-                        val progress = (downloadedBytes * 100 / totalBytes).toInt()
-                        try {
-                            val progressStyle = NotificationCompat.ProgressStyle()
-                                .setProgress(progress)
-                            builder.setStyle(progressStyle)
-                        } catch (e: Exception) {
-                            builder.setProgress(100, progress, false)
-                        }
-                        builder.setContentText("${formatFileSize(downloadedBytes)} / ${formatFileSize(totalBytes)}")
-                        notificationManager.notify(NOTIFICATION_ID, builder.build())
-                    }
-                }
-            }
-        }
-
-        // Rename temp file to final file
-        if (file.exists()) file.delete()
-        tempFile.renameTo(file)
-
-        // Download complete
-        builder.setContentText("下载完成，点击安装")
-            .setStyle(NotificationCompat.BigTextStyle().bigText("GKSchedule v$version 下载完成"))
-            .setOngoing(false)
-            .setAutoCancel(true)
-
-        val installIntent = Intent(Intent.ACTION_VIEW).apply {
-            val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
-            setDataAndType(uri, "application/vnd.android.package-archive")
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        }
-        val pendingIntent = android.app.PendingIntent.getActivity(
-            context, 0, installIntent,
-            android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE
-        )
-        builder.setContentIntent(pendingIntent)
-
-        notificationManager.notify(NOTIFICATION_ID, builder.build())
-
-        return file
+    // ponytail: 通知栏自建下载进度/安装逻辑全删，下载交给系统DownloadManager，安装由UpdateInstallReceiver接管
+    fun enqueueDownload(context: Context, url: String, fileName: String): Long {
+        val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+        val request = DownloadManager.Request(Uri.parse(url))
+            .setTitle("GKSchedule v${fileName.substringAfter('v').substringBefore(".apk")}")
+            .setDescription("正在下载更新")
+            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+            .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
+            .setMimeType("application/vnd.android.package-archive")
+            .setAllowedOverMetered(true)
+            .setAllowedOverRoaming(false)
+        UpdateInstallReceiver.pendingFileName = fileName
+        return dm.enqueue(request)
     }
 
-    private fun createNotificationChannel(notificationManager: NotificationManager) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                CHANNEL_ID,
-                "应用更新",
-                NotificationManager.IMPORTANCE_LOW
-            ).apply {
-                description = "下载应用更新时显示进度"
-            }
-            notificationManager.createNotificationChannel(channel)
-        }
+    fun openInBrowser(context: Context, url: String) {
+        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        })
     }
 
     fun installApk(context: Context, file: File) {
