@@ -7,6 +7,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -61,6 +62,57 @@ sealed class Screen(val route: String) {
     data object ExamEdit : Screen("exam_edit?examId={examId}") {
         fun createRoute(examId: Long? = null): String =
             "exam_edit?examId=${examId ?: -1L}"
+    }
+}
+
+@Composable
+private fun navItemList(): List<Pair<Screen, Triple<androidx.compose.ui.graphics.vector.ImageVector, String, String>>> =
+    listOf(
+        Screen.Today to Triple(Icons.Default.Today, "今日", "today"),
+        Screen.Weekly to Triple(Icons.Default.DateRange, "课表", "weekly"),
+        Screen.Courses to Triple(Icons.AutoMirrored.Filled.LibraryBooks, "课程", "courses"),
+        Screen.About to Triple(Icons.Default.Person, "我的", "about")
+    )
+
+// 悬浮药丸底栏：屏幕中下方覆盖层，未选中纯图标，选中横展名称
+@Composable
+private fun FloatingPillNavBar(
+    currentRoute: String?,
+    onNavigate: (Screen) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .padding(horizontal = 48.dp)
+            .background(
+                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                shape = androidx.compose.foundation.shape.CircleShape
+            )
+            .padding(horizontal = 8.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        navItemList().forEach { (screen, triple) ->
+            val selected = currentRoute == screen.route
+            // ponytail: 选中才横展label；pill底用surfaceContainerHigh，选中块用secondaryContainer
+            val bg = if (selected) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent
+            val fg = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+            Row(
+                modifier = Modifier
+                    .clip(androidx.compose.foundation.shape.CircleShape)
+                    .background(bg)
+                    .clickable(onClick = { onNavigate(screen) })
+                    .padding(horizontal = if (selected) 16.dp else 12.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(triple.first, contentDescription = triple.second, tint = fg, modifier = Modifier.size(24.dp))
+                androidx.compose.animation.AnimatedVisibility(visible = selected) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(triple.second, style = MaterialTheme.typography.labelLarge, color = fg, maxLines = 1)
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -142,58 +194,42 @@ fun ScheduleApp(
             }
         },
         bottomBar = {
-            // ponytail: 底栏常驻，用位移动画藏/显；之前按路由if挪走，返回tab页时底栏是凭空蹦出来的
-            androidx.compose.animation.AnimatedVisibility(
-                visible = showBottomBar,
-                enter = slideInVertically(initialOffsetY = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideInSpec()),
-                exit = slideOutVertically(targetOffsetY = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideOutSpec())
-            ) {
-                NavigationBar {
-                    listOf(
-                        Screen.Today to Triple(Icons.Default.Today, "今日", "today"),
-                        Screen.Weekly to Triple(Icons.Default.DateRange, "课表", "weekly"),
-                        Screen.Courses to Triple(Icons.AutoMirrored.Filled.LibraryBooks, "课程", "courses"),
-                        Screen.About to Triple(Icons.Default.Person, "我的", "about")
-                    ).forEach { (screen, triple) ->
-                        val selected = currentRoute == screen.route
-                        NavigationBarItem(
-                            icon = {
-                                // ponytail: 精简模式选中才横展label；M3规范selected配pill指示器+圆角
-                                if (compactNavBar && !selected) {
-                                    Icon(triple.first, contentDescription = triple.second)
-                                } else {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Icon(triple.first, contentDescription = null)
-                                        if (compactNavBar) {
-                                            Spacer(modifier = Modifier.width(4.dp))
-                                            Text(triple.second, style = MaterialTheme.typography.labelLarge)
+            // ponytail: 普通底栏走Scaffold槽位常驻位移；悬浮pill走内容区Box覆盖层，两套互斥
+            if (!compactNavBar) {
+                androidx.compose.animation.AnimatedVisibility(
+                    visible = showBottomBar,
+                    enter = slideInVertically(initialOffsetY = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideInSpec()),
+                    exit = slideOutVertically(targetOffsetY = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideOutSpec())
+                ) {
+                    NavigationBar {
+                        navItemList().forEach { (screen, triple) ->
+                            NavigationBarItem(
+                                icon = { Icon(triple.first, contentDescription = triple.second) },
+                                label = { Text(triple.second) },
+                                selected = currentRoute == screen.route,
+                                onClick = {
+                                    com.ty.gkschedule.util.HapticFeedback.light(navView)
+                                    if (currentRoute != screen.route) {
+                                        navController.navigate(screen.route) {
+                                            popUpTo(startPage) { saveState = true }
+                                            launchSingleTop = true; restoreState = true
                                         }
                                     }
                                 }
-                            },
-                            label = if (compactNavBar) null else ({ Text(triple.second) }),
-                            selected = selected,
-                            onClick = {
-                                com.ty.gkschedule.util.HapticFeedback.light(navView)
-                                if (currentRoute != screen.route) {
-                                    navController.navigate(screen.route) {
-                                        popUpTo(startPage) { saveState = true }
-                                        launchSingleTop = true; restoreState = true
-                                    }
-                                }
-                            }
-                        )
+                            )
+                        }
                     }
                 }
             }
         }
     ) { innerPadding ->
-        NavHost(
-            navController = navController,
-            startDestination = startPage,
-            // ponytail: 底栏槽位常驻（AnimatedVisibility只做位移），内容区padding恒定，返回时布局不跳
-            modifier = Modifier.padding(innerPadding),
-            // ponytail: tab↔tab按左右方向滑；进子页统一右进；返回统一镜像左出（预测返回手势方向）
+        Box(Modifier.padding(innerPadding)) {
+            NavHost(
+                navController = navController,
+                startDestination = startPage,
+                // ponytail: 悬浮pill覆盖不占位，内容吃满；普通底栏槽位常驻padding恒定
+                modifier = Modifier.fillMaxSize(),
+                // ponytail: tab↔tab按左右方向滑；进子页统一右进；返回统一镜像左出（预测返回手势方向）
             enterTransition = {
                 val from = initialState.destination.route
                 val to = targetState.destination.route
@@ -269,6 +305,28 @@ fun ScheduleApp(
                 val examId = backStackEntry.arguments?.getLong("examId") ?: -1L
                 val currentExam = remember(examId, examList) { if (examId != -1L) examList.find { it.id == examId } else null }
                 com.ty.gkschedule.ui.exam.ExamEditScreen(exam = currentExam, semesterStart = semesterStart, onSave = { examEntities -> viewModel.saveExams(examEntities); navController.popBackStack() }, onDelete = { entity -> viewModel.deleteExamById(entity.id); navController.popBackStack() }, onBack = { navController.popBackStack() })
+            }
+            }
+        }
+        // 悬浮pill覆盖层：Box作用域内，屏幕中下方，不占NavHost位置
+        if (compactNavBar) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
+                androidx.compose.animation.AnimatedVisibility(
+                    visible = showBottomBar,
+                    modifier = Modifier.padding(bottom = 24.dp),
+                    enter = slideInVertically(initialOffsetY = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideInSpec()),
+                    exit = slideOutVertically(targetOffsetY = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideOutSpec())
+                ) {
+                    FloatingPillNavBar(currentRoute = currentRoute) { screen ->
+                        com.ty.gkschedule.util.HapticFeedback.light(navView)
+                        if (currentRoute != screen.route) {
+                            navController.navigate(screen.route) {
+                                popUpTo(startPage) { saveState = true }
+                                launchSingleTop = true; restoreState = true
+                            }
+                        }
+                    }
+                }
             }
         }
     }
