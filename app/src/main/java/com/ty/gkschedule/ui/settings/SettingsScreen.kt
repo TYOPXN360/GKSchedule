@@ -38,6 +38,7 @@ fun SettingsScreen(
     periodsPerDay: Int,
     darkMode: String,
     language: String,
+    startPage: String,
     firstDayOfWeek: Int,
     gridHeight: Int,
     gridCorner: Int,
@@ -66,6 +67,7 @@ fun SettingsScreen(
     onPeriodsPerDayChange: (Int) -> Unit,
     onDarkModeChange: (String) -> Unit,
     onLanguageChange: (String) -> Unit,
+    onStartPageChange: (String) -> Unit,
     onFirstDayOfWeekChange: (Int) -> Unit,
     onGridHeightChange: (Int) -> Unit,
     onGridCornerChange: (Int) -> Unit,
@@ -140,8 +142,10 @@ fun SettingsScreen(
                 AppearancePage(
                     darkMode = darkMode,
                     language = language,
+                    startPage = startPage,
                     onDarkModeChange = onDarkModeChange,
                     onLanguageChange = onLanguageChange,
+                    onStartPageChange = onStartPageChange,
                     onBack = { navController.popBackStack() }
                 )
             }
@@ -419,8 +423,9 @@ private fun SemesterPage(
 
 @Composable
 private fun AppearancePage(
-    darkMode: String, language: String,
-    onDarkModeChange: (String) -> Unit, onLanguageChange: (String) -> Unit, onBack: () -> Unit
+    darkMode: String, language: String, startPage: String,
+    onDarkModeChange: (String) -> Unit, onLanguageChange: (String) -> Unit,
+    onStartPageChange: (String) -> Unit, onBack: () -> Unit
 ) {
     SubPage(stringResource(R.string.settings_category_appearance), onBack) {
         SettingsCard {
@@ -431,6 +436,10 @@ private fun AppearancePage(
             DropdownItem(Icons.Default.Language, stringResource(R.string.language),
                 listOf("system" to stringResource(R.string.language_system), "en" to stringResource(R.string.language_en), "zh" to stringResource(R.string.language_zh)),
                 language, onSelect = onLanguageChange)
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
+            DropdownItem(Icons.Default.Home, stringResource(R.string.start_page),
+                listOf("today" to stringResource(R.string.nav_today), "weekly" to stringResource(R.string.nav_schedule)),
+                startPage, onSelect = onStartPageChange)
         }
     }
 }

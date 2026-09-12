@@ -55,6 +55,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     val semesterStart: Flow<LocalDate> = settings.semesterStart
     val darkMode: Flow<String> = settings.darkMode
     val language: Flow<String> = settings.language
+    val startPage: Flow<String> = settings.startPage
     val firstDayOfWeek: Flow<Int> = settings.firstDayOfWeek
     val gridHeight: Flow<Int> = settings.gridHeight
     val gridCorner: Flow<Int> = settings.gridCorner
@@ -249,6 +250,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     fun setPeriodsPerDay(periods: Int) { viewModelScope.launch { settings.setPeriodsPerDay(periods) } }
     fun setDarkMode(mode: String) { viewModelScope.launch { settings.setDarkMode(mode) } }
     fun setLanguage(lang: String) { viewModelScope.launch { settings.setLanguage(lang) } }
+    fun setStartPage(page: String) { viewModelScope.launch { settings.setStartPage(page) } }
     fun setFirstDayOfWeek(day: Int) { viewModelScope.launch { settings.setFirstDayOfWeek(day) } }
     fun setGridHeight(h: Int) { viewModelScope.launch { settings.setGridHeight(h) } }
     fun setGridCorner(c: Int) { viewModelScope.launch { settings.setGridCorner(c) } }

@@ -93,6 +93,7 @@
     <string name="language_system">跟随系统</string>
     <string name="language_en">English</string>
     <string name="language_zh">中文</string>
+    <string name="start_page">启动页</string>
     <!-- Settings - Schedule Style -->
     <string name="auto_grid_height">自适应内容高度</string>
     <string name="merge_consecutive">合并连续节次</string>

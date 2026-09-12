@@ -100,6 +100,7 @@ fun ScheduleApp(
     val examLookaheadWeeks by viewModel.examLookaheadWeeks.collectAsState(initial = 1)
     val diffColorPerWeek by viewModel.diffColorPerWeek.collectAsState(initial = false)
     val showHiddenCourses by viewModel.showHiddenCourses.collectAsState(initial = false)
+    val startPage by viewModel.startPage.collectAsState(initial = "today")
     val displayCourses = if (showHiddenCourses) courses else courses.filter { !it.isHidden }
     val examList by viewModel.examList.collectAsState(initial = emptyList())
     val showExamSchedule by viewModel.showExamSchedule.collectAsState(initial = false)
@@ -154,7 +155,7 @@ fun ScheduleApp(
                                 com.ty.gkschedule.util.HapticFeedback.light(navView)
                                 if (currentRoute != screen.route) {
                                     navController.navigate(screen.route) {
-                                        popUpTo(Screen.Today.route) { saveState = true }
+                                        popUpTo(startPage) { saveState = true }
                                         launchSingleTop = true; restoreState = true
                                     }
                                 }
@@ -167,8 +168,8 @@ fun ScheduleApp(
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = Screen.Today.route,
-            modifier = Modifier.padding(innerPadding),
+            startDestination = startPage,
+            modifier = Modifier.padding(if (showBottomBar) innerPadding else PaddingValues(0.dp)),
             enterTransition = {
                 val from = tabIndexOf(initialState.destination.route)
                 val to = tabIndexOf(targetState.destination.route)

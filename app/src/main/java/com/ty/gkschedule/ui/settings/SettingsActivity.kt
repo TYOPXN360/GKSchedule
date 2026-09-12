@@ -28,6 +28,7 @@ class SettingsActivity : AppCompatActivity() {
             val context = this
             val darkMode by vm.darkMode.collectAsState(initial = "system")
             val language by vm.language.collectAsState(initial = "system")
+            val startPage by vm.startPage.collectAsState(initial = "today")
 
             // Apply language change — recreate activity when language changes
             var lastLanguage by remember { mutableStateOf(language) }
@@ -92,6 +93,7 @@ class SettingsActivity : AppCompatActivity() {
                         periodsPerDay = periodsPerDay,
                         darkMode = darkMode,
                         language = language,
+                        startPage = startPage,
                         firstDayOfWeek = firstDayOfWeek,
                         gridHeight = gridHeight,
                         gridCorner = gridCorner,
@@ -122,6 +124,7 @@ class SettingsActivity : AppCompatActivity() {
                         onPeriodsPerDayChange = { vm.setPeriodsPerDay(it) },
                         onDarkModeChange = { vm.setDarkMode(it) },
                         onLanguageChange = { vm.setLanguage(it) },
+                        onStartPageChange = { vm.setStartPage(it) },
                         onFirstDayOfWeekChange = { vm.setFirstDayOfWeek(it) },
                         onGridHeightChange = { vm.setGridHeight(it) },
                         onGridCornerChange = { vm.setGridCorner(it) },

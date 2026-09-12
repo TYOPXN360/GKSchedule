@@ -18,6 +18,7 @@ class SettingsDataStore(private val context: Context) {
         private val PERIODS_PER_DAY = intPreferencesKey("periods_per_day")
         private val DARK_MODE = stringPreferencesKey("dark_mode")
         private val LANGUAGE = stringPreferencesKey("language")
+        private val START_PAGE = stringPreferencesKey("start_page") // "today", "weekly"
         private val FIRST_DAY_OF_WEEK = intPreferencesKey("first_day_of_week") // 1=Mon,7=Sun
         private val GRID_HEIGHT = intPreferencesKey("grid_height") // dp
         private val GRID_CORNER = intPreferencesKey("grid_corner") // dp
@@ -72,6 +73,7 @@ class SettingsDataStore(private val context: Context) {
     val periodsPerDay: Flow<Int> = context.dataStore.data.map { prefs -> prefs[PERIODS_PER_DAY] ?: 10 }
     val darkMode: Flow<String> = context.dataStore.data.map { prefs -> prefs[DARK_MODE] ?: "system" }
     val language: Flow<String> = context.dataStore.data.map { prefs -> prefs[LANGUAGE] ?: "system" }
+    val startPage: Flow<String> = context.dataStore.data.map { prefs -> prefs[START_PAGE] ?: "today" }
     val firstDayOfWeek: Flow<Int> = context.dataStore.data.map { prefs -> prefs[FIRST_DAY_OF_WEEK] ?: 1 }
     val gridHeight: Flow<Int> = context.dataStore.data.map { prefs -> prefs[GRID_HEIGHT] ?: 52 }
     val gridCorner: Flow<Int> = context.dataStore.data.map { prefs -> prefs[GRID_CORNER] ?: 8 }
@@ -129,6 +131,7 @@ class SettingsDataStore(private val context: Context) {
     suspend fun setPeriodsPerDay(periods: Int) { context.dataStore.edit { it[PERIODS_PER_DAY] = periods } }
     suspend fun setDarkMode(mode: String) { context.dataStore.edit { it[DARK_MODE] = mode } }
     suspend fun setLanguage(lang: String) { context.dataStore.edit { it[LANGUAGE] = lang } }
+    suspend fun setStartPage(page: String) { context.dataStore.edit { it[START_PAGE] = page } }
     suspend fun setFirstDayOfWeek(day: Int) { context.dataStore.edit { it[FIRST_DAY_OF_WEEK] = day } }
     suspend fun setGridHeight(h: Int) { context.dataStore.edit { it[GRID_HEIGHT] = h } }
     suspend fun setGridCorner(c: Int) { context.dataStore.edit { it[GRID_CORNER] = c } }
