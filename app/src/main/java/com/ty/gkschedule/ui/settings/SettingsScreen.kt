@@ -103,17 +103,18 @@ fun SettingsScreen(
         NavHost(
             navController = navController,
             startDestination = "main",
+            // ponytail: 设置内页统一右进左出，与主NavHost子页同规范；tab spec只给主tab用
                 enterTransition = {
-                    slideInHorizontally(com.ty.gkschedule.ui.theme.M3Motion.tabSlideInSpec()) { it } + fadeIn(com.ty.gkschedule.ui.theme.M3Motion.fadeInSpec())
+                    slideInHorizontally(com.ty.gkschedule.ui.theme.M3Motion.pageEnterSpec()) { it } + fadeIn(com.ty.gkschedule.ui.theme.M3Motion.subPageEnterSpec())
                 },
                 exitTransition = {
-                    slideOutHorizontally(com.ty.gkschedule.ui.theme.M3Motion.tabSlideOutSpec()) { -it } + fadeOut(com.ty.gkschedule.ui.theme.M3Motion.fadeOutSpec())
+                    slideOutHorizontally(com.ty.gkschedule.ui.theme.M3Motion.pageExitSpec()) { -it / 4 } + fadeOut(com.ty.gkschedule.ui.theme.M3Motion.subPageExitSpec())
                 },
                 popEnterTransition = {
-                    slideInHorizontally(com.ty.gkschedule.ui.theme.M3Motion.tabSlideInSpec()) { -it } + fadeIn(com.ty.gkschedule.ui.theme.M3Motion.fadeInSpec())
+                    slideInHorizontally(com.ty.gkschedule.ui.theme.M3Motion.pageEnterSpec()) { -it / 4 } + fadeIn(com.ty.gkschedule.ui.theme.M3Motion.subPageEnterSpec())
                 },
                 popExitTransition = {
-                    slideOutHorizontally(com.ty.gkschedule.ui.theme.M3Motion.tabSlideOutSpec()) { it } + fadeOut(com.ty.gkschedule.ui.theme.M3Motion.fadeOutSpec())
+                    slideOutHorizontally(com.ty.gkschedule.ui.theme.M3Motion.pageExitSpec()) { it } + fadeOut(com.ty.gkschedule.ui.theme.M3Motion.subPageExitSpec())
             }
         ) {
             composable("main") {

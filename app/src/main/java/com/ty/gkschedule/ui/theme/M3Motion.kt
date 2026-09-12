@@ -86,13 +86,20 @@ object M3Motion {
     fun fadeOutSpec() = tween<Float>(Short3, easing = EmphasizedAccelerateEasing)
 
     // =========================================================================
-    // 子页面过渡 (Fade Through)
+    // 子页面过渡 (Shared Axis X：右进左出，返回时镜像)
+    // ponytail: 曾四处各写一套方向+tabIndexOf，返回动画与手势方向打架；现统一走这里
     // =========================================================================
 
-    /** 子页面进入: 淡入 */
-    fun subPageEnterSpec() = tween<Float>(Medium4, easing = EmphasizedDecelerateEasing)
+    /** 子页面进入: 右滑入+淡入 */
+    fun pageEnterSpec() = tween<androidx.compose.ui.unit.IntOffset>(Medium4, easing = EmphasizedDecelerateEasing)
 
-    /** 子页面退出: 淡出 */
+    /** 子页面退出: 左滑出+淡出 */
+    fun pageExitSpec() = tween<androidx.compose.ui.unit.IntOffset>(Short4, easing = EmphasizedAccelerateEasing)
+
+    /** 子页面淡入 */
+    fun subPageEnterSpec() = tween<Float>(Medium1, easing = EmphasizedDecelerateEasing)
+
+    /** 子页面淡出 */
     fun subPageExitSpec() = tween<Float>(Short4, easing = EmphasizedAccelerateEasing)
 
     // =========================================================================

@@ -127,7 +127,9 @@ fun ScheduleApp(
     val mainScaffoldBg = if (com.ty.gkschedule.ui.theme.LocalAppIsDark.current) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainer
 
     val tabIndex = mapOf("today" to 0, "weekly" to 1, "courses" to 2, "about" to 3)
+    // ponytail: 子页(login/webview/exam/edit…)无tab序号 → tabIndexOf回0；导航靠isTabRoute分支而非序号比较
     fun tabIndexOf(route: String?): Int = tabIndex.entries.firstOrNull { route?.startsWith(it.key) == true }?.value ?: 0
+    fun isTabRoute(route: String?): Boolean = route != null && tabIndex.keys.any { route.startsWith(it) }
 
     // Simple approach: NavHost with conditional bottom bar
     Scaffold(
@@ -169,29 +171,38 @@ fun ScheduleApp(
             navController = navController,
             startDestination = startPage,
             modifier = Modifier.padding(if (showBottomBar) innerPadding else PaddingValues(0.dp)),
+            // ponytail: tab↔tab按左右方向滑；进子页统一右进；返回统一镜像左出（预测返回手势方向）
             enterTransition = {
-                val from = tabIndexOf(initialState.destination.route)
-                val to = tabIndexOf(targetState.destination.route)
-                if (to >= from) {
-                    slideInHorizontally(initialOffsetX = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideInSpec()) + fadeIn(com.ty.gkschedule.ui.theme.M3Motion.fadeInSpec())
+                val from = initialState.destination.route
+                val to = targetState.destination.route
+                if (isTabRoute(from) && isTabRoute(to)) {
+                    if (tabIndexOf(to) >= tabIndexOf(from)) {
+                        slideInHorizontally(initialOffsetX = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideInSpec()) + fadeIn(com.ty.gkschedule.ui.theme.M3Motion.fadeInSpec())
+                    } else {
+                        slideInHorizontally(initialOffsetX = { -it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideInSpec()) + fadeIn(com.ty.gkschedule.ui.theme.M3Motion.fadeInSpec())
+                    }
                 } else {
-                    slideInHorizontally(initialOffsetX = { -it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideInSpec()) + fadeIn(com.ty.gkschedule.ui.theme.M3Motion.fadeInSpec())
+                    slideInHorizontally(initialOffsetX = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.pageEnterSpec()) + fadeIn(com.ty.gkschedule.ui.theme.M3Motion.subPageEnterSpec())
                 }
             },
             exitTransition = {
-                val from = tabIndexOf(initialState.destination.route)
-                val to = tabIndexOf(targetState.destination.route)
-                if (to >= from) {
-                    slideOutHorizontally(targetOffsetX = { -it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideOutSpec()) + fadeOut(com.ty.gkschedule.ui.theme.M3Motion.fadeOutSpec())
+                val from = initialState.destination.route
+                val to = targetState.destination.route
+                if (isTabRoute(from) && isTabRoute(to)) {
+                    if (tabIndexOf(to) >= tabIndexOf(from)) {
+                        slideOutHorizontally(targetOffsetX = { -it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideOutSpec()) + fadeOut(com.ty.gkschedule.ui.theme.M3Motion.fadeOutSpec())
+                    } else {
+                        slideOutHorizontally(targetOffsetX = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideOutSpec()) + fadeOut(com.ty.gkschedule.ui.theme.M3Motion.fadeOutSpec())
+                    }
                 } else {
-                    slideOutHorizontally(targetOffsetX = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideOutSpec()) + fadeOut(com.ty.gkschedule.ui.theme.M3Motion.fadeOutSpec())
+                    slideOutHorizontally(targetOffsetX = { -it / 4 }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.pageExitSpec()) + fadeOut(com.ty.gkschedule.ui.theme.M3Motion.subPageExitSpec())
                 }
             },
             popEnterTransition = {
-                slideInHorizontally(initialOffsetX = { -it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideInSpec()) + fadeIn(com.ty.gkschedule.ui.theme.M3Motion.fadeInSpec())
+                slideInHorizontally(initialOffsetX = { -it / 4 }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.pageEnterSpec()) + fadeIn(com.ty.gkschedule.ui.theme.M3Motion.subPageEnterSpec())
             },
             popExitTransition = {
-                slideOutHorizontally(targetOffsetX = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideOutSpec()) + fadeOut(com.ty.gkschedule.ui.theme.M3Motion.fadeOutSpec())
+                slideOutHorizontally(targetOffsetX = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.pageExitSpec()) + fadeOut(com.ty.gkschedule.ui.theme.M3Motion.subPageExitSpec())
             }
         ) {
             composable(Screen.Today.route) { TodayScreen(courses = displayCourses, colorCourses = courses, currentWeek = realCurrentWeek, colorEngine = colorEngine, colorGroupMode = colorGroupMode, exams = examList, showExamSchedule = showExamSchedule, examLookaheadWeeks = examLookaheadWeeks, semesterStart = semesterStart, getStartTime = { viewModel.getStartTime(it) }, getEndTime = { viewModel.getEndTime(it) }, onCourseLongPress = { navController.navigate(Screen.CourseEdit.createRoute(it.id)) }, onExamEdit = { navController.navigate(Screen.ExamEdit.createRoute(it.id)) }, diffColorPerWeek = diffColorPerWeek) }
