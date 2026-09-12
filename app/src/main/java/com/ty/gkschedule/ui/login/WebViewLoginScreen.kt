@@ -73,6 +73,8 @@ fun WebViewLoginScreen(
                 // Phase 3: Keep reading SSE for scan result (blocks until scan or timeout)
                 val result = api.readSseResult(stream)
                 if (result != null) {
+                    statusText = ""
+                    isLoading = true
                     onLoginSuccess(result)
                 } else {
                     isExpired = true
