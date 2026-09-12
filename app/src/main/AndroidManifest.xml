@@ -66,6 +66,11 @@
             android:exported="true"
             android:windowSoftInputMode="adjustResize" />
 
+        <activity
+            android:name=".ui.course.CourseEditActivity"
+            android:exported="true"
+            android:windowSoftInputMode="adjustResize" />
+
         <!-- FileProvider for APK installation -->
         <provider
             android:name="androidx.core.content.FileProvider"
