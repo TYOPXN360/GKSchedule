@@ -69,95 +69,124 @@ private fun navItemList(): List<Pair<Screen, Triple<androidx.compose.ui.graphics
         Screen.About to Triple(Icons.Default.Person, "我的", "about")
     )
 
-// 悬浮药丸底栏：屏幕中下方覆盖层，选中项内容由pillContentMode决定（0=都显示，1=仅图标，2=仅名字）
+// 悬浮药丸底栏：展开居中底部；收起缩到屏幕左边只剩箭头书签
+// ponytail: 收/展是两套AnimatedVisibility左右对滑，不是同一条Row的if/else，位置变化才有动画
 @Composable
 private fun FloatingPillNavBar(
     currentRoute: String?,
     pillContentMode: Int,
     onNavigate: (Screen) -> Unit
 ) {
-    // ponytail: collapsed整条收成小圆钮；单项展开态只影响自己，点击非选中项直接导航
     var collapsed by remember { mutableStateOf(false) }
-    Row(
-        modifier = Modifier
-            .padding(horizontal = 48.dp)
-            .background(
-                color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                shape = androidx.compose.foundation.shape.CircleShape
-            )
-            .padding(horizontal = 8.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        if (collapsed) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        androidx.compose.animation.AnimatedVisibility(
+            visible = !collapsed,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(start = 24.dp, end = 24.dp, bottom = 24.dp),
+            enter = slideInVertically(initialOffsetY = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideInSpec()) + fadeIn(com.ty.gkschedule.ui.theme.M3Motion.fadeInSpec()),
+            exit = slideOutHorizontally(targetOffsetX = { -it / 2 }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideOutSpec()) + fadeOut(com.ty.gkschedule.ui.theme.M3Motion.fadeOutSpec())
+        ) {
             Row(
                 modifier = Modifier
-                    .clip(androidx.compose.foundation.shape.CircleShape)
+                    .background(
+                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        shape = androidx.compose.foundation.shape.CircleShape
+                    )
+                    .animateContentSize(animationSpec = tween(300))
+                    .padding(horizontal = 6.dp, vertical = 6.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                navItemList().forEach { (screen, triple) ->
+                    var expanded by remember(screen.route) { mutableStateOf(true) }
+                    val selected = currentRoute == screen.route
+                    // ponytail: 设置项定默认显示；点选中项切换展开/收起；选中项在仅图标/仅名字模式下补全另一半
+                    val showBoth = pillContentMode == 0
+                    val showText = if (showBoth) true else pillContentMode == 2
+                    val showIcon = if (showBoth) true else pillContentMode == 1
+                    val visibleText = (showText || selected) && expanded
+                    val visibleIcon = showIcon || selected || !visibleText
+                    val bg = if (selected) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent
+                    val fg = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                    Row(
+                        modifier = Modifier
+                            .clip(androidx.compose.foundation.shape.CircleShape)
+                            .background(bg)
+                            .clickable(onClick = {
+                                if (selected) expanded = !expanded
+                                else onNavigate(screen)
+                            })
+                            .padding(horizontal = if (visibleText && visibleIcon) 12.dp else 8.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (visibleIcon) Icon(triple.first, contentDescription = triple.second, tint = fg, modifier = Modifier.size(20.dp))
+                        androidx.compose.animation.AnimatedVisibility(visible = visibleText && visibleIcon) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(triple.second, style = MaterialTheme.typography.labelMedium, color = fg, maxLines = 1)
+                            }
+                        }
+                        androidx.compose.animation.AnimatedVisibility(visible = visibleText && !visibleIcon) {
+                            Text(triple.second, style = MaterialTheme.typography.labelMedium, color = fg, maxLines = 1)
+                        }
+                    }
+                }
+                HorizontalDivider(
+                    modifier = Modifier
+                        .height(20.dp)
+                        .width(1.dp),
+                    color = MaterialTheme.colorScheme.outlineVariant
+                )
+                Row(
+                    modifier = Modifier
+                        .clip(androidx.compose.foundation.shape.CircleShape)
+                        .clickable(onClick = { collapsed = true })
+                        .padding(horizontal = 8.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Default.ChevronLeft, contentDescription = "收起",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+        }
+        // 书签：贴屏幕左边，只露箭头
+        androidx.compose.animation.AnimatedVisibility(
+            visible = collapsed,
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(bottom = 48.dp),
+            enter = slideInHorizontally(initialOffsetX = { -it / 2 }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideInSpec()) + fadeIn(com.ty.gkschedule.ui.theme.M3Motion.fadeInSpec()),
+            exit = slideOutHorizontally(targetOffsetX = { -it / 2 }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideOutSpec()) + fadeOut(com.ty.gkschedule.ui.theme.M3Motion.fadeOutSpec())
+        ) {
+            Row(
+                modifier = Modifier
+                    .background(
+                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(
+                            topStart = 0.dp, bottomStart = 0.dp,
+                            topEnd = 16.dp, bottomEnd = 16.dp
+                        )
+                    )
+                    .clip(
+                        androidx.compose.foundation.shape.RoundedCornerShape(
+                            topStart = 0.dp, bottomStart = 0.dp,
+                            topEnd = 16.dp, bottomEnd = 16.dp
+                        )
+                    )
                     .clickable(onClick = { collapsed = false })
-                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                    .padding(start = 4.dp, end = 10.dp, top = 12.dp, bottom = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
                     Icons.Default.ChevronRight, contentDescription = "展开",
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(20.dp)
                 )
             }
-            return@Row
-        }
-        navItemList().forEach { (screen, triple) ->
-            var expanded by remember(screen.route) { mutableStateOf(true) }
-            val selected = currentRoute == screen.route
-            // ponytail: 设置项定默认显示；点选中项切换展开/收起，固定展示不跟选中走
-            val showBoth = pillContentMode == 0
-            val showIconOnly = pillContentMode == 1
-            val showText = if (showBoth) true else if (showIconOnly) false else true
-            val showIcon = if (showBoth) true else if (showIconOnly) true else false
-            val visibleText = showText && expanded
-            val visibleIcon = showIcon || !visibleText
-            val bg = if (selected) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent
-            val fg = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
-            Row(
-                modifier = Modifier
-                    .clip(androidx.compose.foundation.shape.CircleShape)
-                    .background(bg)
-                    .clickable(onClick = {
-                        if (selected) expanded = !expanded
-                        else onNavigate(screen)
-                    })
-                    .padding(horizontal = if (visibleText && visibleIcon) 16.dp else 12.dp, vertical = 10.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                if (visibleIcon) Icon(triple.first, contentDescription = triple.second, tint = fg, modifier = Modifier.size(24.dp))
-                androidx.compose.animation.AnimatedVisibility(visible = visibleText && visibleIcon) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(triple.second, style = MaterialTheme.typography.labelLarge, color = fg, maxLines = 1)
-                    }
-                }
-                androidx.compose.animation.AnimatedVisibility(visible = visibleText && !visibleIcon) {
-                    Text(triple.second, style = MaterialTheme.typography.labelLarge, color = fg, maxLines = 1)
-                }
-            }
-        }
-        HorizontalDivider(
-            modifier = Modifier
-                .height(24.dp)
-                .width(1.dp),
-            color = MaterialTheme.colorScheme.outlineVariant
-        )
-        Row(
-            modifier = Modifier
-                .clip(androidx.compose.foundation.shape.CircleShape)
-                .clickable(onClick = { collapsed = true })
-                .padding(horizontal = 12.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                Icons.Default.ChevronLeft, contentDescription = "收起",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(24.dp)
-            )
         }
     }
 }
@@ -341,8 +370,7 @@ fun ScheduleApp(
                 CourseEditScreen(course = currentCourse, allCourses = courses, periodsPerDay = periodsPerDay, onSave = { savedCourse, hiddenScopeName -> viewModel.saveCourse(savedCourse, hiddenScopeName); navController.popBackStack() }, onDelete = { viewModel.deleteCourse(it); navController.popBackStack() }, onBack = { navController.popBackStack() })
             }
         }
-        }
-        // 悬浮pill覆盖层：Box作用域内，屏幕中下方，不占NavHost位置
+        // 悬浮pill：跟随tab显隐做位移，内部收/展另有自己的左右对滑
         if (compactNavBar) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
                 androidx.compose.animation.AnimatedVisibility(
@@ -363,6 +391,7 @@ fun ScheduleApp(
                 }
             }
         }
+    }
     }
 }
 
