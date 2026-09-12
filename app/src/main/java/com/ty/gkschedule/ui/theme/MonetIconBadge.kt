@@ -16,10 +16,12 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /**
- * Badge 色相来源
- * 直接使用 M3 标准语义色（已包含正确 Tone）
+ * Badge 色板：LineageOS Settings 首页同款 10 套固定色
+ * fg 恒 T30，bg 浅 T90/深 T80；灰走低 chroma
  */
 enum class BadgeColorPalette {
+    BlueVariant, Blue, Pink, Orange, Yellow, Green, Grey, Cyan, Red, Purple,
+    // 旧名保留，映射到近似色
     Primary, Secondary, Tertiary, Neutral, Inverse
 }
 
@@ -56,17 +58,42 @@ fun MonetIconBadgeTextColor(badgePalette: BadgeColorPalette): Color {
 }
 
 /**
- * 直接使用 M3 标准语义色，无需手动计算 Tone
+ * LineageOS 10 套固定色；旧 Primary/Secondary/Tertiary 映射到近似色
  */
 @Composable
 private fun badgePaletteColors(scheme: androidx.compose.material3.ColorScheme, palette: BadgeColorPalette): Pair<Color, Color> {
+    val fixed = fixedBadgeColors(palette)
+    if (fixed != null) return fixed
     return when (palette) {
-        BadgeColorPalette.Primary -> scheme.primaryContainer to scheme.onPrimaryContainer
-        BadgeColorPalette.Secondary -> scheme.secondaryContainer to scheme.onSecondaryContainer
-        BadgeColorPalette.Tertiary -> scheme.tertiaryContainer to scheme.onTertiaryContainer
+        BadgeColorPalette.Primary -> fixedBadgeColors(BadgeColorPalette.Blue)!!
+        BadgeColorPalette.Secondary -> fixedBadgeColors(BadgeColorPalette.Cyan)!!
+        BadgeColorPalette.Tertiary -> fixedBadgeColors(BadgeColorPalette.Purple)!!
         BadgeColorPalette.Neutral -> scheme.surfaceVariant to scheme.onSurfaceVariant
-        BadgeColorPalette.Inverse -> scheme.inverseSurface to scheme.inverseOnSurface
+        else -> scheme.inverseSurface to scheme.inverseOnSurface
     }
+}
+
+// ponytail: HCT现场算 T30/T90(深T80)，不建xml表；grey低chroma
+@Composable
+private fun fixedBadgeColors(palette: BadgeColorPalette): Pair<Color, Color>? {
+    val isDark = LocalAppIsDark.current
+    val hue = when (palette) {
+        BadgeColorPalette.BlueVariant -> 260.0
+        BadgeColorPalette.Blue -> 255.0
+        BadgeColorPalette.Pink -> 340.0
+        BadgeColorPalette.Orange -> 70.0
+        BadgeColorPalette.Yellow -> 105.0
+        BadgeColorPalette.Green -> 150.0
+        BadgeColorPalette.Grey -> 0.0
+        BadgeColorPalette.Cyan -> 200.0
+        BadgeColorPalette.Red -> 15.0
+        BadgeColorPalette.Purple -> 300.0
+        else -> return null
+    }
+    val chroma = if (palette == BadgeColorPalette.Grey) 12.0 else null
+    val fg = com.google.android.material.color.utilities.Hct.from(hue, chroma ?: 48.0, 30.0).toInt()
+    val bg = com.google.android.material.color.utilities.Hct.from(hue, chroma ?: 32.0, if (isDark) 80.0 else 90.0).toInt()
+    return Color(bg) to Color(fg)
 }
 
 /**

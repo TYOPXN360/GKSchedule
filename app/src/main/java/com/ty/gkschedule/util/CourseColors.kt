@@ -72,14 +72,29 @@ object CourseColors {
         )
     }
 
+    // ponytail: LineageOS Settings首页同款，10套固定色；fg恒T30，bg浅T90/深T80，不跟主题色走
+    private val badgeHues = doubleArrayOf(
+        260.0, // blue_variant
+        255.0, // blue
+        340.0, // pink
+        70.0, // orange
+        105.0, // yellow
+        150.0, // green
+        0.0, // grey（低chroma）
+        200.0, // cyan
+        15.0, // red
+        300.0 // purple
+    )
+
     @Composable
     fun getSettingsBadgeColor(index: Int): CourseColorPair {
         val isDark = LocalAppIsDark.current
-        val themeHue = Hct.fromInt(MaterialTheme.colorScheme.primary.toArgb()).hue
-        val hue = hueForEngine(engine = 0, key = "settings|$index", slot = index, themeHue = themeHue)
+        val i = ((index % badgeHues.size) + badgeHues.size) % badgeHues.size
+        val chromaFg = if (i == 6) 12.0 else 48.0
+        val chromaBg = if (i == 6) 12.0 else 32.0
         return CourseColorPair(
-            container = tonalColor(hue, engine = 0, isDark = isDark, role = Role.Container, variant = 0),
-            content = tonalColor(hue, engine = 0, isDark = isDark, role = Role.Content, variant = 0)
+            container = Color(Hct.from(badgeHues[i], chromaBg, if (isDark) 80.0 else 90.0).toInt()),
+            content = Color(Hct.from(badgeHues[i], chromaFg, 30.0).toInt())
         )
     }
 

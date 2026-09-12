@@ -255,14 +255,6 @@ private fun SettingsMainPage(onOpenPage: (String) -> Unit, onExit: () -> Unit) {
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
         ) {
-            val catPalettes = listOf(
-                com.ty.gkschedule.ui.theme.BadgeColorPalette.Primary,     // 学期 = 主色蓝
-                com.ty.gkschedule.ui.theme.BadgeColorPalette.Tertiary,    // 外观 = 第三色粉紫
-                com.ty.gkschedule.ui.theme.BadgeColorPalette.Secondary,   // 课表样式 = 次色
-                com.ty.gkschedule.ui.theme.BadgeColorPalette.Tertiary,    // 通知 = 粉紫
-                com.ty.gkschedule.ui.theme.BadgeColorPalette.Secondary,   // 同步 = 次色
-                com.ty.gkschedule.ui.theme.BadgeColorPalette.Primary      // 数据 = 主色
-            )
             val catIcons = listOf(Icons.Default.CalendarMonth, Icons.Default.Palette, Icons.Default.GridOn, Icons.Default.Notifications, Icons.Default.Sync, Icons.Default.Storage)
             val catTitles = listOf(
                 stringResource(R.string.settings_category_semester),
@@ -347,21 +339,7 @@ private fun SettingsMainPage(onOpenPage: (String) -> Unit, onExit: () -> Unit) {
     }
 }
 
-@Composable
-private fun CategoryItem(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, subtitle: String, badgePalette: com.ty.gkschedule.ui.theme.BadgeColorPalette, onClick: () -> Unit) {
-    com.ty.gkschedule.ui.theme.Md3Card(modifier = Modifier.fillMaxWidth(), variant = com.ty.gkschedule.ui.theme.Md3CardVariant.Elevated, shape = MaterialTheme.shapes.small) {
-        ListItem(
-            headlineContent = { Text(title, fontWeight = FontWeight.Medium) },
-            supportingContent = { Text(subtitle) },
-            leadingContent = { com.ty.gkschedule.ui.theme.MonetIconBadge(icon = icon, contentDescription = title, badgePalette = badgePalette) },
-            trailingContent = { Icon(Icons.Default.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
-            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-            modifier = Modifier.clickable(onClick = onClick)
-        )
-    }
-}
-
-// === Sub-page wrapper ===
+ // === Sub-page wrapper ===
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
