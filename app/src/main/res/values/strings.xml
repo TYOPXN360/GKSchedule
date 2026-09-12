@@ -88,7 +88,11 @@
     <string name="language_zh">中文</string>
     <string name="start_page">Start Page</string>
     <string name="compact_nav_bar">Floating nav bar</string>
-    <string name="compact_nav_bar_desc">Pill bar above the bottom, expands label on selection</string>
+    <string name="compact_nav_bar_desc">Pill bar above the bottom, labels expanded by default, tap to collapse</string>
+    <string name="pill_content">Pill content</string>
+    <string name="pill_content_both">Icon + label</string>
+    <string name="pill_content_icon">Icon only</string>
+    <string name="pill_content_text">Label only</string>
     <string name="grid_height">Grid Height</string>
     <string name="grid_corner">Corner Radius</string>
     <string name="grid_spacing">Spacing</string>

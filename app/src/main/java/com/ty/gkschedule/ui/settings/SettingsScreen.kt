@@ -94,6 +94,8 @@ fun SettingsScreen(
     onShowHiddenCoursesChange: (Boolean) -> Unit = {},
     compactNavBar: Boolean = true,
     onCompactNavBarChange: (Boolean) -> Unit = {},
+    pillContentMode: Int = 0,
+    onPillContentModeChange: (Int) -> Unit = {},
     onFetchExam: () -> Unit,
     onExportJson: () -> Unit,
     onImportJson: () -> Unit,
@@ -181,6 +183,8 @@ fun SettingsScreen(
                     onShowHiddenCoursesChange = onShowHiddenCoursesChange,
                     compactNavBar = compactNavBar,
                     onCompactNavBarChange = onCompactNavBarChange,
+                    pillContentMode = pillContentMode,
+                    onPillContentModeChange = onPillContentModeChange,
                     onBack = { navController.popBackStack() }
                 )
             }
@@ -445,6 +449,8 @@ private fun ScheduleStylePage(
     onShowHiddenCoursesChange: (Boolean) -> Unit = {},
     compactNavBar: Boolean = true,
     onCompactNavBarChange: (Boolean) -> Unit = {},
+    pillContentMode: Int = 0,
+    onPillContentModeChange: (Int) -> Unit = {},
     onBack: () -> Unit
 ) {
     SubPage(stringResource(R.string.settings_category_schedule), onBack) {
@@ -475,6 +481,20 @@ private fun ScheduleStylePage(
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
             SwitchItem(Icons.Default.Pin, stringResource(R.string.show_period_label), showPeriodLabel, onShowPeriodLabelChange)
             SwitchItem(Icons.Default.Dashboard, stringResource(R.string.compact_nav_bar), compactNavBar, onCompactNavBarChange)
+            androidx.compose.animation.AnimatedVisibility(visible = compactNavBar) {
+                Column {
+                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
+                    DropdownItem(
+                        Icons.Default.Tune, stringResource(R.string.pill_content),
+                        listOf(
+                            "0" to stringResource(R.string.pill_content_both),
+                            "1" to stringResource(R.string.pill_content_icon),
+                            "2" to stringResource(R.string.pill_content_text)
+                        ),
+                        pillContentMode.toString(), onSelect = { onPillContentModeChange(it.toInt()) }
+                    )
+                }
+            }
             Text(
                 stringResource(R.string.compact_nav_bar_desc),
                 style = MaterialTheme.typography.bodySmall,

@@ -95,7 +95,11 @@
     <string name="language_zh">中文</string>
     <string name="start_page">启动页</string>
     <string name="compact_nav_bar">悬浮底栏</string>
-    <string name="compact_nav_bar_desc">屏幕中下方药丸悬浮栏，选中时横向展开名称</string>
+    <string name="compact_nav_bar_desc">屏幕中下方药丸悬浮栏，默认展开名称，点击缩成图标</string>
+    <string name="pill_content">点击时的样式</string>
+    <string name="pill_content_both">都显示</string>
+    <string name="pill_content_icon">仅图标</string>
+    <string name="pill_content_text">仅名字</string>
     <!-- Settings - Schedule Style -->
     <string name="auto_grid_height">自适应内容高度</string>
     <string name="merge_consecutive">合并连续节次</string>

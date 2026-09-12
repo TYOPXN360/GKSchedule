@@ -87,6 +87,7 @@ class SettingsActivity : AppCompatActivity() {
                     val diffColorPerWeek by vm.diffColorPerWeek.collectAsState(initial = false)
                     val showHiddenCourses by vm.showHiddenCourses.collectAsState(initial = false)
                     val compactNavBar by vm.compactNavBar.collectAsState(initial = true)
+                    val pillContentMode by vm.pillContentMode.collectAsState(initial = 0)
 
                     SettingsScreen(
                         semesterStart = semesterStart,
@@ -122,6 +123,8 @@ class SettingsActivity : AppCompatActivity() {
                         onShowHiddenCoursesChange = { vm.setShowHiddenCourses(it) },
                         compactNavBar = compactNavBar,
                         onCompactNavBarChange = { vm.setCompactNavBar(it) },
+                        pillContentMode = pillContentMode,
+                        onPillContentModeChange = { vm.setPillContentMode(it) },
                         onSemesterStartChange = { vm.setSemesterStart(it) },
                         onTotalWeeksChange = { vm.setTotalWeeks(it) },
                         onPeriodsPerDayChange = { vm.setPeriodsPerDay(it) },

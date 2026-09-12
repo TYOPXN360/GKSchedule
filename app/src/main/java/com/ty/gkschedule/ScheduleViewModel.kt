@@ -84,6 +84,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     val diffColorPerWeek: Flow<Boolean> = settings.diffColorPerWeek
     val showHiddenCourses: Flow<Boolean> = settings.showHiddenCourses
     val compactNavBar: Flow<Boolean> = settings.compactNavBar
+    val pillContentMode: Flow<Int> = settings.pillContentMode
     val courseNames: Flow<List<String>> = courseDao.getAllCourseNames()
 
     private val _selectedWeek = MutableStateFlow(0)
@@ -312,6 +313,10 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
 
     fun setCompactNavBar(compact: Boolean) {
         viewModelScope.launch { settings.setCompactNavBar(compact) }
+    }
+
+    fun setPillContentMode(mode: Int) {
+        viewModelScope.launch { settings.setPillContentMode(mode) }
     }
 
     private suspend fun rescheduleSync() {

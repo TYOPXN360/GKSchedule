@@ -69,13 +69,14 @@ private fun navItemList(): List<Pair<Screen, Triple<androidx.compose.ui.graphics
         Screen.About to Triple(Icons.Default.Person, "我的", "about")
     )
 
-// 悬浮药丸底栏：屏幕中下方覆盖层，默认横展名称，点击后缩成纯图标
+// 悬浮药丸底栏：屏幕中下方覆盖层，选中项内容由pillContentMode决定（0=都显示，1=仅图标，2=仅名字）
 @Composable
 private fun FloatingPillNavBar(
     currentRoute: String?,
+    pillContentMode: Int,
     onNavigate: (Screen) -> Unit
 ) {
-    // ponytail: 收起态只剩一个小圆钮，点即展开；展开态每项默认带名，点当前项缩名
+    // ponytail: collapsed整条收成小圆钮；单项展开态只影响自己，点击非选中项直接导航
     var collapsed by remember { mutableStateOf(false) }
     Row(
         modifier = Modifier
@@ -107,6 +108,13 @@ private fun FloatingPillNavBar(
         navItemList().forEach { (screen, triple) ->
             var expanded by remember(screen.route) { mutableStateOf(true) }
             val selected = currentRoute == screen.route
+            // ponytail: 设置项定默认显示；点选中项切换展开/收起，固定展示不跟选中走
+            val showBoth = pillContentMode == 0
+            val showIconOnly = pillContentMode == 1
+            val showText = if (showBoth) true else if (showIconOnly) false else true
+            val showIcon = if (showBoth) true else if (showIconOnly) true else false
+            val visibleText = showText && expanded
+            val visibleIcon = showIcon || !visibleText
             val bg = if (selected) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent
             val fg = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
             Row(
@@ -117,15 +125,18 @@ private fun FloatingPillNavBar(
                         if (selected) expanded = !expanded
                         else onNavigate(screen)
                     })
-                    .padding(horizontal = if (expanded) 16.dp else 12.dp, vertical = 10.dp),
+                    .padding(horizontal = if (visibleText && visibleIcon) 16.dp else 12.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(triple.first, contentDescription = triple.second, tint = fg, modifier = Modifier.size(24.dp))
-                androidx.compose.animation.AnimatedVisibility(visible = expanded) {
+                if (visibleIcon) Icon(triple.first, contentDescription = triple.second, tint = fg, modifier = Modifier.size(24.dp))
+                androidx.compose.animation.AnimatedVisibility(visible = visibleText && visibleIcon) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(triple.second, style = MaterialTheme.typography.labelLarge, color = fg, maxLines = 1)
                     }
+                }
+                androidx.compose.animation.AnimatedVisibility(visible = visibleText && !visibleIcon) {
+                    Text(triple.second, style = MaterialTheme.typography.labelLarge, color = fg, maxLines = 1)
                 }
             }
         }
@@ -188,6 +199,7 @@ fun ScheduleApp(
     val diffColorPerWeek by viewModel.diffColorPerWeek.collectAsState(initial = false)
     val showHiddenCourses by viewModel.showHiddenCourses.collectAsState(initial = false)
     val compactNavBar by viewModel.compactNavBar.collectAsState(initial = true)
+    val pillContentMode by viewModel.pillContentMode.collectAsState(initial = 0)
     val startPage by viewModel.startPage.collectAsState(initial = "today")
     val displayCourses = if (showHiddenCourses) courses else courses.filter { !it.isHidden }
     val examList by viewModel.examList.collectAsState(initial = emptyList())
@@ -339,7 +351,7 @@ fun ScheduleApp(
                     enter = slideInVertically(initialOffsetY = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideInSpec()),
                     exit = slideOutVertically(targetOffsetY = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideOutSpec())
                 ) {
-                    FloatingPillNavBar(currentRoute = currentRoute) { screen ->
+                    FloatingPillNavBar(currentRoute = currentRoute, pillContentMode = pillContentMode) { screen ->
                         com.ty.gkschedule.util.HapticFeedback.light(navView)
                         if (currentRoute != screen.route) {
                             navController.navigate(screen.route) {
