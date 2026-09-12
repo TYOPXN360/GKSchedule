@@ -383,7 +383,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
 
     // --- Login ---
 
-    fun refreshCaptcha() {
+    fun refreshCaptcha(clearError: Boolean = true) {
         viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
             api.getLoginCode().onSuccess { data ->
                 val imgBase64 = data.getImageBase64()
@@ -392,7 +392,8 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                 android.util.Log.d("GdustApi", "Captcha image starts with: ${imgBase64.take(50)}")
                 _captchaImage.value = imgBase64
                 captchaUuid = data.resolveUuid()
-                if (_loginState.value is LoginState.Error) {
+                // ponytail: 验证码图刷新成功≠错误已读，登录失败的错误文案留着给用户看；只在进登录页/手动点刷新时清
+                if (clearError && _loginState.value is LoginState.Error) {
                     _loginState.value = LoginState.LoggedOut
                 }
             }.onFailure { e ->
@@ -430,8 +431,8 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                 }
                 .onFailure { e ->
                     android.util.Log.e("GdustApi", "login FAILED: ${e.message}", e)
-                    _loginState.value = LoginState.Error(e.message ?: "登录失败")
-                    refreshCaptcha()
+                    _loginState.value = LoginState.Error(friendlyLoginError(e.message))
+                    refreshCaptcha(clearError = false)
                 }
         }
     }
@@ -581,6 +582,24 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
         return message?.contains("离线") == true || message?.contains("重新登录") == true || message?.contains("token", ignoreCase = true) == true
     }
 
+    // ponytail: 后端msg是英文/代码+堆栈拼盘，前端只做关键字映射；未知原文截断200字兜底
+    private fun friendlyLoginError(raw: String?): String {
+        if (raw.isNullOrBlank()) return "登录失败，请重试"
+        val lower = raw.lowercase()
+        return when {
+            "captcha" in lower || "code" in lower && ("wrong" in lower || "invalid" in lower || "error" in lower) ||
+                "验证码" in raw -> "验证码错误，请重新输入"
+            "password" in lower || "密码" in raw -> "密码错误，请重新输入"
+            "account" in lower || "username" in lower || "loginname" in lower ||
+                "账号" in raw || "用户不存在" in raw -> "账号错误，请检查学号"
+            "ticket" in lower -> "登录票据失效，请重试"
+            "token" in lower -> "登录已过期，请重新登录"
+            "timeout" in lower || "connect" in lower || "network" in lower ||
+                "网络" in raw || "超时" in raw -> "网络异常，请检查网络后重试"
+            else -> raw.take(200)
+        }
+    }
+
     private suspend fun handleTokenExpired() {
         _isRefreshing.value = false
         // Only clear the API token, keep saved studentId for re-login
@@ -654,8 +673,8 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                     if (isTokenExpired(e.message)) {
                         handleTokenExpired()
                     } else {
-                        _loginState.value = LoginState.Error(e.message ?: "登录失败")
-                        refreshCaptcha()
+                        _loginState.value = LoginState.Error(friendlyLoginError(e.message))
+                        refreshCaptcha(clearError = false)
                     }
                 }
         }
