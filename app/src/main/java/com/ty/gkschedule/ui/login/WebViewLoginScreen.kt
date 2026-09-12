@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
@@ -28,6 +29,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.ty.gkschedule.LoginState
 import com.ty.gkschedule.R
 import com.ty.gkschedule.api.GdustApi
 import com.ty.gkschedule.util.HapticFeedback
@@ -39,6 +41,7 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WebViewLoginScreen(
+    loginState: LoginState?,
     api: GdustApi,
     onLoginSuccess: (loginCode: String) -> Unit,
     onBack: () -> Unit
@@ -164,7 +167,44 @@ fun WebViewLoginScreen(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    if (isLoading) {
+                    val successName = (loginState as? LoginState.Success)?.name
+                    val importCount = (loginState as? LoginState.ImportResult)?.count
+                    if (successName != null || importCount != null) {
+                        // ponytail: 成功态直接盖在二维码上展示，返回逻辑在ScheduleApp
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(
+                                Icons.Default.CheckCircle, null,
+                                modifier = Modifier.size(64.dp),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(
+                                text = when {
+                                    importCount != null && importCount > 0 -> stringResource(R.string.login_import_success, importCount)
+                                    importCount != null -> stringResource(R.string.login_import_empty)
+                                    else -> stringResource(R.string.login_success)
+                                },
+                                style = MaterialTheme.typography.titleMedium,
+                                textAlign = TextAlign.Center
+                            )
+                            if (successName != null && importCount == null) {
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = successName,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    textAlign = TextAlign.Center
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = stringResource(R.string.login_importing),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
+                    } else if (isLoading) {
                         CircularProgressIndicator()
                     } else if (qrBitmap != null) {
                         Image(

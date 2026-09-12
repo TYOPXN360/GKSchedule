@@ -213,9 +213,9 @@ fun ScheduleApp(
                 LaunchedEffect(Unit) { viewModel.clearLoginError(); if (captchaImage == null) viewModel.refreshCaptcha() }
                 LaunchedEffect(loginState) { if (loginState is LoginState.Success || loginState is LoginState.ImportResult) { kotlinx.coroutines.delay(500); navController.popBackStack() } }
             }
-            composable(Screen.WebViewLogin.route) { WebViewLoginScreen(api = viewModel.api, onLoginSuccess = { loginCode -> viewModel.webViewLogin(loginCode) }, onBack = { navController.popBackStack() })
-                // ponytail: 扫码页之前没监听，ticket换Success后一直晾在二维码页；与Login页同逻辑
-                LaunchedEffect(loginState) { if (loginState is LoginState.Success || loginState is LoginState.ImportResult) { kotlinx.coroutines.delay(500); navController.popBackStack() } }
+            composable(Screen.WebViewLogin.route) { WebViewLoginScreen(loginState = loginState, api = viewModel.api, onLoginSuccess = { loginCode -> viewModel.webViewLogin(loginCode) }, onBack = { navController.popBackStack() })
+                // ponytail: 扫码成功直接回我的页，跳过中间账号密码页
+                LaunchedEffect(loginState) { if (loginState is LoginState.Success || loginState is LoginState.ImportResult) { kotlinx.coroutines.delay(1200); navController.popBackStack(Screen.Login.route, inclusive = true) } }
             }
             composable(Screen.Exam.route) {
                 val examLoading by viewModel.examLoading.collectAsState()
