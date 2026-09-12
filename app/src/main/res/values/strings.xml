@@ -75,11 +75,9 @@
     <string name="settings_category_notification_desc">Course reminders</string>
     <string name="settings_category_data">Data</string>
     <string name="settings_category_data_desc">Import, export, backup</string>
-    <string name="semester_config">Semester</string>
     <string name="semester_start">Semester Start Date</string>
     <string name="total_weeks">Total Weeks</string>
     <string name="periods_per_day">Periods Per Day</string>
-    <string name="appearance">Appearance</string>
     <string name="dark_mode">Dark Mode</string>
     <string name="dark_mode_system">Follow System</string>
     <string name="dark_mode_light">Light</string>
@@ -89,7 +87,6 @@
     <string name="language_en">English</string>
     <string name="language_zh">中文</string>
     <string name="start_page">Start Page</string>
-    <string name="schedule_style">Schedule Style</string>
     <string name="grid_height">Grid Height</string>
     <string name="grid_corner">Corner Radius</string>
     <string name="grid_spacing">Spacing</string>
@@ -117,7 +114,6 @@
     <string name="first_day_sunday">Sunday</string>
     <string name="hide_empty_weeks">Hide Empty Weeks</string>
     <string name="hide_empty_weeks_desc">Auto-skip weeks with no courses</string>
-    <string name="theme_color">Theme Color</string>
     <string name="reminder">Reminder</string>
     <string name="reminder_off">Off</string>
     <string name="reminder_format">%1$d min before</string>
@@ -143,7 +139,6 @@
     <string name="diff_color_per_week">Different color per week</string>
     <string name="show_exam_schedule_hint">Please fetch under campus network</string>
     <string name="fetch_exam_now">Fetch Now</string>
-    <string name="data_management">Data</string>
     <string name="export_json">Export JSON</string>
     <string name="import_json">Import JSON</string>
     <string name="export_ics">Export ICS Calendar</string>
@@ -196,8 +191,6 @@
     <string name="logout">Logout</string>
     <string name="logged_in_as">Logged in as %1$s</string>
     <string name="import_from_school">Import from School</string>
-    <string name="import_banner_title">Import Your Schedule</string>
-    <string name="import_banner_desc">Login with your GDUST account to auto-import courses</string>
     <string name="nav_about">Me</string>
     <string name="about_desc">A course schedule app designed for GDUST students.</string>
     <string name="about_settings_desc">Semester, appearance, schedule style</string>
