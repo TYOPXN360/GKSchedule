@@ -43,8 +43,11 @@
 ### 个性化
 - 深色/浅色/跟随系统
 - 中文/英文
+- 自定义启动页（今日/课表）
 - 同科不同地点颜色区分
 - 课程提醒（5/10/15/30 分钟）
+- 课程进度提醒（Live Update，仅上课时段）
+- 考试进度提醒（可选，默认关闭）
 - 隐藏无课周
 
 ### 自动同步
@@ -56,14 +59,14 @@
 
 | 组件 | 版本 |
 |------|------|
-| Kotlin | 2.0.21 |
-| Jetpack Compose BOM | 2026.06.00 |
+| Kotlin | 2.3.20 |
+| Jetpack Compose BOM | 2026.09.00 |
 | Material 3 | BOM 内置 |
-| Room | 2.6.1 |
-| DataStore | 1.1.1 |
-| Navigation | 2.8.5 |
-| OkHttp | 4.12.0 |
-| WorkManager | 2.9.1 |
+| Room | 2.8.4 |
+| DataStore | 1.2.1 |
+| Navigation | 2.9.8 |
+| OkHttp | 5.4.0 |
+| WorkManager | 2.11.2 |
 | material-color-utilities | 1.0.0 |
 
 ## 开发环境
