@@ -86,6 +86,7 @@ class SettingsActivity : AppCompatActivity() {
                     val examLookaheadWeeks by vm.examLookaheadWeeks.collectAsState(initial = 1)
                     val diffColorPerWeek by vm.diffColorPerWeek.collectAsState(initial = false)
                     val showHiddenCourses by vm.showHiddenCourses.collectAsState(initial = false)
+                    val compactNavBar by vm.compactNavBar.collectAsState(initial = true)
 
                     SettingsScreen(
                         semesterStart = semesterStart,
@@ -119,6 +120,8 @@ class SettingsActivity : AppCompatActivity() {
                         diffColorPerWeek = diffColorPerWeek,
                         showHiddenCourses = showHiddenCourses,
                         onShowHiddenCoursesChange = { vm.setShowHiddenCourses(it) },
+                        compactNavBar = compactNavBar,
+                        onCompactNavBarChange = { vm.setCompactNavBar(it) },
                         onSemesterStartChange = { vm.setSemesterStart(it) },
                         onTotalWeeksChange = { vm.setTotalWeeks(it) },
                         onPeriodsPerDayChange = { vm.setPeriodsPerDay(it) },

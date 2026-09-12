@@ -100,6 +100,7 @@ fun ScheduleApp(
     val examLookaheadWeeks by viewModel.examLookaheadWeeks.collectAsState(initial = 1)
     val diffColorPerWeek by viewModel.diffColorPerWeek.collectAsState(initial = false)
     val showHiddenCourses by viewModel.showHiddenCourses.collectAsState(initial = false)
+    val compactNavBar by viewModel.compactNavBar.collectAsState(initial = true)
     val startPage by viewModel.startPage.collectAsState(initial = "today")
     val displayCourses = if (showHiddenCourses) courses else courses.filter { !it.isHidden }
     val examList by viewModel.examList.collectAsState(initial = emptyList())
@@ -154,10 +155,24 @@ fun ScheduleApp(
                         Screen.Courses to Triple(Icons.AutoMirrored.Filled.LibraryBooks, "课程", "courses"),
                         Screen.About to Triple(Icons.Default.Person, "我的", "about")
                     ).forEach { (screen, triple) ->
+                        val selected = currentRoute == screen.route
                         NavigationBarItem(
-                            icon = { Icon(triple.first, contentDescription = triple.second) },
-                            label = { Text(triple.second) },
-                            selected = currentRoute == screen.route,
+                            icon = {
+                                // ponytail: 精简模式选中才横展label；M3规范selected配pill指示器+圆角
+                                if (compactNavBar && !selected) {
+                                    Icon(triple.first, contentDescription = triple.second)
+                                } else {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(triple.first, contentDescription = null)
+                                        if (compactNavBar) {
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text(triple.second, style = MaterialTheme.typography.labelLarge)
+                                        }
+                                    }
+                                }
+                            },
+                            label = if (compactNavBar) null else ({ Text(triple.second) }),
+                            selected = selected,
                             onClick = {
                                 com.ty.gkschedule.util.HapticFeedback.light(navView)
                                 if (currentRoute != screen.route) {

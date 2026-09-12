@@ -92,6 +92,8 @@ fun SettingsScreen(
     onDiffColorPerWeekChange: (Boolean) -> Unit,
     showHiddenCourses: Boolean = false,
     onShowHiddenCoursesChange: (Boolean) -> Unit = {},
+    compactNavBar: Boolean = true,
+    onCompactNavBarChange: (Boolean) -> Unit = {},
     onFetchExam: () -> Unit,
     onExportJson: () -> Unit,
     onImportJson: () -> Unit,
@@ -177,6 +179,8 @@ fun SettingsScreen(
                     onDiffColorPerWeekChange = onDiffColorPerWeekChange,
                     showHiddenCourses = showHiddenCourses,
                     onShowHiddenCoursesChange = onShowHiddenCoursesChange,
+                    compactNavBar = compactNavBar,
+                    onCompactNavBarChange = onCompactNavBarChange,
                     onBack = { navController.popBackStack() }
                 )
             }
@@ -435,8 +439,12 @@ private fun ScheduleStylePage(
     onShowTimeLabelChange: (Boolean) -> Unit, onDetailedSplitChange: (Boolean) -> Unit,
     onColorEngineChange: (Int) -> Unit, onColorGroupModeChange: (Int) -> Unit,
     onShowDateInHeaderChange: (Boolean) -> Unit,
-    diffColorPerWeek: Boolean, onDiffColorPerWeekChange: (Boolean) -> Unit,
-    showHiddenCourses: Boolean = false, onShowHiddenCoursesChange: (Boolean) -> Unit = {},
+    diffColorPerWeek: Boolean,
+    onDiffColorPerWeekChange: (Boolean) -> Unit,
+    showHiddenCourses: Boolean = false,
+    onShowHiddenCoursesChange: (Boolean) -> Unit = {},
+    compactNavBar: Boolean = true,
+    onCompactNavBarChange: (Boolean) -> Unit = {},
     onBack: () -> Unit
 ) {
     SubPage(stringResource(R.string.settings_category_schedule), onBack) {
@@ -466,6 +474,13 @@ private fun ScheduleStylePage(
             SwitchItem(Icons.Default.CalendarMonth, stringResource(R.string.show_date_in_header), showDateInHeader, onShowDateInHeaderChange)
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
             SwitchItem(Icons.Default.Pin, stringResource(R.string.show_period_label), showPeriodLabel, onShowPeriodLabelChange)
+            SwitchItem(Icons.Default.Dashboard, stringResource(R.string.compact_nav_bar), compactNavBar, onCompactNavBarChange)
+            Text(
+                stringResource(R.string.compact_nav_bar_desc),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            )
         }
         Spacer(modifier = Modifier.height(16.dp))
         SettingsCard {

@@ -87,6 +87,8 @@
     <string name="language_en">English</string>
     <string name="language_zh">中文</string>
     <string name="start_page">Start Page</string>
+    <string name="compact_nav_bar">Compact nav bar</string>
+    <string name="compact_nav_bar_desc">Show labels only on the selected tab</string>
     <string name="grid_height">Grid Height</string>
     <string name="grid_corner">Corner Radius</string>
     <string name="grid_spacing">Spacing</string>
