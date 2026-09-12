@@ -6,6 +6,7 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -204,11 +205,12 @@ fun ScheduleApp(
                     slideOutHorizontally(targetOffsetX = { -it / 4 }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.pageExitSpec()) + fadeOut(com.ty.gkschedule.ui.theme.M3Motion.subPageExitSpec())
                 }
             },
+            // ponytail: 系统级预测返回只播popExit+popEnter；seek跟手要求这两者是纯位移+透明度，scale(0.9f)会让预览抽搐
             popEnterTransition = {
-                slideInHorizontally(initialOffsetX = { -it / 4 }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.pageEnterSpec()) + fadeIn(com.ty.gkschedule.ui.theme.M3Motion.subPageEnterSpec())
+                fadeIn(animationSpec = tween(150))
             },
             popExitTransition = {
-                slideOutHorizontally(targetOffsetX = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.pageExitSpec()) + fadeOut(com.ty.gkschedule.ui.theme.M3Motion.subPageExitSpec())
+                slideOutHorizontally(targetOffsetX = { (it * 0.15f).toInt() }, animationSpec = tween(300)) + fadeOut(animationSpec = tween(150))
             }
         ) {
             composable(Screen.Today.route) { TodayScreen(courses = displayCourses, colorCourses = courses, currentWeek = realCurrentWeek, colorEngine = colorEngine, colorGroupMode = colorGroupMode, exams = examList, showExamSchedule = showExamSchedule, examLookaheadWeeks = examLookaheadWeeks, semesterStart = semesterStart, getStartTime = { viewModel.getStartTime(it) }, getEndTime = { viewModel.getEndTime(it) }, onCourseLongPress = { navController.navigate(Screen.CourseEdit.createRoute(it.id)) }, onExamEdit = { navController.navigate(Screen.ExamEdit.createRoute(it.id)) }, diffColorPerWeek = diffColorPerWeek) }
