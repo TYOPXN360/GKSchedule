@@ -70,6 +70,8 @@ fun CourseManageScreen(
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     // ponytail: miuix源层，顶栏drawBackdrop吃糊
     val backdrop = top.yukonga.miuix.kmp.blur.rememberLayerBackdrop()
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    // ponytail: 基础避让锚折叠高，展开差由首项Spacer跟heightOffset联动补，不提前露空洞
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         // ponytail: 顶栏自己吃系统栏，内容区不再重复垫（双重Insets留白根因）
@@ -130,8 +132,9 @@ fun CourseManageScreen(
             }
         }
     ) { padding ->
-        // ponytail: 避让固定=展开态顶栏高；innerPadding/fraction每帧变，喂contentPadding会抖动顶死
-        val expandedBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 152.dp
+        // ponytail: 基础padding锚折叠高不露洞；展开88dp由首项Spacer跟heightOffset同步推
+        val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+        val collapsedTopPadding = statusBarTop + 64.dp + 8.dp
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -150,11 +153,19 @@ fun CourseManageScreen(
                 LazyColumn(
                     state = listState,
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = expandedBarTop, bottom = 88.dp),
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = collapsedTopPadding, bottom = 88.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
+                    // ponytail: 首项Spacer跟heightOffset联动，顶栏扩张多少就推多少，同帧同步
+                    item(key = "header_expansion_spacer") {
+                        val heightOffsetDp = with(density) { scrollBehavior.state.heightOffset.toDp() }
+                        val expansionDelta = (88.dp + heightOffsetDp).coerceIn(0.dp, 88.dp)
+                        if (expansionDelta > 0.dp) {
+                            Spacer(modifier = Modifier.height(expansionDelta))
+                        }
+                    }
                     // ponytail: 门数跟标题走了，列表头不再摆第二份
-                    items(uniqueCourses) { course ->
+                    items(uniqueCourses, key = { it.id }) { course ->
                         val count = courseGroups[course.name].orEmpty().size
                         CourseListItem(
                             course = course,
