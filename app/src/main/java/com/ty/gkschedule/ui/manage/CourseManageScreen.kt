@@ -67,7 +67,7 @@ fun CourseManageScreen(
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            // ponytail: 与WIfikeyXposed同款LargeTopAppBar；栏内只有小标题+垃圾桶，大标题在列表头
+            // ponytail: 大标题只在栏内一份；垃圾桶常驻actions，折叠后也能删全部
             LargeTopAppBar(
                 title = {
                     Text(stringResource(R.string.course_manage_title), fontWeight = FontWeight.Bold)
@@ -75,6 +75,13 @@ fun CourseManageScreen(
                 navigationIcon = {
                     if (onBack != null) {
                         IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") }
+                    }
+                },
+                actions = {
+                    if (courses.isNotEmpty()) {
+                        IconButton(onClick = { showDeleteAllDialog = true }) {
+                            Icon(Icons.Default.DeleteSweep, contentDescription = null, tint = MaterialTheme.colorScheme.error)
+                        }
                     }
                 },
                 scrollBehavior = scrollBehavior
@@ -105,31 +112,14 @@ fun CourseManageScreen(
                     contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 88.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    // ponytail: 大标题头+门数+垃圾桶都在列表头里，滚出即走；栏内只剩小标题
+                    // ponytail: 副标题门数行，大标题在栏内；滚走不留空白
                     item {
-                        Column(modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 8.dp)) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    stringResource(R.string.course_manage_title),
-                                    style = MaterialTheme.typography.headlineLarge,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                if (courses.isNotEmpty()) {
-                                    IconButton(onClick = { showDeleteAllDialog = true }) {
-                                        Icon(Icons.Default.DeleteSweep, contentDescription = null, tint = MaterialTheme.colorScheme.error)
-                                    }
-                                }
-                            }
-                            Text(
-                                stringResource(R.string.course_count_format, courses.size),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
+                        Text(
+                            stringResource(R.string.course_count_format, courses.size),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 4.dp)
+                        )
                     }
                     items(uniqueCourses) { course ->
                         val count = courseGroups[course.name].orEmpty().size
