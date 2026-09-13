@@ -629,13 +629,14 @@ fun ScheduleItemDetailSheet(item: ScheduleItem, getStartTime: (Int) -> String, g
     ) {
         BlurCard(
             enabled = true,
-            modifier = Modifier.fillMaxWidth().fillMaxHeight(),
+            modifier = Modifier.fillMaxWidth(),
             backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f),
         ) {
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 24.dp)
+                .fillMaxWidth()
+                .heightIn(max = 520.dp)
+                .padding(horizontal = 24.dp, vertical = 8.dp)
                 .padding(bottom = 32.dp)
         ) {
             // ponytail: 自画把手进BlurCard覆盖区，与卡片同底色
@@ -710,12 +711,13 @@ private fun WeekPickerSheet(totalWeeks: Int, currentWeek: Int, onWeekSelected: (
     ) {
         BlurCard(
             enabled = true,
-            modifier = Modifier.fillMaxWidth().fillMaxHeight(),
+            modifier = Modifier.fillMaxWidth(),
             backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f),
         ) {
         Column(
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxWidth()
+                .heightIn(max = 520.dp)
                 .padding(horizontal = 24.dp, vertical = 8.dp)
                 .padding(bottom = 32.dp)
         ) {
