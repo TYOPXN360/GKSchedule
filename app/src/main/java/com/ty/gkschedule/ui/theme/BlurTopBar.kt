@@ -30,6 +30,7 @@ fun BlurLargeTopBar(
     val barBg = MaterialTheme.colorScheme.surface.copy(
         alpha = if (useBlur) 0.35f else 1f
     )
+    // ponytail: Large顶栏真折叠——miuix糊跟栏高收缩走，折叠黑条是糊层没跟上
     androidx.compose.material3.LargeTopAppBar(
         title = title,
         navigationIcon = navigationIcon,
