@@ -66,6 +66,8 @@ fun CourseManageScreen(
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        // ponytail: contentWindowInsets归零，状态栏沉浸由外层MainActivity/边到边统一管；否则顶栏下方空一块系统栏padding
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             // ponytail: 大标题只在栏内一份；垃圾桶常驻actions，折叠后也能删全部
             LargeTopAppBar(
