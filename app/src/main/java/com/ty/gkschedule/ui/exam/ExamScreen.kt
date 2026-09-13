@@ -355,11 +355,12 @@ fun ExamScreen(
         )
     }
 
-    // Re-login dialog
+    // Re-login dialog — 独立窗口，窗口级blurBehind已在Activity整窗开启，Dialog容器半透明透糊
     if (showReloginDialog) {
         var captcha by remember { mutableStateOf("") }
         AlertDialog(
             onDismissRequest = onDismissRelogin,
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.7f),
             title = { Text("教务系统登录过期") },
             text = {
                 Column {

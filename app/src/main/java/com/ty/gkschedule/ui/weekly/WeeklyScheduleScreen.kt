@@ -30,6 +30,9 @@ import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import top.yukonga.miuix.kmp.blur.blur
+import top.yukonga.miuix.kmp.blur.drawBackdrop
+import top.yukonga.miuix.kmp.blur.layerBackdrop
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -100,6 +103,8 @@ fun WeeklyScheduleScreen(
     var detailItem by remember { mutableStateOf<ScheduleItem?>(null) }
     var detailColorIndex by remember { mutableStateOf<Int?>(null) }
     var detailClassroomColorIndex by remember { mutableIntStateOf(0) }
+    // ponytail: miuix源层，FAB组drawBackdrop吃糊
+    val backdrop = top.yukonga.miuix.kmp.blur.rememberLayerBackdrop()
     val hapticContext = androidx.compose.ui.platform.LocalContext.current
     val hapticView = androidx.compose.ui.platform.LocalView.current
     val labelWidthDp = if (showPeriodLabel) { if (showTimeLabel) 64.dp else 36.dp } else 0.dp
@@ -160,7 +165,12 @@ fun WeeklyScheduleScreen(
         var cropBottomPx by remember { mutableIntStateOf(0) }
         var hideFabs by remember { mutableStateOf(false) }
 
-        Column(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .layerBackdrop(backdrop)
+                .background(MaterialTheme.colorScheme.surface)
+        ) {
             // Week selector — track top edge in pixels
             Card(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
@@ -438,10 +448,17 @@ fun WeeklyScheduleScreen(
         )
         Box(modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp)) {
             // Toggle — bottom right
+            // ponytail: FAB糊——miuix drawBackdrop吃课表源，关模糊开关时回退纯色；blurEffect开关透传
             FloatingActionButton(
                 onClick = { com.ty.gkschedule.util.HapticFeedback.light(hapticView); fabExpanded = !fabExpanded },
-                modifier = Modifier.align(Alignment.BottomEnd),
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .drawBackdrop(
+                        backdrop = backdrop,
+                        shape = { androidx.compose.foundation.shape.CircleShape },
+                        effects = { blur(28.dp.toPx()) }
+                    ),
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.35f),
                 contentColor = MaterialTheme.colorScheme.onSurfaceVariant
             ) { Text(if (fabExpanded) "—" else "+", style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center, modifier = Modifier.width(20.dp)) }
 
@@ -452,12 +469,30 @@ fun WeeklyScheduleScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 AnimatedVisibility(visible = fabExpanded, enter = slideInVertically(initialOffsetY = { it }) + fadeIn(), exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()) {
-                    FloatingActionButton(onClick = { com.ty.gkschedule.util.HapticFeedback.medium(hapticView); onRefresh() }, containerColor = MaterialTheme.colorScheme.secondaryContainer, contentColor = MaterialTheme.colorScheme.onSecondaryContainer) {
+                    FloatingActionButton(
+                        onClick = { com.ty.gkschedule.util.HapticFeedback.medium(hapticView); onRefresh() },
+                        modifier = Modifier.drawBackdrop(
+                            backdrop = backdrop,
+                            shape = { androidx.compose.foundation.shape.CircleShape },
+                            effects = { blur(28.dp.toPx()) }
+                        ),
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.35f),
+                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                    ) {
                                                 if (isRefreshing)  CircularProgressIndicator(modifier = Modifier.size(24.dp)) else Icon(Icons.Default.Refresh, "Refresh")
                     }
                 }
                 AnimatedVisibility(visible = fabExpanded, enter = slideInVertically(initialOffsetY = { it }) + fadeIn(), exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()) {
-                    FloatingActionButton(onClick = { com.ty.gkschedule.util.HapticFeedback.medium(hapticView); onAddCourse() }, containerColor = MaterialTheme.colorScheme.primary) {
+                    FloatingActionButton(
+                        onClick = { com.ty.gkschedule.util.HapticFeedback.medium(hapticView); onAddCourse() },
+                        modifier = Modifier.drawBackdrop(
+                            backdrop = backdrop,
+                            shape = { androidx.compose.foundation.shape.CircleShape },
+                            effects = { blur(28.dp.toPx()) }
+                        ),
+                        containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.35f),
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    ) {
                         Icon(Icons.Default.Add, stringResource(R.string.add_course))
                     }
                 }
@@ -483,7 +518,12 @@ fun WeeklyScheduleScreen(
                                 android.widget.Toast.makeText(context, "截图失败: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
                             }
                         }
-                    }, containerColor = MaterialTheme.colorScheme.tertiaryContainer, contentColor = MaterialTheme.colorScheme.onTertiaryContainer) { Icon(Icons.Default.CropFree, "Screenshot") }
+                    }, containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.35f), contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                        modifier = Modifier.drawBackdrop(
+                            backdrop = backdrop,
+                            shape = { androidx.compose.foundation.shape.CircleShape },
+                            effects = { blur(28.dp.toPx()) }
+                        )) { Icon(Icons.Default.CropFree, "Screenshot") }
                     }
             } // HorizontalPager
 
@@ -496,7 +536,12 @@ fun WeeklyScheduleScreen(
             ) {
                 FloatingActionButton(
                     onClick = { com.ty.gkschedule.util.HapticFeedback.medium(hapticView); onWeekChange(realCurrentWeek) },
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    modifier = Modifier.drawBackdrop(
+                        backdrop = backdrop,
+                        shape = { androidx.compose.foundation.shape.CircleShape },
+                        effects = { blur(28.dp.toPx()) }
+                    ),
+                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f),
                     contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 ) { Icon(if (currentWeek > realCurrentWeek) Icons.Default.ChevronLeft else Icons.Default.ChevronRight, stringResource(R.string.back_to_current_week)) }
             }
@@ -560,7 +605,11 @@ fun ScheduleItemDetailSheet(item: ScheduleItem, getStartTime: (Int) -> String, g
             .joinToString("\n")
     }
 
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState()) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(),
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.7f)
+    ) {
         Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp).padding(bottom = 32.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 val detailDotColor = dotColor ?: hctColors.container
@@ -612,7 +661,11 @@ private fun DetailRow(label: String, value: String) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun WeekPickerSheet(totalWeeks: Int, currentWeek: Int, onWeekSelected: (Int) -> Unit, onDismiss: () -> Unit) {
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState()) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(),
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.7f)
+    ) {
         Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp).padding(bottom = 32.dp)) {
             Text(stringResource(R.string.select_week), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(bottom = 16.dp))
             for (row in 0 until (totalWeeks + 4) / 5) {

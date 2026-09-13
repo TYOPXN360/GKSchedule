@@ -29,6 +29,8 @@ import androidx.compose.ui.unit.lerp
 import com.ty.gkschedule.R
 import com.ty.gkschedule.data.Course
 import com.ty.gkschedule.util.CourseColors
+import top.yukonga.miuix.kmp.blur.blur
+import top.yukonga.miuix.kmp.blur.drawBackdrop
 import top.yukonga.miuix.kmp.blur.layerBackdrop
 import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
 
@@ -120,7 +122,12 @@ fun CourseManageScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onAddCourse,
-                containerColor = MaterialTheme.colorScheme.primary
+                modifier = Modifier.drawBackdrop(
+                    backdrop = backdrop,
+                    shape = { androidx.compose.foundation.shape.CircleShape },
+                    effects = { blur(28.dp.toPx()) }
+                ),
+                containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.35f)
             ) {
                 Icon(Icons.Default.Add, stringResource(R.string.add_course))
             }

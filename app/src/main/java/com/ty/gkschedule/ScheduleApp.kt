@@ -166,7 +166,8 @@ private fun FloatingPillNavBar(
                 // 选中项强制补全另一半；expanded只管收起，不参与补全
                 val visibleText = (showText || selected) && (expanded || selected)
                 val visibleIcon = showIcon || selected || !visibleText
-                val bg = if (selected) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent
+                // ponytail: 选中底只给55%透明，透出药丸糊层，不盖糊
+                val bg = if (selected) MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.55f) else Color.Transparent
                 val fg = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
                 Row(
                     modifier = Modifier
