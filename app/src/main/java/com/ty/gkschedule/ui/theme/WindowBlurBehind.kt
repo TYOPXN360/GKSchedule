@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -19,6 +20,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.window.DialogWindowProvider
 
 // ponytail: 卡片区域毛玻璃——BackgroundBlurDrawable矩形=载体bounds，只糊卡片不糊全屏
 // decor全屏挂会整屏糊，载体等大View+LayerDrawable合成才是doubaoime原意
@@ -34,6 +36,15 @@ fun BlurCard(
 ) {
     val view = LocalView.current
     val shape = RoundedCornerShape(cornerRadiusDp.dp)
+
+    // ponytail: Dialog默认60%黑幕先压死底子，对齐Sheet降到12%才透光
+    DisposableEffect(view) {
+        val window = (view.parent as? DialogWindowProvider)?.window
+            ?: (view.context as? DialogWindowProvider)?.window
+        window?.let { w -> w.setDimAmount(0.12f) }
+        onDispose {}
+    }
+
     Box(modifier = modifier.clip(shape)) {
         if (enabled && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             AndroidView(

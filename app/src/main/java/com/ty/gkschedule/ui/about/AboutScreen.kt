@@ -273,7 +273,8 @@ Column(
             com.ty.gkschedule.ui.theme.BlurCard(
                 enabled = true,
                 modifier = Modifier.fillMaxWidth(),
-                backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f),
+                radiusDp = 36f,
+                backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.48f),
                 cornerRadiusDp = 28f
             ) {
                 Column(modifier = Modifier.padding(24.dp)) {

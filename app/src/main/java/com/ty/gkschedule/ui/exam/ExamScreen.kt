@@ -363,7 +363,8 @@ fun ExamScreen(
             BlurCard(
                 enabled = true,
                 modifier = Modifier.fillMaxWidth(),
-                backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f),
+                radiusDp = 36f,
+                backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.48f),
             ) {
             Column(modifier = Modifier.padding(24.dp)) {
                 Text("教务系统登录过期", style = MaterialTheme.typography.headlineSmall)
