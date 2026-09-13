@@ -75,29 +75,20 @@ fun CourseManageScreen(
         // ponytail: 顶栏自己吃系统栏，内容区不再重复垫（双重Insets留白根因）
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
-            // ponytail: 展开态大字headineMedium；折叠用alpha/size双插值防下沉跳变；门数常驻小标题
-            val fraction = scrollBehavior.state.collapsedFraction
-            val titleSize = lerp(
-                MaterialTheme.typography.headlineMedium.fontSize,
-                MaterialTheme.typography.titleLarge.fontSize,
-                fraction
-            )
-            com.ty.gkschedule.ui.theme.BlurLargeTopBar(
+            // ponytail: 普通顶栏固定statusBars+64，content避让精确匹配，永不重叠；列表上滚穿过顶栏底下才有沉浸
+            com.ty.gkschedule.ui.theme.BlurTopBar(
                 title = {
-                    Column {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             stringResource(R.string.course_manage_title),
                             fontWeight = FontWeight.Bold,
-                            maxLines = 1,
-                            fontSize = titleSize
+                            maxLines = 1
                         )
+                        Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             stringResource(R.string.course_count_format, courses.size),
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(
-                                // ponytail: 折叠后门数降对比但不消失
-                                alpha = 1f - fraction * 0.3f
-                            ),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 1
                         )
                     }
@@ -109,7 +100,6 @@ fun CourseManageScreen(
                         }
                     }
                 },
-                scrollBehavior = scrollBehavior,
                 backdrop = backdrop,
                 blurEnabled = blurEnabled
             )
