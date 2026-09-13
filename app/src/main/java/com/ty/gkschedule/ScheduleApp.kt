@@ -11,6 +11,7 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -30,6 +31,8 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Today
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.draw.shadow
+import com.ty.gkschedule.ui.theme.LocalAppIsDark
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.graphicsLayer
@@ -139,9 +142,11 @@ private fun FloatingPillNavBar(
         val swPx = with(LocalDensity.current) { screenW.toPx() }
         // 药丸：BottomCenter，p=1时右边缘越过x=0整条出左屏
         // ponytail: miuix同窗口backdrop糊（窗口级API只糊别家窗口，同窗口必须走这条）
-        // ponytail: 底35%透+miuix内backgroundColor透明，糊感最强；叠加会压淡
-        val pillBg = MaterialTheme.colorScheme.surfaceContainerHigh.copy(
-            alpha = if (blurEnabled) 0.75f else 1f
+        // ponytail: 纯色背景Blur(C)=C无反差——shadow+Highest色阶+1dp描边接管轮廓，糊只管彩色区
+        val pillShape = androidx.compose.foundation.shape.CircleShape
+        val isDark = LocalAppIsDark.current
+        val pillBg = MaterialTheme.colorScheme.surfaceContainerHighest.copy(
+            alpha = if (blurEnabled) 0.65f else 1f
         )
         Row(
             modifier = Modifier
@@ -153,13 +158,26 @@ private fun FloatingPillNavBar(
                     translationY = slide.value * size.height
                     alpha = 1f - slide.value
                 }
-                .clip(androidx.compose.foundation.shape.CircleShape)
+                .shadow(
+                    elevation = 6.dp,
+                    shape = pillShape,
+                    spotColor = Color.Black.copy(alpha = 0.35f),
+                    ambientColor = Color.Black.copy(alpha = 0.25f)
+                )
+                .clip(pillShape)
                 .then(
                     if (blurEnabled) Modifier.drawBackdrop(
                         backdrop = backdrop,
-                        shape = { androidx.compose.foundation.shape.CircleShape },
+                        shape = { pillShape },
                         effects = { blur(28.dp.toPx()) }
                     ) else Modifier.background(pillBg)
+                )
+                .background(pillBg)
+                .border(
+                    width = 1.dp,
+                    color = if (isDark) Color.White.copy(alpha = 0.12f)
+                    else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.40f),
+                    shape = pillShape
                 )
                 .padding(horizontal = pillHPad, vertical = pillHPad),
             horizontalArrangement = Arrangement.Center,
@@ -216,6 +234,10 @@ private fun FloatingPillNavBar(
             }
         }
         // 书签：BottomStart静止位即贴边；p=0时藏到屏外
+        val bookmarkShape = androidx.compose.foundation.shape.RoundedCornerShape(
+            topStart = 0.dp, bottomStart = 0.dp,
+            topEnd = barH / 2, bottomEnd = barH / 2
+        )
         Row(
             modifier = Modifier
                 .align(Alignment.BottomStart)
@@ -226,23 +248,26 @@ private fun FloatingPillNavBar(
                     translationY = slide.value * size.height
                     alpha = 1f - slide.value
                 }
-                .clip(
-                    androidx.compose.foundation.shape.RoundedCornerShape(
-                        topStart = 0.dp, bottomStart = 0.dp,
-                        topEnd = barH / 2, bottomEnd = barH / 2
-                    )
+                .shadow(
+                    elevation = 6.dp,
+                    shape = bookmarkShape,
+                    spotColor = Color.Black.copy(alpha = 0.35f),
+                    ambientColor = Color.Black.copy(alpha = 0.25f)
                 )
+                .clip(bookmarkShape)
                 .then(
                     if (blurEnabled) Modifier.drawBackdrop(
                         backdrop = backdrop,
-                        shape = {
-                            androidx.compose.foundation.shape.RoundedCornerShape(
-                                topStart = 0.dp, bottomStart = 0.dp,
-                                topEnd = barH / 2, bottomEnd = barH / 2
-                            )
-                        },
+                        shape = { bookmarkShape },
                         effects = { blur(28.dp.toPx()) }
                     ) else Modifier.background(pillBg)
+                )
+                .background(pillBg)
+                .border(
+                    width = 1.dp,
+                    color = if (isDark) Color.White.copy(alpha = 0.12f)
+                    else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.40f),
+                    shape = bookmarkShape
                 )
                 .clickable(enabled = p.value > 0.5f) { onCollapsedChange(false) }
                 .padding(start = 6.dp, end = 12.dp, top = itemVPad, bottom = itemVPad),

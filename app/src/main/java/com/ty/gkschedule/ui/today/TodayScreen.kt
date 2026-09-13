@@ -512,8 +512,19 @@ private fun CourseCard(
                         Spacer(modifier = Modifier.width(6.dp))
                     }
                     if (isNext) {
-                        Box(modifier = Modifier.background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(4.dp)).padding(horizontal = 5.dp, vertical = 2.dp), contentAlignment = Alignment.Center) {
-                            Text(stringResource(R.string.next_course), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(MaterialTheme.colorScheme.tertiary)
+                                .padding(horizontal = 6.dp, vertical = 2.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = stringResource(R.string.next_course),
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onTertiary
+                            )
                         }
                         Spacer(modifier = Modifier.width(6.dp))
                     }
