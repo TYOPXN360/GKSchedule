@@ -143,7 +143,9 @@ fun CourseEditScreen(
     val isDark = com.ty.gkschedule.ui.theme.LocalAppIsDark.current
     val scaffoldBg = if (isDark) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainer
 
-    Scaffold(contentWindowInsets = WindowInsets.systemBars, containerColor = scaffoldBg,
+    Scaffold(
+        modifier = Modifier.hazeSource(state = hazeState),
+        contentWindowInsets = WindowInsets(0, 0, 0, 0), containerColor = scaffoldBg,
         topBar = {
             com.ty.gkschedule.ui.theme.BlurTopBar(
                 title = { Text(if (isEditing) stringResource(R.string.edit_course) else stringResource(R.string.add_new_course)) },
@@ -154,10 +156,10 @@ fun CourseEditScreen(
             )
         }
     ) { padding ->
+        // ponytail: 源=Scaffold整块(含顶栏，z序自动排除自己)；滚动避让放内层
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .hazeSource(state = hazeState)
                 // ponytail: 避让走滚动内padding，源纹理全屏录(含顶栏身后)
                 .verticalScroll(rememberScrollState())
                 .padding(top = padding.calculateTopPadding())
