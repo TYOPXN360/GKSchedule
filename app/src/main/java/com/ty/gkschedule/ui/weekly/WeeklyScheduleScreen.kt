@@ -463,7 +463,7 @@ fun WeeklyScheduleScreen(
                         shape = { fabShape },
                         effects = { blur(28.dp.toPx()) }
                     ),
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f),
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.50f),
                 contentColor = MaterialTheme.colorScheme.onSurfaceVariant
             ) { Text(if (fabExpanded) "—" else "+", style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center, modifier = Modifier.width(20.dp)) }
 
@@ -483,7 +483,7 @@ fun WeeklyScheduleScreen(
                             shape = { fabShape },
                             effects = { blur(28.dp.toPx()) }
                         ),
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.75f),
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.50f),
                         contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                     ) {
                                                 if (isRefreshing)  CircularProgressIndicator(modifier = Modifier.size(24.dp)) else Icon(Icons.Default.Refresh, "Refresh")
@@ -499,7 +499,7 @@ fun WeeklyScheduleScreen(
                             shape = { fabShape },
                             effects = { blur(28.dp.toPx()) }
                         ),
-                        containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.75f),
+                        containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.50f),
                         contentColor = MaterialTheme.colorScheme.onPrimary
                     ) {
                         Icon(Icons.Default.Add, stringResource(R.string.add_course))
@@ -533,7 +533,7 @@ fun WeeklyScheduleScreen(
                             shape = { fabShape },
                             effects = { blur(28.dp.toPx()) }
                         ),
-                        containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.75f), contentColor = MaterialTheme.colorScheme.onTertiaryContainer) { Icon(Icons.Default.CropFree, "Screenshot") }
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.50f), contentColor = MaterialTheme.colorScheme.onTertiaryContainer) { Icon(Icons.Default.CropFree, "Screenshot") }
                     }
             } // HorizontalPager
 
@@ -553,7 +553,7 @@ fun WeeklyScheduleScreen(
                         shape = { fabShape },
                         effects = { blur(28.dp.toPx()) }
                     ),
-                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.75f),
+                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.50f),
                     contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 ) { Icon(if (currentWeek > realCurrentWeek) Icons.Default.ChevronLeft else Icons.Default.ChevronRight, stringResource(R.string.back_to_current_week)) }
             }

@@ -131,7 +131,7 @@ fun CourseManageScreen(
                     shape = { fabShape },
                     effects = { blur(28.dp.toPx()) }
                 ),
-                containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.75f)
+                containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.50f)
             ) {
                 Icon(Icons.Default.Add, stringResource(R.string.add_course))
             }
