@@ -63,13 +63,12 @@ fun CourseManageScreen(
         lastIndex = idx
     }
 
-    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            // ponytail: 大标题在栏内折叠，不在列表里再摆一个；门数塞进title行，省掉subtitle参数
-            // ponytail: scrollBehavior先占位，下一步接nestedScroll才真折叠
-            MediumTopAppBar(
+            // ponytail: 与WIfikeyXposed同款LargeTopAppBar，大标题在栏内折叠
+            LargeTopAppBar(
                 title = {
                     Column {
                         Text(stringResource(R.string.course_manage_title), fontWeight = FontWeight.Bold)
