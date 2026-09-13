@@ -6,6 +6,9 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.padding
@@ -27,7 +30,9 @@ import androidx.compose.material.icons.filled.Today
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
@@ -62,8 +67,8 @@ private fun navItemList(): List<Pair<Screen, Triple<androidx.compose.ui.graphics
         Screen.About to Triple(Icons.Default.Person, "我的", "about")
     )
 
-// 悬浮药丸底栏：展开居中底部；收起整条左滑，只剩左边书签
-// ponytail: 选中补全用静态if——图标出现不占位变化，无涟漪抖动；尺寸全部按屏宽比例，自适应大小屏
+// 悬浮药丸底栏：展开居中底部；收起整条左滑，只剩左边半胶囊书签
+// ponytail: 单Animatable进度p驱动双graphicsLayer位移（方案B）；选中补全用静态if，无涟漪抖动
 @Composable
 private fun FloatingPillNavBar(
     currentRoute: String?,
@@ -71,7 +76,14 @@ private fun FloatingPillNavBar(
     onNavigate: (Screen) -> Unit
 ) {
     var collapsed by remember { mutableStateOf(false) }
-    // ponytail: 药丸底中，书签贴左边缘——两个独立锚点，同底同高才是同一行
+    // ponytail: 一份进度+一份spring，两个视图时序物理上不错开
+    val p = remember { Animatable(if (collapsed) 1f else 0f) }
+    LaunchedEffect(collapsed) {
+        p.animateTo(
+            if (collapsed) 1f else 0f,
+            spring(dampingRatio = 0.9f, stiffness = 380f)
+        )
+    }
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         val screenW = maxWidth
         // 尺寸档：按屏宽分三档，小屏不再硬塞，全部等比缩小
@@ -105,117 +117,98 @@ private fun FloatingPillNavBar(
             screenW < 340.dp -> 3.dp
             else -> 4.dp
         }
-        // ponytail: 高度锁死单项高度，模式切换/选中补全只换内容不跳高；书签纵向padding对齐此处
+        // ponytail: 高度锁死同一barH，显式等高=同行，不靠padding凑
         val barH = iconSize + itemVPad * 2 + pillHPad * 2
-        // ponytail: 书签纵向总高与药丸单项对齐：图标+上下padding相等即同高
-        Box(
+        val swPx = with(LocalDensity.current) { screenW.toPx() }
+        // 药丸：BottomCenter，p=1时右边缘越过x=0整条出左屏
+        Row(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(start = 12.dp, end = 12.dp, bottom = barBottom)
-                .height(barH),
-            contentAlignment = Alignment.Center
-        ) {
-            androidx.compose.animation.AnimatedVisibility(
-                visible = !collapsed,
-                enter = fadeIn(com.ty.gkschedule.ui.theme.M3Motion.fadeInSpec()),
-                exit = fadeOut(com.ty.gkschedule.ui.theme.M3Motion.fadeOutSpec())
-            ) {
-            Row(
-                modifier = Modifier
-                    .background(
-                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        shape = androidx.compose.foundation.shape.CircleShape
-                    )
-                    .padding(horizontal = pillHPad, vertical = pillHPad),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                navItemList().forEach { (screen, triple) ->
-                    var expanded by remember(screen.route) { mutableStateOf(true) }
-                    val selected = currentRoute == screen.route
-                    val showBoth = pillContentMode == 0
-                    val showText = if (showBoth) true else pillContentMode == 2
-                    val showIcon = if (showBoth) true else pillContentMode == 1
-                    // 选中项强制补全另一半；expanded只管收起，不参与补全
-                    val visibleText = (showText || selected) && (expanded || selected)
-                    val visibleIcon = showIcon || selected || !visibleText
-                    val bg = if (selected) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent
-                    val fg = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
-                    Row(
-                        modifier = Modifier
-                            .clip(androidx.compose.foundation.shape.CircleShape)
-                            .background(bg)
-                            .clickable(onClick = {
-                                if (selected) expanded = !expanded
-                                else onNavigate(screen)
-                            })
-                            .padding(horizontal = if (visibleText && visibleIcon) itemHPadBoth else itemHPadSingle, vertical = itemVPad),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        if (visibleIcon) Icon(triple.first, contentDescription = triple.second, tint = fg, modifier = Modifier.size(iconSize))
-                        if (visibleText) {
-                            if (visibleIcon) Spacer(modifier = Modifier.width(gapW))
-                            Text(triple.second, style = textStyle, color = fg, maxLines = 1)
-                        }
-                    }
+                .padding(bottom = barBottom)
+                .height(barH)
+                .graphicsLayer {
+                    translationX = -p.value * (swPx / 2f + size.width / 2f)
                 }
-                HorizontalDivider(
-                    modifier = Modifier
-                        .height(20.dp)
-                        .width(1.dp),
-                    color = MaterialTheme.colorScheme.outlineVariant
-                )
+                .clip(androidx.compose.foundation.shape.CircleShape)
+                .background(color = MaterialTheme.colorScheme.surfaceContainerHigh)
+                .padding(horizontal = pillHPad, vertical = pillHPad),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            navItemList().forEach { (screen, triple) ->
+                var expanded by remember(screen.route) { mutableStateOf(true) }
+                val selected = currentRoute == screen.route
+                val showBoth = pillContentMode == 0
+                val showText = if (showBoth) true else pillContentMode == 2
+                val showIcon = if (showBoth) true else pillContentMode == 1
+                // 选中项强制补全另一半；expanded只管收起，不参与补全
+                val visibleText = (showText || selected) && (expanded || selected)
+                val visibleIcon = showIcon || selected || !visibleText
+                val bg = if (selected) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent
+                val fg = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
                 Row(
                     modifier = Modifier
                         .clip(androidx.compose.foundation.shape.CircleShape)
-                        .clickable(onClick = { collapsed = true })
-                        .padding(horizontal = itemHPadSingle, vertical = itemVPad),
+                        .background(bg)
+                        .clickable(onClick = {
+                            if (selected) expanded = !expanded
+                            else onNavigate(screen)
+                        })
+                        .padding(horizontal = if (visibleText && visibleIcon) itemHPadBoth else itemHPadSingle, vertical = itemVPad),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        Icons.Default.ChevronLeft, contentDescription = "收起",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(iconSize)
-                    )
+                    if (visibleIcon) Icon(triple.first, contentDescription = triple.second, tint = fg, modifier = Modifier.size(iconSize))
+                    if (visibleText) {
+                        if (visibleIcon) Spacer(modifier = Modifier.width(gapW))
+                        Text(triple.second, style = textStyle, color = fg, maxLines = 1)
+                    }
                 }
             }
-        }
-        // 书签：贴左边缘，中心与药丸中心同高——同一行
-        androidx.compose.animation.AnimatedVisibility(
-            visible = collapsed,
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(bottom = barBottom + pillHPad - 0.dp),
-            enter = fadeIn(com.ty.gkschedule.ui.theme.M3Motion.fadeInSpec()),
-            exit = fadeOut(com.ty.gkschedule.ui.theme.M3Motion.fadeOutSpec())
-        ) {
+            HorizontalDivider(
+                modifier = Modifier
+                    .height(20.dp)
+                    .width(1.dp),
+                color = MaterialTheme.colorScheme.outlineVariant
+            )
             Row(
                 modifier = Modifier
-                    .background(
-                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        // ponytail: 左边两角0贴边，右边半圆——半个胶囊，不是压扁圆
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(
-                            topStart = 0.dp, bottomStart = 0.dp,
-                            topEnd = 50.dp, bottomEnd = 50.dp
-                        )
-                    )
-                    .clip(
-                        androidx.compose.foundation.shape.RoundedCornerShape(
-                            topStart = 0.dp, bottomStart = 0.dp,
-                            topEnd = 50.dp, bottomEnd = 50.dp
-                        )
-                    )
-                    .clickable(onClick = { collapsed = false })
-                    .padding(start = 6.dp, end = 12.dp, top = itemVPad + pillHPad, bottom = itemVPad + pillHPad),
+                    .clip(androidx.compose.foundation.shape.CircleShape)
+                    .clickable(onClick = { collapsed = true })
+                    .padding(horizontal = itemHPadSingle, vertical = itemVPad),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    Icons.Default.ChevronRight, contentDescription = "展开",
+                    Icons.Default.ChevronLeft, contentDescription = "收起",
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(iconSize)
                 )
             }
         }
+        // 书签：BottomStart静止位即贴边；p=0时藏到屏外
+        Row(
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(bottom = barBottom)
+                .height(barH)
+                .graphicsLayer {
+                    translationX = -(1f - p.value) * size.width
+                }
+                .clip(
+                    androidx.compose.foundation.shape.RoundedCornerShape(
+                        topStart = 0.dp, bottomStart = 0.dp,
+                        topEnd = barH / 2, bottomEnd = barH / 2
+                    )
+                )
+                .background(color = MaterialTheme.colorScheme.surfaceContainerHigh)
+                .clickable(enabled = p.value > 0.5f) { collapsed = false }
+                .padding(start = 6.dp, end = 12.dp, top = itemVPad, bottom = itemVPad),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                Icons.Default.ChevronRight, contentDescription = "展开",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(iconSize)
+            )
         }
     }
 }
