@@ -80,6 +80,8 @@ fun WeeklyScheduleScreen(
     onExamEdit: (com.ty.gkschedule.data.ExamEntity) -> Unit = {},
     onAddCourse: () -> Unit,
     onRefresh: () -> Unit,
+    onScreenshotHidePill: () -> Unit = {},
+    onScreenshotRestorePill: () -> Unit = {},
     realCurrentWeek: Int = currentWeek,
     firstDayOfWeek: Int = 1,
     diffColorPerWeek: Boolean = false,
@@ -460,7 +462,27 @@ fun WeeklyScheduleScreen(
                     }
                 }
                 AnimatedVisibility(visible = fabExpanded, enter = slideInVertically(initialOffsetY = { it }) + fadeIn(), exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()) {
-                    FloatingActionButton(onClick = { com.ty.gkschedule.util.HapticFeedback.medium(hapticView); coroutineScope.launch { try { hideFabs = true; kotlinx.coroutines.delay(100); val fb = android.graphics.Bitmap.createBitmap(rootView.width, rootView.height, android.graphics.Bitmap.Config.ARGB_8888); rootView.draw(android.graphics.Canvas(fb)); hideFabs = false; val c = android.graphics.Bitmap.createBitmap(fb, 0, cropTopPx.coerceIn(0, fb.height), fb.width, cropBottomPx.coerceIn(cropTopPx.coerceIn(0, fb.height), fb.height) - cropTopPx.coerceIn(0, fb.height)); val s = com.ty.gkschedule.util.ImageExport.saveBitmapToGallery(context, c, "Pictures/Screenshots/schedule_${System.currentTimeMillis()}.png"); android.widget.Toast.makeText(context, if (s) "已保存到 Pictures/Screenshots" else "保存失败", android.widget.Toast.LENGTH_SHORT).show() } catch (e: Exception) { android.widget.Toast.makeText(context, "截图失败: ${e.message}", android.widget.Toast.LENGTH_SHORT).show() } }
+                    FloatingActionButton(onClick = {
+                        com.ty.gkschedule.util.HapticFeedback.medium(hapticView)
+                        // ponytail: 截图前藏FAB+悬浮pill，截完恢复；pill藏显走ViewModel，跨组件
+                        coroutineScope.launch {
+                            try {
+                                hideFabs = true
+                                onScreenshotHidePill()
+                                kotlinx.coroutines.delay(300)
+                                val fb = android.graphics.Bitmap.createBitmap(rootView.width, rootView.height, android.graphics.Bitmap.Config.ARGB_8888)
+                                rootView.draw(android.graphics.Canvas(fb))
+                                hideFabs = false
+                                onScreenshotRestorePill()
+                                val c = android.graphics.Bitmap.createBitmap(fb, 0, cropTopPx.coerceIn(0, fb.height), fb.width, cropBottomPx.coerceIn(cropTopPx.coerceIn(0, fb.height), fb.height) - cropTopPx.coerceIn(0, fb.height))
+                                val s = com.ty.gkschedule.util.ImageExport.saveBitmapToGallery(context, c, "Pictures/Screenshots/schedule_${System.currentTimeMillis()}.png")
+                                android.widget.Toast.makeText(context, if (s) "已保存到 Pictures/Screenshots" else "保存失败", android.widget.Toast.LENGTH_SHORT).show()
+                            } catch (e: Exception) {
+                                hideFabs = false
+                                onScreenshotRestorePill()
+                                android.widget.Toast.makeText(context, "截图失败: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                        }
                     }, containerColor = MaterialTheme.colorScheme.tertiaryContainer, contentColor = MaterialTheme.colorScheme.onTertiaryContainer) { Icon(Icons.Default.CropFree, "Screenshot") }
                     }
             } // HorizontalPager
