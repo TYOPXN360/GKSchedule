@@ -126,7 +126,7 @@ private fun FloatingPillNavBar(
         val barH = iconSize + itemVPad * 2 + pillHPad * 2
         val swPx = with(LocalDensity.current) { screenW.toPx() }
         // 药丸：BottomCenter，p=1时右边缘越过x=0整条出左屏
-        // ponytail: 窗口blurBehind(系统API)+Translucent，未开/不支持时回退纯色
+        // ponytail: 同窗口跨层糊(BackgroundBlurDrawable)+半透明底；图标文字画在上层，不碰
         val crossBlur = blurEnabled &&
             android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S &&
             com.ty.gkschedule.MainActivity.applyPillBlur
@@ -135,9 +135,6 @@ private fun FloatingPillNavBar(
         } else {
             MaterialTheme.colorScheme.surfaceContainerHigh
         }
-        // ponytail: 这俩只负责画backdrop，不管图标文字（画在它俩外层）
-        val pillBehind = Modifier.blurBehind(enabled = crossBlur)
-        val bookmarkBehind = Modifier.blurBehind(enabled = crossBlur)
         Row(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -148,7 +145,7 @@ private fun FloatingPillNavBar(
                 }
                 .clip(androidx.compose.foundation.shape.CircleShape)
                 .background(color = pillBg)
-                .then(pillBehind)
+                .blurBehind(enabled = crossBlur)
                 .padding(horizontal = pillHPad, vertical = pillHPad),
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
@@ -218,7 +215,7 @@ private fun FloatingPillNavBar(
                     )
                 )
                 .background(color = pillBg)
-                .then(bookmarkBehind)
+                .blurBehind(enabled = crossBlur)
                 .clickable(enabled = p.value > 0.5f) { collapsed = false }
                 .padding(start = 6.dp, end = 12.dp, top = itemVPad, bottom = itemVPad),
             verticalAlignment = Alignment.CenterVertically
