@@ -25,6 +25,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.lerp
 import com.ty.gkschedule.R
 import com.ty.gkschedule.data.Course
 import com.ty.gkschedule.util.CourseColors
@@ -71,24 +72,32 @@ fun CourseManageScreen(
         // ponytail: 顶栏自己吃系统栏，内容区不再重复垫（双重Insets留白根因）
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
-            // ponytail: 左上无返回键，右上垃圾桶会悬空——改Medium收窄；副标题随折叠淡出防挤爆
-            MediumTopAppBar(
+            // ponytail: 展开态大字headineMedium；折叠用alpha/size双插值防下沉跳变；门数常驻小标题
+            val fraction = scrollBehavior.state.collapsedFraction
+            val titleSize = lerp(
+                MaterialTheme.typography.headlineMedium.fontSize,
+                MaterialTheme.typography.titleLarge.fontSize,
+                fraction
+            )
+            LargeTopAppBar(
                 windowInsets = WindowInsets(0, 0, 0, 0),
                 title = {
                     Column {
-                        Text(stringResource(R.string.course_manage_title), fontWeight = FontWeight.Bold, maxLines = 1)
-                        androidx.compose.animation.AnimatedVisibility(
-                            visible = scrollBehavior.state.collapsedFraction < 0.3f,
-                            enter = fadeIn(),
-                            exit = fadeOut()
-                        ) {
-                            Text(
-                                stringResource(R.string.course_count_format, courses.size),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 1
-                            )
-                        }
+                        Text(
+                            stringResource(R.string.course_manage_title),
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            fontSize = titleSize
+                        )
+                        Text(
+                            stringResource(R.string.course_count_format, courses.size),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                                // ponytail: 折叠后门数降对比但不消失
+                                alpha = 1f - fraction * 0.3f
+                            ),
+                            maxLines = 1
+                        )
                     }
                 },
                 actions = {
