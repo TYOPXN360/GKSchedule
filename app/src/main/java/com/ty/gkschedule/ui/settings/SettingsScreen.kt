@@ -505,12 +505,6 @@ private fun ScheduleStylePage(
                     )
                 }
             }
-            Text(
-                stringResource(R.string.compact_nav_bar_desc),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-            )
         }
         Spacer(modifier = Modifier.height(16.dp))
         SectionHeader(stringResource(R.string.style_section_color))
