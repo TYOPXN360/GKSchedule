@@ -19,6 +19,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.asComposeRenderEffect
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.layer.drawLayer
 import androidx.compose.ui.graphics.rememberGraphicsLayer
@@ -171,7 +172,10 @@ private fun FloatingPillNavBar(
                         blurred.record {
                             translate(srcPos.x - pillPos.x - tx, srcPos.y - pillPos.y) { drawLayer(backdrop) }
                         }
-                        drawLayer(blurred)
+                        // ponytail: 糊点渗出裁在药丸bounds内，防污染周围内容
+                        clipRect {
+                            drawLayer(blurred)
+                        }
                     }
                     drawRect(pillBg)
                     drawContent()
@@ -254,7 +258,10 @@ private fun FloatingPillNavBar(
                         blurredMark.record {
                             translate(srcPos.x - markPos.x - tx, srcPos.y - markPos.y) { drawLayer(backdrop) }
                         }
-                        drawLayer(blurredMark)
+                        // ponytail: 糊点渗出裁在书签bounds内
+                        clipRect {
+                            drawLayer(blurredMark)
+                        }
                     }
                     drawRect(pillBg)
                     drawContent()
