@@ -30,28 +30,42 @@ class CourseEditActivity : AppCompatActivity() {
                     val courses by vm.courses.collectAsState(initial = emptyList())
                     val periodsPerDay by vm.periodsPerDay.collectAsState(initial = 10)
                     var currentCourse by remember { mutableStateOf<Course?>(null) }
+                    var loaded by remember { mutableStateOf(false) }
 
-                    LaunchedEffect(courseId, courses) {
+                    LaunchedEffect(courseId) {
                         currentCourse = if (courseId > 0) {
+                            // ponytail: 先读内存列表（快），miss 再查库（跨 Activity 时 collect 还没吐数据）
                             courses.find { it.id == courseId } ?: vm.getCourseById(courseId)
                         } else null
+                        loaded = true
+                    }
+                    // DB 后到时补一次，避免 collect 晚到导致空表单
+                    LaunchedEffect(courses) {
+                        if (courseId > 0 && currentCourse == null) {
+                            courses.find { it.id == courseId }?.let {
+                                currentCourse = it
+                                loaded = true
+                            }
+                        }
                     }
 
                     // ponytail: id<=0且DB空时直接给空表单，不白屏等collect
-                    CourseEditScreen(
-                        course = currentCourse,
-                        allCourses = courses,
-                        periodsPerDay = periodsPerDay,
-                        onSave = { savedCourse, hiddenScopeName ->
-                            vm.saveCourse(savedCourse, hiddenScopeName)
-                            finish()
-                        },
-                        onDelete = {
-                            vm.deleteCourse(it)
-                            finish()
-                        },
-                        onBack = { finish() }
-                    )
+                    if (loaded || courseId <= 0) {
+                        CourseEditScreen(
+                            course = currentCourse,
+                            allCourses = courses,
+                            periodsPerDay = periodsPerDay,
+                            onSave = { savedCourse, hiddenScopeName ->
+                                vm.saveCourse(savedCourse, hiddenScopeName)
+                                finish()
+                            },
+                            onDelete = {
+                                vm.deleteCourse(it)
+                                finish()
+                            },
+                            onBack = { finish() }
+                        )
+                    }
                 }
             }
         }

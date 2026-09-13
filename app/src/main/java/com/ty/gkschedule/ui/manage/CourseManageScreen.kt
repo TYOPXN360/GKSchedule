@@ -5,6 +5,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -24,6 +26,7 @@ import com.ty.gkschedule.R
 import com.ty.gkschedule.data.Course
 import com.ty.gkschedule.util.CourseColors
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CourseManageScreen(
     courses: List<Course>,
@@ -32,7 +35,9 @@ fun CourseManageScreen(
     onCourseClick: (Course) -> Unit,
     onAddCourse: () -> Unit,
     onDeleteCourse: (Course) -> Unit,
-    onDeleteAll: () -> Unit
+    onDeleteAll: () -> Unit,
+    onBack: (() -> Unit)? = null,
+    onScrollHidePill: (Boolean) -> Unit = {}
 ) {
     var showDeleteAllDialog by remember { mutableStateOf(false) }
     var courseToDelete by remember { mutableStateOf<Course?>(null) }
@@ -40,60 +45,91 @@ fun CourseManageScreen(
     val courseGroups = remember(courses) { courses.groupBy { it.name } }
     val uniqueCourses = remember(courseGroups) { courseGroups.values.map { it.first() }.sortedBy { it.name } }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        if (courses.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(Icons.Default.Schedule, null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(text = stringResource(R.string.no_course_today), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
-                }
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 88.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+    val listState = rememberLazyListState()
+    // ponytail: 大标题滚出即折叠成顶栏标题；下滑隐藏悬浮pill，上滑恢复
+    val collapsed by remember {
+        derivedStateOf { listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 120 }
+    }
+    LaunchedEffect(listState.isScrollInProgress, listState.firstVisibleItemIndex, listState.firstVisibleItemScrollOffset) {
+        onScrollHidePill(listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 200)
+    }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        stringResource(R.string.course_manage_title),
+                        style = if (collapsed) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                },
+                navigationIcon = {
+                    if (onBack != null) {
+                        IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") }
+                    }
+                },
+                actions = {
+                    if (courses.isNotEmpty()) {
+                        IconButton(onClick = { showDeleteAllDialog = true }) {
+                            Icon(Icons.Default.DeleteSweep, contentDescription = null, tint = MaterialTheme.colorScheme.error)
+                        }
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface.copy(
+                        alpha = (listState.firstVisibleItemScrollOffset / 200f).coerceIn(0f, 1f) * 0.95f + 0.05f
+                    )
+                )
+            )
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = onAddCourse,
+                containerColor = MaterialTheme.colorScheme.primary
             ) {
-                item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.Bottom
-                    ) {
-                        Column {
+                Icon(Icons.Default.Add, stringResource(R.string.add_course))
+            }
+        }
+    ) { padding ->
+        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+            if (courses.isEmpty()) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(Icons.Default.Schedule, null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(text = stringResource(R.string.no_course_today), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
+                    }
+                }
+            } else {
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 88.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // 大标题：滚出屏幕即折叠
+                    item {
+                        Column(modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 8.dp)) {
                             Text(stringResource(R.string.course_manage_title), style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(stringResource(R.string.course_count_format, courses.size), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
-                        if (courses.isNotEmpty()) {
-                            IconButton(onClick = { showDeleteAllDialog = true }) {
-                                Icon(Icons.Default.DeleteSweep, contentDescription = null, tint = MaterialTheme.colorScheme.error)
-                            }
-                        }
+                    }
+
+                    items(uniqueCourses) { course ->
+                        val count = courseGroups[course.name].orEmpty().size
+                        CourseListItem(
+                            course = course,
+                            instanceCount = count,
+                            colorEngine = colorEngine,
+                            colorGroupMode = colorGroupMode,
+                            onClick = { onCourseClick(course) },
+                            onDelete = { courseToDelete = course }
+                        )
                     }
                 }
-
-                items(uniqueCourses) { course ->
-                    val count = courseGroups[course.name].orEmpty().size
-                    CourseListItem(
-                        course = course,
-                        instanceCount = count,
-                        colorEngine = colorEngine,
-                        colorGroupMode = colorGroupMode,
-                        onClick = { onCourseClick(course) },
-                        onDelete = { courseToDelete = course }
-                    )
-                }
             }
-        }
-
-        FloatingActionButton(
-            onClick = onAddCourse,
-            containerColor = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp)
-        ) {
-            Icon(Icons.Default.Add, stringResource(R.string.add_course))
         }
     }
 

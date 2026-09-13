@@ -71,38 +71,39 @@ private fun FloatingPillNavBar(
     onNavigate: (Screen) -> Unit
 ) {
     var collapsed by remember { mutableStateOf(false) }
+    // ponytail: 悬浮模式下滚到底隐藏由调用方传pillHidden控制（课程管理下滑）；普通收起按钮另算
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         val screenW = maxWidth
         // 尺寸档：按屏宽分三档，小屏不再硬塞，全部等比缩小
         val iconSize = when {
-            screenW < 340.dp -> 16.dp
-            screenW < 400.dp -> 18.dp
-            else -> 20.dp
+            screenW < 340.dp -> 20.dp
+            screenW < 400.dp -> 22.dp
+            else -> 24.dp
         }
         val barBottom = 24.dp
         val pillHPad = when {
-            screenW < 340.dp -> 4.dp
-            screenW < 400.dp -> 5.dp
-            else -> 6.dp
+            screenW < 340.dp -> 8.dp
+            screenW < 400.dp -> 9.dp
+            else -> 10.dp
         }
         val itemHPadBoth = when {
-            screenW < 340.dp -> 8.dp
-            screenW < 400.dp -> 10.dp
-            else -> 12.dp
+            screenW < 340.dp -> 12.dp
+            screenW < 400.dp -> 14.dp
+            else -> 16.dp
         }
         val itemHPadSingle = when {
-            screenW < 340.dp -> 6.dp
-            screenW < 400.dp -> 7.dp
-            else -> 8.dp
+            screenW < 340.dp -> 10.dp
+            screenW < 400.dp -> 11.dp
+            else -> 12.dp
         }
         val itemVPad = when {
-            screenW < 340.dp -> 6.dp
-            else -> 8.dp
+            screenW < 340.dp -> 10.dp
+            else -> 12.dp
         }
-        val textStyle = if (screenW < 340.dp) MaterialTheme.typography.labelSmall else MaterialTheme.typography.labelMedium
+        val textStyle = if (screenW < 340.dp) MaterialTheme.typography.labelMedium else MaterialTheme.typography.titleSmall
         val gapW = when {
-            screenW < 340.dp -> 2.dp
-            else -> 4.dp
+            screenW < 340.dp -> 4.dp
+            else -> 6.dp
         }
         androidx.compose.animation.AnimatedVisibility(
             visible = !collapsed,
@@ -207,7 +208,7 @@ private fun FloatingPillNavBar(
                         )
                     )
                     .clickable(onClick = { collapsed = false })
-                    .padding(start = 6.dp, end = 12.dp, top = itemVPad + 6.dp, bottom = itemVPad + 6.dp),
+                    .padding(start = 6.dp, end = 12.dp, top = itemVPad + 2.dp, bottom = itemVPad + 2.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
@@ -371,7 +372,7 @@ fun ScheduleApp(
         ) {
             composable(Screen.Today.route) { TodayScreen(courses = displayCourses, colorCourses = courses, currentWeek = realCurrentWeek, colorEngine = colorEngine, colorGroupMode = colorGroupMode, exams = examList, showExamSchedule = showExamSchedule, examLookaheadWeeks = examLookaheadWeeks, semesterStart = semesterStart, getStartTime = { viewModel.getStartTime(it) }, getEndTime = { viewModel.getEndTime(it) }, onCourseLongPress = { context.startActivity(Intent(context, com.ty.gkschedule.ui.course.CourseEditActivity::class.java).apply { putExtra("courseId", it.id) }) }, onExamEdit = { context.startActivity(Intent(context, com.ty.gkschedule.ui.exam.ExamActivity::class.java).apply { putExtra("examId", it.id) }) }, diffColorPerWeek = diffColorPerWeek) }
             composable(Screen.Weekly.route) { WeeklyScheduleScreen(courses = displayCourses, colorCourses = courses, currentWeek = selectedWeek, totalWeeks = totalWeeks, periodsPerDay = periodsPerDay, gridHeight = gridHeight, gridCorner = gridCorner, gridSpacing = gridSpacing, showPeriodLabel = showPeriodLabel, autoGridHeight = autoGridHeight, firstDayOfWeek = firstDayOfWeek, mergeConsecutive = mergeConsecutive, showTimeLabel = showTimeLabel, detailedSplit = detailedSplit, colorEngine = colorEngine, colorGroupMode = colorGroupMode, showDateInHeader = showDateInHeader, hideEmptyWeeks = hideEmptyWeeks, semesterStart = semesterStart, exams = examList, showExamSchedule = showExamSchedule, realCurrentWeek = realCurrentWeek, isRefreshing = isRefreshing, onWeekChange = { viewModel.setWeek(it.coerceIn(1, totalWeeks)) }, onCourseClick = { }, onCourseLongPress = { context.startActivity(Intent(context, com.ty.gkschedule.ui.course.CourseEditActivity::class.java).apply { putExtra("courseId", it.id) }) }, onExamEdit = { context.startActivity(Intent(context, com.ty.gkschedule.ui.exam.ExamActivity::class.java).apply { putExtra("examId", it.id) }) }, onAddCourse = { context.startActivity(Intent(context, com.ty.gkschedule.ui.course.CourseEditActivity::class.java)) }, onRefresh = { viewModel.refreshFromSchool() }, getStartTime = { viewModel.getStartTime(it) }, getEndTime = { viewModel.getEndTime(it) }, diffColorPerWeek = diffColorPerWeek) }
-            composable(Screen.Courses.route) { CourseManageScreen(courses = courses, colorEngine = colorEngine, colorGroupMode = colorGroupMode, onCourseClick = { context.startActivity(Intent(context, com.ty.gkschedule.ui.course.CourseEditActivity::class.java).apply { putExtra("courseId", it.id) }) }, onAddCourse = { context.startActivity(Intent(context, com.ty.gkschedule.ui.course.CourseEditActivity::class.java)) }, onDeleteCourse = { viewModel.deleteCourse(it) }, onDeleteAll = { viewModel.deleteAllCourses() }) }
+            composable(Screen.Courses.route) { CourseManageScreen(courses = courses, colorEngine = colorEngine, colorGroupMode = colorGroupMode, onCourseClick = { context.startActivity(Intent(context, com.ty.gkschedule.ui.course.CourseEditActivity::class.java).apply { putExtra("courseId", it.id) }) }, onAddCourse = { context.startActivity(Intent(context, com.ty.gkschedule.ui.course.CourseEditActivity::class.java)) }, onDeleteCourse = { viewModel.deleteCourse(it) }, onDeleteAll = { viewModel.deleteAllCourses() }, onScrollHidePill = { viewModel.setPillHidden(it) }) }
             composable(Screen.About.route) {
                 val savedStudentId by viewModel.savedStudentIdFlow.collectAsState()
                 val savedRealName by viewModel.savedRealName.collectAsState(initial = "")
@@ -392,14 +393,16 @@ fun ScheduleApp(
                 LaunchedEffect(loginState) { if (loginState is LoginState.Success || loginState is LoginState.ImportResult) { kotlinx.coroutines.delay(1200); navController.popBackStack(Screen.Login.route, inclusive = true) } }
             }
         }
-        // 悬浮pill：跟随tab显隐做位移，内部收/展另有自己的左右对滑
+        // 悬浮pill：跟随tab显隐做位移，内部收/展另有自己的左右对滑；
+        // ponytail: 课程管理下滑时pillHidden=true，向下淡出隐藏
         if (compactNavBar) {
+            val pillHidden by viewModel.pillHidden.collectAsState(initial = false)
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
                 androidx.compose.animation.AnimatedVisibility(
-                    visible = showBottomBar,
+                    visible = showBottomBar && !pillHidden,
                     modifier = Modifier.padding(bottom = 24.dp),
-                    enter = slideInVertically(initialOffsetY = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideInSpec()),
-                    exit = slideOutVertically(targetOffsetY = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideOutSpec())
+                    enter = slideInVertically(initialOffsetY = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideInSpec()) + fadeIn(com.ty.gkschedule.ui.theme.M3Motion.fadeInSpec()),
+                    exit = slideOutVertically(targetOffsetY = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideOutSpec()) + fadeOut(com.ty.gkschedule.ui.theme.M3Motion.fadeOutSpec())
                 ) {
                     FloatingPillNavBar(currentRoute = currentRoute, pillContentMode = pillContentMode) { screen ->
                         com.ty.gkschedule.util.HapticFeedback.light(navView)

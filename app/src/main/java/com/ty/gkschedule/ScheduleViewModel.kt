@@ -90,6 +90,11 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     private val _selectedWeek = MutableStateFlow(0)
     val selectedWeek: StateFlow<Int> = _selectedWeek
 
+    // ponytail: 纯UI瞬态，不进DataStore；课程管理下滑隐藏悬浮pill
+    private val _pillHidden = MutableStateFlow(false)
+    val pillHidden: StateFlow<Boolean> = _pillHidden
+    fun setPillHidden(hidden: Boolean) { _pillHidden.value = hidden }
+
     // Login state
     private val _loginState = MutableStateFlow<LoginState>(LoginState.LoggedOut)
     val loginState: StateFlow<LoginState> = _loginState
