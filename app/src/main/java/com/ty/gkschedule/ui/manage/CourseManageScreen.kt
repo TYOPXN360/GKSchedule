@@ -128,7 +128,7 @@ fun CourseManageScreen(
                     backdrop = backdrop,
                     shape = { fabShape },
                     effects = { blur(28.dp.toPx()) },
-                    onDrawSurface = { drawRect(fabBrand.copy(alpha = 0.82f)) }
+                    onDrawSurface = { drawRect(fabBrand.copy(alpha = 0.70f)) }
                 ),
                 containerColor = androidx.compose.ui.graphics.Color.Transparent,
                 contentColor = fabOnBrand
