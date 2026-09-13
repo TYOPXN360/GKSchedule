@@ -151,14 +151,15 @@ fun ExamEditScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
                 .onGloballyPositioned { srcPos = it.positionInRoot() }
                 .drawWithContent {
                     backdrop.record { with(this@drawWithContent) { drawContent() } }
                     drawLayer(backdrop)
                 }
-                .padding(horizontal = 16.dp)
-                .verticalScroll(rememberScrollState()),
+                // ponytail: 避让走滚动内padding，源纹理全屏录(含顶栏身后)
+                .verticalScroll(rememberScrollState())
+                .padding(top = padding.calculateTopPadding())
+                .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Spacer(modifier = Modifier.height(4.dp))

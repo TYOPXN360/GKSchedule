@@ -135,15 +135,17 @@ fun ExamScreen(
             }
         }
     ) { padding ->
+        // ponytail: 源层全屏录(含顶栏身后)；避让走内部padding，卡片滚动穿过顶栏下方
+        val topPad = padding.calculateTopPadding()
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
                 .onGloballyPositioned { srcPos = it.positionInRoot() }
                 .drawWithContent {
                     backdrop.record { with(this@drawWithContent) { drawContent() } }
                     drawLayer(backdrop)
                 }
+                .padding(top = topPad)
         ) {
             // Filter card
             Md3Card(
@@ -262,7 +264,7 @@ fun ExamScreen(
                 val sortedExams = exams.sortedBy { it.examDate }
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(sortedExams) { exam ->

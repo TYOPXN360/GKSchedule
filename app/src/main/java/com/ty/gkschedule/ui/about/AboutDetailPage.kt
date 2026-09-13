@@ -77,13 +77,14 @@ fun AboutDetailPage(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
                 .onGloballyPositioned { srcPos = it.positionInRoot() }
                 .drawWithContent {
                     backdrop.record { with(this@drawWithContent) { drawContent() } }
                     drawLayer(backdrop)
                 }
-                .verticalScroll(rememberScrollState()),
+                // ponytail: 避让走滚动内padding，源纹理全屏录(含顶栏身后)
+                .verticalScroll(rememberScrollState())
+                .padding(top = padding.calculateTopPadding()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(32.dp))

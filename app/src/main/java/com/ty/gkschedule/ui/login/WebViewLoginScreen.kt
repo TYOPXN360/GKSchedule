@@ -156,12 +156,13 @@ fun WebViewLoginScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
                 .onGloballyPositioned { srcPos = it.positionInRoot() }
                 .drawWithContent {
                     backdrop.record { with(this@drawWithContent) { drawContent() } }
                     drawLayer(backdrop)
                 }
+                // ponytail: 源纹理全屏录(含顶栏身后)；本页不滚动，避让放录制后
+                .padding(padding)
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
