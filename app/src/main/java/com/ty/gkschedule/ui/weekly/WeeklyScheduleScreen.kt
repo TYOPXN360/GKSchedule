@@ -458,7 +458,7 @@ fun WeeklyScheduleScreen(
                         shape = { androidx.compose.foundation.shape.RoundedCornerShape(16.dp) },
                         effects = { blur(28.dp.toPx()) }
                     ),
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.35f),
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f),
                 contentColor = MaterialTheme.colorScheme.onSurfaceVariant
             ) { Text(if (fabExpanded) "—" else "+", style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center, modifier = Modifier.width(20.dp)) }
 
@@ -476,7 +476,7 @@ fun WeeklyScheduleScreen(
                             shape = { androidx.compose.foundation.shape.RoundedCornerShape(16.dp) },
                             effects = { blur(28.dp.toPx()) }
                         ),
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.35f),
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.75f),
                         contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                     ) {
                                                 if (isRefreshing)  CircularProgressIndicator(modifier = Modifier.size(24.dp)) else Icon(Icons.Default.Refresh, "Refresh")
@@ -490,7 +490,7 @@ fun WeeklyScheduleScreen(
                             shape = { androidx.compose.foundation.shape.RoundedCornerShape(16.dp) },
                             effects = { blur(28.dp.toPx()) }
                         ),
-                        containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.35f),
+                        containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.75f),
                         contentColor = MaterialTheme.colorScheme.onPrimary
                     ) {
                         Icon(Icons.Default.Add, stringResource(R.string.add_course))
@@ -518,7 +518,7 @@ fun WeeklyScheduleScreen(
                                 android.widget.Toast.makeText(context, "截图失败: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
                             }
                         }
-                    }, containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.35f), contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                    }, containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.75f), contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
                         modifier = Modifier.drawBackdrop(
                             backdrop = backdrop,
                             shape = { androidx.compose.foundation.shape.RoundedCornerShape(16.dp) },
@@ -541,7 +541,7 @@ fun WeeklyScheduleScreen(
                         shape = { androidx.compose.foundation.shape.RoundedCornerShape(16.dp) },
                         effects = { blur(28.dp.toPx()) }
                     ),
-                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f),
+                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.75f),
                     contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 ) { Icon(if (currentWeek > realCurrentWeek) Icons.Default.ChevronLeft else Icons.Default.ChevronRight, stringResource(R.string.back_to_current_week)) }
             }

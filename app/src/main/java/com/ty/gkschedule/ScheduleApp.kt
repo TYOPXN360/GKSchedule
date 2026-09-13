@@ -135,7 +135,7 @@ private fun FloatingPillNavBar(
         // ponytail: miuix同窗口backdrop糊（窗口级API只糊别家窗口，同窗口必须走这条）
         // ponytail: 底35%透+miuix内backgroundColor透明，糊感最强；叠加会压淡
         val pillBg = MaterialTheme.colorScheme.surfaceContainerHigh.copy(
-            alpha = if (blurEnabled) 0.35f else 1f
+            alpha = if (blurEnabled) 0.75f else 1f
         )
         Row(
             modifier = Modifier
@@ -167,7 +167,7 @@ private fun FloatingPillNavBar(
                 val visibleText = (showText || selected) && (expanded || selected)
                 val visibleIcon = showIcon || selected || !visibleText
                 // ponytail: 选中底只给55%透明，透出药丸糊层，不盖糊
-                val bg = if (selected) MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.55f) else Color.Transparent
+                val bg = if (selected) MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.75f) else Color.Transparent
                 val fg = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
                 Row(
                     modifier = Modifier

@@ -127,7 +127,7 @@ fun CourseManageScreen(
                     shape = { androidx.compose.foundation.shape.RoundedCornerShape(16.dp) },
                     effects = { blur(28.dp.toPx()) }
                 ),
-                containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.35f)
+                containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.75f)
             ) {
                 Icon(Icons.Default.Add, stringResource(R.string.add_course))
             }
