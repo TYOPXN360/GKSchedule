@@ -85,6 +85,7 @@ private fun FloatingPillNavBar(
     screenshotHidden: Boolean = false,
     blurEnabled: Boolean = true,
     backdrop: androidx.compose.ui.graphics.layer.GraphicsLayer,
+    srcPos: androidx.compose.ui.geometry.Offset,
     onNavigate: (Screen) -> Unit
 ) {
     var collapsed by remember { mutableStateOf(false) }
@@ -149,6 +150,7 @@ private fun FloatingPillNavBar(
                 .asComposeRenderEffect()
         }
         val blurred = rememberGraphicsLayer()
+        val blurredMark = rememberGraphicsLayer()
         var pillPos by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
         Row(
             modifier = Modifier
@@ -164,9 +166,10 @@ private fun FloatingPillNavBar(
                 .drawWithContent {
                     val fx = blurFx
                     if (fx != null) {
+                        val tx = -p.value * (swPx / 2f + size.width / 2f)
                         blurred.renderEffect = fx
                         blurred.record {
-                            translate(-pillPos.x, -pillPos.y) { drawLayer(backdrop) }
+                            translate(srcPos.x - pillPos.x - tx, srcPos.y - pillPos.y) { drawLayer(backdrop) }
                         }
                         drawLayer(blurred)
                     }
@@ -246,11 +249,12 @@ private fun FloatingPillNavBar(
                 .drawWithContent {
                     val fx = blurFx
                     if (fx != null) {
-                        blurred.renderEffect = fx
-                        blurred.record {
-                            translate(-markPos.x, -markPos.y) { drawLayer(backdrop) }
+                        val tx = -(1f - p.value) * size.width
+                        blurredMark.renderEffect = fx
+                        blurredMark.record {
+                            translate(srcPos.x - markPos.x - tx, srcPos.y - markPos.y) { drawLayer(backdrop) }
                         }
-                        drawLayer(blurred)
+                        drawLayer(blurredMark)
                     }
                     drawRect(pillBg)
                     drawContent()
@@ -378,11 +382,14 @@ fun ScheduleApp(
         }
     ) { innerPadding ->
         // ponytail: 路A——源层录离屏纹理，药丸处贴回糊版；同窗口不走窗口blur API
+        // ponytail: 源层只含NavHost，药丸是兄弟(环=RenderThread栈溢出，见08c190d)
         val backdrop = rememberGraphicsLayer()
+        var srcPos by remember { mutableStateOf(Offset.Zero) }
         Box(Modifier.padding(innerPadding)) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
+                    .onGloballyPositioned { srcPos = it.positionInRoot() }
                     .drawWithContent {
                         backdrop.record { with(this@drawWithContent) { drawContent() } }
                         drawLayer(backdrop)
@@ -451,8 +458,9 @@ fun ScheduleApp(
                 LaunchedEffect(loginState) { if (loginState is LoginState.Success || loginState is LoginState.ImportResult) { kotlinx.coroutines.delay(1200); navController.popBackStack(Screen.Login.route, inclusive = true) } }
             }
         }
+        } // 源层Box只含NavHost
         // 悬浮pill：跟随tab显隐做位移，内部收/展另有自己的左右对滑；
-        // ponytail: 课程管理下滑时pillHidden=true，向下淡出隐藏
+        // ponytail: 源层兄弟节点(断环)；课程管理下滑时pillHidden=true，向下淡出隐藏
         if (compactNavBar) {
             val pillHidden by viewModel.pillHidden.collectAsState(initial = false)
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
@@ -462,7 +470,7 @@ fun ScheduleApp(
                     enter = slideInVertically(initialOffsetY = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideInSpec()) + fadeIn(com.ty.gkschedule.ui.theme.M3Motion.fadeInSpec()),
                     exit = slideOutVertically(targetOffsetY = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideOutSpec()) + fadeOut(com.ty.gkschedule.ui.theme.M3Motion.fadeOutSpec())
                 ) {
-                    FloatingPillNavBar(currentRoute = currentRoute, pillContentMode = pillContentMode, screenshotHidden = pillHidden, blurEnabled = blurEffect, backdrop = backdrop) { screen ->
+                    FloatingPillNavBar(currentRoute = currentRoute, pillContentMode = pillContentMode, screenshotHidden = pillHidden, blurEnabled = blurEffect, backdrop = backdrop, srcPos = srcPos) { screen ->
                         com.ty.gkschedule.util.HapticFeedback.light(navView)
                         if (currentRoute != screen.route) {
                             navController.navigate(screen.route) {
@@ -473,8 +481,7 @@ fun ScheduleApp(
                     }
                 }
             }
-        }
-        } // backdrop源层Box
+        } // pill兄弟层
     }
     }
 }
