@@ -2,6 +2,7 @@
 /build/
 /app/build/
 /.gradle/
+/.gradle-home/
 /.kotlin/
 /.android/
 *.apk
@@ -13,7 +14,6 @@
 # Local
 /local.properties
 /set-env.sh
-/build.sh
 *.har
 *.png
 !app/src/main/res/mipmap-*/*.png
