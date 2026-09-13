@@ -119,9 +119,6 @@ dependencies {
     // WorkManager for periodic sync
     implementation(libs.workmanager.runtime)
 
-    // Haze for in-window backdrop blur
-    implementation(libs.haze)
-
-    // Miuix-blur for MIUI-style backdrop blur
+    // Miuix-blur for in-window backdrop blur
     implementation(libs.miuix.blur)
 }

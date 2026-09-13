@@ -101,7 +101,7 @@ fun ExamScreen(
     }
     val scaffoldBg = if (isDark) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainer
     var detailItem by remember { mutableStateOf<ScheduleItem.ExamItem?>(null) }
-    // ponytail: haze源层
+    // ponytail: miuix源层
     val backdrop = top.yukonga.miuix.kmp.blur.rememberLayerBackdrop()
 
     Scaffold(

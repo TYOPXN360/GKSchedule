@@ -51,7 +51,7 @@ fun ExamEditScreen(
     onBack: () -> Unit,
     blurEnabled: Boolean = true
 ) {
-    // ponytail: haze源层
+    // ponytail: miuix源层
     val backdrop = top.yukonga.miuix.kmp.blur.rememberLayerBackdrop()
     val isDark = LocalAppIsDark.current
     val scaffoldBg = if (isDark) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainer

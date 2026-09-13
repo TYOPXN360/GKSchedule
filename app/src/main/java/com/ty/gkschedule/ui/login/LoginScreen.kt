@@ -48,7 +48,7 @@ fun LoginScreen(
     onBack: () -> Unit,
     blurEnabled: Boolean = true
 ) {
-    // ponytail: haze源层
+    // ponytail: miuix源层
     val backdrop = top.yukonga.miuix.kmp.blur.rememberLayerBackdrop()
     var studentId by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }

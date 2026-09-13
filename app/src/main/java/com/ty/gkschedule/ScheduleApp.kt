@@ -132,8 +132,8 @@ private fun FloatingPillNavBar(
         val barH = iconSize + itemVPad * 2 + pillHPad * 2
         val swPx = with(LocalDensity.current) { screenW.toPx() }
         // 药丸：BottomCenter，p=1时右边缘越过x=0整条出左屏
-        // ponytail: haze同窗口backdrop糊（窗口级API只糊别家窗口，同窗口必须走这条）
-        // ponytail: 底35%透+haze内backgroundColor透明，糊感最强；叠加会压淡
+        // ponytail: miuix同窗口backdrop糊（窗口级API只糊别家窗口，同窗口必须走这条）
+        // ponytail: 底35%透+miuix内backgroundColor透明，糊感最强；叠加会压淡
         val pillBg = MaterialTheme.colorScheme.surfaceContainerHigh.copy(
             alpha = if (blurEnabled) 0.35f else 1f
         )
@@ -355,7 +355,7 @@ fun ScheduleApp(
             }
         }
     ) { innerPadding ->
-        // ponytail: haze源层——内容标hazeSource吃糊；药丸挂兄弟层(环=RenderThread栈溢出，见08c190d)
+        // ponytail: miuix源层——内容标layerBackdrop吃糊；药丸挂兄弟层(环=RenderThread栈溢出，见08c190d)
         val backdrop = top.yukonga.miuix.kmp.blur.rememberLayerBackdrop()
         Box(Modifier.padding(innerPadding)) {
             Box(

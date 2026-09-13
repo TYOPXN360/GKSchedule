@@ -70,7 +70,7 @@ fun CourseManageScreen(
     }
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
-    // ponytail: haze源层，顶栏hazeEffect吃糊
+    // ponytail: miuix源层，顶栏drawBackdrop吃糊
     val backdrop = top.yukonga.miuix.kmp.blur.rememberLayerBackdrop()
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -126,7 +126,7 @@ fun CourseManageScreen(
             }
         }
     ) { padding ->
-        // ponytail: haze源层全屏，避让走contentPadding，item滚动穿过顶栏下方
+        // ponytail: miuix源层全屏，避让走contentPadding，item滚动穿过顶栏下方
         val topPad = padding.calculateTopPadding()
         Box(
             modifier = Modifier

@@ -381,7 +381,7 @@ private fun SubPage(
 ) {
     val isDark = com.ty.gkschedule.ui.theme.LocalAppIsDark.current
     val scaffoldBg = if (isDark) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainer
-    // ponytail: haze源层
+    // ponytail: miuix源层
     val backdrop = top.yukonga.miuix.kmp.blur.rememberLayerBackdrop()
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),

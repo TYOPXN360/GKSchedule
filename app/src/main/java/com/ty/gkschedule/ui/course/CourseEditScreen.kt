@@ -47,7 +47,7 @@ fun CourseEditScreen(
     onBack: () -> Unit,
     blurEnabled: Boolean = true
 ) {
-    // ponytail: haze源层
+    // ponytail: miuix源层
     val backdrop = top.yukonga.miuix.kmp.blur.rememberLayerBackdrop()
     val isEditing = course != null
     val hiddenScopeName = course?.name
