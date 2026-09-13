@@ -37,6 +37,7 @@ fun BlurLargeTopBar(
         alpha = if (useBlur) 0.40f else 1f
     )
     // ponytail: Large顶栏真折叠——miuix糊跟栏高收缩走，折叠黑条是糊层没跟上
+    // ponytail: windowInsets交还M3（外层statusBarsPadding会推歪两行measure基线）
     Box(
         modifier = Modifier
             .then(
@@ -47,13 +48,12 @@ fun BlurLargeTopBar(
                 ) else Modifier
             )
             .background(barBg)
-            .statusBarsPadding()
     ) {
         LargeTopAppBar(
             title = title,
             navigationIcon = navigationIcon,
             actions = actions,
-            windowInsets = WindowInsets(0, 0, 0, 0),
+            windowInsets = TopAppBarDefaults.windowInsets,
             scrollBehavior = scrollBehavior,
             colors = TopAppBarDefaults.topAppBarColors(
                 containerColor = Color.Transparent,
@@ -87,7 +87,6 @@ fun BlurTopBar(
                 ) else Modifier
             )
             .background(barBg)
-            .statusBarsPadding()
     ) {
         TopAppBar(
             title = title,

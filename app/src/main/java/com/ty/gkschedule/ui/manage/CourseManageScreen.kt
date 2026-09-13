@@ -75,20 +75,22 @@ fun CourseManageScreen(
         // ponytail: 顶栏自己吃系统栏，内容区不再重复垫（双重Insets留白根因）
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
-            // ponytail: 普通顶栏固定statusBars+64，content避让精确匹配，永不重叠；列表上滚穿过顶栏底下才有沉浸
-            com.ty.gkschedule.ui.theme.BlurTopBar(
+            // ponytail: Large展开/折叠自然形态；字号lerp双重缩放已删，M3内部自带大小标题切换
+            val fraction = scrollBehavior.state.collapsedFraction
+            com.ty.gkschedule.ui.theme.BlurLargeTopBar(
                 title = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column {
                         Text(
                             stringResource(R.string.course_manage_title),
                             fontWeight = FontWeight.Bold,
                             maxLines = 1
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             stringResource(R.string.course_count_format, courses.size),
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                                alpha = 1f - fraction * 0.3f
+                            ),
                             maxLines = 1
                         )
                     }
@@ -100,6 +102,7 @@ fun CourseManageScreen(
                         }
                     }
                 },
+                scrollBehavior = scrollBehavior,
                 backdrop = backdrop,
                 blurEnabled = blurEnabled
             )
@@ -127,9 +130,8 @@ fun CourseManageScreen(
             }
         }
     ) { padding ->
-        // ponytail: miuix源层全屏，避让走contentPadding，item滚动穿过顶栏下方
-        // ponytail: 避让按折叠后高度算，卡片藏进顶栏/状态栏底下才有沉浸；实时顶栏高会留大片空白
-        val immersiveTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 64.dp
+        // ponytail: 避让固定=展开态顶栏高；innerPadding/fraction每帧变，喂contentPadding会抖动顶死
+        val expandedBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 152.dp
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -148,7 +150,7 @@ fun CourseManageScreen(
                 LazyColumn(
                     state = listState,
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = immersiveTop, bottom = 88.dp),
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = expandedBarTop, bottom = 88.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     // ponytail: 门数跟标题走了，列表头不再摆第二份
