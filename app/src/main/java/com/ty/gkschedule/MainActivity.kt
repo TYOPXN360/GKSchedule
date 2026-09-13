@@ -28,6 +28,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ty.gkschedule.ui.theme.GKScheduleTheme
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.runBlocking
 import java.util.Locale
 
@@ -87,7 +88,17 @@ class MainActivity : AppCompatActivity() {
                 applyPillBlur = it
             }
         }
-        // ponytail: 主窗口不糊behind（同窗口内容miuix管）；Dialog/BottomSheet独立窗口糊背后时才需要，见ExamActivity
+        // ponytail: Sheet/Dialog独立窗口糊背后主窗口——主窗口开blurBehind，Sheet容器半透明透糊
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            try {
+                val blurOn = kotlinx.coroutines.runBlocking { settings.blurEffect.firstOrNull() ?: true }
+                val radius = (28 * resources.displayMetrics.density).toInt().coerceIn(1, 150)
+                val attrs = window.attributes
+                attrs.blurBehindRadius = if (blurOn) radius else 0
+                window.attributes = attrs
+                window.setBackgroundBlurRadius(if (blurOn) radius else 0)
+            } catch (_: Exception) {}
+        }
 
         setContent {
             val vm: ScheduleViewModel = viewModel()

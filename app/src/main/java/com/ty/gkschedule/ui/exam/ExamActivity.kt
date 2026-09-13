@@ -10,6 +10,7 @@ import com.ty.gkschedule.ScheduleViewModel
 import com.ty.gkschedule.data.ExamEntity
 import com.ty.gkschedule.ui.theme.GKScheduleTheme
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.firstOrNull
 
 // ponytail: 考试页独立Activity，返回走系统级预测动画；新增/编辑在内部状态切换，不进NavHost
 class ExamActivity : AppCompatActivity() {
@@ -17,6 +18,18 @@ class ExamActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         val initialExamId = intent.getLongExtra("examId", -1L)
+        // ponytail: 重登录Dialog独立窗口糊背后——窗口级blurBehind，圆角形状糊不到但比纯透强
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            try {
+                val settings = com.ty.gkschedule.data.SettingsDataStore(this)
+                val blurOn = kotlinx.coroutines.runBlocking { settings.blurEffect.firstOrNull() ?: true }
+                val radius = (28 * resources.displayMetrics.density).toInt().coerceIn(1, 150)
+                val attrs = window.attributes
+                attrs.blurBehindRadius = if (blurOn) radius else 0
+                window.attributes = attrs
+                window.setBackgroundBlurRadius(if (blurOn) radius else 0)
+            } catch (_: Exception) {}
+        }
 
         setContent {
             val vm: ScheduleViewModel = viewModel()

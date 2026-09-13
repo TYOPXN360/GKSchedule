@@ -78,6 +78,7 @@ fun BlurTopBar(
             if (useBlur) Modifier.drawBackdrop(
                 backdrop = backdrop!!,
                 shape = { androidx.compose.ui.graphics.RectangleShape },
+                // ponytail: 探针已撤——顶栏正常，只修Dialog/Sheet
                 effects = { blur(28.dp.toPx()) }
             ) else Modifier
         )

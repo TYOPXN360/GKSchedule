@@ -620,7 +620,9 @@ fun ScheduleItemDetailSheet(item: ScheduleItem, getStartTime: (Int) -> String, g
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(),
-        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.7f)
+        // ponytail: Sheet独立窗口，miuix源采不到主窗口——容器半透明+窗口级blurBehind糊背后
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f),
+        scrimColor = Color.Transparent
     ) {
         Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp).padding(bottom = 32.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -676,7 +678,8 @@ private fun WeekPickerSheet(totalWeeks: Int, currentWeek: Int, onWeekSelected: (
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(),
-        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.7f)
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f),
+        scrimColor = Color.Transparent
     ) {
         Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp).padding(bottom = 32.dp)) {
             Text(stringResource(R.string.select_week), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(bottom = 16.dp))
