@@ -131,11 +131,11 @@ fun CourseManageScreen(
             }
         }
     ) { padding ->
-        // ponytail: 源层只包内容(顶栏兄弟)，录纹理给糊顶栏吃
+        // ponytail: 源层全屏录(含顶栏身后)；避让走contentPadding，item滚动穿过顶栏下方
+        val topPad = padding.calculateTopPadding()
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
                 .onGloballyPositioned { srcPos = it.positionInRoot() }
                 .drawWithContent {
                     backdrop.record { with(this@drawWithContent) { drawContent() } }
@@ -154,7 +154,7 @@ fun CourseManageScreen(
                 LazyColumn(
                     state = listState,
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 88.dp),
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = topPad + 8.dp, bottom = 88.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     // ponytail: 门数跟标题走了，列表头不再摆第二份

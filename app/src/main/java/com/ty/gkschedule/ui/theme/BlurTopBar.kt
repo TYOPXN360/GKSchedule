@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.asComposeRenderEffect
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.layer.GraphicsLayer
 import androidx.compose.ui.graphics.layer.drawLayer
@@ -57,8 +58,8 @@ fun BlurLargeTopBar(
         windowInsets = windowInsets,
         scrollBehavior = scrollBehavior,
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = barBg,
-            scrolledContainerColor = barBg
+            containerColor = androidx.compose.ui.graphics.Color.Transparent,
+            scrolledContainerColor = androidx.compose.ui.graphics.Color.Transparent
         ),
         modifier = Modifier
             .onGloballyPositioned { barPos.value = it.positionInRoot() }
@@ -69,7 +70,10 @@ fun BlurLargeTopBar(
                     blurred.record {
                         translate(srcPos.x - barPos.value.x, srcPos.y - barPos.value.y) { drawLayer(backdrop) }
                     }
-                    drawLayer(blurred)
+                    // ponytail: 高斯核半径24dp，糊点会渗出~72px；clip到自身bounds防污染下方内容
+                    clipRect {
+                        drawLayer(blurred)
+                    }
                     drawRect(barBg)
                 }
                 drawContent()
@@ -106,8 +110,8 @@ fun BlurTopBar(
         actions = actions,
         scrollBehavior = scrollBehavior,
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = barBg,
-            scrolledContainerColor = barBg
+            containerColor = androidx.compose.ui.graphics.Color.Transparent,
+            scrolledContainerColor = androidx.compose.ui.graphics.Color.Transparent
         ),
         modifier = Modifier
             .onGloballyPositioned { barPos.value = it.positionInRoot() }
@@ -118,7 +122,10 @@ fun BlurTopBar(
                     blurred.record {
                         translate(srcPos.x - barPos.value.x, srcPos.y - barPos.value.y) { drawLayer(backdrop) }
                     }
-                    drawLayer(blurred)
+                    // ponytail: 高斯核半径24dp，糊点会渗出~72px；clip到自身bounds防污染下方内容
+                    clipRect {
+                        drawLayer(blurred)
+                    }
                     drawRect(barBg)
                 }
                 drawContent()
