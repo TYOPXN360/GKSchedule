@@ -266,15 +266,24 @@ Column(
         )
     }
 
-    // Re-login dialog (captcha only)
+    // Re-login dialog (captcha only) — 只糊卡片不糊全屏，Dialog + BlurCard 载体等大
     if (showReloginDialog) {
         var captcha by remember { mutableStateOf("") }
-        AlertDialog(
-            onDismissRequest = { showReloginDialog = false },
-            title = { Text("重新登录") },
-            text = {
-                Column {
-                    Text("请输入验证码", style = MaterialTheme.typography.bodyMedium)
+        androidx.compose.ui.window.Dialog(onDismissRequest = { showReloginDialog = false }) {
+            com.ty.gkschedule.ui.theme.BlurCard(
+                enabled = true,
+                modifier = Modifier.fillMaxWidth(),
+                backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f),
+                cornerRadiusDp = 28f
+            ) {
+                Column(modifier = Modifier.padding(24.dp)) {
+                    Text(
+                        text = "教务系统登录过期",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("请输入验证码重新登录", style = MaterialTheme.typography.bodyMedium)
                     Spacer(modifier = Modifier.height(12.dp))
                     if (captchaImageBase64 != null && captchaImageBase64.isNotEmpty()) {
                         val bitmap = remember(captchaImageBase64) {
@@ -302,23 +311,25 @@ Column(
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true
                     )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        TextButton(onClick = { showReloginDialog = false }) { Text(stringResource(R.string.cancel)) }
+                        TextButton(
+                            onClick = {
+                                if (captcha.isNotBlank()) {
+                                    onQuickRelogin(captcha)
+                                    showReloginDialog = false
+                                }
+                            },
+                            enabled = captcha.isNotBlank()
+                        ) { Text("登录") }
+                    }
                 }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        if (captcha.isNotBlank()) {
-                            onQuickRelogin(captcha)
-                            showReloginDialog = false
-                        }
-                    },
-                    enabled = captcha.isNotBlank()
-                ) { Text("登录") }
-            },
-            dismissButton = {
-                TextButton(onClick = { showReloginDialog = false }) { Text(stringResource(R.string.cancel)) }
             }
-        )
+        }
     }
 }
 

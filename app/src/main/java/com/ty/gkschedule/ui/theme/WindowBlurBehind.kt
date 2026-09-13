@@ -1,7 +1,7 @@
 package com.ty.gkschedule.ui.theme
 
-import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
+import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.LayerDrawable
 import android.os.Build
 import android.view.View
@@ -10,15 +10,19 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 
 // ponytail: 卡片区域毛玻璃——BackgroundBlurDrawable矩形=载体bounds，只糊卡片不糊全屏
 // decor全屏挂会整屏糊，载体等大View+LayerDrawable合成才是doubaoime原意
+// ponytail: attach时序——factory瞬间未挂载getViewRootImpl=null，监听+post+update三保险重试
 @Composable
 fun BlurCard(
     enabled: Boolean,
@@ -29,20 +33,36 @@ fun BlurCard(
     content: @Composable BoxScope.() -> Unit,
 ) {
     val view = LocalView.current
-    Box(modifier) {
+    val shape = RoundedCornerShape(cornerRadiusDp.dp)
+    Box(modifier = modifier.clip(shape)) {
         if (enabled && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             AndroidView(
                 factory = { ctx ->
                     View(ctx).apply {
-                        val d = applyBlur(this, view, radiusDp, cornerRadiusDp, backgroundColor)
-                        android.util.Log.d("blurcard", "applied=${d != null}")
-                        if (d == null && backgroundColor != Color.Unspecified) {
-                            setBackgroundColor(backgroundColor.copy(alpha = 1f).toArgb())
+                        val attachListener = object : View.OnAttachStateChangeListener {
+                            override fun onViewAttachedToWindow(v: View) {
+                                applyBlur(v, view, radiusDp, cornerRadiusDp, backgroundColor)
+                            }
+                            override fun onViewDetachedFromWindow(v: View) {}
+                        }
+                        addOnAttachStateChangeListener(attachListener)
+                        if (isAttachedToWindow) {
+                            applyBlur(this, view, radiusDp, cornerRadiusDp, backgroundColor)
+                        } else {
+                            post {
+                                if (isAttachedToWindow) {
+                                    applyBlur(this, view, radiusDp, cornerRadiusDp, backgroundColor)
+                                }
+                            }
                         }
                     }
                 },
                 modifier = Modifier.matchParentSize(),
-                update = {},
+                update = { v ->
+                    if (v.isAttachedToWindow) {
+                        applyBlur(v, view, radiusDp, cornerRadiusDp, backgroundColor)
+                    }
+                }
             )
         } else if (backgroundColor != Color.Unspecified) {
             Spacer(Modifier.matchParentSize().background(backgroundColor))
@@ -58,15 +78,23 @@ private fun applyBlur(
         .invoke(composeView) ?: return null
     val blur = root.javaClass.getDeclaredMethod("createBackgroundBlurDrawable").apply { isAccessible = true }
         .invoke(root) as? Drawable ?: return null
-    val px = (radiusDp * host.resources.displayMetrics.density).toInt().coerceIn(1, 150)
+    val density = host.resources.displayMetrics.density
+    val px = (radiusDp * density).toInt().coerceIn(1, 150)
+    val cornerPx = cornerRadiusDp * density
     blur.javaClass.getDeclaredMethod("setBlurRadius", Int::class.javaPrimitiveType)
         .apply { isAccessible = true }.invoke(blur, px)
     runCatching {
         blur.javaClass.getDeclaredMethod("setCornerRadius", Float::class.javaPrimitiveType)
-            .apply { isAccessible = true }.invoke(blur, cornerRadiusDp * host.resources.displayMetrics.density)
+            .apply { isAccessible = true }.invoke(blur, cornerPx)
     }
-    val layers = if (backgroundColor != Color.Unspecified)
-        arrayOf(blur, ColorDrawable(backgroundColor.toArgb())) else arrayOf(blur)
+    // ponytail: GradientDrawable带圆角，ColorDrawable直角会盖住模糊层
+    val tintDrawable = if (backgroundColor != Color.Unspecified) {
+        GradientDrawable().apply {
+            setColor(backgroundColor.toArgb())
+            cornerRadius = cornerPx
+        }
+    } else null
+    val layers = if (tintDrawable != null) arrayOf(blur, tintDrawable) else arrayOf(blur)
     host.background = LayerDrawable(layers)
     blur
 }.getOrNull()
