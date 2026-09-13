@@ -1,6 +1,6 @@
 package com.ty.gkschedule.ui.exam
 import com.ty.gkschedule.ui.theme.GKSwitch
-import com.ty.gkschedule.ui.theme.windowBlurBehind
+import com.ty.gkschedule.ui.theme.BlurCard
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -356,38 +356,43 @@ fun ExamScreen(
         )
     }
 
-    // Re-login dialog — 独立窗口糊自己背后，windowBlurBehind设Dialog自己窗口
+    // Re-login dialog — 只糊卡片不糊全屏，Dialog+BlurCard载体等大
     if (showReloginDialog) {
         var captcha by remember { mutableStateOf("") }
-        AlertDialog(
-            onDismissRequest = onDismissRelogin,
-            modifier = Modifier.windowBlurBehind(true),
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f),
-            title = { Text("教务系统登录过期") },
-            text = {
-                Column {
-                    Text("请输入验证码重新登录", style = MaterialTheme.typography.bodyMedium)
-                    Spacer(modifier = Modifier.height(12.dp))
-                    if (!captchaImageBase64.isNullOrEmpty()) {
-                        val bitmap = remember(captchaImageBase64) {
-                            try {
-                                val bytes = android.util.Base64.decode(captchaImageBase64, android.util.Base64.DEFAULT)
-                                android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-                            } catch (_: Exception) { null }
-                        }
-                        if (bitmap != null) {
-                            Card(modifier = Modifier.size(width = 120.dp, height = 56.dp).clickable { onRefreshCaptcha() }, shape = MaterialTheme.shapes.extraSmall) {
-                                Image(bitmap = bitmap.asImageBitmap(), contentDescription = "Captcha", modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Fit)
-                            }
+        androidx.compose.ui.window.Dialog(onDismissRequest = onDismissRelogin) {
+            BlurCard(
+                enabled = true,
+                modifier = Modifier.fillMaxWidth(),
+                backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f),
+            ) {
+            Column(modifier = Modifier.padding(24.dp)) {
+                Text("教务系统登录过期", style = MaterialTheme.typography.headlineSmall)
+                Spacer(modifier = Modifier.height(16.dp))
+                Text("请输入验证码重新登录", style = MaterialTheme.typography.bodyMedium)
+                Spacer(modifier = Modifier.height(12.dp))
+                if (!captchaImageBase64.isNullOrEmpty()) {
+                    val bitmap = remember(captchaImageBase64) {
+                        try {
+                            val bytes = android.util.Base64.decode(captchaImageBase64, android.util.Base64.DEFAULT)
+                            android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                        } catch (_: Exception) { null }
+                    }
+                    if (bitmap != null) {
+                        Card(modifier = Modifier.size(width = 120.dp, height = 56.dp).clickable { onRefreshCaptcha() }, shape = MaterialTheme.shapes.extraSmall) {
+                            Image(bitmap = bitmap.asImageBitmap(), contentDescription = "Captcha", modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Fit)
                         }
                     }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(value = captcha, onValueChange = { captcha = it }, label = { Text("验证码") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
                 }
-            },
-            confirmButton = { TextButton(onClick = { if (captcha.isNotBlank()) { onQuickRelogin(captcha); onDismissRelogin() } }, enabled = captcha.isNotBlank()) { Text("登录") } },
-            dismissButton = { TextButton(onClick = onDismissRelogin) { Text("取消") } }
-        )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(value = captcha, onValueChange = { captcha = it }, label = { Text("验证码") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+                Spacer(modifier = Modifier.height(16.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    TextButton(onClick = onDismissRelogin) { Text("取消") }
+                    TextButton(onClick = { if (captcha.isNotBlank()) { onQuickRelogin(captcha); onDismissRelogin() } }, enabled = captcha.isNotBlank()) { Text("登录") }
+                }
+            }
+            }
+        }
     }
 }
 

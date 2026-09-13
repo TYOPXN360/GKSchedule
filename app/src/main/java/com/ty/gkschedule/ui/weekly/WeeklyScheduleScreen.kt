@@ -30,7 +30,7 @@ import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import com.ty.gkschedule.ui.theme.windowBlurBehind
+import com.ty.gkschedule.ui.theme.BlurCard
 import top.yukonga.miuix.kmp.blur.blur
 import top.yukonga.miuix.kmp.blur.drawBackdrop
 import top.yukonga.miuix.kmp.blur.layerBackdrop
@@ -621,14 +621,18 @@ fun ScheduleItemDetailSheet(item: ScheduleItem, getStartTime: (Int) -> String, g
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(),
-        // ponytail: Sheet独立窗口糊自己背后——windowBlurBehind设自己窗口，容器半透明透糊
-        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f),
+        // ponytail: 只糊卡片不糊全屏——BlurCard载体等大+LayerDrawable合成
+        containerColor = Color.Transparent,
         scrimColor = Color.Transparent
     ) {
+        BlurCard(
+            enabled = true,
+            modifier = Modifier.fillMaxWidth(),
+            backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f),
+        ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .windowBlurBehind(true)
                 .padding(horizontal = 24.dp)
                 .padding(bottom = 32.dp)
         ) {
@@ -668,6 +672,7 @@ fun ScheduleItemDetailSheet(item: ScheduleItem, getStartTime: (Int) -> String, g
                 Text("编辑")
             }
         }
+        }
     }
 }
 
@@ -685,13 +690,17 @@ private fun WeekPickerSheet(totalWeeks: Int, currentWeek: Int, onWeekSelected: (
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(),
-        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f),
+        containerColor = Color.Transparent,
         scrimColor = Color.Transparent
     ) {
+        BlurCard(
+            enabled = true,
+            modifier = Modifier.fillMaxWidth(),
+            backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f),
+        ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .windowBlurBehind(true)
                 .padding(horizontal = 24.dp, vertical = 8.dp)
                 .padding(bottom = 32.dp)
         ) {
@@ -712,6 +721,7 @@ private fun WeekPickerSheet(totalWeeks: Int, currentWeek: Int, onWeekSelected: (
                         } else Spacer(modifier = Modifier.weight(1f))
                     }
                 }
+        }
         }
     }
 }
