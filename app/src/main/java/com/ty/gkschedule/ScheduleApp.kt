@@ -96,14 +96,10 @@ private fun FloatingPillNavBar(
         )
     }
     // ponytail: 滚动隐藏走位移不断组合，collapsed/p保住不断动画
+    // ponytail: 位移挂Row自身(size=barH)，挂全屏Box会位移整屏高=瞬间消失
     val slide = remember { Animatable(0f) }
     LaunchedEffect(visible) { slide.animateTo(if (visible) 0f else 1f, spring(dampingRatio = 1f, stiffness = 300f)) }
-    BoxWithConstraints(
-        modifier = Modifier.fillMaxSize().graphicsLayer {
-            translationY = slide.value * size.height
-            alpha = 1f - slide.value
-        }
-    ) {
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         // ponytail: 截屏瞬间整条gone，比alpha=0少一帧合成，rootView.draw抓不到残影
         if (screenshotHidden) return@BoxWithConstraints
         val screenW = maxWidth
@@ -154,6 +150,8 @@ private fun FloatingPillNavBar(
                 .height(barH)
                 .graphicsLayer {
                     translationX = -p.value * (swPx / 2f + size.width / 2f)
+                    translationY = slide.value * size.height
+                    alpha = 1f - slide.value
                 }
                 .clip(androidx.compose.foundation.shape.CircleShape)
                 .then(
@@ -225,6 +223,8 @@ private fun FloatingPillNavBar(
                 .height(barH)
                 .graphicsLayer {
                     translationX = -(1f - p.value) * size.width
+                    translationY = slide.value * size.height
+                    alpha = 1f - slide.value
                 }
                 .clip(
                     androidx.compose.foundation.shape.RoundedCornerShape(

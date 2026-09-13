@@ -31,7 +31,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import com.ty.gkschedule.ui.theme.BlurCard
-import top.yukonga.miuix.kmp.blur.blendColors
 import top.yukonga.miuix.kmp.blur.blur
 import top.yukonga.miuix.kmp.blur.drawBackdrop
 import top.yukonga.miuix.kmp.blur.layerBackdrop
@@ -454,11 +453,6 @@ fun WeeklyScheduleScreen(
             // ponytail: FAB糊——miuix drawBackdrop吃课表源，关模糊开关时回退纯色；blurEffect开关透传
             // ponytail: clip shape与按钮外轮廓同源——不一致必漏角
             val fabShape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
-            val fabToggleBg = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.82f)
-            val fabRefreshBg = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.82f)
-            val fabAddBg = MaterialTheme.colorScheme.primary.copy(alpha = 0.82f)
-            val fabShotBg = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.82f)
-            val fabBackBg = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.82f)
             FloatingActionButton(
                 onClick = { com.ty.gkschedule.util.HapticFeedback.light(hapticView); fabExpanded = !fabExpanded },
                 shape = fabShape,
@@ -468,13 +462,9 @@ fun WeeklyScheduleScreen(
                     .drawBackdrop(
                         backdrop = backdrop,
                         shape = { fabShape },
-                        effects = {
-                            blur(28.dp.toPx())
-                            blendColors(top.yukonga.miuix.kmp.blur.BlurColors(brightness = 0.06f, saturation = 1.15f))
-                        },
-                        onDrawSurface = { drawRect(fabToggleBg) }
+                        effects = { blur(28.dp.toPx()) }
                     ),
-                containerColor = androidx.compose.ui.graphics.Color.Transparent,
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f),
                 contentColor = MaterialTheme.colorScheme.onSurfaceVariant
             ) { Text(if (fabExpanded) "—" else "+", style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center, modifier = Modifier.width(20.dp)) }
 
@@ -492,13 +482,9 @@ fun WeeklyScheduleScreen(
                         modifier = Modifier.drawBackdrop(
                             backdrop = backdrop,
                             shape = { fabShape },
-                            effects = {
-                                blur(28.dp.toPx())
-                                blendColors(top.yukonga.miuix.kmp.blur.BlurColors(brightness = 0.06f, saturation = 1.15f))
-                            },
-                            onDrawSurface = { drawRect(fabRefreshBg) }
+                            effects = { blur(28.dp.toPx()) }
                         ),
-                        containerColor = androidx.compose.ui.graphics.Color.Transparent,
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.75f),
                         contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                     ) {
                                                 if (isRefreshing)  CircularProgressIndicator(modifier = Modifier.size(24.dp)) else Icon(Icons.Default.Refresh, "Refresh")
@@ -512,13 +498,9 @@ fun WeeklyScheduleScreen(
                         modifier = Modifier.drawBackdrop(
                             backdrop = backdrop,
                             shape = { fabShape },
-                            effects = {
-                                blur(28.dp.toPx())
-                                blendColors(top.yukonga.miuix.kmp.blur.BlurColors(brightness = 0.06f, saturation = 1.15f))
-                            },
-                            onDrawSurface = { drawRect(fabAddBg) }
+                            effects = { blur(28.dp.toPx()) }
                         ),
-                        containerColor = androidx.compose.ui.graphics.Color.Transparent,
+                        containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.75f),
                         contentColor = MaterialTheme.colorScheme.onPrimary
                     ) {
                         Icon(Icons.Default.Add, stringResource(R.string.add_course))
@@ -550,13 +532,9 @@ fun WeeklyScheduleScreen(
                         modifier = Modifier.drawBackdrop(
                             backdrop = backdrop,
                             shape = { fabShape },
-                            effects = {
-                                blur(28.dp.toPx())
-                                blendColors(top.yukonga.miuix.kmp.blur.BlurColors(brightness = 0.06f, saturation = 1.15f))
-                            },
-                            onDrawSurface = { drawRect(fabShotBg) }
+                            effects = { blur(28.dp.toPx()) }
                         ),
-                        containerColor = androidx.compose.ui.graphics.Color.Transparent, contentColor = MaterialTheme.colorScheme.onTertiaryContainer) { Icon(Icons.Default.CropFree, "Screenshot") }
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.75f), contentColor = MaterialTheme.colorScheme.onTertiaryContainer) { Icon(Icons.Default.CropFree, "Screenshot") }
                     }
             } // HorizontalPager
 
@@ -574,13 +552,9 @@ fun WeeklyScheduleScreen(
                     modifier = Modifier.drawBackdrop(
                         backdrop = backdrop,
                         shape = { fabShape },
-                        effects = {
-                            blur(28.dp.toPx())
-                            blendColors(top.yukonga.miuix.kmp.blur.BlurColors(brightness = 0.06f, saturation = 1.15f))
-                        },
-                        onDrawSurface = { drawRect(fabBackBg) }
+                        effects = { blur(28.dp.toPx()) }
                     ),
-                    containerColor = androidx.compose.ui.graphics.Color.Transparent,
+                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.75f),
                     contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 ) { Icon(if (currentWeek > realCurrentWeek) Icons.Default.ChevronLeft else Icons.Default.ChevronRight, stringResource(R.string.back_to_current_week)) }
             }

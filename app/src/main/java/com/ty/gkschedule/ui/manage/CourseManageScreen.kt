@@ -62,11 +62,9 @@ fun CourseManageScreen(
     LaunchedEffect(listState.firstVisibleItemIndex, listState.firstVisibleItemScrollOffset) {
         val idx = listState.firstVisibleItemIndex
         val off = listState.firstVisibleItemScrollOffset
-        // ponytail: 24px阈值防停顿抖动翻转
-        val delta = off - lastOffset
-        if (idx != lastIndex) { onScrollHidePill(idx > lastIndex) }
-        else if (kotlin.math.abs(delta) > 24) { onScrollHidePill(delta > 0); lastOffset = off }
-        lastIndex = idx
+        // ponytail: 24px阈值防停顿抖动翻转；跨item同步lastOffset防旧值翻转
+        if (idx != lastIndex) { onScrollHidePill(idx > lastIndex); lastOffset = off; lastIndex = idx }
+        else if (kotlin.math.abs(off - lastOffset) > 24) { onScrollHidePill(off > lastOffset); lastOffset = off }
     }
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
@@ -129,10 +127,7 @@ fun CourseManageScreen(
                 modifier = Modifier.drawBackdrop(
                     backdrop = backdrop,
                     shape = { fabShape },
-                    effects = {
-                        blur(28.dp.toPx())
-                        blendColors(top.yukonga.miuix.kmp.blur.BlurColors(brightness = 0.06f, saturation = 1.15f))
-                    },
+                    effects = { blur(28.dp.toPx()) },
                     onDrawSurface = { drawRect(fabBrand.copy(alpha = 0.82f)) }
                 ),
                 containerColor = androidx.compose.ui.graphics.Color.Transparent,
@@ -143,7 +138,8 @@ fun CourseManageScreen(
         }
     ) { padding ->
         // ponytail: miuix源层全屏，避让走contentPadding，item滚动穿过顶栏下方
-        val topPad = padding.calculateTopPadding()
+        // ponytail: 避让按折叠后高度算，卡片藏进顶栏/状态栏底下才有沉浸；实时顶栏高会留大片空白
+        val immersiveTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 64.dp
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -162,7 +158,7 @@ fun CourseManageScreen(
                 LazyColumn(
                     state = listState,
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = topPad + 8.dp, bottom = 88.dp),
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = immersiveTop, bottom = 88.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     // ponytail: 门数跟标题走了，列表头不再摆第二份
