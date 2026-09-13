@@ -161,13 +161,15 @@ fun WeeklyScheduleScreen(
         },
         modifier = Modifier.fillMaxSize(),
         state = ptrState,
-        // ponytail: M3E LoadingIndicator下拉头——位移/显隐全交IndicatorBox，offset只调释放位
+        // ponytail: M3E花团下拉头——maxDistance压住周字+半透明底透糊
         indicator = {
             @OptIn(androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class)
             androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.LoadingIndicator(
                 modifier = Modifier.align(Alignment.TopCenter),
                 state = ptrState,
-                isRefreshing = isRefreshing
+                isRefreshing = isRefreshing,
+                maxDistance = 160.dp,
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f)
             )
         }
     ) {
