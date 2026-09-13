@@ -367,8 +367,13 @@ fun ScheduleApp(
         }
     ) { innerPadding ->
         // ponytail: miuix源层——内容标layerBackdrop吃糊；药丸挂兄弟层(环=RenderThread栈溢出，见08c190d)
+        // ponytail: 外层不垫状态栏，各Tab自己吃（今日/课表无顶栏挂statusBarsPadding，管理页顶栏自己吃）
         val backdrop = top.yukonga.miuix.kmp.blur.rememberLayerBackdrop()
-        Box(Modifier.padding(innerPadding)) {
+        Box(
+            Modifier
+                .fillMaxSize()
+                .padding(bottom = innerPadding.calculateBottomPadding())
+        ) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()

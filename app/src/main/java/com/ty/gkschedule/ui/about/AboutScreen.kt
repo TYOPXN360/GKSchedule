@@ -54,6 +54,7 @@ Column(
             modifier = Modifier
                 .widthIn(max = 560.dp)
                 .fillMaxSize()
+                .statusBarsPadding()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally

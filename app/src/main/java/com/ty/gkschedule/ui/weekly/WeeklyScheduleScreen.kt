@@ -170,6 +170,7 @@ fun WeeklyScheduleScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .statusBarsPadding()
                 .layerBackdrop(backdrop)
                 .background(MaterialTheme.colorScheme.surface)
         ) {
