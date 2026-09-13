@@ -42,6 +42,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -161,24 +162,43 @@ fun WeeklyScheduleScreen(
         },
         modifier = Modifier.fillMaxSize(),
         state = ptrState,
-        // ponytail: M3E花团下拉头——maxDistance压住周字+半透明底透糊
+        // ponytail: 下拉头自组毛玻璃球——位移/淡入必须在 drawBackdrop 外层，否则球不动、花团在球里跑
         indicator = {
+            val hlDark = com.ty.gkschedule.ui.theme.LocalAppIsDark.current
+            val hlStroke = if (hlDark) {
+                top.yukonga.miuix.kmp.blur.highlight.Highlight.GlassStrokeSmallDark
+            } else {
+                top.yukonga.miuix.kmp.blur.highlight.Highlight.GlassStrokeSmallLight
+            }
+            // ponytail: 1.5.0-alpha27 里这个属性叫 distanceFraction（旧名 progress 已不存在）
+            val progress = ptrState.distanceFraction.coerceIn(0f, 1f)
+            // 跟手下移上限 160dp（压住周选择器）；刷新中停靠位≈Size/2+Spacing
+            val offsetDp = if (isRefreshing) 30.dp else 160.dp * progress
             @OptIn(androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class)
-            androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.LoadingIndicator(
-                // ponytail: 源纹理从状态栏下方起才有内容，糊层必须落在其内，否则采到空洞=纯黑
+            Box(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .statusBarsPadding()
+                    .offset(y = offsetDp)
+                    .graphicsLayer { alpha = if (isRefreshing) 1f else progress }
                     .drawBackdrop(
                         backdrop = backdrop,
                         shape = { androidx.compose.foundation.shape.CircleShape },
                         effects = { blur(28.dp.toPx()) },
-                    ),
-                state = ptrState,
-                isRefreshing = isRefreshing,
-                maxDistance = 160.dp,
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.40f)
-            )
+                        highlight = { hlStroke },
+                    )
+                    .background(
+                        MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.40f),
+                        androidx.compose.foundation.shape.CircleShape,
+                    )
+                    .size(40.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                androidx.compose.material3.LoadingIndicator(
+                    modifier = Modifier.size(24.dp),
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
         }
     ) {
         val coroutineScope = rememberCoroutineScope()
