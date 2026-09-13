@@ -125,12 +125,13 @@ fun CourseManageScreen(
             FloatingActionButton(
                 onClick = onAddCourse,
                 shape = fabShape,
+                elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp),
                 modifier = Modifier.drawBackdrop(
                     backdrop = backdrop,
                     shape = { fabShape },
-                    effects = { blur(28.dp.toPx()); padding = 0f }
+                    effects = { blur(28.dp.toPx()) }
                 ),
-                containerColor = if (blurEnabled) MaterialTheme.colorScheme.primary.copy(alpha = 0.75f) else MaterialTheme.colorScheme.primary
+                containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.75f)
             ) {
                 Icon(Icons.Default.Add, stringResource(R.string.add_course))
             }
