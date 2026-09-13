@@ -38,6 +38,9 @@ class MainActivity : AppCompatActivity() {
         private const val KEY_APPLIED_LANG = "applied_lang"
         private const val DISCLAIMER_PREF = "disclaimer_prefs"
         private const val KEY_DISCLAIMER_AGREED = "disclaimer_agreed"
+
+        // ponytail: 系统跨窗口模糊是否可用；compose层只读，不自己调API
+        @Volatile var applyPillBlur: Boolean = false
     }
 
     override fun attachBaseContext(newBase: Context) {
@@ -75,8 +78,14 @@ class MainActivity : AppCompatActivity() {
         requestNotificationPermissionIfNeeded()
 
         // Request high refresh rate without changing resolution
+        // ponytail: 跨窗口模糊总开关；开了才允许模糊，不开后面全白搭
         window.attributes = window.attributes.apply {
             preferredRefreshRate = display?.supportedModes?.maxByOrNull { it.refreshRate }?.refreshRate ?: 120f
+        }
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            windowManager.addCrossWindowBlurEnabledListener {
+                applyPillBlur = it
+            }
         }
 
         setContent {

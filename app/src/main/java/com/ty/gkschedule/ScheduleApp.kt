@@ -126,10 +126,18 @@ private fun FloatingPillNavBar(
         val barH = iconSize + itemVPad * 2 + pillHPad * 2
         val swPx = with(LocalDensity.current) { screenW.toPx() }
         // 药丸：BottomCenter，p=1时右边缘越过x=0整条出左屏
-        // ponytail: 系统RenderEffect backdrop blur，底色只给60%透明度让课表透上来取色
-        val pillBg = MaterialTheme.colorScheme.surfaceContainerHigh.copy(
-            alpha = if (blurEnabled) 0.6f else 1f
-        )
+        // ponytail: 窗口blurBehind(系统API)+Translucent，未开/不支持时回退纯色
+        val crossBlur = blurEnabled &&
+            android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S &&
+            com.ty.gkschedule.MainActivity.applyPillBlur
+        val pillBg = if (crossBlur) {
+            MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.55f)
+        } else {
+            MaterialTheme.colorScheme.surfaceContainerHigh
+        }
+        // ponytail: 这俩只负责画backdrop，不管图标文字（画在它俩外层）
+        val pillBehind = Modifier.blurBehind(enabled = crossBlur)
+        val bookmarkBehind = Modifier.blurBehind(enabled = crossBlur)
         Row(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -140,7 +148,7 @@ private fun FloatingPillNavBar(
                 }
                 .clip(androidx.compose.foundation.shape.CircleShape)
                 .background(color = pillBg)
-                .then(if (blurEnabled && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) Modifier.blur(24.dp) else Modifier)
+                .then(pillBehind)
                 .padding(horizontal = pillHPad, vertical = pillHPad),
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
@@ -210,7 +218,7 @@ private fun FloatingPillNavBar(
                     )
                 )
                 .background(color = pillBg)
-                .then(if (blurEnabled && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) Modifier.blur(24.dp) else Modifier)
+                .then(bookmarkBehind)
                 .clickable(enabled = p.value > 0.5f) { collapsed = false }
                 .padding(start = 6.dp, end = 12.dp, top = itemVPad, bottom = itemVPad),
             verticalAlignment = Alignment.CenterVertically
