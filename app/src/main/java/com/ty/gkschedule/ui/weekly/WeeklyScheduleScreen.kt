@@ -192,22 +192,37 @@ fun WeeklyScheduleScreen(
                     ),
                 contentAlignment = Alignment.Center,
             ) {
-                @OptIn(androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class)
-                androidx.compose.material3.ContainedLoadingIndicator(
-                    progress = { ptrState.distanceFraction },
-                    modifier = Modifier
-                        .size(
-                            width = androidx.compose.material3.LoadingIndicatorDefaults.ContainerWidth,
-                            height = androidx.compose.material3.LoadingIndicatorDefaults.ContainerHeight,
+                // ponytail: 官方同款分支——刷新中不能喂 progress，否则 distanceFraction 停在 1f，花团被钉死在满进度那一帧
+                androidx.compose.animation.Crossfade(targetState = isRefreshing) { refreshing ->
+                    if (refreshing) {
+                        @OptIn(androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class)
+                        androidx.compose.material3.ContainedLoadingIndicator(
+                            modifier = Modifier.size(
+                                width = androidx.compose.material3.LoadingIndicatorDefaults.ContainerWidth,
+                                height = androidx.compose.material3.LoadingIndicatorDefaults.ContainerHeight,
+                            ),
+                            containerColor = androidx.compose.ui.graphics.Color.Transparent,
+                            indicatorColor = MaterialTheme.colorScheme.primary,
                         )
-                        // 官方同款：超过 1 之后整颗连续自转，避免跳变
-                        .graphicsLayer {
-                            val f = ptrState.distanceFraction
-                            if (f > 1f) rotationZ = -(f - 1f) * 180f
-                        },
-                    containerColor = androidx.compose.ui.graphics.Color.Transparent,
-                    indicatorColor = MaterialTheme.colorScheme.primary,
-                )
+                    } else {
+                        @OptIn(androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class)
+                        androidx.compose.material3.ContainedLoadingIndicator(
+                            progress = { ptrState.distanceFraction },
+                            modifier = Modifier
+                                .size(
+                                    width = androidx.compose.material3.LoadingIndicatorDefaults.ContainerWidth,
+                                    height = androidx.compose.material3.LoadingIndicatorDefaults.ContainerHeight,
+                                )
+                                // 官方同款：超过 1 之后整颗连续自转，避免跳变
+                                .graphicsLayer {
+                                    val f = ptrState.distanceFraction
+                                    if (f > 1f) rotationZ = -(f - 1f) * 180f
+                                },
+                            containerColor = androidx.compose.ui.graphics.Color.Transparent,
+                            indicatorColor = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                }
             }
         }
     ) {
