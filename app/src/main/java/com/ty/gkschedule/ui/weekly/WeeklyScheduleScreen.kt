@@ -488,7 +488,11 @@ fun WeeklyScheduleScreen(
                         containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.75f),
                         contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                     ) {
-                                                if (isRefreshing)  CircularProgressIndicator(modifier = Modifier.size(24.dp)) else Icon(Icons.Default.Refresh, "Refresh")
+                        // ponytail: MD3E花瓣形变刷新图标，动态取色跟壁纸走
+                        com.ty.gkschedule.ui.theme.ExpressiveReloadIcon(
+                            isRefreshing = isRefreshing,
+                            size = 26.dp
+                        )
                     }
                 }
                 AnimatedVisibility(visible = fabExpanded, enter = slideInVertically(initialOffsetY = { it }) + fadeIn(), exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()) {
