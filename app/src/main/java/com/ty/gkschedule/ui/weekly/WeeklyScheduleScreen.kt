@@ -88,6 +88,7 @@ fun WeeklyScheduleScreen(
     realCurrentWeek: Int = currentWeek,
     firstDayOfWeek: Int = 1,
     diffColorPerWeek: Boolean = false,
+    blurEnabled: Boolean = true,
     getStartTime: (Int) -> String = { "" },
     getEndTime: (Int) -> String = { "" }
 ) {
@@ -454,14 +455,15 @@ fun WeeklyScheduleScreen(
             FloatingActionButton(
                 onClick = { com.ty.gkschedule.util.HapticFeedback.light(hapticView); fabExpanded = !fabExpanded },
                 shape = fabShape,
+                elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp),
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .drawBackdrop(
                         backdrop = backdrop,
                         shape = { fabShape },
-                        effects = { blur(28.dp.toPx()) }
+                        effects = { blur(28.dp.toPx()); padding = 0f }
                     ),
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f),
+                containerColor = if (blurEnabled) MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f) else MaterialTheme.colorScheme.surfaceContainerHigh,
                 contentColor = MaterialTheme.colorScheme.onSurfaceVariant
             ) { Text(if (fabExpanded) "—" else "+", style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center, modifier = Modifier.width(20.dp)) }
 
@@ -478,9 +480,9 @@ fun WeeklyScheduleScreen(
                         modifier = Modifier.drawBackdrop(
                             backdrop = backdrop,
                             shape = { fabShape },
-                            effects = { blur(28.dp.toPx()) }
+                            effects = { blur(28.dp.toPx()); padding = 0f }
                         ),
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.75f),
+                        containerColor = if (blurEnabled) MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.75f) else MaterialTheme.colorScheme.secondaryContainer,
                         contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                     ) {
                                                 if (isRefreshing)  CircularProgressIndicator(modifier = Modifier.size(24.dp)) else Icon(Icons.Default.Refresh, "Refresh")
@@ -493,9 +495,9 @@ fun WeeklyScheduleScreen(
                         modifier = Modifier.drawBackdrop(
                             backdrop = backdrop,
                             shape = { fabShape },
-                            effects = { blur(28.dp.toPx()) }
+                            effects = { blur(28.dp.toPx()); padding = 0f }
                         ),
-                        containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.75f),
+                        containerColor = if (blurEnabled) MaterialTheme.colorScheme.primary.copy(alpha = 0.75f) else MaterialTheme.colorScheme.primary,
                         contentColor = MaterialTheme.colorScheme.onPrimary
                     ) {
                         Icon(Icons.Default.Add, stringResource(R.string.add_course))
@@ -523,11 +525,11 @@ fun WeeklyScheduleScreen(
                                 android.widget.Toast.makeText(context, "截图失败: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
                             }
                         }
-                    }, shape = fabShape, containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.75f), contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                    }, shape = fabShape, containerColor = if (blurEnabled) MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.75f) else MaterialTheme.colorScheme.tertiaryContainer, contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
                         modifier = Modifier.drawBackdrop(
                             backdrop = backdrop,
                             shape = { fabShape },
-                            effects = { blur(28.dp.toPx()) }
+                            effects = { blur(28.dp.toPx()); padding = 0f }
                         )) { Icon(Icons.Default.CropFree, "Screenshot") }
                     }
             } // HorizontalPager
@@ -545,9 +547,9 @@ fun WeeklyScheduleScreen(
                     modifier = Modifier.drawBackdrop(
                         backdrop = backdrop,
                         shape = { fabShape },
-                        effects = { blur(28.dp.toPx()) }
+                        effects = { blur(28.dp.toPx()); padding = 0f }
                     ),
-                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.75f),
+                    containerColor = if (blurEnabled) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.75f) else MaterialTheme.colorScheme.primaryContainer,
                     contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 ) { Icon(if (currentWeek > realCurrentWeek) Icons.Default.ChevronLeft else Icons.Default.ChevronRight, stringResource(R.string.back_to_current_week)) }
             }

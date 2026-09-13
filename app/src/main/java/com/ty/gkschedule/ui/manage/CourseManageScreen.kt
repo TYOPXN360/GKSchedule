@@ -128,9 +128,9 @@ fun CourseManageScreen(
                 modifier = Modifier.drawBackdrop(
                     backdrop = backdrop,
                     shape = { fabShape },
-                    effects = { blur(28.dp.toPx()) }
+                    effects = { blur(28.dp.toPx()); padding = 0f }
                 ),
-                containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.75f)
+                containerColor = if (blurEnabled) MaterialTheme.colorScheme.primary.copy(alpha = 0.75f) else MaterialTheme.colorScheme.primary
             ) {
                 Icon(Icons.Default.Add, stringResource(R.string.add_course))
             }
