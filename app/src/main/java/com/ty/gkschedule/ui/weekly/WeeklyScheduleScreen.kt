@@ -165,11 +165,19 @@ fun WeeklyScheduleScreen(
         indicator = {
             @OptIn(androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class)
             androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.LoadingIndicator(
-                modifier = Modifier.align(Alignment.TopCenter),
+                // ponytail: 源纹理从状态栏下方起才有内容，糊层必须落在其内，否则采到空洞=纯黑
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .statusBarsPadding()
+                    .drawBackdrop(
+                        backdrop = backdrop,
+                        shape = { androidx.compose.foundation.shape.CircleShape },
+                        effects = { blur(28.dp.toPx()) },
+                    ),
                 state = ptrState,
                 isRefreshing = isRefreshing,
                 maxDistance = 160.dp,
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f)
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.40f)
             )
         }
     ) {
