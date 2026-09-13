@@ -71,51 +71,56 @@ private fun FloatingPillNavBar(
     onNavigate: (Screen) -> Unit
 ) {
     var collapsed by remember { mutableStateOf(false) }
-    // ponytail: 悬浮模式下滚到底隐藏由调用方传pillHidden控制（课程管理下滑）；普通收起按钮另算
-    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+    // ponytail: 药丸与书签同一锚点(底中同一行)交叉淡入淡出；位置不动只换内容，天然同行
+    BoxWithConstraints(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.BottomCenter
+    ) {
         val screenW = maxWidth
         // 尺寸档：按屏宽分三档，小屏不再硬塞，全部等比缩小
         val iconSize = when {
-            screenW < 340.dp -> 20.dp
-            screenW < 400.dp -> 22.dp
-            else -> 24.dp
+            screenW < 340.dp -> 18.dp
+            screenW < 400.dp -> 20.dp
+            else -> 22.dp
         }
         val barBottom = 24.dp
         val pillHPad = when {
+            screenW < 340.dp -> 5.dp
+            screenW < 400.dp -> 6.dp
+            else -> 7.dp
+        }
+        val itemHPadBoth = when {
+            screenW < 340.dp -> 9.dp
+            screenW < 400.dp -> 10.dp
+            else -> 12.dp
+        }
+        val itemHPadSingle = when {
             screenW < 340.dp -> 8.dp
             screenW < 400.dp -> 9.dp
             else -> 10.dp
         }
-        val itemHPadBoth = when {
-            screenW < 340.dp -> 12.dp
-            screenW < 400.dp -> 14.dp
-            else -> 16.dp
-        }
-        val itemHPadSingle = when {
-            screenW < 340.dp -> 10.dp
-            screenW < 400.dp -> 11.dp
-            else -> 12.dp
-        }
         val itemVPad = when {
-            screenW < 340.dp -> 10.dp
-            else -> 12.dp
+            screenW < 340.dp -> 8.dp
+            else -> 9.dp
         }
-        val textStyle = if (screenW < 340.dp) MaterialTheme.typography.labelMedium else MaterialTheme.typography.titleSmall
+        val textStyle = MaterialTheme.typography.labelMedium
         val gapW = when {
-            screenW < 340.dp -> 4.dp
-            else -> 6.dp
+            screenW < 340.dp -> 3.dp
+            else -> 4.dp
         }
-        androidx.compose.animation.AnimatedVisibility(
-            visible = !collapsed,
+        // ponytail: 高度锁死单项高度，模式切换/选中补全只换内容不跳高
+        val barH = iconSize + itemVPad * 2 + pillHPad * 2
+        Box(
             modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(start = 12.dp, end = 12.dp, bottom = barBottom),
-            enter = slideInVertically(initialOffsetY = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideInSpec()) + fadeIn(com.ty.gkschedule.ui.theme.M3Motion.fadeInSpec()),
-            exit = slideOutHorizontally(
-                targetOffsetX = { -(it + 48) },
-                animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideOutSpec()
-            ) + fadeOut(com.ty.gkschedule.ui.theme.M3Motion.fadeOutSpec())
+                .padding(start = 12.dp, end = 12.dp, bottom = barBottom)
+                .height(barH),
+            contentAlignment = Alignment.Center
         ) {
+            androidx.compose.animation.AnimatedVisibility(
+                visible = !collapsed,
+                enter = fadeIn(com.ty.gkschedule.ui.theme.M3Motion.fadeInSpec()),
+                exit = fadeOut(com.ty.gkschedule.ui.theme.M3Motion.fadeOutSpec())
+            ) {
             Row(
                 modifier = Modifier
                     .background(
@@ -176,20 +181,11 @@ private fun FloatingPillNavBar(
                 }
             }
         }
-        // 书签：半个胶囊贴屏幕左边，与药丸同底，只露箭头
+        // 书签：同行居中交叉淡入淡出；半胶囊，纵向padding与药丸单项对齐保同高
         androidx.compose.animation.AnimatedVisibility(
             visible = collapsed,
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(bottom = barBottom),
-            enter = slideInHorizontally(
-                initialOffsetX = { -(it + 48) },
-                animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideInSpec()
-            ) + fadeIn(com.ty.gkschedule.ui.theme.M3Motion.fadeInSpec()),
-            exit = slideOutHorizontally(
-                targetOffsetX = { -(it + 48) },
-                animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideOutSpec()
-            ) + fadeOut(com.ty.gkschedule.ui.theme.M3Motion.fadeOutSpec())
+            enter = fadeIn(com.ty.gkschedule.ui.theme.M3Motion.fadeInSpec()),
+            exit = fadeOut(com.ty.gkschedule.ui.theme.M3Motion.fadeOutSpec())
         ) {
             Row(
                 modifier = Modifier
@@ -208,7 +204,7 @@ private fun FloatingPillNavBar(
                         )
                     )
                     .clickable(onClick = { collapsed = false })
-                    .padding(start = 6.dp, end = 12.dp, top = itemVPad + 2.dp, bottom = itemVPad + 2.dp),
+                    .padding(start = 6.dp, end = 12.dp, top = itemVPad, bottom = itemVPad),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
@@ -217,6 +213,7 @@ private fun FloatingPillNavBar(
                     modifier = Modifier.size(iconSize)
                 )
             }
+        }
         }
     }
 }
