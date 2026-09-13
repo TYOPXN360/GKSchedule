@@ -620,22 +620,35 @@ fun ScheduleItemDetailSheet(item: ScheduleItem, getStartTime: (Int) -> String, g
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(),
-        // ponytail: 只糊卡片不糊全屏——BlurCard载体等大+LayerDrawable合成
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        // ponytail: 只糊卡片不糊全屏——BlurCard载体等大+LayerDrawable合成；handle自画进覆盖区
         containerColor = Color.Transparent,
-        scrimColor = Color.Transparent
+        scrimColor = Color.Transparent,
+        dragHandle = { },
+        contentWindowInsets = { WindowInsets(0, 0, 0, 0) }
     ) {
         BlurCard(
             enabled = true,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().fillMaxHeight(),
             backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f),
         ) {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
+                .fillMaxSize()
                 .padding(horizontal = 24.dp)
                 .padding(bottom = 32.dp)
         ) {
+            // ponytail: 自画把手进BlurCard覆盖区，与卡片同底色
+            Box(
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 4.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    modifier = Modifier.width(32.dp).height(4.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
+                )
+            }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 val detailDotColor = dotColor ?: hctColors.container
                 Box(modifier = Modifier.size(12.dp).clip(RoundedCornerShape(50)).background(detailDotColor))
@@ -689,21 +702,33 @@ private fun DetailRow(label: String, value: String) {
 private fun WeekPickerSheet(totalWeeks: Int, currentWeek: Int, onWeekSelected: (Int) -> Unit, onDismiss: () -> Unit) {
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(),
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         containerColor = Color.Transparent,
-        scrimColor = Color.Transparent
+        scrimColor = Color.Transparent,
+        dragHandle = { },
+        contentWindowInsets = { WindowInsets(0, 0, 0, 0) }
     ) {
         BlurCard(
             enabled = true,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().fillMaxHeight(),
             backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f),
         ) {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
+                .fillMaxSize()
                 .padding(horizontal = 24.dp, vertical = 8.dp)
                 .padding(bottom = 32.dp)
         ) {
+            Box(
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 4.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    modifier = Modifier.width(32.dp).height(4.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
+                )
+            }
             Text(stringResource(R.string.select_week), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(bottom = 16.dp))
             for (row in 0 until (totalWeeks + 4) / 5) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
