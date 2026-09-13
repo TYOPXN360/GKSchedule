@@ -100,8 +100,14 @@ private fun FloatingPillNavBar(
     }
     // ponytail: 滚动隐藏走位移不断组合，collapsed/p保住不断动画
     // ponytail: 位移挂Row自身(size=barH)，挂全屏Box会位移整屏高=瞬间消失
+    // ponytail: 280ms FastOutSlowIn向下淡出，位移自身高+底边距确保完全滑出
     val slide = remember { Animatable(0f) }
-    LaunchedEffect(visible) { slide.animateTo(if (visible) 0f else 1f, spring(dampingRatio = 1f, stiffness = 300f)) }
+    LaunchedEffect(visible) {
+        slide.animateTo(
+            targetValue = if (visible) 0f else 1f,
+            animationSpec = tween(durationMillis = 280, easing = androidx.compose.animation.core.FastOutSlowInEasing)
+        )
+    }
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         // ponytail: 截屏瞬间整条gone，比alpha=0少一帧合成，rootView.draw抓不到残影
         if (screenshotHidden) return@BoxWithConstraints
@@ -155,8 +161,8 @@ private fun FloatingPillNavBar(
                 .height(barH)
                 .graphicsLayer {
                     translationX = -p.value * (swPx / 2f + size.width / 2f)
-                    translationY = slide.value * size.height
-                    alpha = 1f - slide.value
+                    translationY = slide.value * (size.height + barBottom.toPx())
+                    alpha = (1f - slide.value).coerceIn(0f, 1f)
                 }
                 .shadow(
                     elevation = 6.dp,
@@ -245,8 +251,8 @@ private fun FloatingPillNavBar(
                 .height(barH)
                 .graphicsLayer {
                     translationX = -(1f - p.value) * size.width
-                    translationY = slide.value * size.height
-                    alpha = 1f - slide.value
+                    translationY = slide.value * (size.height + barBottom.toPx())
+                    alpha = (1f - slide.value).coerceIn(0f, 1f)
                 }
                 .shadow(
                     elevation = 6.dp,
@@ -331,6 +337,9 @@ fun ScheduleApp(
             snackbarHostState.showSnackbar(message, duration = SnackbarDuration.Short)
         }
     }
+
+    // 专门给截图用的无动画拔除状态，严禁与日常滚动 pillHidden 混用！
+    var screenshotHidden by remember { mutableStateOf(false) }
 
     val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let {
@@ -446,7 +455,7 @@ fun ScheduleApp(
             }
         ) {
             composable(Screen.Today.route) { TodayScreen(courses = displayCourses, colorCourses = courses, currentWeek = realCurrentWeek, colorEngine = colorEngine, colorGroupMode = colorGroupMode, exams = examList, showExamSchedule = showExamSchedule, examLookaheadWeeks = examLookaheadWeeks, semesterStart = semesterStart, getStartTime = { viewModel.getStartTime(it) }, getEndTime = { viewModel.getEndTime(it) }, onCourseLongPress = { context.startActivity(Intent(context, com.ty.gkschedule.ui.course.CourseEditActivity::class.java).apply { putExtra("courseId", it.id) }) }, onExamEdit = { context.startActivity(Intent(context, com.ty.gkschedule.ui.exam.ExamActivity::class.java).apply { putExtra("examId", it.id) }) }, diffColorPerWeek = diffColorPerWeek) }
-            composable(Screen.Weekly.route) { WeeklyScheduleScreen(courses = displayCourses, colorCourses = courses, currentWeek = selectedWeek, totalWeeks = totalWeeks, periodsPerDay = periodsPerDay, gridHeight = gridHeight, gridCorner = gridCorner, gridSpacing = gridSpacing, showPeriodLabel = showPeriodLabel, autoGridHeight = autoGridHeight, firstDayOfWeek = firstDayOfWeek, mergeConsecutive = mergeConsecutive, showTimeLabel = showTimeLabel, detailedSplit = detailedSplit, colorEngine = colorEngine, colorGroupMode = colorGroupMode, showDateInHeader = showDateInHeader, hideEmptyWeeks = hideEmptyWeeks, semesterStart = semesterStart, exams = examList, showExamSchedule = showExamSchedule, realCurrentWeek = realCurrentWeek, isRefreshing = isRefreshing, onWeekChange = { viewModel.setWeek(it.coerceIn(1, totalWeeks)) }, onCourseClick = { }, onCourseLongPress = { context.startActivity(Intent(context, com.ty.gkschedule.ui.course.CourseEditActivity::class.java).apply { putExtra("courseId", it.id) }) }, onExamEdit = { context.startActivity(Intent(context, com.ty.gkschedule.ui.exam.ExamActivity::class.java).apply { putExtra("examId", it.id) }) }, onAddCourse = { context.startActivity(Intent(context, com.ty.gkschedule.ui.course.CourseEditActivity::class.java)) }, onRefresh = { viewModel.refreshFromSchool() }, onScreenshotHidePill = { viewModel.setPillHidden(true) }, onScreenshotRestorePill = { viewModel.setPillHidden(false) }, blurEnabled = blurEffect, getStartTime = { viewModel.getStartTime(it) }, getEndTime = { viewModel.getEndTime(it) }, diffColorPerWeek = diffColorPerWeek) }
+            composable(Screen.Weekly.route) { WeeklyScheduleScreen(courses = displayCourses, colorCourses = courses, currentWeek = selectedWeek, totalWeeks = totalWeeks, periodsPerDay = periodsPerDay, gridHeight = gridHeight, gridCorner = gridCorner, gridSpacing = gridSpacing, showPeriodLabel = showPeriodLabel, autoGridHeight = autoGridHeight, firstDayOfWeek = firstDayOfWeek, mergeConsecutive = mergeConsecutive, showTimeLabel = showTimeLabel, detailedSplit = detailedSplit, colorEngine = colorEngine, colorGroupMode = colorGroupMode, showDateInHeader = showDateInHeader, hideEmptyWeeks = hideEmptyWeeks, semesterStart = semesterStart, exams = examList, showExamSchedule = showExamSchedule, realCurrentWeek = realCurrentWeek, isRefreshing = isRefreshing, onWeekChange = { viewModel.setWeek(it.coerceIn(1, totalWeeks)) }, onCourseClick = { }, onCourseLongPress = { context.startActivity(Intent(context, com.ty.gkschedule.ui.course.CourseEditActivity::class.java).apply { putExtra("courseId", it.id) }) }, onExamEdit = { context.startActivity(Intent(context, com.ty.gkschedule.ui.exam.ExamActivity::class.java).apply { putExtra("examId", it.id) }) }, onAddCourse = { context.startActivity(Intent(context, com.ty.gkschedule.ui.course.CourseEditActivity::class.java)) }, onRefresh = { viewModel.refreshFromSchool() }, onScreenshotHidePill = { screenshotHidden = true }, onScreenshotRestorePill = { screenshotHidden = false }, blurEnabled = blurEffect, getStartTime = { viewModel.getStartTime(it) }, getEndTime = { viewModel.getEndTime(it) }, diffColorPerWeek = diffColorPerWeek) }
             composable(Screen.Courses.route) { CourseManageScreen(courses = courses, blurEnabled = blurEffect, colorEngine = colorEngine, colorGroupMode = colorGroupMode, onCourseClick = { context.startActivity(Intent(context, com.ty.gkschedule.ui.course.CourseEditActivity::class.java).apply { putExtra("courseId", it.id) }) }, onAddCourse = { context.startActivity(Intent(context, com.ty.gkschedule.ui.course.CourseEditActivity::class.java)) }, onDeleteCourse = { viewModel.deleteCourse(it) }, onDeleteAll = { viewModel.deleteAllCourses() }, onScrollHidePill = { viewModel.setPillHidden(it) }) }
             composable(Screen.About.route) {
                 val savedStudentId by viewModel.savedStudentIdFlow.collectAsState()
@@ -476,7 +485,7 @@ fun ScheduleApp(
             val pillCollapsed by viewModel.pillCollapsed.collectAsState(initial = false)
             Box(Modifier.fillMaxSize().padding(bottom = 24.dp), contentAlignment = Alignment.BottomCenter) {
                 FloatingPillNavBar(
-                    currentRoute = currentRoute, pillContentMode = pillContentMode, screenshotHidden = pillHidden,
+                    currentRoute = currentRoute, pillContentMode = pillContentMode, screenshotHidden = screenshotHidden,
                     blurEnabled = blurEffect, backdrop = backdrop,
                     collapsed = pillCollapsed, onCollapsedChange = { viewModel.setPillCollapsed(it) },
                     visible = showBottomBar && !(pillHidden && !pillCollapsed)
