@@ -26,8 +26,9 @@ fun BlurLargeTopBar(
     scrollBehavior: TopAppBarScrollBehavior? = null
 ) {
     val useBlur = blurEnabled && hazeState != null
+    // ponytail: 底色只给35%透明，让糊层透上来；haze的backgroundColor与containerColor叠加会压淡糊感
     val barBg = MaterialTheme.colorScheme.surface.copy(
-        alpha = if (useBlur) 0.55f else 1f
+        alpha = if (useBlur) 0.35f else 1f
     )
     androidx.compose.material3.LargeTopAppBar(
         title = title,
@@ -43,8 +44,8 @@ fun BlurLargeTopBar(
             if (useBlur) Modifier.hazeEffect(
                 state = hazeState!!,
                 style = dev.chrisbanes.haze.HazeDefaults.style(
-                    backgroundColor = barBg,
-                    blurRadius = 24.dp,
+                    backgroundColor = androidx.compose.ui.graphics.Color.Transparent,
+                    blurRadius = 28.dp,
                     noiseFactor = 0f
                 )
             ) else Modifier
@@ -63,8 +64,9 @@ fun BlurTopBar(
     scrollBehavior: TopAppBarScrollBehavior? = null
 ) {
     val useBlur = blurEnabled && hazeState != null
+    // ponytail: 底色只给35%透明，让糊层透上来；haze的backgroundColor与containerColor叠加会压淡糊感
     val barBg = MaterialTheme.colorScheme.surface.copy(
-        alpha = if (useBlur) 0.55f else 1f
+        alpha = if (useBlur) 0.35f else 1f
     )
     TopAppBar(
         title = title,
@@ -79,8 +81,8 @@ fun BlurTopBar(
             if (useBlur) Modifier.hazeEffect(
                 state = hazeState!!,
                 style = dev.chrisbanes.haze.HazeDefaults.style(
-                    backgroundColor = barBg,
-                    blurRadius = 24.dp,
+                    backgroundColor = androidx.compose.ui.graphics.Color.Transparent,
+                    blurRadius = 28.dp,
                     noiseFactor = 0f
                 )
             ) else Modifier

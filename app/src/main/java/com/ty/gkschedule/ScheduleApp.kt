@@ -131,8 +131,9 @@ private fun FloatingPillNavBar(
         val swPx = with(LocalDensity.current) { screenW.toPx() }
         // 药丸：BottomCenter，p=1时右边缘越过x=0整条出左屏
         // ponytail: haze同窗口backdrop糊（窗口级API只糊别家窗口，同窗口必须走这条）
+        // ponytail: 底35%透+haze内backgroundColor透明，糊感最强；叠加会压淡
         val pillBg = MaterialTheme.colorScheme.surfaceContainerHigh.copy(
-            alpha = if (blurEnabled) 0.55f else 1f
+            alpha = if (blurEnabled) 0.35f else 1f
         )
         Row(
             modifier = Modifier
@@ -147,8 +148,8 @@ private fun FloatingPillNavBar(
                     if (blurEnabled) Modifier.hazeEffect(
                         state = hazeState,
                         style = dev.chrisbanes.haze.HazeDefaults.style(
-                            backgroundColor = pillBg,
-                            blurRadius = 24.dp,
+                            backgroundColor = androidx.compose.ui.graphics.Color.Transparent,
+                            blurRadius = 28.dp,
                             noiseFactor = 0f
                         )
                     ) else Modifier.background(pillBg)
@@ -225,8 +226,8 @@ private fun FloatingPillNavBar(
                     if (blurEnabled) Modifier.hazeEffect(
                         state = hazeState,
                         style = dev.chrisbanes.haze.HazeDefaults.style(
-                            backgroundColor = pillBg,
-                            blurRadius = 24.dp,
+                            backgroundColor = androidx.compose.ui.graphics.Color.Transparent,
+                            blurRadius = 28.dp,
                             noiseFactor = 0f
                         )
                     ) else Modifier.background(pillBg)
