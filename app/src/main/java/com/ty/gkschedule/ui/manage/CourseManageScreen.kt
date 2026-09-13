@@ -67,7 +67,7 @@ fun CourseManageScreen(
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            // ponytail: 与WIfikeyXposed同款LargeTopAppBar；垃圾桶只在栏内，列表头那份滚走即消失
+            // ponytail: 与WIfikeyXposed同款LargeTopAppBar；栏内只有小标题+垃圾桶，大标题在列表头
             LargeTopAppBar(
                 title = {
                     Text(stringResource(R.string.course_manage_title), fontWeight = FontWeight.Bold)
@@ -75,13 +75,6 @@ fun CourseManageScreen(
                 navigationIcon = {
                     if (onBack != null) {
                         IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") }
-                    }
-                },
-                actions = {
-                    if (courses.isNotEmpty()) {
-                        IconButton(onClick = { showDeleteAllDialog = true }) {
-                            Icon(Icons.Default.DeleteSweep, contentDescription = null, tint = MaterialTheme.colorScheme.error)
-                        }
                     }
                 },
                 scrollBehavior = scrollBehavior
