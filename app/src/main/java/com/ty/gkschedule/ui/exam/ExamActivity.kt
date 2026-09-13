@@ -24,18 +24,6 @@ class ExamActivity : AppCompatActivity() {
             val context = this
             val darkMode by vm.darkMode.collectAsState(initial = "system")
             val blurEffect by vm.blurEffect.collectAsState(initial = true)
-            // ponytail: Dialog/Sheet独立窗口，miuix源采不到主窗口——窗口级blurBehind糊背后主窗口
-            androidx.compose.runtime.SideEffect {
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-                    try {
-                        val radius = (24 * resources.displayMetrics.density).toInt().coerceIn(1, 150)
-                        val attrs = window.attributes
-                        attrs.blurBehindRadius = if (blurEffect) radius else 0
-                        window.attributes = attrs
-                        window.setBackgroundBlurRadius(if (blurEffect) radius else 0)
-                    } catch (_: Exception) {}
-                }
-            }
 
             GKScheduleTheme(darkTheme = darkMode) {
                 val examList by vm.examList.collectAsState(initial = emptyList())

@@ -87,17 +87,7 @@ class MainActivity : AppCompatActivity() {
                 applyPillBlur = it
             }
         }
-        // ponytail: 主窗口整窗blurBehind——Dialog/BottomSheet独立窗口糊背后主窗口；开关变化重启Activity生效
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-            try {
-                val blurOn = kotlinx.coroutines.runBlocking { settings.blurEffect.first() }
-                val radius = (24 * resources.displayMetrics.density).toInt().coerceIn(1, 150)
-                val attrs = window.attributes
-                attrs.blurBehindRadius = if (blurOn) radius else 0
-                window.attributes = attrs
-                window.setBackgroundBlurRadius(if (blurOn) radius else 0)
-            } catch (_: Exception) {}
-        }
+        // ponytail: 主窗口不糊behind（同窗口内容miuix管）；Dialog/BottomSheet独立窗口糊背后时才需要，见ExamActivity
 
         setContent {
             val vm: ScheduleViewModel = viewModel()
