@@ -560,11 +560,11 @@ fun WeeklyScheduleScreen(
                         if (isRefreshing) {
                             @OptIn(androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class)
                             androidx.compose.material3.LoadingIndicator(
-                                modifier = Modifier.size(24.dp),
+                                modifier = Modifier.size(36.dp),
                                 color = MaterialTheme.colorScheme.onSecondaryContainer
                             )
                         } else {
-                            Icon(Icons.Default.Refresh, "Refresh")
+                            Icon(Icons.Default.Refresh, "Refresh", modifier = Modifier.size(28.dp))
                         }
                     }
                 }
