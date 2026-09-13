@@ -71,11 +71,8 @@ private fun FloatingPillNavBar(
     onNavigate: (Screen) -> Unit
 ) {
     var collapsed by remember { mutableStateOf(false) }
-    // ponytail: 药丸与书签同一锚点(底中同一行)交叉淡入淡出；位置不动只换内容，天然同行
-    BoxWithConstraints(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.BottomCenter
-    ) {
+    // ponytail: 药丸底中，书签贴左边缘——两个独立锚点，同底同高才是同一行
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         val screenW = maxWidth
         // 尺寸档：按屏宽分三档，小屏不再硬塞，全部等比缩小
         val iconSize = when {
@@ -108,10 +105,12 @@ private fun FloatingPillNavBar(
             screenW < 340.dp -> 3.dp
             else -> 4.dp
         }
-        // ponytail: 高度锁死单项高度，模式切换/选中补全只换内容不跳高
+        // ponytail: 高度锁死单项高度，模式切换/选中补全只换内容不跳高；书签纵向padding对齐此处
         val barH = iconSize + itemVPad * 2 + pillHPad * 2
+        // ponytail: 书签纵向总高与药丸单项对齐：图标+上下padding相等即同高
         Box(
             modifier = Modifier
+                .align(Alignment.BottomCenter)
                 .padding(start = 12.dp, end = 12.dp, bottom = barBottom)
                 .height(barH),
             contentAlignment = Alignment.Center
@@ -181,9 +180,12 @@ private fun FloatingPillNavBar(
                 }
             }
         }
-        // 书签：同行居中交叉淡入淡出；半胶囊，纵向padding与药丸单项对齐保同高
+        // 书签：贴左边缘，中心与药丸中心同高——同一行
         androidx.compose.animation.AnimatedVisibility(
             visible = collapsed,
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(bottom = barBottom + pillHPad - 0.dp),
             enter = fadeIn(com.ty.gkschedule.ui.theme.M3Motion.fadeInSpec()),
             exit = fadeOut(com.ty.gkschedule.ui.theme.M3Motion.fadeOutSpec())
         ) {
@@ -204,7 +206,7 @@ private fun FloatingPillNavBar(
                         )
                     )
                     .clickable(onClick = { collapsed = false })
-                    .padding(start = 6.dp, end = 12.dp, top = itemVPad, bottom = itemVPad),
+                    .padding(start = 6.dp, end = 12.dp, top = itemVPad + pillHPad, bottom = itemVPad + pillHPad),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
