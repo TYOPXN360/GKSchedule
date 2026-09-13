@@ -53,7 +53,8 @@ fun AboutDetailPage(
     // ponytail: haze源层
     val hazeState = remember { dev.chrisbanes.haze.HazeState() }
     Scaffold(
-        contentWindowInsets = WindowInsets.systemBars,
+        modifier = Modifier.hazeSource(state = hazeState),
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
             com.ty.gkschedule.ui.theme.BlurTopBar(
@@ -71,8 +72,7 @@ fun AboutDetailPage(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .hazeSource(state = hazeState)
-                // ponytail: 避让走滚动内padding，源纹理全屏录(含顶栏身后)
+                                // ponytail: 避让走滚动内padding，源纹理全屏录(含顶栏身后)
                 .verticalScroll(rememberScrollState())
                 .padding(top = padding.calculateTopPadding()),
             horizontalAlignment = Alignment.CenterHorizontally

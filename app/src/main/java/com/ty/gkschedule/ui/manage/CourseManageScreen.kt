@@ -72,7 +72,9 @@ fun CourseManageScreen(
     // ponytail: haze源层，顶栏hazeEffect吃糊
     val hazeState = remember { dev.chrisbanes.haze.HazeState() }
     Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        modifier = Modifier
+            .nestedScroll(scrollBehavior.nestedScrollConnection)
+            .hazeSource(state = hazeState),
         // ponytail: 顶栏自己吃系统栏，内容区不再重复垫（双重Insets留白根因）
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
@@ -128,9 +130,7 @@ fun CourseManageScreen(
         // ponytail: haze源层全屏，避让走contentPadding，item滚动穿过顶栏下方
         val topPad = padding.calculateTopPadding()
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .hazeSource(state = hazeState)
+            modifier = Modifier.fillMaxSize()
         ) {
             if (courses.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

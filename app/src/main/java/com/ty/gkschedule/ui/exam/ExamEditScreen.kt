@@ -133,7 +133,7 @@ fun ExamEditScreen(
         return "闭卷"
     }
 
-    Scaffold(containerColor = scaffoldBg, topBar = {
+    Scaffold(modifier = Modifier.hazeSource(state = hazeState), contentWindowInsets = WindowInsets(0, 0, 0, 0), containerColor = scaffoldBg, topBar = {
         com.ty.gkschedule.ui.theme.BlurTopBar(
             title = { Text(if (exam == null) "添加考试安排" else "编辑考试安排", fontWeight = FontWeight.Bold) },
             navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") } },
@@ -145,8 +145,7 @@ fun ExamEditScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .hazeSource(state = hazeState)
-                // ponytail: 避让走滚动内padding，源纹理全屏录(含顶栏身后)
+                                // ponytail: 避让走滚动内padding，源纹理全屏录(含顶栏身后)
                 .verticalScroll(rememberScrollState())
                 .padding(top = padding.calculateTopPadding())
                 .padding(horizontal = 16.dp),

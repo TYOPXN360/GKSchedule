@@ -260,7 +260,8 @@ private fun SettingsMainPage(
     val scaffoldBg = if (isDark) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainer
     val hazeState = remember { dev.chrisbanes.haze.HazeState() }
     Scaffold(
-        contentWindowInsets = WindowInsets.systemBars,
+        modifier = Modifier.hazeSource(state = hazeState),
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         containerColor = scaffoldBg,
         topBar = {
             com.ty.gkschedule.ui.theme.BlurTopBar(
@@ -278,8 +279,7 @@ private fun SettingsMainPage(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .hazeSource(state = hazeState)
-                // ponytail: 避让走滚动内padding，源纹理全屏录(含顶栏身后)
+                                // ponytail: 避让走滚动内padding，源纹理全屏录(含顶栏身后)
                 .verticalScroll(rememberScrollState())
                 .padding(top = padding.calculateTopPadding())
         ) {
@@ -381,7 +381,8 @@ private fun SubPage(
     // ponytail: haze源层
     val hazeState = remember { dev.chrisbanes.haze.HazeState() }
     Scaffold(
-        contentWindowInsets = WindowInsets.systemBars,
+        modifier = Modifier.hazeSource(state = hazeState),
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         containerColor = scaffoldBg,
         topBar = {
             com.ty.gkschedule.ui.theme.BlurTopBar(
@@ -399,8 +400,7 @@ private fun SubPage(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .hazeSource(state = hazeState)
-                // ponytail: 避让走滚动内padding，源纹理全屏录(含顶栏身后)
+                                // ponytail: 避让走滚动内padding，源纹理全屏录(含顶栏身后)
                 .verticalScroll(rememberScrollState())
                 .padding(top = padding.calculateTopPadding())
                 .padding(horizontal = 16.dp)

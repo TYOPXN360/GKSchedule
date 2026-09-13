@@ -133,7 +133,8 @@ fun WebViewLoginScreen(
     LaunchedEffect(Unit) { generateQr() }
 
     Scaffold(
-        contentWindowInsets = WindowInsets.systemBars,
+        modifier = Modifier.hazeSource(state = hazeState),
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             com.ty.gkschedule.ui.theme.BlurTopBar(
                 title = { Text(stringResource(R.string.scan_login_title)) },
@@ -150,8 +151,7 @@ fun WebViewLoginScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .hazeSource(state = hazeState)
-                // ponytail: 源纹理全屏录(含顶栏身后)；本页不滚动，避让放录制后
+                                // ponytail: 源纹理全屏录(含顶栏身后)；本页不滚动，避让放录制后
                 .padding(padding)
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,

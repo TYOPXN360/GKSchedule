@@ -104,7 +104,8 @@ fun ExamScreen(
     val hazeState = remember { dev.chrisbanes.haze.HazeState() }
 
     Scaffold(
-        contentWindowInsets = WindowInsets.systemBars,
+        modifier = Modifier.hazeSource(state = hazeState),
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         containerColor = scaffoldBg,
         topBar = {
             com.ty.gkschedule.ui.theme.BlurTopBar(
@@ -134,8 +135,7 @@ fun ExamScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .hazeSource(state = hazeState)
-                .padding(top = topPad)
+                                .padding(top = topPad)
         ) {
             // Filter card
             Md3Card(

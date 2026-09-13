@@ -59,6 +59,8 @@ fun LoginScreen(
     val importResult = (loginState as? LoginState.ImportResult)?.let { "导入完成: ${it.count} 门课程" }
 
     Scaffold(
+        modifier = Modifier.hazeSource(state = hazeState),
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             com.ty.gkschedule.ui.theme.BlurTopBar(
                 title = { Text(stringResource(R.string.login_title)) },
@@ -75,8 +77,7 @@ fun LoginScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .hazeSource(state = hazeState)
-                // ponytail: 避让走滚动内padding，源纹理全屏录(含顶栏身后)
+                                // ponytail: 避让走滚动内padding，源纹理全屏录(含顶栏身后)
                 .verticalScroll(rememberScrollState())
                 .padding(top = padding.calculateTopPadding())
                 .padding(24.dp),
