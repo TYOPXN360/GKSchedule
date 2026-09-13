@@ -124,7 +124,7 @@ fun CourseManageScreen(
                 onClick = onAddCourse,
                 modifier = Modifier.drawBackdrop(
                     backdrop = backdrop,
-                    shape = { androidx.compose.foundation.shape.CircleShape },
+                    shape = { androidx.compose.foundation.shape.RoundedCornerShape(16.dp) },
                     effects = { blur(28.dp.toPx()) }
                 ),
                 containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.35f)
