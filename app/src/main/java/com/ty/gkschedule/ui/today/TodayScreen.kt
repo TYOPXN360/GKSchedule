@@ -514,16 +514,16 @@ private fun CourseCard(
                     if (isNext) {
                         Box(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(MaterialTheme.colorScheme.tertiary)
-                                .padding(horizontal = 6.dp, vertical = 2.dp),
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(MaterialTheme.colorScheme.primary)
+                                .padding(horizontal = 5.dp, vertical = 2.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 text = stringResource(R.string.next_course),
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onTertiary
+                                color = MaterialTheme.colorScheme.onPrimary
                             )
                         }
                         Spacer(modifier = Modifier.width(6.dp))
