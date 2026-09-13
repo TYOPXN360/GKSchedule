@@ -120,11 +120,14 @@ fun CourseManageScreen(
             )
         },
         floatingActionButton = {
+            // ponytail: clip shape与按钮外轮廓同源——不一致必漏角
+            val fabShape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
             FloatingActionButton(
                 onClick = onAddCourse,
+                shape = fabShape,
                 modifier = Modifier.drawBackdrop(
                     backdrop = backdrop,
-                    shape = { androidx.compose.foundation.shape.CircleShape },
+                    shape = { fabShape },
                     effects = { blur(28.dp.toPx()) }
                 ),
                 containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.75f)

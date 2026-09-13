@@ -449,13 +449,16 @@ fun WeeklyScheduleScreen(
         Box(modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp)) {
             // Toggle — bottom right
             // ponytail: FAB糊——miuix drawBackdrop吃课表源，关模糊开关时回退纯色；blurEffect开关透传
+            // ponytail: clip shape与按钮外轮廓同源——不一致必漏角
+            val fabShape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
             FloatingActionButton(
                 onClick = { com.ty.gkschedule.util.HapticFeedback.light(hapticView); fabExpanded = !fabExpanded },
+                shape = fabShape,
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .drawBackdrop(
                         backdrop = backdrop,
-                        shape = { androidx.compose.foundation.shape.CircleShape },
+                        shape = { fabShape },
                         effects = { blur(28.dp.toPx()) }
                     ),
                 containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f),
@@ -471,9 +474,10 @@ fun WeeklyScheduleScreen(
                 AnimatedVisibility(visible = fabExpanded, enter = slideInVertically(initialOffsetY = { it }) + fadeIn(), exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()) {
                     FloatingActionButton(
                         onClick = { com.ty.gkschedule.util.HapticFeedback.medium(hapticView); onRefresh() },
+                shape = fabShape,
                         modifier = Modifier.drawBackdrop(
                             backdrop = backdrop,
-                            shape = { androidx.compose.foundation.shape.CircleShape },
+                            shape = { fabShape },
                             effects = { blur(28.dp.toPx()) }
                         ),
                         containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.75f),
@@ -485,9 +489,10 @@ fun WeeklyScheduleScreen(
                 AnimatedVisibility(visible = fabExpanded, enter = slideInVertically(initialOffsetY = { it }) + fadeIn(), exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()) {
                     FloatingActionButton(
                         onClick = { com.ty.gkschedule.util.HapticFeedback.medium(hapticView); onAddCourse() },
+                shape = fabShape,
                         modifier = Modifier.drawBackdrop(
                             backdrop = backdrop,
-                            shape = { androidx.compose.foundation.shape.CircleShape },
+                            shape = { fabShape },
                             effects = { blur(28.dp.toPx()) }
                         ),
                         containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.75f),
@@ -518,10 +523,10 @@ fun WeeklyScheduleScreen(
                                 android.widget.Toast.makeText(context, "截图失败: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
                             }
                         }
-                    }, containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.75f), contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                    }, shape = fabShape, containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.75f), contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
                         modifier = Modifier.drawBackdrop(
                             backdrop = backdrop,
-                            shape = { androidx.compose.foundation.shape.CircleShape },
+                            shape = { fabShape },
                             effects = { blur(28.dp.toPx()) }
                         )) { Icon(Icons.Default.CropFree, "Screenshot") }
                     }
@@ -536,9 +541,10 @@ fun WeeklyScheduleScreen(
             ) {
                 FloatingActionButton(
                     onClick = { com.ty.gkschedule.util.HapticFeedback.medium(hapticView); onWeekChange(realCurrentWeek) },
+                shape = fabShape,
                     modifier = Modifier.drawBackdrop(
                         backdrop = backdrop,
-                        shape = { androidx.compose.foundation.shape.CircleShape },
+                        shape = { fabShape },
                         effects = { blur(28.dp.toPx()) }
                     ),
                     containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.75f),
