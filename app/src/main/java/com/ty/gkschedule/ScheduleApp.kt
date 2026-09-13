@@ -82,9 +82,11 @@ private fun FloatingPillNavBar(
     screenshotHidden: Boolean = false,
     blurEnabled: Boolean = true,
     backdrop: top.yukonga.miuix.kmp.blur.LayerBackdrop,
+    collapsed: Boolean,
+    onCollapsedChange: (Boolean) -> Unit,
+    visible: Boolean,
     onNavigate: (Screen) -> Unit
 ) {
-    var collapsed by remember { mutableStateOf(false) }
     // ponytail: 一份进度+一份spring，两个视图时序物理上不错开
     val p = remember { Animatable(if (collapsed) 1f else 0f) }
     LaunchedEffect(collapsed) {
@@ -93,7 +95,15 @@ private fun FloatingPillNavBar(
             spring(dampingRatio = 0.9f, stiffness = 380f)
         )
     }
-    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+    // ponytail: 滚动隐藏走位移不断组合，collapsed/p保住不断动画
+    val slide = remember { Animatable(0f) }
+    LaunchedEffect(visible) { slide.animateTo(if (visible) 0f else 1f, spring(dampingRatio = 1f, stiffness = 300f)) }
+    BoxWithConstraints(
+        modifier = Modifier.fillMaxSize().graphicsLayer {
+            translationY = slide.value * size.height
+            alpha = 1f - slide.value
+        }
+    ) {
         // ponytail: 截屏瞬间整条gone，比alpha=0少一帧合成，rootView.draw抓不到残影
         if (screenshotHidden) return@BoxWithConstraints
         val screenW = maxWidth
@@ -196,7 +206,7 @@ private fun FloatingPillNavBar(
             Row(
                 modifier = Modifier
                     .clip(androidx.compose.foundation.shape.CircleShape)
-                    .clickable(onClick = { collapsed = true })
+                    .clickable(onClick = { onCollapsedChange(true) })
                     .padding(horizontal = itemHPadSingle, vertical = itemVPad),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -234,7 +244,7 @@ private fun FloatingPillNavBar(
                         effects = { blur(28.dp.toPx()) }
                     ) else Modifier.background(pillBg)
                 )
-                .clickable(enabled = p.value > 0.5f) { collapsed = false }
+                .clickable(enabled = p.value > 0.5f) { onCollapsedChange(false) }
                 .padding(start = 6.dp, end = 12.dp, top = itemVPad, bottom = itemVPad),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -430,23 +440,22 @@ fun ScheduleApp(
         }
         } // 源层Box只含NavHost
         // 悬浮pill：跟随tab显隐做位移，内部收/展另有自己的左右对滑；
-        // ponytail: 源层兄弟节点(断环)；课程管理下滑时pillHidden=true，向下淡出隐藏
+        // ponytail: 源层兄弟节点(断环)；滚动隐藏走位移不断组合，收起态常驻
         if (compactNavBar) {
             val pillHidden by viewModel.pillHidden.collectAsState(initial = false)
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
-                androidx.compose.animation.AnimatedVisibility(
-                    visible = showBottomBar && !pillHidden,
-                    modifier = Modifier.padding(bottom = 24.dp),
-                    enter = slideInVertically(initialOffsetY = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideInSpec()) + fadeIn(com.ty.gkschedule.ui.theme.M3Motion.fadeInSpec()),
-                    exit = slideOutVertically(targetOffsetY = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideOutSpec()) + fadeOut(com.ty.gkschedule.ui.theme.M3Motion.fadeOutSpec())
-                ) {
-                    FloatingPillNavBar(currentRoute = currentRoute, pillContentMode = pillContentMode, screenshotHidden = pillHidden, blurEnabled = blurEffect, backdrop = backdrop) { screen ->
-                        com.ty.gkschedule.util.HapticFeedback.light(navView)
-                        if (currentRoute != screen.route) {
-                            navController.navigate(screen.route) {
-                                popUpTo(startPage) { saveState = true }
-                                launchSingleTop = true; restoreState = true
-                            }
+            val pillCollapsed by viewModel.pillCollapsed.collectAsState(initial = false)
+            Box(Modifier.fillMaxSize().padding(bottom = 24.dp), contentAlignment = Alignment.BottomCenter) {
+                FloatingPillNavBar(
+                    currentRoute = currentRoute, pillContentMode = pillContentMode, screenshotHidden = pillHidden,
+                    blurEnabled = blurEffect, backdrop = backdrop,
+                    collapsed = pillCollapsed, onCollapsedChange = { viewModel.setPillCollapsed(it) },
+                    visible = showBottomBar && !(pillHidden && !pillCollapsed)
+                ) { screen ->
+                    com.ty.gkschedule.util.HapticFeedback.light(navView)
+                    if (currentRoute != screen.route) {
+                        navController.navigate(screen.route) {
+                            popUpTo(startPage) { saveState = true }
+                            launchSingleTop = true; restoreState = true
                         }
                     }
                 }

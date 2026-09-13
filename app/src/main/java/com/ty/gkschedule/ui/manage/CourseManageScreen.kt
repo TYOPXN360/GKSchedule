@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.lerp
 import com.ty.gkschedule.R
 import com.ty.gkschedule.data.Course
 import com.ty.gkschedule.util.CourseColors
+import top.yukonga.miuix.kmp.blur.blendColors
 import top.yukonga.miuix.kmp.blur.blur
 import top.yukonga.miuix.kmp.blur.drawBackdrop
 import top.yukonga.miuix.kmp.blur.layerBackdrop
@@ -61,13 +62,10 @@ fun CourseManageScreen(
     LaunchedEffect(listState.firstVisibleItemIndex, listState.firstVisibleItemScrollOffset) {
         val idx = listState.firstVisibleItemIndex
         val off = listState.firstVisibleItemScrollOffset
-        // 同一item内比offset，跨item按方向：index变大=下滑藏，变小=上滑现
-        val scrollingDown = when {
-            idx != lastIndex -> idx > lastIndex
-            else -> off > lastOffset
-        }
-        onScrollHidePill(scrollingDown)
-        lastOffset = off
+        // ponytail: 24px阈值防停顿抖动翻转
+        val delta = off - lastOffset
+        if (idx != lastIndex) { onScrollHidePill(idx > lastIndex) }
+        else if (kotlin.math.abs(delta) > 24) { onScrollHidePill(delta > 0); lastOffset = off }
         lastIndex = idx
     }
 
@@ -87,7 +85,6 @@ fun CourseManageScreen(
                 fraction
             )
             com.ty.gkschedule.ui.theme.BlurLargeTopBar(
-                windowInsets = WindowInsets(0, 0, 0, 0),
                 title = {
                     Column {
                         Text(
@@ -121,7 +118,10 @@ fun CourseManageScreen(
         },
         floatingActionButton = {
             // ponytail: clip shape与按钮外轮廓同源——不一致必漏角
+            // ponytail: 品牌色放onDrawSurface（糊之后图标之前），Surface不再画第二层抢色
             val fabShape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
+            val fabBrand = MaterialTheme.colorScheme.primary
+            val fabOnBrand = MaterialTheme.colorScheme.onPrimary
             FloatingActionButton(
                 onClick = onAddCourse,
                 shape = fabShape,
@@ -129,9 +129,14 @@ fun CourseManageScreen(
                 modifier = Modifier.drawBackdrop(
                     backdrop = backdrop,
                     shape = { fabShape },
-                    effects = { blur(28.dp.toPx()) }
+                    effects = {
+                        blur(28.dp.toPx())
+                        blendColors(top.yukonga.miuix.kmp.blur.BlurColors(brightness = 0.06f, saturation = 1.15f))
+                    },
+                    onDrawSurface = { drawRect(fabBrand.copy(alpha = 0.82f)) }
                 ),
-                containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.50f)
+                containerColor = androidx.compose.ui.graphics.Color.Transparent,
+                contentColor = fabOnBrand
             ) {
                 Icon(Icons.Default.Add, stringResource(R.string.add_course))
             }

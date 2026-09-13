@@ -96,6 +96,11 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     val pillHidden: StateFlow<Boolean> = _pillHidden
     fun setPillHidden(hidden: Boolean) { _pillHidden.value = hidden }
 
+    // ponytail: pill收起态——AnimatedVisibility销毁会丢，提ViewModel持久化
+    private val _pillCollapsed = MutableStateFlow(false)
+    val pillCollapsed: StateFlow<Boolean> = _pillCollapsed
+    fun setPillCollapsed(v: Boolean) { _pillCollapsed.value = v }
+
     // Login state
     private val _loginState = MutableStateFlow<LoginState>(LoginState.LoggedOut)
     val loginState: StateFlow<LoginState> = _loginState
