@@ -30,6 +30,7 @@ import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import com.ty.gkschedule.ui.theme.windowBlurBehind
 import top.yukonga.miuix.kmp.blur.blur
 import top.yukonga.miuix.kmp.blur.drawBackdrop
 import top.yukonga.miuix.kmp.blur.layerBackdrop
@@ -620,11 +621,17 @@ fun ScheduleItemDetailSheet(item: ScheduleItem, getStartTime: (Int) -> String, g
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(),
-        // ponytail: Sheet独立窗口，miuix源采不到主窗口——容器半透明+窗口级blurBehind糊背后
+        // ponytail: Sheet独立窗口糊自己背后——windowBlurBehind设自己窗口，容器半透明透糊
         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f),
         scrimColor = Color.Transparent
     ) {
-        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp).padding(bottom = 32.dp)) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .windowBlurBehind(true)
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 32.dp)
+        ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 val detailDotColor = dotColor ?: hctColors.container
                 Box(modifier = Modifier.size(12.dp).clip(RoundedCornerShape(50)).background(detailDotColor))
@@ -681,7 +688,13 @@ private fun WeekPickerSheet(totalWeeks: Int, currentWeek: Int, onWeekSelected: (
         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f),
         scrimColor = Color.Transparent
     ) {
-        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp).padding(bottom = 32.dp)) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .windowBlurBehind(true)
+                .padding(horizontal = 24.dp, vertical = 8.dp)
+                .padding(bottom = 32.dp)
+        ) {
             Text(stringResource(R.string.select_week), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(bottom = 16.dp))
             for (row in 0 until (totalWeeks + 4) / 5) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {

@@ -1,5 +1,6 @@
 package com.ty.gkschedule.ui.exam
 import com.ty.gkschedule.ui.theme.GKSwitch
+import com.ty.gkschedule.ui.theme.windowBlurBehind
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -355,11 +356,12 @@ fun ExamScreen(
         )
     }
 
-    // Re-login dialog — 独立窗口，窗口级blurBehind糊背后主窗口，容器半透明透糊
+    // Re-login dialog — 独立窗口糊自己背后，windowBlurBehind设Dialog自己窗口
     if (showReloginDialog) {
         var captcha by remember { mutableStateOf("") }
         AlertDialog(
             onDismissRequest = onDismissRelogin,
+            modifier = Modifier.windowBlurBehind(true),
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f),
             title = { Text("教务系统登录过期") },
             text = {

@@ -88,17 +88,7 @@ class MainActivity : AppCompatActivity() {
                 applyPillBlur = it
             }
         }
-        // ponytail: Sheet/Dialog独立窗口糊背后主窗口——主窗口开blurBehind，Sheet容器半透明透糊
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-            try {
-                val blurOn = kotlinx.coroutines.runBlocking { settings.blurEffect.firstOrNull() ?: true }
-                val radius = (28 * resources.displayMetrics.density).toInt().coerceIn(1, 150)
-                val attrs = window.attributes
-                attrs.blurBehindRadius = if (blurOn) radius else 0
-                window.attributes = attrs
-                window.setBackgroundBlurRadius(if (blurOn) radius else 0)
-            } catch (_: Exception) {}
-        }
+        // ponytail: 主窗口不开blurBehind（糊的是桌面还多一次relayout）；Dialog/Sheet糊自己窗口，见windowBlurBehind
 
         setContent {
             val vm: ScheduleViewModel = viewModel()
