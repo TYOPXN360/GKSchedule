@@ -1,21 +1,21 @@
 [versions]
 agp = "9.2.1"
-kotlin = "2.3.20"
+kotlin = "2.3.21"
 composeBom = "2026.09.00"
-room = "2.8.4"
-ksp = "2.3.9"
-navigation = "2.9.8"
+room = "2.8.5"
+ksp = "2.3.12"
+navigation = "2.10.1"
 datastore = "1.2.1"
 coreKtx = "1.19.0"
 activityCompose = "1.13.0"
 lifecycleRuntime = "2.11.0"
-documentfile = "1.0.1"
+documentfile = "1.1.0"
 material = "1.14.0"
 workmanager = "2.11.2"
-okhttp = "5.4.0"
-miuixBlur = "0.9.3"
+okhttp = "5.5.0"
+miuixBlur = "0.9.4-rc01"
 zxing = "3.5.4"
-appcompat = "1.7.1"
+appcompat = "1.8.0"
 coroutines = "1.11.0"
 kotlinxSerialization = "1.11.0"
 
@@ -26,7 +26,7 @@ compose-ui = { group = "androidx.compose.ui", name = "ui" }
 compose-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
 compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
 compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
+compose-material3 = { group = "androidx.compose.material3", name = "material3", version = "1.5.0-alpha27" }
 compose-material-icons = { group = "androidx.compose.material", name = "material-icons-extended" }
 compose-runtime = { group = "androidx.compose.runtime", name = "runtime" }
 compose-foundation = { group = "androidx.compose.foundation", name = "foundation" }

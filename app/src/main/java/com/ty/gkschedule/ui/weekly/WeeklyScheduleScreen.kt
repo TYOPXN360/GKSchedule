@@ -488,11 +488,16 @@ fun WeeklyScheduleScreen(
                         containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.75f),
                         contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                     ) {
-                        // ponytail: MD3E花瓣形变刷新图标，动态取色跟壁纸走
-                        com.ty.gkschedule.ui.theme.ExpressiveReloadIcon(
-                            isRefreshing = isRefreshing,
-                            size = 26.dp
-                        )
+                        // ponytail: 官方LoadingIndicator(M3 1.5.0-alpha27 pin版，BOM不管)
+                        if (isRefreshing) {
+                            @OptIn(androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class)
+                            androidx.compose.material3.LoadingIndicator(
+                                modifier = Modifier.size(24.dp),
+                                color = MaterialTheme.colorScheme.onSecondaryContainer
+                            )
+                        } else {
+                            Icon(Icons.Default.Refresh, "Refresh")
+                        }
                     }
                 }
                 AnimatedVisibility(visible = fabExpanded, enter = slideInVertically(initialOffsetY = { it }) + fadeIn(), exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()) {
