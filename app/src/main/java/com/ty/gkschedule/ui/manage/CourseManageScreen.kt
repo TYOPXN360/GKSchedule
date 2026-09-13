@@ -1,5 +1,7 @@
 package com.ty.gkschedule.ui.manage
 
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -66,17 +68,27 @@ fun CourseManageScreen(
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        // ponytail: contentWindowInsets归零，状态栏沉浸由外层MainActivity/边到边统一管；否则顶栏下方空一块系统栏padding
+        // ponytail: 顶栏自己吃系统栏，内容区不再重复垫（双重Insets留白根因）
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
-            // ponytail: 大标题只在栏内一份；垃圾桶常驻actions，折叠后也能删全部
-            LargeTopAppBar(
+            // ponytail: 左上无返回键，右上垃圾桶会悬空——改Medium收窄；副标题随折叠淡出防挤爆
+            MediumTopAppBar(
+                windowInsets = WindowInsets(0, 0, 0, 0),
                 title = {
-                    Text(stringResource(R.string.course_manage_title), fontWeight = FontWeight.Bold)
-                },
-                navigationIcon = {
-                    if (onBack != null) {
-                        IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") }
+                    Column {
+                        Text(stringResource(R.string.course_manage_title), fontWeight = FontWeight.Bold, maxLines = 1)
+                        androidx.compose.animation.AnimatedVisibility(
+                            visible = scrollBehavior.state.collapsedFraction < 0.3f,
+                            enter = fadeIn(),
+                            exit = fadeOut()
+                        ) {
+                            Text(
+                                stringResource(R.string.course_count_format, courses.size),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1
+                            )
+                        }
                     }
                 },
                 actions = {
@@ -114,15 +126,7 @@ fun CourseManageScreen(
                     contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 88.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    // ponytail: 副标题门数行，大标题在栏内；滚走不留空白
-                    item {
-                        Text(
-                            stringResource(R.string.course_count_format, courses.size),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 4.dp)
-                        )
-                    }
+                    // ponytail: 门数跟标题走了，列表头不再摆第二份
                     items(uniqueCourses) { course ->
                         val count = courseGroups[course.name].orEmpty().size
                         CourseListItem(
