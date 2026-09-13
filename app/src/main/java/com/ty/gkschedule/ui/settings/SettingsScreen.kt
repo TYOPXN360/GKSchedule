@@ -15,12 +15,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.layer.drawLayer
-import androidx.compose.ui.graphics.rememberGraphicsLayer
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -33,6 +28,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.LocalDate
+import dev.chrisbanes.haze.hazeSource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -262,8 +258,7 @@ private fun SettingsMainPage(
     android.util.Log.d("SettingsColors", "surface=#${Integer.toHexString(surf.hashCode())}, surfaceContainerLow=#${Integer.toHexString(surfLow.hashCode())}, surfaceContainer=#${Integer.toHexString(surfCont.hashCode())}, surfaceContainerHigh=#${Integer.toHexString(surfHigh.hashCode())}, surfaceContainerHighest=#${Integer.toHexString(surfHighest.hashCode())}")
     val isDark = com.ty.gkschedule.ui.theme.LocalAppIsDark.current
     val scaffoldBg = if (isDark) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainer
-    val backdrop = androidx.compose.ui.graphics.rememberGraphicsLayer()
-    var srcPos by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
+    val hazeState = remember { dev.chrisbanes.haze.HazeState() }
     Scaffold(
         contentWindowInsets = WindowInsets.systemBars,
         containerColor = scaffoldBg,
@@ -275,8 +270,7 @@ private fun SettingsMainPage(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
                     }
                 },
-                backdrop = backdrop,
-                srcPos = srcPos,
+                hazeState = hazeState,
                 blurEnabled = blurEnabled
             )
         }
@@ -284,11 +278,7 @@ private fun SettingsMainPage(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .onGloballyPositioned { srcPos = it.positionInRoot() }
-                .drawWithContent {
-                    backdrop.record { with(this@drawWithContent) { drawContent() } }
-                    drawLayer(backdrop)
-                }
+                .hazeSource(state = hazeState)
                 // ponytail: 避让走滚动内padding，源纹理全屏录(含顶栏身后)
                 .verticalScroll(rememberScrollState())
                 .padding(top = padding.calculateTopPadding())
@@ -388,9 +378,8 @@ private fun SubPage(
 ) {
     val isDark = com.ty.gkschedule.ui.theme.LocalAppIsDark.current
     val scaffoldBg = if (isDark) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainer
-    // ponytail: 糊顶栏要吃源纹理——源层只包内容列，顶栏是兄弟(不断环)
-    val backdrop = androidx.compose.ui.graphics.rememberGraphicsLayer()
-    var srcPos by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
+    // ponytail: haze源层
+    val hazeState = remember { dev.chrisbanes.haze.HazeState() }
     Scaffold(
         contentWindowInsets = WindowInsets.systemBars,
         containerColor = scaffoldBg,
@@ -402,8 +391,7 @@ private fun SubPage(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
                     }
                 },
-                backdrop = backdrop,
-                srcPos = srcPos,
+                hazeState = hazeState,
                 blurEnabled = blurEnabled
             )
         }
@@ -411,11 +399,7 @@ private fun SubPage(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .onGloballyPositioned { srcPos = it.positionInRoot() }
-                .drawWithContent {
-                    backdrop.record { with(this@drawWithContent) { drawContent() } }
-                    drawLayer(backdrop)
-                }
+                .hazeSource(state = hazeState)
                 // ponytail: 避让走滚动内padding，源纹理全屏录(含顶栏身后)
                 .verticalScroll(rememberScrollState())
                 .padding(top = padding.calculateTopPadding())

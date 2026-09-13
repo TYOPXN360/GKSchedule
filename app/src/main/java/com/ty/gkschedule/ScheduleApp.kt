@@ -16,15 +16,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.asComposeRenderEffect
-import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.drawscope.translate
-import androidx.compose.ui.graphics.layer.drawLayer
-import androidx.compose.ui.graphics.rememberGraphicsLayer
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
@@ -58,6 +50,8 @@ import com.ty.gkschedule.ui.settings.SettingsScreen
 import com.ty.gkschedule.ui.today.TodayScreen
 import com.ty.gkschedule.ui.weekly.WeeklyScheduleScreen
 import kotlinx.coroutines.launch
+import dev.chrisbanes.haze.hazeEffect
+import dev.chrisbanes.haze.hazeSource
 
 sealed class Screen(val route: String) {
     data object Today : Screen("today")
@@ -85,8 +79,7 @@ private fun FloatingPillNavBar(
     pillContentMode: Int,
     screenshotHidden: Boolean = false,
     blurEnabled: Boolean = true,
-    backdrop: androidx.compose.ui.graphics.layer.GraphicsLayer,
-    srcPos: androidx.compose.ui.geometry.Offset,
+    hazeState: dev.chrisbanes.haze.HazeState,
     onNavigate: (Screen) -> Unit
 ) {
     var collapsed by remember { mutableStateOf(false) }
@@ -137,49 +130,29 @@ private fun FloatingPillNavBar(
         val barH = iconSize + itemVPad * 2 + pillHPad * 2
         val swPx = with(LocalDensity.current) { screenW.toPx() }
         // 药丸：BottomCenter，p=1时右边缘越过x=0整条出左屏
-        // ponytail: 路A真模糊——糊层画在drawWithContent里，字画在糊上，互不干扰
-        val useBlur = blurEnabled && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S
-        val pillBg = if (useBlur) {
-            MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.55f)
-        } else {
-            MaterialTheme.colorScheme.surfaceContainerHigh
-        }
-        val blurR = with(LocalDensity.current) { 24.dp.toPx() }
-        val blurFx = remember(useBlur, blurR) {
-            if (!useBlur) null else android.graphics.RenderEffect
-                .createBlurEffect(blurR, blurR, android.graphics.Shader.TileMode.CLAMP)
-                .asComposeRenderEffect()
-        }
-        val blurred = rememberGraphicsLayer()
-        val blurredMark = rememberGraphicsLayer()
-        var pillPos by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
+        // ponytail: haze同窗口backdrop糊（窗口级API只糊别家窗口，同窗口必须走这条）
+        val pillBg = MaterialTheme.colorScheme.surfaceContainerHigh.copy(
+            alpha = if (blurEnabled) 0.55f else 1f
+        )
         Row(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = barBottom)
                 .height(barH)
-                .onGloballyPositioned { pillPos = it.positionInRoot() }
                 .graphicsLayer {
                     translationX = -p.value * (swPx / 2f + size.width / 2f)
                 }
                 .clip(androidx.compose.foundation.shape.CircleShape)
-                // ponytail: 糊层在背景前先画(身后内容反向平移对齐)，再画半透明底+字
-                .drawWithContent {
-                    val fx = blurFx
-                    if (fx != null) {
-                        val tx = -p.value * (swPx / 2f + size.width / 2f)
-                        blurred.renderEffect = fx
-                        blurred.record {
-                            translate(srcPos.x - pillPos.x - tx, srcPos.y - pillPos.y) { drawLayer(backdrop) }
-                        }
-                        // ponytail: 糊点渗出裁在药丸bounds内，防污染周围内容
-                        clipRect {
-                            drawLayer(blurred)
-                        }
-                    }
-                    drawRect(pillBg)
-                    drawContent()
-                }
+                .then(
+                    if (blurEnabled) Modifier.hazeEffect(
+                        state = hazeState,
+                        style = dev.chrisbanes.haze.HazeDefaults.style(
+                            backgroundColor = pillBg,
+                            blurRadius = 24.dp,
+                            noiseFactor = 0f
+                        )
+                    ) else Modifier.background(pillBg)
+                )
                 .padding(horizontal = pillHPad, vertical = pillHPad),
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
@@ -234,13 +207,11 @@ private fun FloatingPillNavBar(
             }
         }
         // 书签：BottomStart静止位即贴边；p=0时藏到屏外
-        var markPos by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
         Row(
             modifier = Modifier
                 .align(Alignment.BottomStart)
                 .padding(bottom = barBottom)
                 .height(barH)
-                .onGloballyPositioned { markPos = it.positionInRoot() }
                 .graphicsLayer {
                     translationX = -(1f - p.value) * size.width
                 }
@@ -250,22 +221,16 @@ private fun FloatingPillNavBar(
                         topEnd = barH / 2, bottomEnd = barH / 2
                     )
                 )
-                .drawWithContent {
-                    val fx = blurFx
-                    if (fx != null) {
-                        val tx = -(1f - p.value) * size.width
-                        blurredMark.renderEffect = fx
-                        blurredMark.record {
-                            translate(srcPos.x - markPos.x - tx, srcPos.y - markPos.y) { drawLayer(backdrop) }
-                        }
-                        // ponytail: 糊点渗出裁在书签bounds内
-                        clipRect {
-                            drawLayer(blurredMark)
-                        }
-                    }
-                    drawRect(pillBg)
-                    drawContent()
-                }
+                .then(
+                    if (blurEnabled) Modifier.hazeEffect(
+                        state = hazeState,
+                        style = dev.chrisbanes.haze.HazeDefaults.style(
+                            backgroundColor = pillBg,
+                            blurRadius = 24.dp,
+                            noiseFactor = 0f
+                        )
+                    ) else Modifier.background(pillBg)
+                )
                 .clickable(enabled = p.value > 0.5f) { collapsed = false }
                 .padding(start = 6.dp, end = 12.dp, top = itemVPad, bottom = itemVPad),
             verticalAlignment = Alignment.CenterVertically
@@ -388,19 +353,13 @@ fun ScheduleApp(
             }
         }
     ) { innerPadding ->
-        // ponytail: 路A——源层录离屏纹理，药丸处贴回糊版；同窗口不走窗口blur API
-        // ponytail: 源层只含NavHost，药丸是兄弟(环=RenderThread栈溢出，见08c190d)
-        val backdrop = rememberGraphicsLayer()
-        var srcPos by remember { mutableStateOf(Offset.Zero) }
+        // ponytail: haze源层——内容标hazeSource吃糊；药丸挂兄弟层(环=RenderThread栈溢出，见08c190d)
+        val hazeState = remember { dev.chrisbanes.haze.HazeState() }
         Box(Modifier.padding(innerPadding)) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .onGloballyPositioned { srcPos = it.positionInRoot() }
-                    .drawWithContent {
-                        backdrop.record { with(this@drawWithContent) { drawContent() } }
-                        drawLayer(backdrop)
-                    }
+                    .hazeSource(state = hazeState)
             ) {
             NavHost(
                 navController = navController,
@@ -477,7 +436,7 @@ fun ScheduleApp(
                     enter = slideInVertically(initialOffsetY = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideInSpec()) + fadeIn(com.ty.gkschedule.ui.theme.M3Motion.fadeInSpec()),
                     exit = slideOutVertically(targetOffsetY = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideOutSpec()) + fadeOut(com.ty.gkschedule.ui.theme.M3Motion.fadeOutSpec())
                 ) {
-                    FloatingPillNavBar(currentRoute = currentRoute, pillContentMode = pillContentMode, screenshotHidden = pillHidden, blurEnabled = blurEffect, backdrop = backdrop, srcPos = srcPos) { screen ->
+                    FloatingPillNavBar(currentRoute = currentRoute, pillContentMode = pillContentMode, screenshotHidden = pillHidden, blurEnabled = blurEffect, hazeState = hazeState) { screen ->
                         com.ty.gkschedule.util.HapticFeedback.light(navView)
                         if (currentRoute != screen.route) {
                             navController.navigate(screen.route) {

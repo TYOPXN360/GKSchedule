@@ -1,8 +1,6 @@
 package com.ty.gkschedule.ui.theme
 
-import android.graphics.RenderEffect
-import android.graphics.Shader
-import android.os.Build
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -10,23 +8,12 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.asComposeRenderEffect
-import androidx.compose.ui.graphics.drawscope.clipRect
-import androidx.compose.ui.graphics.drawscope.translate
-import androidx.compose.ui.graphics.layer.GraphicsLayer
-import androidx.compose.ui.graphics.layer.drawLayer
-import androidx.compose.ui.graphics.rememberGraphicsLayer
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInRoot
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.hazeEffect
 
-// ponytail: 可滚动页糊顶栏统一入口——兄弟backdrop纹理+自身糊版+55%底+字在上；关开关/S以下回退纯色
+// ponytail: 可滚动页糊顶栏统一入口——haze同窗口backdrop糊；关开关回退纯色
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BlurLargeTopBar(
@@ -34,23 +21,14 @@ fun BlurLargeTopBar(
     navigationIcon: @Composable () -> Unit = {},
     actions: @Composable RowScope.() -> Unit = {},
     windowInsets: androidx.compose.foundation.layout.WindowInsets = TopAppBarDefaults.windowInsets,
-    backdrop: GraphicsLayer? = null,
-    srcPos: Offset = Offset.Zero,
+    hazeState: HazeState? = null,
     blurEnabled: Boolean = true,
     scrollBehavior: TopAppBarScrollBehavior? = null
 ) {
-    val useBlur = blurEnabled && backdrop != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+    val useBlur = blurEnabled && hazeState != null
     val barBg = MaterialTheme.colorScheme.surface.copy(
         alpha = if (useBlur) 0.55f else 1f
     )
-    val blurR = with(LocalDensity.current) { 24.dp.toPx() }
-    val blurFx = remember(useBlur, blurR) {
-        if (!useBlur) null else RenderEffect
-            .createBlurEffect(blurR, blurR, Shader.TileMode.CLAMP)
-            .asComposeRenderEffect()
-    }
-    val blurred = rememberGraphicsLayer()
-    val barPos = remember { mutableStateOf(Offset.Zero) }
     androidx.compose.material3.LargeTopAppBar(
         title = title,
         navigationIcon = navigationIcon,
@@ -58,26 +36,19 @@ fun BlurLargeTopBar(
         windowInsets = windowInsets,
         scrollBehavior = scrollBehavior,
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = androidx.compose.ui.graphics.Color.Transparent,
-            scrolledContainerColor = androidx.compose.ui.graphics.Color.Transparent
+            containerColor = barBg,
+            scrolledContainerColor = barBg
         ),
-        modifier = Modifier
-            .onGloballyPositioned { barPos.value = it.positionInRoot() }
-            .drawWithContent {
-                val fx = blurFx
-                if (fx != null && backdrop != null) {
-                    blurred.renderEffect = fx
-                    blurred.record {
-                        translate(srcPos.x - barPos.value.x, srcPos.y - barPos.value.y) { drawLayer(backdrop) }
-                    }
-                    // ponytail: 高斯核半径24dp，糊点会渗出~72px；clip到自身bounds防污染下方内容
-                    clipRect {
-                        drawLayer(blurred)
-                    }
-                    drawRect(barBg)
-                }
-                drawContent()
-            }
+        modifier = Modifier.then(
+            if (useBlur) Modifier.hazeEffect(
+                state = hazeState!!,
+                style = dev.chrisbanes.haze.HazeDefaults.style(
+                    backgroundColor = barBg,
+                    blurRadius = 24.dp,
+                    noiseFactor = 0f
+                )
+            ) else Modifier
+        )
     )
 }
 
@@ -87,48 +58,32 @@ fun BlurTopBar(
     title: @Composable () -> Unit,
     navigationIcon: @Composable () -> Unit = {},
     actions: @Composable RowScope.() -> Unit = {},
-    backdrop: GraphicsLayer? = null,
-    srcPos: Offset = Offset.Zero,
+    hazeState: HazeState? = null,
     blurEnabled: Boolean = true,
     scrollBehavior: TopAppBarScrollBehavior? = null
 ) {
-    val useBlur = blurEnabled && backdrop != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+    val useBlur = blurEnabled && hazeState != null
     val barBg = MaterialTheme.colorScheme.surface.copy(
         alpha = if (useBlur) 0.55f else 1f
     )
-    val blurR = with(LocalDensity.current) { 24.dp.toPx() }
-    val blurFx = remember(useBlur, blurR) {
-        if (!useBlur) null else RenderEffect
-            .createBlurEffect(blurR, blurR, Shader.TileMode.CLAMP)
-            .asComposeRenderEffect()
-    }
-    val blurred = rememberGraphicsLayer()
-    val barPos = remember { mutableStateOf(Offset.Zero) }
     TopAppBar(
         title = title,
         navigationIcon = navigationIcon,
         actions = actions,
         scrollBehavior = scrollBehavior,
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = androidx.compose.ui.graphics.Color.Transparent,
-            scrolledContainerColor = androidx.compose.ui.graphics.Color.Transparent
+            containerColor = barBg,
+            scrolledContainerColor = barBg
         ),
-        modifier = Modifier
-            .onGloballyPositioned { barPos.value = it.positionInRoot() }
-            .drawWithContent {
-                val fx = blurFx
-                if (fx != null && backdrop != null) {
-                    blurred.renderEffect = fx
-                    blurred.record {
-                        translate(srcPos.x - barPos.value.x, srcPos.y - barPos.value.y) { drawLayer(backdrop) }
-                    }
-                    // ponytail: 高斯核半径24dp，糊点会渗出~72px；clip到自身bounds防污染下方内容
-                    clipRect {
-                        drawLayer(blurred)
-                    }
-                    drawRect(barBg)
-                }
-                drawContent()
-            }
+        modifier = Modifier.then(
+            if (useBlur) Modifier.hazeEffect(
+                state = hazeState!!,
+                style = dev.chrisbanes.haze.HazeDefaults.style(
+                    backgroundColor = barBg,
+                    blurRadius = 24.dp,
+                    noiseFactor = 0f
+                )
+            ) else Modifier
+        )
     )
 }

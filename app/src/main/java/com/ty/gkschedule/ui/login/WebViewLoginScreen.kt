@@ -20,11 +20,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.graphics.layer.drawLayer
-import androidx.compose.ui.graphics.rememberGraphicsLayer
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color as ComposeColor
 import androidx.compose.ui.graphics.asImageBitmap
@@ -42,6 +37,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import dev.chrisbanes.haze.hazeSource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,9 +48,8 @@ fun WebViewLoginScreen(
     onBack: () -> Unit,
     blurEnabled: Boolean = true
 ) {
-    // ponytail: 兄弟backdrop源纹理+糊顶栏
-    val backdrop = androidx.compose.ui.graphics.rememberGraphicsLayer()
-    var srcPos by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
+    // ponytail: haze源层
+    val hazeState = remember { dev.chrisbanes.haze.HazeState() }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
@@ -147,8 +142,7 @@ fun WebViewLoginScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
                     }
                 },
-                backdrop = backdrop,
-                srcPos = srcPos,
+                hazeState = hazeState,
                 blurEnabled = blurEnabled
             )
         }
@@ -156,11 +150,7 @@ fun WebViewLoginScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .onGloballyPositioned { srcPos = it.positionInRoot() }
-                .drawWithContent {
-                    backdrop.record { with(this@drawWithContent) { drawContent() } }
-                    drawLayer(backdrop)
-                }
+                .hazeSource(state = hazeState)
                 // ponytail: 源纹理全屏录(含顶栏身后)；本页不滚动，避让放录制后
                 .padding(padding)
                 .padding(24.dp),

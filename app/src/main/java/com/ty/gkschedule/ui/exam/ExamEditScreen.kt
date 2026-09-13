@@ -10,11 +10,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.graphics.layer.drawLayer
-import androidx.compose.ui.graphics.rememberGraphicsLayer
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Assignment
@@ -42,6 +37,7 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
+import dev.chrisbanes.haze.hazeSource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,9 +49,8 @@ fun ExamEditScreen(
     onBack: () -> Unit,
     blurEnabled: Boolean = true
 ) {
-    // ponytail: 兄弟backdrop源纹理+糊顶栏
-    val backdrop = androidx.compose.ui.graphics.rememberGraphicsLayer()
-    var srcPos by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
+    // ponytail: haze源层
+    val hazeState = remember { dev.chrisbanes.haze.HazeState() }
     val isDark = LocalAppIsDark.current
     val scaffoldBg = if (isDark) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainer
     val context = LocalContext.current
@@ -143,19 +138,14 @@ fun ExamEditScreen(
             title = { Text(if (exam == null) "添加考试安排" else "编辑考试安排", fontWeight = FontWeight.Bold) },
             navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") } },
             actions = { if (exam != null) { IconButton(onClick = { onDelete(exam) }) { Icon(Icons.Default.Delete, "Delete", tint = MaterialTheme.colorScheme.error) } } },
-            backdrop = backdrop,
-            srcPos = srcPos,
+                hazeState = hazeState,
             blurEnabled = blurEnabled
         )
     }) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .onGloballyPositioned { srcPos = it.positionInRoot() }
-                .drawWithContent {
-                    backdrop.record { with(this@drawWithContent) { drawContent() } }
-                    drawLayer(backdrop)
-                }
+                .hazeSource(state = hazeState)
                 // ponytail: 避让走滚动内padding，源纹理全屏录(含顶栏身后)
                 .verticalScroll(rememberScrollState())
                 .padding(top = padding.calculateTopPadding())

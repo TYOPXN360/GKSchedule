@@ -25,11 +25,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.graphics.layer.drawLayer
-import androidx.compose.ui.graphics.rememberGraphicsLayer
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -38,6 +33,7 @@ import com.ty.gkschedule.R
 import com.ty.gkschedule.data.Course
 import com.ty.gkschedule.util.CourseColors
 import com.ty.gkschedule.util.JsonImportExport
+import dev.chrisbanes.haze.hazeSource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,9 +46,8 @@ fun CourseEditScreen(
     onBack: () -> Unit,
     blurEnabled: Boolean = true
 ) {
-    // ponytail: 兄弟backdrop源纹理+糊顶栏
-    val backdrop = androidx.compose.ui.graphics.rememberGraphicsLayer()
-    var srcPos by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
+    // ponytail: haze源层
+    val hazeState = remember { dev.chrisbanes.haze.HazeState() }
     val isEditing = course != null
     val hiddenScopeName = course?.name
     val context = LocalContext.current
@@ -154,8 +149,7 @@ fun CourseEditScreen(
                 title = { Text(if (isEditing) stringResource(R.string.edit_course) else stringResource(R.string.add_new_course)) },
                 navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") } },
                 actions = { if (isEditing) { IconButton(onClick = { showDeleteDialog = true }) { Icon(Icons.Default.Delete, stringResource(R.string.delete), tint = MaterialTheme.colorScheme.error) } } },
-                backdrop = backdrop,
-                srcPos = srcPos,
+                hazeState = hazeState,
                 blurEnabled = blurEnabled
             )
         }
@@ -163,11 +157,7 @@ fun CourseEditScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .onGloballyPositioned { srcPos = it.positionInRoot() }
-                .drawWithContent {
-                    backdrop.record { with(this@drawWithContent) { drawContent() } }
-                    drawLayer(backdrop)
-                }
+                .hazeSource(state = hazeState)
                 // ponytail: 避让走滚动内padding，源纹理全屏录(含顶栏身后)
                 .verticalScroll(rememberScrollState())
                 .padding(top = padding.calculateTopPadding())

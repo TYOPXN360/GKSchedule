@@ -10,11 +10,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.graphics.layer.drawLayer
-import androidx.compose.ui.graphics.rememberGraphicsLayer
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -34,6 +29,7 @@ import androidx.compose.ui.unit.lerp
 import com.ty.gkschedule.R
 import com.ty.gkschedule.data.Course
 import com.ty.gkschedule.util.CourseColors
+import dev.chrisbanes.haze.hazeSource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -73,9 +69,8 @@ fun CourseManageScreen(
     }
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
-    // ponytail: 兄弟backdrop源纹理+糊顶栏；顶栏是Scaffold兄弟槽，不进内容树，不断环
-    val backdrop = androidx.compose.ui.graphics.rememberGraphicsLayer()
-    var srcPos by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
+    // ponytail: haze源层，顶栏hazeEffect吃糊
+    val hazeState = remember { dev.chrisbanes.haze.HazeState() }
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         // ponytail: 顶栏自己吃系统栏，内容区不再重复垫（双重Insets留白根因）
@@ -117,8 +112,7 @@ fun CourseManageScreen(
                     }
                 },
                 scrollBehavior = scrollBehavior,
-                backdrop = backdrop,
-                srcPos = srcPos,
+                hazeState = hazeState,
                 blurEnabled = blurEnabled
             )
         },
@@ -131,16 +125,12 @@ fun CourseManageScreen(
             }
         }
     ) { padding ->
-        // ponytail: 源层全屏录(含顶栏身后)；避让走contentPadding，item滚动穿过顶栏下方
+        // ponytail: haze源层全屏，避让走contentPadding，item滚动穿过顶栏下方
         val topPad = padding.calculateTopPadding()
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .onGloballyPositioned { srcPos = it.positionInRoot() }
-                .drawWithContent {
-                    backdrop.record { with(this@drawWithContent) { drawContent() } }
-                    drawLayer(backdrop)
-                }
+                .hazeSource(state = hazeState)
         ) {
             if (courses.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

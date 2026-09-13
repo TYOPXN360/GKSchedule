@@ -118,4 +118,7 @@ dependencies {
 
     // WorkManager for periodic sync
     implementation(libs.workmanager.runtime)
+
+    // Haze for in-window backdrop blur
+    implementation(libs.haze)
 }
