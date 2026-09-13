@@ -16,6 +16,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.asComposeRenderEffect
+import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.layer.drawLayer
+import androidx.compose.ui.graphics.rememberGraphicsLayer
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
@@ -76,6 +84,7 @@ private fun FloatingPillNavBar(
     pillContentMode: Int,
     screenshotHidden: Boolean = false,
     blurEnabled: Boolean = true,
+    backdrop: androidx.compose.ui.graphics.layer.GraphicsLayer,
     onNavigate: (Screen) -> Unit
 ) {
     var collapsed by remember { mutableStateOf(false) }
@@ -126,26 +135,44 @@ private fun FloatingPillNavBar(
         val barH = iconSize + itemVPad * 2 + pillHPad * 2
         val swPx = with(LocalDensity.current) { screenW.toPx() }
         // 药丸：BottomCenter，p=1时右边缘越过x=0整条出左屏
-        // ponytail: 同窗口跨层糊(BackgroundBlurDrawable)+半透明底；图标文字画在上层，不碰
-        val crossBlur = blurEnabled &&
-            android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S &&
-            com.ty.gkschedule.MainActivity.applyPillBlur
-        val pillBg = if (crossBlur) {
+        // ponytail: 路A真模糊——糊层画在drawWithContent里，字画在糊上，互不干扰
+        val useBlur = blurEnabled && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S
+        val pillBg = if (useBlur) {
             MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.55f)
         } else {
             MaterialTheme.colorScheme.surfaceContainerHigh
         }
+        val blurR = with(LocalDensity.current) { 24.dp.toPx() }
+        val blurFx = remember(useBlur, blurR) {
+            if (!useBlur) null else android.graphics.RenderEffect
+                .createBlurEffect(blurR, blurR, android.graphics.Shader.TileMode.CLAMP)
+                .asComposeRenderEffect()
+        }
+        val blurred = rememberGraphicsLayer()
+        var pillPos by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
         Row(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = barBottom)
                 .height(barH)
+                .onGloballyPositioned { pillPos = it.positionInRoot() }
                 .graphicsLayer {
                     translationX = -p.value * (swPx / 2f + size.width / 2f)
                 }
                 .clip(androidx.compose.foundation.shape.CircleShape)
-                .background(color = pillBg)
-                .blurBehind(enabled = crossBlur)
+                // ponytail: 糊层在背景前先画(身后内容反向平移对齐)，再画半透明底+字
+                .drawWithContent {
+                    val fx = blurFx
+                    if (fx != null) {
+                        blurred.renderEffect = fx
+                        blurred.record {
+                            translate(-pillPos.x, -pillPos.y) { drawLayer(backdrop) }
+                        }
+                        drawLayer(blurred)
+                    }
+                    drawRect(pillBg)
+                    drawContent()
+                }
                 .padding(horizontal = pillHPad, vertical = pillHPad),
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
@@ -200,11 +227,13 @@ private fun FloatingPillNavBar(
             }
         }
         // 书签：BottomStart静止位即贴边；p=0时藏到屏外
+        var markPos by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
         Row(
             modifier = Modifier
                 .align(Alignment.BottomStart)
                 .padding(bottom = barBottom)
                 .height(barH)
+                .onGloballyPositioned { markPos = it.positionInRoot() }
                 .graphicsLayer {
                     translationX = -(1f - p.value) * size.width
                 }
@@ -214,8 +243,18 @@ private fun FloatingPillNavBar(
                         topEnd = barH / 2, bottomEnd = barH / 2
                     )
                 )
-                .background(color = pillBg)
-                .blurBehind(enabled = crossBlur)
+                .drawWithContent {
+                    val fx = blurFx
+                    if (fx != null) {
+                        blurred.renderEffect = fx
+                        blurred.record {
+                            translate(-markPos.x, -markPos.y) { drawLayer(backdrop) }
+                        }
+                        drawLayer(blurred)
+                    }
+                    drawRect(pillBg)
+                    drawContent()
+                }
                 .clickable(enabled = p.value > 0.5f) { collapsed = false }
                 .padding(start = 6.dp, end = 12.dp, top = itemVPad, bottom = itemVPad),
             verticalAlignment = Alignment.CenterVertically
@@ -338,7 +377,17 @@ fun ScheduleApp(
             }
         }
     ) { innerPadding ->
+        // ponytail: 路A——源层录离屏纹理，药丸处贴回糊版；同窗口不走窗口blur API
+        val backdrop = rememberGraphicsLayer()
         Box(Modifier.padding(innerPadding)) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .drawWithContent {
+                        backdrop.record { with(this@drawWithContent) { drawContent() } }
+                        drawLayer(backdrop)
+                    }
+            ) {
             NavHost(
                 navController = navController,
                 startDestination = startPage,
@@ -413,7 +462,7 @@ fun ScheduleApp(
                     enter = slideInVertically(initialOffsetY = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideInSpec()) + fadeIn(com.ty.gkschedule.ui.theme.M3Motion.fadeInSpec()),
                     exit = slideOutVertically(targetOffsetY = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideOutSpec()) + fadeOut(com.ty.gkschedule.ui.theme.M3Motion.fadeOutSpec())
                 ) {
-                    FloatingPillNavBar(currentRoute = currentRoute, pillContentMode = pillContentMode, screenshotHidden = pillHidden, blurEnabled = blurEffect) { screen ->
+                    FloatingPillNavBar(currentRoute = currentRoute, pillContentMode = pillContentMode, screenshotHidden = pillHidden, blurEnabled = blurEffect, backdrop = backdrop) { screen ->
                         com.ty.gkschedule.util.HapticFeedback.light(navView)
                         if (currentRoute != screen.route) {
                             navController.navigate(screen.route) {
@@ -425,6 +474,7 @@ fun ScheduleApp(
                 }
             }
         }
+        } // backdrop源层Box
     }
     }
 }
