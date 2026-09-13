@@ -455,7 +455,7 @@ fun WeeklyScheduleScreen(
                     .align(Alignment.BottomEnd)
                     .drawBackdrop(
                         backdrop = backdrop,
-                        shape = { androidx.compose.foundation.shape.RoundedCornerShape(16.dp) },
+                        shape = { androidx.compose.foundation.shape.CircleShape },
                         effects = { blur(28.dp.toPx()) }
                     ),
                 containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f),
@@ -473,7 +473,7 @@ fun WeeklyScheduleScreen(
                         onClick = { com.ty.gkschedule.util.HapticFeedback.medium(hapticView); onRefresh() },
                         modifier = Modifier.drawBackdrop(
                             backdrop = backdrop,
-                            shape = { androidx.compose.foundation.shape.RoundedCornerShape(16.dp) },
+                            shape = { androidx.compose.foundation.shape.CircleShape },
                             effects = { blur(28.dp.toPx()) }
                         ),
                         containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.75f),
@@ -487,7 +487,7 @@ fun WeeklyScheduleScreen(
                         onClick = { com.ty.gkschedule.util.HapticFeedback.medium(hapticView); onAddCourse() },
                         modifier = Modifier.drawBackdrop(
                             backdrop = backdrop,
-                            shape = { androidx.compose.foundation.shape.RoundedCornerShape(16.dp) },
+                            shape = { androidx.compose.foundation.shape.CircleShape },
                             effects = { blur(28.dp.toPx()) }
                         ),
                         containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.75f),
@@ -521,7 +521,7 @@ fun WeeklyScheduleScreen(
                     }, containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.75f), contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
                         modifier = Modifier.drawBackdrop(
                             backdrop = backdrop,
-                            shape = { androidx.compose.foundation.shape.RoundedCornerShape(16.dp) },
+                            shape = { androidx.compose.foundation.shape.CircleShape },
                             effects = { blur(28.dp.toPx()) }
                         )) { Icon(Icons.Default.CropFree, "Screenshot") }
                     }
@@ -538,7 +538,7 @@ fun WeeklyScheduleScreen(
                     onClick = { com.ty.gkschedule.util.HapticFeedback.medium(hapticView); onWeekChange(realCurrentWeek) },
                     modifier = Modifier.drawBackdrop(
                         backdrop = backdrop,
-                        shape = { androidx.compose.foundation.shape.RoundedCornerShape(16.dp) },
+                        shape = { androidx.compose.foundation.shape.CircleShape },
                         effects = { blur(28.dp.toPx()) }
                     ),
                     containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.75f),
