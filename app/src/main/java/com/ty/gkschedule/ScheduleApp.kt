@@ -50,8 +50,10 @@ import com.ty.gkschedule.ui.settings.SettingsScreen
 import com.ty.gkschedule.ui.today.TodayScreen
 import com.ty.gkschedule.ui.weekly.WeeklyScheduleScreen
 import kotlinx.coroutines.launch
-import dev.chrisbanes.haze.hazeEffect
-import dev.chrisbanes.haze.hazeSource
+import top.yukonga.miuix.kmp.blur.blur
+import top.yukonga.miuix.kmp.blur.drawBackdrop
+import top.yukonga.miuix.kmp.blur.layerBackdrop
+import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
 
 sealed class Screen(val route: String) {
     data object Today : Screen("today")
@@ -79,7 +81,7 @@ private fun FloatingPillNavBar(
     pillContentMode: Int,
     screenshotHidden: Boolean = false,
     blurEnabled: Boolean = true,
-    hazeState: dev.chrisbanes.haze.HazeState,
+    backdrop: top.yukonga.miuix.kmp.blur.LayerBackdrop,
     onNavigate: (Screen) -> Unit
 ) {
     var collapsed by remember { mutableStateOf(false) }
@@ -145,13 +147,10 @@ private fun FloatingPillNavBar(
                 }
                 .clip(androidx.compose.foundation.shape.CircleShape)
                 .then(
-                    if (blurEnabled) Modifier.hazeEffect(
-                        state = hazeState,
-                        style = dev.chrisbanes.haze.HazeDefaults.style(
-                            backgroundColor = androidx.compose.ui.graphics.Color.Transparent,
-                            blurRadius = 28.dp,
-                            noiseFactor = 0f
-                        )
+                    if (blurEnabled) Modifier.drawBackdrop(
+                        backdrop = backdrop,
+                        shape = { androidx.compose.foundation.shape.CircleShape },
+                        effects = { blur(28.dp.toPx()) }
                     ) else Modifier.background(pillBg)
                 )
                 .padding(horizontal = pillHPad, vertical = pillHPad),
@@ -223,13 +222,15 @@ private fun FloatingPillNavBar(
                     )
                 )
                 .then(
-                    if (blurEnabled) Modifier.hazeEffect(
-                        state = hazeState,
-                        style = dev.chrisbanes.haze.HazeDefaults.style(
-                            backgroundColor = androidx.compose.ui.graphics.Color.Transparent,
-                            blurRadius = 28.dp,
-                            noiseFactor = 0f
-                        )
+                    if (blurEnabled) Modifier.drawBackdrop(
+                        backdrop = backdrop,
+                        shape = {
+                            androidx.compose.foundation.shape.RoundedCornerShape(
+                                topStart = 0.dp, bottomStart = 0.dp,
+                                topEnd = barH / 2, bottomEnd = barH / 2
+                            )
+                        },
+                        effects = { blur(28.dp.toPx()) }
                     ) else Modifier.background(pillBg)
                 )
                 .clickable(enabled = p.value > 0.5f) { collapsed = false }
@@ -355,12 +356,12 @@ fun ScheduleApp(
         }
     ) { innerPadding ->
         // ponytail: haze源层——内容标hazeSource吃糊；药丸挂兄弟层(环=RenderThread栈溢出，见08c190d)
-        val hazeState = remember { dev.chrisbanes.haze.HazeState() }
+        val backdrop = top.yukonga.miuix.kmp.blur.rememberLayerBackdrop()
         Box(Modifier.padding(innerPadding)) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .hazeSource(state = hazeState)
+                    .layerBackdrop(backdrop)
             ) {
             NavHost(
                 navController = navController,
@@ -437,7 +438,7 @@ fun ScheduleApp(
                     enter = slideInVertically(initialOffsetY = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideInSpec()) + fadeIn(com.ty.gkschedule.ui.theme.M3Motion.fadeInSpec()),
                     exit = slideOutVertically(targetOffsetY = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideOutSpec()) + fadeOut(com.ty.gkschedule.ui.theme.M3Motion.fadeOutSpec())
                 ) {
-                    FloatingPillNavBar(currentRoute = currentRoute, pillContentMode = pillContentMode, screenshotHidden = pillHidden, blurEnabled = blurEffect, hazeState = hazeState) { screen ->
+                    FloatingPillNavBar(currentRoute = currentRoute, pillContentMode = pillContentMode, screenshotHidden = pillHidden, blurEnabled = blurEffect, backdrop = backdrop) { screen ->
                         com.ty.gkschedule.util.HapticFeedback.light(navView)
                         if (currentRoute != screen.route) {
                             navController.navigate(screen.route) {

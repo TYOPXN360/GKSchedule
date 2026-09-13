@@ -121,4 +121,7 @@ dependencies {
 
     // Haze for in-window backdrop blur
     implementation(libs.haze)
+
+    // Miuix-blur for MIUI-style backdrop blur
+    implementation(libs.miuix.blur)
 }

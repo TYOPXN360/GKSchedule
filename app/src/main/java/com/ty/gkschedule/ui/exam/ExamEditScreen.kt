@@ -37,7 +37,8 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
-import dev.chrisbanes.haze.hazeSource
+import top.yukonga.miuix.kmp.blur.layerBackdrop
+import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,7 +51,7 @@ fun ExamEditScreen(
     blurEnabled: Boolean = true
 ) {
     // ponytail: haze源层
-    val hazeState = remember { dev.chrisbanes.haze.HazeState() }
+    val backdrop = top.yukonga.miuix.kmp.blur.rememberLayerBackdrop()
     val isDark = LocalAppIsDark.current
     val scaffoldBg = if (isDark) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainer
     val context = LocalContext.current
@@ -133,18 +134,19 @@ fun ExamEditScreen(
         return "闭卷"
     }
 
-    Scaffold(modifier = Modifier.hazeSource(state = hazeState), contentWindowInsets = WindowInsets(0, 0, 0, 0), containerColor = scaffoldBg, topBar = {
+    Scaffold(contentWindowInsets = WindowInsets(0, 0, 0, 0), containerColor = scaffoldBg, topBar = {
         com.ty.gkschedule.ui.theme.BlurTopBar(
             title = { Text(if (exam == null) "添加考试安排" else "编辑考试安排", fontWeight = FontWeight.Bold) },
             navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") } },
             actions = { if (exam != null) { IconButton(onClick = { onDelete(exam) }) { Icon(Icons.Default.Delete, "Delete", tint = MaterialTheme.colorScheme.error) } } },
-                hazeState = hazeState,
+                backdrop = backdrop,
             blurEnabled = blurEnabled
         )
     }) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .layerBackdrop(backdrop)
                                 // ponytail: 避让走滚动内padding，源纹理全屏录(含顶栏身后)
                 .verticalScroll(rememberScrollState())
                 .padding(top = padding.calculateTopPadding())

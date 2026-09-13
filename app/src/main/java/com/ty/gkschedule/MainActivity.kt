@@ -76,8 +76,6 @@ class MainActivity : AppCompatActivity() {
 
         enableEdgeToEdge()
         requestNotificationPermissionIfNeeded()
-        // ponytail: 临时探针——haze内部降级log，定音后删除
-        dev.chrisbanes.haze.HazeLogger.enabled = true
 
         // Request high refresh rate without changing resolution
         // ponytail: 跨窗口模糊总开关；开了才允许模糊，不开后面全白搭

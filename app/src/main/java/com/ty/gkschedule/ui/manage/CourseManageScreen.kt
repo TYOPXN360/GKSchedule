@@ -29,7 +29,8 @@ import androidx.compose.ui.unit.lerp
 import com.ty.gkschedule.R
 import com.ty.gkschedule.data.Course
 import com.ty.gkschedule.util.CourseColors
-import dev.chrisbanes.haze.hazeSource
+import top.yukonga.miuix.kmp.blur.layerBackdrop
+import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -70,11 +71,9 @@ fun CourseManageScreen(
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     // ponytail: haze源层，顶栏hazeEffect吃糊
-    val hazeState = remember { dev.chrisbanes.haze.HazeState() }
+    val backdrop = top.yukonga.miuix.kmp.blur.rememberLayerBackdrop()
     Scaffold(
-        modifier = Modifier
-            .nestedScroll(scrollBehavior.nestedScrollConnection)
-            .hazeSource(state = hazeState),
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         // ponytail: 顶栏自己吃系统栏，内容区不再重复垫（双重Insets留白根因）
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
@@ -114,7 +113,7 @@ fun CourseManageScreen(
                     }
                 },
                 scrollBehavior = scrollBehavior,
-                hazeState = hazeState,
+                backdrop = backdrop,
                 blurEnabled = blurEnabled
             )
         },
@@ -130,7 +129,9 @@ fun CourseManageScreen(
         // ponytail: haze源层全屏，避让走contentPadding，item滚动穿过顶栏下方
         val topPad = padding.calculateTopPadding()
         Box(
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier
+                .fillMaxSize()
+                .layerBackdrop(backdrop)
         ) {
             if (courses.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

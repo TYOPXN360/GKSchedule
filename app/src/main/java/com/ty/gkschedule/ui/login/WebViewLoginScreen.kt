@@ -37,7 +37,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import dev.chrisbanes.haze.hazeSource
+import top.yukonga.miuix.kmp.blur.layerBackdrop
+import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,7 +50,7 @@ fun WebViewLoginScreen(
     blurEnabled: Boolean = true
 ) {
     // ponytail: haze源层
-    val hazeState = remember { dev.chrisbanes.haze.HazeState() }
+    val backdrop = top.yukonga.miuix.kmp.blur.rememberLayerBackdrop()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
@@ -133,7 +134,6 @@ fun WebViewLoginScreen(
     LaunchedEffect(Unit) { generateQr() }
 
     Scaffold(
-        modifier = Modifier.hazeSource(state = hazeState),
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             com.ty.gkschedule.ui.theme.BlurTopBar(
@@ -143,7 +143,7 @@ fun WebViewLoginScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
                     }
                 },
-                hazeState = hazeState,
+                backdrop = backdrop,
                 blurEnabled = blurEnabled
             )
         }
@@ -151,6 +151,7 @@ fun WebViewLoginScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .layerBackdrop(backdrop)
                                 // ponytail: 源纹理全屏录(含顶栏身后)；本页不滚动，避让放录制后
                 .padding(padding)
                 .padding(24.dp),

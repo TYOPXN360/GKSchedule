@@ -33,7 +33,8 @@ import com.ty.gkschedule.R
 import com.ty.gkschedule.data.Course
 import com.ty.gkschedule.util.CourseColors
 import com.ty.gkschedule.util.JsonImportExport
-import dev.chrisbanes.haze.hazeSource
+import top.yukonga.miuix.kmp.blur.layerBackdrop
+import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,7 +48,7 @@ fun CourseEditScreen(
     blurEnabled: Boolean = true
 ) {
     // ponytail: haze源层
-    val hazeState = remember { dev.chrisbanes.haze.HazeState() }
+    val backdrop = top.yukonga.miuix.kmp.blur.rememberLayerBackdrop()
     val isEditing = course != null
     val hiddenScopeName = course?.name
     val context = LocalContext.current
@@ -144,14 +145,13 @@ fun CourseEditScreen(
     val scaffoldBg = if (isDark) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainer
 
     Scaffold(
-        modifier = Modifier.hazeSource(state = hazeState),
         contentWindowInsets = WindowInsets(0, 0, 0, 0), containerColor = scaffoldBg,
         topBar = {
             com.ty.gkschedule.ui.theme.BlurTopBar(
                 title = { Text(if (isEditing) stringResource(R.string.edit_course) else stringResource(R.string.add_new_course)) },
                 navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") } },
                 actions = { if (isEditing) { IconButton(onClick = { showDeleteDialog = true }) { Icon(Icons.Default.Delete, stringResource(R.string.delete), tint = MaterialTheme.colorScheme.error) } } },
-                hazeState = hazeState,
+                backdrop = backdrop,
                 blurEnabled = blurEnabled
             )
         }
@@ -160,6 +160,7 @@ fun CourseEditScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .layerBackdrop(backdrop)
                 // ponytail: 避让走滚动内padding，源纹理全屏录(含顶栏身后)
                 .verticalScroll(rememberScrollState())
                 .padding(top = padding.calculateTopPadding())

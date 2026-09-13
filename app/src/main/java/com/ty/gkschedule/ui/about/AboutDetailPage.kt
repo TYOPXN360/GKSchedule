@@ -28,7 +28,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import dev.chrisbanes.haze.hazeSource
+import top.yukonga.miuix.kmp.blur.layerBackdrop
+import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -51,9 +52,8 @@ fun AboutDetailPage(
     val currentVersion = remember { UpdateChecker.getCurrentVersion(context) }
 
     // ponytail: haze源层
-    val hazeState = remember { dev.chrisbanes.haze.HazeState() }
+    val backdrop = top.yukonga.miuix.kmp.blur.rememberLayerBackdrop()
     Scaffold(
-        modifier = Modifier.hazeSource(state = hazeState),
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
@@ -64,7 +64,7 @@ fun AboutDetailPage(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "返回")
                     }
                 },
-                hazeState = hazeState,
+                backdrop = backdrop,
                 blurEnabled = blurEnabled
             )
         }
@@ -72,6 +72,7 @@ fun AboutDetailPage(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .layerBackdrop(backdrop)
                                 // ponytail: 避让走滚动内padding，源纹理全屏录(含顶栏身后)
                 .verticalScroll(rememberScrollState())
                 .padding(top = padding.calculateTopPadding()),

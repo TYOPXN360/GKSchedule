@@ -31,7 +31,8 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.ty.gkschedule.LoginState
 import com.ty.gkschedule.R
-import dev.chrisbanes.haze.hazeSource
+import top.yukonga.miuix.kmp.blur.layerBackdrop
+import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,7 +48,7 @@ fun LoginScreen(
     blurEnabled: Boolean = true
 ) {
     // ponytail: haze源层
-    val hazeState = remember { dev.chrisbanes.haze.HazeState() }
+    val backdrop = top.yukonga.miuix.kmp.blur.rememberLayerBackdrop()
     var studentId by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var captcha by remember { mutableStateOf("") }
@@ -59,7 +60,6 @@ fun LoginScreen(
     val importResult = (loginState as? LoginState.ImportResult)?.let { "导入完成: ${it.count} 门课程" }
 
     Scaffold(
-        modifier = Modifier.hazeSource(state = hazeState),
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             com.ty.gkschedule.ui.theme.BlurTopBar(
@@ -69,7 +69,7 @@ fun LoginScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
                     }
                 },
-                hazeState = hazeState,
+                backdrop = backdrop,
                 blurEnabled = blurEnabled
             )
         }
@@ -77,6 +77,7 @@ fun LoginScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .layerBackdrop(backdrop)
                                 // ponytail: 避让走滚动内padding，源纹理全屏录(含顶栏身后)
                 .verticalScroll(rememberScrollState())
                 .padding(top = padding.calculateTopPadding())

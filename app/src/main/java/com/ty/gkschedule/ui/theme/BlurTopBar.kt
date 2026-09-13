@@ -1,6 +1,5 @@
 package com.ty.gkschedule.ui.theme
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -9,11 +8,13 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.hazeEffect
+import top.yukonga.miuix.kmp.blur.Backdrop
+import top.yukonga.miuix.kmp.blur.blur
+import top.yukonga.miuix.kmp.blur.drawBackdrop
 
-// ponytail: 可滚动页糊顶栏统一入口——haze同窗口backdrop糊；关开关回退纯色
+// ponytail: 顶栏miuix糊——drawBackdrop吃backdrop源，RuntimeShader真模糊；关开关回退纯色
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BlurLargeTopBar(
@@ -21,12 +22,11 @@ fun BlurLargeTopBar(
     navigationIcon: @Composable () -> Unit = {},
     actions: @Composable RowScope.() -> Unit = {},
     windowInsets: androidx.compose.foundation.layout.WindowInsets = TopAppBarDefaults.windowInsets,
-    hazeState: HazeState? = null,
+    backdrop: Backdrop? = null,
     blurEnabled: Boolean = true,
     scrollBehavior: TopAppBarScrollBehavior? = null
 ) {
-    val useBlur = blurEnabled && hazeState != null
-    // ponytail: 底色只给35%透明，让糊层透上来；haze的backgroundColor与containerColor叠加会压淡糊感
+    val useBlur = blurEnabled && backdrop != null
     val barBg = MaterialTheme.colorScheme.surface.copy(
         alpha = if (useBlur) 0.35f else 1f
     )
@@ -41,13 +41,10 @@ fun BlurLargeTopBar(
             scrolledContainerColor = barBg
         ),
         modifier = Modifier.then(
-            if (useBlur) Modifier.hazeEffect(
-                state = hazeState!!,
-                style = dev.chrisbanes.haze.HazeDefaults.style(
-                    backgroundColor = androidx.compose.ui.graphics.Color.Transparent,
-                    blurRadius = 28.dp,
-                    noiseFactor = 0f
-                )
+            if (useBlur) Modifier.drawBackdrop(
+                backdrop = backdrop!!,
+                shape = { androidx.compose.ui.graphics.RectangleShape },
+                effects = { blur(28.dp.toPx()) }
             ) else Modifier
         )
     )
@@ -59,12 +56,11 @@ fun BlurTopBar(
     title: @Composable () -> Unit,
     navigationIcon: @Composable () -> Unit = {},
     actions: @Composable RowScope.() -> Unit = {},
-    hazeState: HazeState? = null,
+    backdrop: Backdrop? = null,
     blurEnabled: Boolean = true,
     scrollBehavior: TopAppBarScrollBehavior? = null
 ) {
-    val useBlur = blurEnabled && hazeState != null
-    // ponytail: 底色只给35%透明，让糊层透上来；haze的backgroundColor与containerColor叠加会压淡糊感
+    val useBlur = blurEnabled && backdrop != null
     val barBg = MaterialTheme.colorScheme.surface.copy(
         alpha = if (useBlur) 0.35f else 1f
     )
@@ -78,13 +74,10 @@ fun BlurTopBar(
             scrolledContainerColor = barBg
         ),
         modifier = Modifier.then(
-            if (useBlur) Modifier.hazeEffect(
-                state = hazeState!!,
-                style = dev.chrisbanes.haze.HazeDefaults.style(
-                    backgroundColor = androidx.compose.ui.graphics.Color.Transparent,
-                    blurRadius = 28.dp,
-                    noiseFactor = 0f
-                )
+            if (useBlur) Modifier.drawBackdrop(
+                backdrop = backdrop!!,
+                shape = { androidx.compose.ui.graphics.RectangleShape },
+                effects = { blur(28.dp.toPx()) }
             ) else Modifier
         )
     )

@@ -41,7 +41,8 @@ import com.ty.gkschedule.ui.theme.Md3Card
 import com.ty.gkschedule.ui.theme.Md3CardVariant
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
-import dev.chrisbanes.haze.hazeSource
+import top.yukonga.miuix.kmp.blur.layerBackdrop
+import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -101,10 +102,9 @@ fun ExamScreen(
     val scaffoldBg = if (isDark) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainer
     var detailItem by remember { mutableStateOf<ScheduleItem.ExamItem?>(null) }
     // ponytail: haze源层
-    val hazeState = remember { dev.chrisbanes.haze.HazeState() }
+    val backdrop = top.yukonga.miuix.kmp.blur.rememberLayerBackdrop()
 
     Scaffold(
-        modifier = Modifier.hazeSource(state = hazeState),
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         containerColor = scaffoldBg,
         topBar = {
@@ -115,7 +115,7 @@ fun ExamScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
                     }
                 },
-                hazeState = hazeState,
+                backdrop = backdrop,
                 blurEnabled = blurEnabled
             )
         },
@@ -135,6 +135,7 @@ fun ExamScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .layerBackdrop(backdrop)
                                 .padding(top = topPad)
         ) {
             // Filter card
