@@ -6,9 +6,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
@@ -19,6 +19,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -46,23 +47,38 @@ fun CourseManageScreen(
     val uniqueCourses = remember(courseGroups) { courseGroups.values.map { it.first() }.sortedBy { it.name } }
 
     val listState = rememberLazyListState()
-    // ponytail: 大标题滚出即折叠成顶栏标题；下滑隐藏悬浮pill，上滑恢复
-    val collapsed by remember {
-        derivedStateOf { listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 120 }
-    }
-    LaunchedEffect(listState.isScrollInProgress, listState.firstVisibleItemIndex, listState.firstVisibleItemScrollOffset) {
-        onScrollHidePill(listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 200)
+    // ponytail: pill跟滚动方向走——下滑内容(手指上推)立即藏，上滑立即现；顶部不强制现
+    var lastOffset by remember { mutableIntStateOf(0) }
+    var lastIndex by remember { mutableIntStateOf(0) }
+    LaunchedEffect(listState.firstVisibleItemIndex, listState.firstVisibleItemScrollOffset) {
+        val idx = listState.firstVisibleItemIndex
+        val off = listState.firstVisibleItemScrollOffset
+        // 同一item内比offset，跨item按方向：index变大=下滑藏，变小=上滑现
+        val scrollingDown = when {
+            idx != lastIndex -> idx > lastIndex
+            else -> off > lastOffset
+        }
+        onScrollHidePill(scrollingDown)
+        lastOffset = off
+        lastIndex = idx
     }
 
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            TopAppBar(
+            // ponytail: 大标题在栏内折叠，不在列表里再摆一个；门数塞进title行，省掉subtitle参数
+            // ponytail: scrollBehavior先占位，下一步接nestedScroll才真折叠
+            MediumTopAppBar(
                 title = {
-                    Text(
-                        stringResource(R.string.course_manage_title),
-                        style = if (collapsed) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Column {
+                        Text(stringResource(R.string.course_manage_title), fontWeight = FontWeight.Bold)
+                        Text(
+                            stringResource(R.string.course_count_format, courses.size),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 },
                 navigationIcon = {
                     if (onBack != null) {
@@ -76,11 +92,7 @@ fun CourseManageScreen(
                         }
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface.copy(
-                        alpha = (listState.firstVisibleItemScrollOffset / 200f).coerceIn(0f, 1f) * 0.95f + 0.05f
-                    )
-                )
+                scrollBehavior = scrollBehavior
             )
         },
         floatingActionButton = {
@@ -108,15 +120,6 @@ fun CourseManageScreen(
                     contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 88.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    // 大标题：滚出屏幕即折叠
-                    item {
-                        Column(modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 8.dp)) {
-                            Text(stringResource(R.string.course_manage_title), style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(stringResource(R.string.course_count_format, courses.size), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                    }
-
                     items(uniqueCourses) { course ->
                         val count = courseGroups[course.name].orEmpty().size
                         CourseListItem(
