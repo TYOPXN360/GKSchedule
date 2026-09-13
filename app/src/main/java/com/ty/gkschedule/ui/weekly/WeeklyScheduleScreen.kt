@@ -152,13 +152,31 @@ fun WeeklyScheduleScreen(
         onWeekChange(realWeek.intValue)
     }
 
+    val ptrState = androidx.compose.material3.pulltorefresh.rememberPullToRefreshState()
     PullToRefreshBox(
         isRefreshing = isRefreshing,
         onRefresh = {
             com.ty.gkschedule.util.HapticFeedback.medium(hapticView)
             onRefresh()
         },
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize(),
+        state = ptrState,
+        // ponytail: M3E LoadingIndicator下拉头，释放位压住周卡片+backdrop糊
+        indicator = {
+            @OptIn(androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class)
+            androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.LoadingIndicator(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .offset(y = 96.dp)
+                    .drawBackdrop(
+                        backdrop = backdrop,
+                        shape = { androidx.compose.foundation.shape.CircleShape },
+                        effects = { blur(28.dp.toPx()) }
+                    ),
+                state = ptrState,
+                isRefreshing = isRefreshing
+            )
+        }
     ) {
         val coroutineScope = rememberCoroutineScope()
         val context = androidx.compose.ui.platform.LocalContext.current
