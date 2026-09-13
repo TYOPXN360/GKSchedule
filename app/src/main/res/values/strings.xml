@@ -96,6 +96,10 @@
     <string name="grid_height">Grid Height</string>
     <string name="grid_corner">Corner Radius</string>
     <string name="grid_spacing">Spacing</string>
+    <string name="style_section_layout">Layout</string>
+    <string name="style_section_content">Content</string>
+    <string name="style_section_navbar">Nav Bar</string>
+    <string name="style_section_color">Colors</string>
     <string name="show_period_label">Show Period Numbers</string>
     <string name="auto_grid_height">Auto-fit Content</string>
     <string name="merge_consecutive">Merge Consecutive Periods</string>

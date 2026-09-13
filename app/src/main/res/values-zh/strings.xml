@@ -117,6 +117,10 @@
     <string name="grid_height">格子高度</string>
     <string name="grid_corner">圆角</string>
     <string name="grid_spacing">间距</string>
+    <string name="style_section_layout">布局</string>
+    <string name="style_section_content">内容</string>
+    <string name="style_section_navbar">导航栏</string>
+    <string name="style_section_color">颜色</string>
     <string name="show_period_label">显示节次标号</string>
     <string name="detailed_split">详细分割</string>
     <!-- Settings - Notification -->

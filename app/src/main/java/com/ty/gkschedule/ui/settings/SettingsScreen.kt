@@ -454,6 +454,8 @@ private fun ScheduleStylePage(
     onBack: () -> Unit
 ) {
     SubPage(stringResource(R.string.settings_category_schedule), onBack) {
+        // ponytail: 布局类一卡，内容类一卡，导航栏类一卡，颜色类一卡
+        SectionHeader(stringResource(R.string.style_section_layout))
         SettingsCard {
             SwitchItem(Icons.Default.AutoAwesome, stringResource(R.string.auto_grid_height), autoGridHeight, onAutoGridHeightChange)
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
@@ -475,11 +477,19 @@ private fun ScheduleStylePage(
                     HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
                 }
             }
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        SectionHeader(stringResource(R.string.style_section_content))
+        SettingsCard {
             SwitchItem(Icons.Default.AccessTime, stringResource(R.string.show_time_label), showTimeLabel, onShowTimeLabelChange)
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
             SwitchItem(Icons.Default.CalendarMonth, stringResource(R.string.show_date_in_header), showDateInHeader, onShowDateInHeaderChange)
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
             SwitchItem(Icons.Default.Pin, stringResource(R.string.show_period_label), showPeriodLabel, onShowPeriodLabelChange)
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        SectionHeader(stringResource(R.string.style_section_navbar))
+        SettingsCard {
             SwitchItem(Icons.Default.Dashboard, stringResource(R.string.compact_nav_bar), compactNavBar, onCompactNavBarChange)
             androidx.compose.animation.AnimatedVisibility(visible = compactNavBar) {
                 Column {
@@ -503,6 +513,7 @@ private fun ScheduleStylePage(
             )
         }
         Spacer(modifier = Modifier.height(16.dp))
+        SectionHeader(stringResource(R.string.style_section_color))
         SettingsCard {
             DropdownItem(Icons.Default.Palette, stringResource(R.string.color_engine),
                 listOf("0" to stringResource(R.string.color_engine_monet), "1" to stringResource(R.string.color_engine_vibrant), "2" to stringResource(R.string.color_engine_classic), "3" to stringResource(R.string.color_engine_hsl)),
@@ -725,6 +736,17 @@ private fun DataPage(onExportJson: () -> Unit, onImportJson: () -> Unit, onExpor
 }
 
 // === Shared components ===
+
+@Composable
+private fun SectionHeader(title: String) {
+    Text(
+        text = title,
+        style = MaterialTheme.typography.titleSmall,
+        fontWeight = FontWeight.SemiBold,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
+    )
+}
 
 @Composable
 private fun SettingsCard(content: @Composable ColumnScope.() -> Unit) {
