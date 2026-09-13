@@ -162,7 +162,7 @@ fun WeeklyScheduleScreen(
         },
         modifier = Modifier.fillMaxSize(),
         state = ptrState,
-        // ponytail: 下拉头自组毛玻璃球——位移/淡入必须在 drawBackdrop 外层，否则球不动、花团在球里跑
+        // ponytail: 下拉头自组毛玻璃球——位移公式与尺寸复刻官方 IndicatorBox，花团用官方 ContainedLoadingIndicator
         indicator = {
             val hlDark = com.ty.gkschedule.ui.theme.LocalAppIsDark.current
             val hlStroke = if (hlDark) {
@@ -170,17 +170,16 @@ fun WeeklyScheduleScreen(
             } else {
                 top.yukonga.miuix.kmp.blur.highlight.Highlight.GlassStrokeSmallLight
             }
-            // ponytail: 1.5.0-alpha27 里这个属性叫 distanceFraction（旧名 progress 已不存在）
-            val progress = ptrState.distanceFraction.coerceIn(0f, 1f)
-            // 跟手下移上限 160dp（压住周选择器）；刷新中停靠位≈Size/2+Spacing
-            val offsetDp = if (isRefreshing) 30.dp else 160.dp * progress
+            val density = androidx.compose.ui.platform.LocalDensity.current
+            val maxDistancePx = with(density) { 160.dp.toPx() }
             @OptIn(androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class)
             Box(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
-                    .statusBarsPadding()
-                    .offset(y = offsetDp)
-                    .graphicsLayer { alpha = if (isRefreshing) 1f else progress }
+                    // 官方同款：fraction*maxDistance - 自身高 ⇒ 起始完全藏在顶边之上，下拉才从屏幕顶边探出
+                    .graphicsLayer {
+                        translationY = ptrState.distanceFraction * maxDistancePx - size.height
+                    }
                     .drawBackdrop(
                         backdrop = backdrop,
                         shape = { androidx.compose.foundation.shape.CircleShape },
@@ -190,13 +189,24 @@ fun WeeklyScheduleScreen(
                     .background(
                         MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.40f),
                         androidx.compose.foundation.shape.CircleShape,
-                    )
-                    .size(40.dp),
+                    ),
                 contentAlignment = Alignment.Center,
             ) {
-                androidx.compose.material3.LoadingIndicator(
-                    modifier = Modifier.size(24.dp),
-                    color = MaterialTheme.colorScheme.primary,
+                @OptIn(androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class)
+                androidx.compose.material3.ContainedLoadingIndicator(
+                    progress = { ptrState.distanceFraction },
+                    modifier = Modifier
+                        .size(
+                            width = androidx.compose.material3.LoadingIndicatorDefaults.ContainerWidth,
+                            height = androidx.compose.material3.LoadingIndicatorDefaults.ContainerHeight,
+                        )
+                        // 官方同款：超过 1 之后整颗连续自转，避免跳变
+                        .graphicsLayer {
+                            val f = ptrState.distanceFraction
+                            if (f > 1f) rotationZ = -(f - 1f) * 180f
+                        },
+                    containerColor = androidx.compose.ui.graphics.Color.Transparent,
+                    indicatorColor = MaterialTheme.colorScheme.primary,
                 )
             }
         }
@@ -211,9 +221,11 @@ fun WeeklyScheduleScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .statusBarsPadding()
+                // ponytail: layerBackdrop→background 在前、statusBarsPadding 在最后：
+                // 源纹理必须含状态栏那一段（否则贴顶的糊层采到空洞=黑），避让只作用于内容
                 .layerBackdrop(backdrop)
                 .background(MaterialTheme.colorScheme.surface)
+                .statusBarsPadding()
         ) {
             // Week selector — track top edge in pixels
             Card(
