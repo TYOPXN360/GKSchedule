@@ -67,17 +67,10 @@ fun CourseManageScreen(
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            // ponytail: 与WIfikeyXposed同款LargeTopAppBar，大标题在栏内折叠
+            // ponytail: 与WIfikeyXposed同款LargeTopAppBar；垃圾桶只在栏内，列表头那份滚走即消失
             LargeTopAppBar(
                 title = {
-                    Column {
-                        Text(stringResource(R.string.course_manage_title), fontWeight = FontWeight.Bold)
-                        Text(
-                            stringResource(R.string.course_count_format, courses.size),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+                    Text(stringResource(R.string.course_manage_title), fontWeight = FontWeight.Bold)
                 },
                 navigationIcon = {
                     if (onBack != null) {
@@ -119,6 +112,32 @@ fun CourseManageScreen(
                     contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 88.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
+                    // ponytail: 大标题头+门数+垃圾桶都在列表头里，滚出即走；栏内只剩小标题
+                    item {
+                        Column(modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 8.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    stringResource(R.string.course_manage_title),
+                                    style = MaterialTheme.typography.headlineLarge,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                if (courses.isNotEmpty()) {
+                                    IconButton(onClick = { showDeleteAllDialog = true }) {
+                                        Icon(Icons.Default.DeleteSweep, contentDescription = null, tint = MaterialTheme.colorScheme.error)
+                                    }
+                                }
+                            }
+                            Text(
+                                stringResource(R.string.course_count_format, courses.size),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
                     items(uniqueCourses) { course ->
                         val count = courseGroups[course.name].orEmpty().size
                         CourseListItem(
