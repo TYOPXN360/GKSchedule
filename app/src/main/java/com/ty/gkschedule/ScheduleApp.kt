@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.Today
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -74,6 +75,7 @@ private fun FloatingPillNavBar(
     currentRoute: String?,
     pillContentMode: Int,
     screenshotHidden: Boolean = false,
+    blurEnabled: Boolean = true,
     onNavigate: (Screen) -> Unit
 ) {
     var collapsed by remember { mutableStateOf(false) }
@@ -124,6 +126,10 @@ private fun FloatingPillNavBar(
         val barH = iconSize + itemVPad * 2 + pillHPad * 2
         val swPx = with(LocalDensity.current) { screenW.toPx() }
         // 药丸：BottomCenter，p=1时右边缘越过x=0整条出左屏
+        // ponytail: 系统RenderEffect backdrop blur，底色只给60%透明度让课表透上来取色
+        val pillBg = MaterialTheme.colorScheme.surfaceContainerHigh.copy(
+            alpha = if (blurEnabled) 0.6f else 1f
+        )
         Row(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -133,7 +139,8 @@ private fun FloatingPillNavBar(
                     translationX = -p.value * (swPx / 2f + size.width / 2f)
                 }
                 .clip(androidx.compose.foundation.shape.CircleShape)
-                .background(color = MaterialTheme.colorScheme.surfaceContainerHigh)
+                .background(color = pillBg)
+                .then(if (blurEnabled && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) Modifier.blur(24.dp) else Modifier)
                 .padding(horizontal = pillHPad, vertical = pillHPad),
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
@@ -202,7 +209,8 @@ private fun FloatingPillNavBar(
                         topEnd = barH / 2, bottomEnd = barH / 2
                     )
                 )
-                .background(color = MaterialTheme.colorScheme.surfaceContainerHigh)
+                .background(color = pillBg)
+                .then(if (blurEnabled && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) Modifier.blur(24.dp) else Modifier)
                 .clickable(enabled = p.value > 0.5f) { collapsed = false }
                 .padding(start = 6.dp, end = 12.dp, top = itemVPad, bottom = itemVPad),
             verticalAlignment = Alignment.CenterVertically
@@ -254,6 +262,7 @@ fun ScheduleApp(
     val showHiddenCourses by viewModel.showHiddenCourses.collectAsState(initial = false)
     val compactNavBar by viewModel.compactNavBar.collectAsState(initial = true)
     val pillContentMode by viewModel.pillContentMode.collectAsState(initial = 0)
+    val blurEffect by viewModel.blurEffect.collectAsState(initial = true)
     val startPage by viewModel.startPage.collectAsState(initial = "today")
     val displayCourses = if (showHiddenCourses) courses else courses.filter { !it.isHidden }
     val examList by viewModel.examList.collectAsState(initial = emptyList())
@@ -399,7 +408,7 @@ fun ScheduleApp(
                     enter = slideInVertically(initialOffsetY = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideInSpec()) + fadeIn(com.ty.gkschedule.ui.theme.M3Motion.fadeInSpec()),
                     exit = slideOutVertically(targetOffsetY = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideOutSpec()) + fadeOut(com.ty.gkschedule.ui.theme.M3Motion.fadeOutSpec())
                 ) {
-                    FloatingPillNavBar(currentRoute = currentRoute, pillContentMode = pillContentMode, screenshotHidden = pillHidden) { screen ->
+                    FloatingPillNavBar(currentRoute = currentRoute, pillContentMode = pillContentMode, screenshotHidden = pillHidden, blurEnabled = blurEffect) { screen ->
                         com.ty.gkschedule.util.HapticFeedback.light(navView)
                         if (currentRoute != screen.route) {
                             navController.navigate(screen.route) {

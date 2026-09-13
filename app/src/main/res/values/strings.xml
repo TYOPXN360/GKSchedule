@@ -87,6 +87,7 @@
     <string name="language_en">English</string>
     <string name="language_zh">中文</string>
     <string name="start_page">Start Page</string>
+    <string name="blur_effect">Blur effect</string>
     <string name="compact_nav_bar">Floating nav bar</string>
     <string name="pill_content">Style</string>
     <string name="pill_content_both">Icon + label</string>

@@ -94,6 +94,7 @@
     <string name="language_en">English</string>
     <string name="language_zh">中文</string>
     <string name="start_page">启动页</string>
+    <string name="blur_effect">模糊效果</string>
     <string name="compact_nav_bar">悬浮底栏</string>
     <string name="pill_content">样式</string>
     <string name="pill_content_both">都显示</string>

@@ -55,6 +55,7 @@ class SettingsDataStore(private val context: Context) {
         private val SHOW_HIDDEN_COURSES = booleanPreferencesKey("show_hidden_courses")
         private val COMPACT_NAV_BAR = booleanPreferencesKey("compact_nav_bar")
         private val PILL_CONTENT_MODE = intPreferencesKey("pill_content_mode") // 0=都显示，1=仅图标，2=仅名字
+        private val BLUR_EFFECT = booleanPreferencesKey("blur_effect")
 
         private val DEFAULT_START_TIMES = listOf(
             "08:30", "09:20", "10:25", "11:15",  // Morning 1-4
@@ -112,6 +113,7 @@ class SettingsDataStore(private val context: Context) {
     val showHiddenCourses: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[SHOW_HIDDEN_COURSES] ?: false }
     val compactNavBar: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[COMPACT_NAV_BAR] ?: true }
     val pillContentMode: Flow<Int> = context.dataStore.data.map { prefs -> prefs[PILL_CONTENT_MODE] ?: 0 }
+    val blurEffect: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[BLUR_EFFECT] ?: true }
 
     fun getCurrentWeek(): Flow<Int> = context.dataStore.data.map { prefs ->
         val start = prefs[SEMESTER_START]?.let { LocalDate.parse(it) } ?: LocalDate.now()
@@ -188,6 +190,7 @@ class SettingsDataStore(private val context: Context) {
     suspend fun setShowHiddenCourses(show: Boolean) { context.dataStore.edit { it[SHOW_HIDDEN_COURSES] = show } }
     suspend fun setCompactNavBar(compact: Boolean) { context.dataStore.edit { it[COMPACT_NAV_BAR] = compact } }
     suspend fun setPillContentMode(mode: Int) { context.dataStore.edit { it[PILL_CONTENT_MODE] = mode.coerceIn(0, 2) } }
+    suspend fun setBlurEffect(enabled: Boolean) { context.dataStore.edit { it[BLUR_EFFECT] = enabled } }
     suspend fun saveCasTicket(ticket: String) { context.dataStore.edit { it[CAS_TICKET] = ticket } }
     suspend fun saveCachedExams(json: String, year: String, semester: String) {
         context.dataStore.edit {

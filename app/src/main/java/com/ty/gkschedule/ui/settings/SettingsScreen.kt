@@ -38,6 +38,7 @@ fun SettingsScreen(
     darkMode: String,
     language: String,
     startPage: String,
+    blurEffect: Boolean,
     firstDayOfWeek: Int,
     gridHeight: Int,
     gridCorner: Int,
@@ -67,6 +68,7 @@ fun SettingsScreen(
     onDarkModeChange: (String) -> Unit,
     onLanguageChange: (String) -> Unit,
     onStartPageChange: (String) -> Unit,
+    onBlurEffectChange: (Boolean) -> Unit,
     onFirstDayOfWeekChange: (Int) -> Unit,
     onGridHeightChange: (Int) -> Unit,
     onGridCornerChange: (Int) -> Unit,
@@ -147,9 +149,11 @@ fun SettingsScreen(
                     darkMode = darkMode,
                     language = language,
                     startPage = startPage,
+                    blurEffect = blurEffect,
                     onDarkModeChange = onDarkModeChange,
                     onLanguageChange = onLanguageChange,
                     onStartPageChange = onStartPageChange,
+                    onBlurEffectChange = onBlurEffectChange,
                     onBack = { navController.popBackStack() }
                 )
             }
@@ -409,9 +413,9 @@ private fun SemesterPage(
 
 @Composable
 private fun AppearancePage(
-    darkMode: String, language: String, startPage: String,
+    darkMode: String, language: String, startPage: String, blurEffect: Boolean,
     onDarkModeChange: (String) -> Unit, onLanguageChange: (String) -> Unit,
-    onStartPageChange: (String) -> Unit, onBack: () -> Unit
+    onStartPageChange: (String) -> Unit, onBlurEffectChange: (Boolean) -> Unit, onBack: () -> Unit
 ) {
     SubPage(stringResource(R.string.settings_category_appearance), onBack) {
         SettingsCard {
@@ -426,6 +430,8 @@ private fun AppearancePage(
             DropdownItem(Icons.Default.Home, stringResource(R.string.start_page),
                 listOf("today" to stringResource(R.string.nav_today), "weekly" to stringResource(R.string.nav_schedule)),
                 startPage, onSelect = onStartPageChange)
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
+            SwitchItem(Icons.Default.BlurOn, stringResource(R.string.blur_effect), blurEffect, onBlurEffectChange)
         }
     }
 }
