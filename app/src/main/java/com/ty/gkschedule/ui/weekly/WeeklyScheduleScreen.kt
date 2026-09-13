@@ -161,18 +161,11 @@ fun WeeklyScheduleScreen(
         },
         modifier = Modifier.fillMaxSize(),
         state = ptrState,
-        // ponytail: M3E LoadingIndicator下拉头，释放位压住周卡片+backdrop糊
+        // ponytail: M3E LoadingIndicator下拉头——位移/显隐全交IndicatorBox，offset只调释放位
         indicator = {
             @OptIn(androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class)
             androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.LoadingIndicator(
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .offset(y = 96.dp)
-                    .drawBackdrop(
-                        backdrop = backdrop,
-                        shape = { androidx.compose.foundation.shape.CircleShape },
-                        effects = { blur(28.dp.toPx()) }
-                    ),
+                modifier = Modifier.align(Alignment.TopCenter),
                 state = ptrState,
                 isRefreshing = isRefreshing
             )
