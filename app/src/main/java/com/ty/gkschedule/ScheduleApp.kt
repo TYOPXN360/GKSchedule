@@ -362,6 +362,7 @@ fun ScheduleApp(
                 modifier = Modifier
                     .fillMaxSize()
                     .layerBackdrop(backdrop)
+                    .background(mainScaffoldBg)
             ) {
             NavHost(
                 navController = navController,

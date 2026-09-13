@@ -152,6 +152,7 @@ fun WebViewLoginScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .layerBackdrop(backdrop)
+                .background(MaterialTheme.colorScheme.surface)
                                 // ponytail: 源纹理全屏录(含顶栏身后)；本页不滚动，避让放录制后
                 .padding(padding)
                 .padding(24.dp),

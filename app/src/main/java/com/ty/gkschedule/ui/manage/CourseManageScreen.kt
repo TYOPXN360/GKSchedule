@@ -132,6 +132,7 @@ fun CourseManageScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .layerBackdrop(backdrop)
+                .background(MaterialTheme.colorScheme.surface)
         ) {
             if (courses.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

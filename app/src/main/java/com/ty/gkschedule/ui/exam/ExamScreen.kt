@@ -136,6 +136,7 @@ fun ExamScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .layerBackdrop(backdrop)
+                .background(scaffoldBg)
                                 .padding(top = topPad)
         ) {
             // Filter card
