@@ -38,6 +38,7 @@ class ExamActivity : AppCompatActivity() {
                 val examLookaheadWeeks by vm.examLookaheadWeeks.collectAsState(initial = 1)
                 val showExamSchedule by vm.showExamSchedule.collectAsState(initial = false)
                 val diffColorPerWeek by vm.diffColorPerWeek.collectAsState(initial = false)
+                val blurEffect by vm.blurEffect.collectAsState(initial = true)
                 val selectedWeek by vm.selectedWeek.collectAsState()
 
                 var editingExam by remember { mutableStateOf<ExamEntity?>(null) }
@@ -68,8 +69,8 @@ class ExamActivity : AppCompatActivity() {
                             creating = false
                             editingExam = null
                         },
-                        onBack = { creating = false; editingExam = null }
-                    )
+                        onBack = { creating = false; editingExam = null },
+                        blurEnabled = blurEffect                    )
                     else -> ExamScreen(
                         exams = examList,
                         colorCourses = courses,
@@ -98,7 +99,8 @@ class ExamActivity : AppCompatActivity() {
                         onDismissRelogin = { vm.dismissExamReloginDialog() },
                         onRefreshCaptcha = { vm.refreshCaptcha() },
                         onQuickRelogin = { cap -> vm.quickRelogin(cap) },
-                        onBack = { finish() }
+                        onBack = { finish() },
+                        blurEnabled = blurEffect
                     )
                 }
             }

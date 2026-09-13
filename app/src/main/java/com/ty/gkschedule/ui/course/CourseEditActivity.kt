@@ -29,6 +29,7 @@ class CourseEditActivity : AppCompatActivity() {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     val courses by vm.courses.collectAsState(initial = emptyList())
                     val periodsPerDay by vm.periodsPerDay.collectAsState(initial = 10)
+                val blurEffect by vm.blurEffect.collectAsState(initial = true)
                     var currentCourse by remember { mutableStateOf<Course?>(null) }
                     var loaded by remember { mutableStateOf(false) }
 
@@ -63,7 +64,8 @@ class CourseEditActivity : AppCompatActivity() {
                                 vm.deleteCourse(it)
                                 finish()
                             },
-                            onBack = { finish() }
+                            onBack = { finish() },
+                            blurEnabled = blurEffect
                         )
                     }
                 }

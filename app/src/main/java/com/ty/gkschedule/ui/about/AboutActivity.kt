@@ -25,7 +25,8 @@ class AboutActivity : AppCompatActivity() {
 
             GKScheduleTheme(darkTheme = darkMode) {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    AboutDetailPage(onBack = { finish() })
+                    val blurEffect by vm.blurEffect.collectAsState(initial = true)
+                    AboutDetailPage(onBack = { finish() }, blurEnabled = blurEffect)
                 }
             }
         }

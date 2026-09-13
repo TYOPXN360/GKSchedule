@@ -10,6 +10,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.layer.drawLayer
+import androidx.compose.ui.graphics.rememberGraphicsLayer
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Assignment
@@ -45,8 +50,12 @@ fun ExamEditScreen(
     semesterStart: LocalDate,
     onSave: (List<ExamEntity>) -> Unit,
     onDelete: (ExamEntity) -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    blurEnabled: Boolean = true
 ) {
+    // ponytail: 兄弟backdrop源纹理+糊顶栏
+    val backdrop = androidx.compose.ui.graphics.rememberGraphicsLayer()
+    var srcPos by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
     val isDark = LocalAppIsDark.current
     val scaffoldBg = if (isDark) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainer
     val context = LocalContext.current
@@ -130,12 +139,28 @@ fun ExamEditScreen(
     }
 
     Scaffold(containerColor = scaffoldBg, topBar = {
-        TopAppBar(title = { Text(if (exam == null) "添加考试安排" else "编辑考试安排", fontWeight = FontWeight.Bold) },
-            colors = TopAppBarDefaults.topAppBarColors(containerColor = scaffoldBg, scrolledContainerColor = scaffoldBg),
+        com.ty.gkschedule.ui.theme.BlurTopBar(
+            title = { Text(if (exam == null) "添加考试安排" else "编辑考试安排", fontWeight = FontWeight.Bold) },
             navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") } },
-            actions = { if (exam != null) { IconButton(onClick = { onDelete(exam) }) { Icon(Icons.Default.Delete, "Delete", tint = MaterialTheme.colorScheme.error) } } })
+            actions = { if (exam != null) { IconButton(onClick = { onDelete(exam) }) { Icon(Icons.Default.Delete, "Delete", tint = MaterialTheme.colorScheme.error) } } },
+            backdrop = backdrop,
+            srcPos = srcPos,
+            blurEnabled = blurEnabled
+        )
     }) { padding ->
-        Column(modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .onGloballyPositioned { srcPos = it.positionInRoot() }
+                .drawWithContent {
+                    backdrop.record { with(this@drawWithContent) { drawContent() } }
+                    drawLayer(backdrop)
+                }
+                .padding(horizontal = 16.dp)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
             Spacer(modifier = Modifier.height(4.dp))
 
             // AI Import Panel

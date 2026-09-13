@@ -20,6 +20,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.layer.drawLayer
+import androidx.compose.ui.graphics.rememberGraphicsLayer
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
@@ -42,8 +47,12 @@ fun LoginScreen(
     onLogin: (studentId: String, password: String, captcha: String) -> Unit,
     onQuickRelogin: (captcha: String) -> Unit,
     onWebViewLogin: () -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    blurEnabled: Boolean = true
 ) {
+    // ponytail: 兄弟backdrop源纹理+糊顶栏
+    val backdrop = androidx.compose.ui.graphics.rememberGraphicsLayer()
+    var srcPos by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
     var studentId by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var captcha by remember { mutableStateOf("") }
@@ -56,13 +65,16 @@ fun LoginScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            com.ty.gkschedule.ui.theme.BlurTopBar(
                 title = { Text(stringResource(R.string.login_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
                     }
-                }
+                },
+                backdrop = backdrop,
+                srcPos = srcPos,
+                blurEnabled = blurEnabled
             )
         }
     ) { padding ->
@@ -70,6 +82,11 @@ fun LoginScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                .onGloballyPositioned { srcPos = it.positionInRoot() }
+                .drawWithContent {
+                    backdrop.record { with(this@drawWithContent) { drawContent() } }
+                    drawLayer(backdrop)
+                }
                 .verticalScroll(rememberScrollState())
                 .padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)

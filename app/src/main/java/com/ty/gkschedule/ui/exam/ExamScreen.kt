@@ -25,9 +25,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.layer.drawLayer
+import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -72,7 +77,8 @@ fun ExamScreen(
     onDismissRelogin: () -> Unit = {},
     onRefreshCaptcha: () -> Unit = {},
     onQuickRelogin: (String) -> Unit = {},
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    blurEnabled: Boolean = true
 ) {
     LaunchedEffect(Unit) {
         if (examYear.isEmpty()) {
@@ -98,19 +104,24 @@ fun ExamScreen(
     }
     val scaffoldBg = if (isDark) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainer
     var detailItem by remember { mutableStateOf<ScheduleItem.ExamItem?>(null) }
+    // ponytail: 兄弟backdrop源纹理+糊顶栏
+    val backdrop = androidx.compose.ui.graphics.rememberGraphicsLayer()
+    var srcPos by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
 
     Scaffold(
         contentWindowInsets = WindowInsets.systemBars,
         containerColor = scaffoldBg,
         topBar = {
-            TopAppBar(
+            com.ty.gkschedule.ui.theme.BlurTopBar(
                 title = { Text("考试安排", fontWeight = FontWeight.Bold) },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = scaffoldBg, scrolledContainerColor = scaffoldBg),
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
                     }
-                }
+                },
+                backdrop = backdrop,
+                srcPos = srcPos,
+                blurEnabled = blurEnabled
             )
         },
         floatingActionButton = {
@@ -124,7 +135,16 @@ fun ExamScreen(
             }
         }
     ) { padding ->
-        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .onGloballyPositioned { srcPos = it.positionInRoot() }
+                .drawWithContent {
+                    backdrop.record { with(this@drawWithContent) { drawContent() } }
+                    drawLayer(backdrop)
+                }
+        ) {
             // Filter card
             Md3Card(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),

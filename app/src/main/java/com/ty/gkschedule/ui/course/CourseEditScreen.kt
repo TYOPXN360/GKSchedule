@@ -25,6 +25,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.layer.drawLayer
+import androidx.compose.ui.graphics.rememberGraphicsLayer
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -42,8 +47,12 @@ fun CourseEditScreen(
     periodsPerDay: Int,
     onSave: (Course, String?) -> Unit,
     onDelete: (Course) -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    blurEnabled: Boolean = true
 ) {
+    // ponytail: 兄弟backdrop源纹理+糊顶栏
+    val backdrop = androidx.compose.ui.graphics.rememberGraphicsLayer()
+    var srcPos by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
     val isEditing = course != null
     val hiddenScopeName = course?.name
     val context = LocalContext.current
@@ -141,13 +150,29 @@ fun CourseEditScreen(
 
     Scaffold(contentWindowInsets = WindowInsets.systemBars, containerColor = scaffoldBg,
         topBar = {
-            TopAppBar(title = { Text(if (isEditing) stringResource(R.string.edit_course) else stringResource(R.string.add_new_course)) },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = scaffoldBg, scrolledContainerColor = scaffoldBg),
+            com.ty.gkschedule.ui.theme.BlurTopBar(
+                title = { Text(if (isEditing) stringResource(R.string.edit_course) else stringResource(R.string.add_new_course)) },
                 navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") } },
-                actions = { if (isEditing) { IconButton(onClick = { showDeleteDialog = true }) { Icon(Icons.Default.Delete, stringResource(R.string.delete), tint = MaterialTheme.colorScheme.error) } } })
+                actions = { if (isEditing) { IconButton(onClick = { showDeleteDialog = true }) { Icon(Icons.Default.Delete, stringResource(R.string.delete), tint = MaterialTheme.colorScheme.error) } } },
+                backdrop = backdrop,
+                srcPos = srcPos,
+                blurEnabled = blurEnabled
+            )
         }
     ) { padding ->
-        Column(modifier = Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .onGloballyPositioned { srcPos = it.positionInRoot() }
+                .drawWithContent {
+                    backdrop.record { with(this@drawWithContent) { drawContent() } }
+                    drawLayer(backdrop)
+                }
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
             // AI Import Panel
             Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh), modifier = Modifier.fillMaxWidth().border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.25f), MaterialTheme.shapes.large), shape = MaterialTheme.shapes.large) {
                 Column(modifier = Modifier.padding(16.dp)) {

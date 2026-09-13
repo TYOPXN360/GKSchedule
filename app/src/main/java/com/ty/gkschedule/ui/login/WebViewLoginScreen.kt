@@ -20,6 +20,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.layer.drawLayer
+import androidx.compose.ui.graphics.rememberGraphicsLayer
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color as ComposeColor
 import androidx.compose.ui.graphics.asImageBitmap
@@ -44,8 +49,12 @@ fun WebViewLoginScreen(
     loginState: LoginState?,
     api: GdustApi,
     onLoginSuccess: (loginCode: String) -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    blurEnabled: Boolean = true
 ) {
+    // ponytail: 兄弟backdrop源纹理+糊顶栏
+    val backdrop = androidx.compose.ui.graphics.rememberGraphicsLayer()
+    var srcPos by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
@@ -131,13 +140,16 @@ fun WebViewLoginScreen(
     Scaffold(
         contentWindowInsets = WindowInsets.systemBars,
         topBar = {
-            TopAppBar(
+            com.ty.gkschedule.ui.theme.BlurTopBar(
                 title = { Text(stringResource(R.string.scan_login_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
                     }
-                }
+                },
+                backdrop = backdrop,
+                srcPos = srcPos,
+                blurEnabled = blurEnabled
             )
         }
     ) { padding ->
@@ -145,6 +157,11 @@ fun WebViewLoginScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                .onGloballyPositioned { srcPos = it.positionInRoot() }
+                .drawWithContent {
+                    backdrop.record { with(this@drawWithContent) { drawContent() } }
+                    drawLayer(backdrop)
+                }
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center

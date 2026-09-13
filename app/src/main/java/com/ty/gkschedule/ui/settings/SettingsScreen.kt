@@ -15,7 +15,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.layer.drawLayer
+import androidx.compose.ui.graphics.rememberGraphicsLayer
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -126,7 +131,8 @@ fun SettingsScreen(
             composable("main") {
                 SettingsMainPage(
                     onOpenPage = { navController.navigate(it) },
-                    onExit = { (context as? android.app.Activity)?.finish() }
+                    onExit = { (context as? android.app.Activity)?.finish() },
+                    blurEnabled = blurEffect
                 )
             }
             composable("semester") {
@@ -141,7 +147,8 @@ fun SettingsScreen(
                     onPeriodsPerDayChange = onPeriodsPerDayChange,
                     onFirstDayOfWeekChange = onFirstDayOfWeekChange,
                     onHideEmptyWeeksChange = onHideEmptyWeeksChange,
-                    onBack = { navController.popBackStack() }
+                    onBack = { navController.popBackStack() },
+                    blurEnabled = blurEffect
                 )
             }
             composable("appearance") {
@@ -154,7 +161,8 @@ fun SettingsScreen(
                     onLanguageChange = onLanguageChange,
                     onStartPageChange = onStartPageChange,
                     onBlurEffectChange = onBlurEffectChange,
-                    onBack = { navController.popBackStack() }
+                    onBack = { navController.popBackStack() },
+                    blurEnabled = blurEffect
                 )
             }
             composable("schedule_style") {
@@ -189,7 +197,8 @@ fun SettingsScreen(
                     onCompactNavBarChange = onCompactNavBarChange,
                     pillContentMode = pillContentMode,
                     onPillContentModeChange = onPillContentModeChange,
-                    onBack = { navController.popBackStack() }
+                    onBack = { navController.popBackStack() },
+                    blurEnabled = blurEffect
                 )
             }
             composable("notification") {
@@ -200,7 +209,8 @@ fun SettingsScreen(
                     onReminderMinutesChange = onReminderMinutesChange,
                     onReminderLiveUpdateChange = onReminderLiveUpdateChange,
                     onReminderExamLiveUpdateChange = onReminderExamLiveUpdateChange,
-                    onBack = { navController.popBackStack() }
+                    onBack = { navController.popBackStack() },
+                    blurEnabled = blurEffect
                 )
             }
             composable("sync") {
@@ -220,7 +230,8 @@ fun SettingsScreen(
                     onExamLookaheadWeeksChange = onExamLookaheadWeeksChange,
                     onDiffColorPerWeekChange = onDiffColorPerWeekChange,
                     onFetchExam = onFetchExam,
-                    onBack = { navController.popBackStack() }
+                    onBack = { navController.popBackStack() },
+                    blurEnabled = blurEffect
                 )
             }
             composable("data") {
@@ -228,7 +239,8 @@ fun SettingsScreen(
                     onExportJson = onExportJson,
                     onImportJson = onImportJson,
                     onExportIcs = onExportIcs,
-                    onBack = { navController.popBackStack() }
+                    onBack = { navController.popBackStack() },
+                    blurEnabled = blurEffect
                 )
             }
         }
@@ -238,7 +250,10 @@ fun SettingsScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SettingsMainPage(onOpenPage: (String) -> Unit, onExit: () -> Unit) {
+private fun SettingsMainPage(
+    onOpenPage: (String) -> Unit, onExit: () -> Unit,
+    blurEnabled: Boolean = true
+) {
     val surf = MaterialTheme.colorScheme.surface
     val surfLow = MaterialTheme.colorScheme.surfaceContainerLow
     val surfCont = MaterialTheme.colorScheme.surfaceContainer
@@ -247,18 +262,22 @@ private fun SettingsMainPage(onOpenPage: (String) -> Unit, onExit: () -> Unit) {
     android.util.Log.d("SettingsColors", "surface=#${Integer.toHexString(surf.hashCode())}, surfaceContainerLow=#${Integer.toHexString(surfLow.hashCode())}, surfaceContainer=#${Integer.toHexString(surfCont.hashCode())}, surfaceContainerHigh=#${Integer.toHexString(surfHigh.hashCode())}, surfaceContainerHighest=#${Integer.toHexString(surfHighest.hashCode())}")
     val isDark = com.ty.gkschedule.ui.theme.LocalAppIsDark.current
     val scaffoldBg = if (isDark) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainer
+    val backdrop = androidx.compose.ui.graphics.rememberGraphicsLayer()
+    var srcPos by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
     Scaffold(
         contentWindowInsets = WindowInsets.systemBars,
         containerColor = scaffoldBg,
         topBar = {
-            TopAppBar(
+            com.ty.gkschedule.ui.theme.BlurTopBar(
                 title = { Text(stringResource(R.string.settings_title)) },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = scaffoldBg),
                 navigationIcon = {
                     IconButton(onClick = onExit) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
                     }
-                }
+                },
+                backdrop = backdrop,
+                srcPos = srcPos,
+                blurEnabled = blurEnabled
             )
         }
     ) { padding ->
@@ -266,6 +285,11 @@ private fun SettingsMainPage(onOpenPage: (String) -> Unit, onExit: () -> Unit) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                .onGloballyPositioned { srcPos = it.positionInRoot() }
+                .drawWithContent {
+                    backdrop.record { with(this@drawWithContent) { drawContent() } }
+                    drawLayer(backdrop)
+                }
                 .verticalScroll(rememberScrollState())
         ) {
             val catIcons = listOf(Icons.Default.CalendarMonth, Icons.Default.Palette, Icons.Default.GridOn, Icons.Default.Notifications, Icons.Default.Sync, Icons.Default.Storage)
@@ -356,21 +380,30 @@ private fun SettingsMainPage(onOpenPage: (String) -> Unit, onExit: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SubPage(title: String, onBack: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
+private fun SubPage(
+    title: String, onBack: () -> Unit,
+    blurEnabled: Boolean = true,
+    content: @Composable ColumnScope.() -> Unit
+) {
     val isDark = com.ty.gkschedule.ui.theme.LocalAppIsDark.current
     val scaffoldBg = if (isDark) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainer
+    // ponytail: 糊顶栏要吃源纹理——源层只包内容列，顶栏是兄弟(不断环)
+    val backdrop = androidx.compose.ui.graphics.rememberGraphicsLayer()
+    var srcPos by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
     Scaffold(
         contentWindowInsets = WindowInsets.systemBars,
         containerColor = scaffoldBg,
         topBar = {
-            TopAppBar(
+            com.ty.gkschedule.ui.theme.BlurTopBar(
                 title = { Text(title) },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = scaffoldBg),
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
                     }
-                }
+                },
+                backdrop = backdrop,
+                srcPos = srcPos,
+                blurEnabled = blurEnabled
             )
         }
     ) { padding ->
@@ -378,6 +411,11 @@ private fun SubPage(title: String, onBack: () -> Unit, content: @Composable Colu
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                .onGloballyPositioned { srcPos = it.positionInRoot() }
+                .drawWithContent {
+                    backdrop.record { with(this@drawWithContent) { drawContent() } }
+                    drawLayer(backdrop)
+                }
                 .padding(horizontal = 16.dp)
                 .verticalScroll(rememberScrollState())
         ) {
@@ -396,9 +434,10 @@ private fun SemesterPage(
     hideEmptyWeeks: Boolean,
     onSemesterStartChange: (LocalDate) -> Unit, onTotalWeeksChange: (Int) -> Unit,
     onPeriodsPerDayChange: (Int) -> Unit, onFirstDayOfWeekChange: (Int) -> Unit,
-    onHideEmptyWeeksChange: (Boolean) -> Unit, onBack: () -> Unit
+    onHideEmptyWeeksChange: (Boolean) -> Unit, onBack: () -> Unit,
+    blurEnabled: Boolean = true
 ) {
-    SubPage(stringResource(R.string.settings_category_semester), onBack) {
+    SubPage(stringResource(R.string.settings_category_semester), onBack, blurEnabled = blurEnabled) {
         SettingsCard {
             DropdownItem(Icons.Default.FirstPage, stringResource(R.string.first_day_of_week),
                 listOf("1" to stringResource(R.string.first_day_monday), "7" to stringResource(R.string.first_day_sunday)),
@@ -415,9 +454,10 @@ private fun SemesterPage(
 private fun AppearancePage(
     darkMode: String, language: String, startPage: String, blurEffect: Boolean,
     onDarkModeChange: (String) -> Unit, onLanguageChange: (String) -> Unit,
-    onStartPageChange: (String) -> Unit, onBlurEffectChange: (Boolean) -> Unit, onBack: () -> Unit
+    onStartPageChange: (String) -> Unit, onBlurEffectChange: (Boolean) -> Unit, onBack: () -> Unit,
+    blurEnabled: Boolean = true
 ) {
-    SubPage(stringResource(R.string.settings_category_appearance), onBack) {
+    SubPage(stringResource(R.string.settings_category_appearance), onBack, blurEnabled = blurEnabled) {
         SettingsCard {
             DropdownItem(Icons.Default.DarkMode, stringResource(R.string.dark_mode),
                 listOf("system" to stringResource(R.string.dark_mode_system), "light" to stringResource(R.string.dark_mode_light), "dark" to stringResource(R.string.dark_mode_dark)),
@@ -457,9 +497,10 @@ private fun ScheduleStylePage(
     onCompactNavBarChange: (Boolean) -> Unit = {},
     pillContentMode: Int = 0,
     onPillContentModeChange: (Int) -> Unit = {},
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    blurEnabled: Boolean = true
 ) {
-    SubPage(stringResource(R.string.settings_category_schedule), onBack) {
+    SubPage(stringResource(R.string.settings_category_schedule), onBack, blurEnabled = blurEnabled) {
         // ponytail: 布局类一卡，内容类一卡，导航栏类一卡，颜色类一卡
         SectionHeader(stringResource(R.string.style_section_layout))
         SettingsCard {
@@ -540,9 +581,10 @@ private fun NotificationPage(
     onReminderMinutesChange: (Int) -> Unit,
     onReminderLiveUpdateChange: (Boolean) -> Unit,
     onReminderExamLiveUpdateChange: (Boolean) -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    blurEnabled: Boolean = true
 ) {
-    SubPage(stringResource(R.string.settings_category_notification), onBack) {
+    SubPage(stringResource(R.string.settings_category_notification), onBack, blurEnabled = blurEnabled) {
         SettingsCard {
             DropdownItem(Icons.Default.Notifications, stringResource(R.string.reminder),
                 listOf("0" to stringResource(R.string.reminder_off), "5" to stringResource(R.string.reminder_format, 5), "10" to stringResource(R.string.reminder_format, 10), "15" to stringResource(R.string.reminder_format, 15), "30" to stringResource(R.string.reminder_format, 30)),
@@ -588,7 +630,8 @@ private fun SyncPage(
     onExamLookaheadWeeksChange: (Int) -> Unit,
     onDiffColorPerWeekChange: (Boolean) -> Unit,
     onFetchExam: () -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    blurEnabled: Boolean = true
 ) {
     val unitLabel = when (autoSyncIntervalUnit) {
         "min" -> stringResource(R.string.auto_sync_unit_min)
@@ -603,7 +646,7 @@ private fun SyncPage(
         else -> 1 to 60
     }
 
-    SubPage(stringResource(R.string.settings_category_sync), onBack) {
+    SubPage(stringResource(R.string.settings_category_sync), onBack, blurEnabled = blurEnabled) {
         SettingsCard {
             SwitchItem(Icons.Default.PowerSettingsNew, stringResource(R.string.auto_sync_on_start), autoSyncOnStart) {
                 onAutoSyncOnStartChange(it)
@@ -723,8 +766,8 @@ private fun SyncPage(
 // === Data ===
 
 @Composable
-private fun DataPage(onExportJson: () -> Unit, onImportJson: () -> Unit, onExportIcs: () -> Unit, onBack: () -> Unit) {
-    SubPage(stringResource(R.string.settings_category_data), onBack) {
+private fun DataPage(onExportJson: () -> Unit, onImportJson: () -> Unit, onExportIcs: () -> Unit, onBack: () -> Unit, blurEnabled: Boolean = true) {
+    SubPage(stringResource(R.string.settings_category_data), onBack, blurEnabled = blurEnabled) {
         SettingsCard {
             SettingsItem(Icons.Default.FileUpload, stringResource(R.string.import_json), onClick = onImportJson)
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))

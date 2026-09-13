@@ -10,6 +10,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.layer.drawLayer
+import androidx.compose.ui.graphics.rememberGraphicsLayer
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -36,6 +41,7 @@ fun CourseManageScreen(
     courses: List<Course>,
     colorEngine: Int = 0,
     colorGroupMode: Int = 0,
+    blurEnabled: Boolean = true,
     onCourseClick: (Course) -> Unit,
     onAddCourse: () -> Unit,
     onDeleteCourse: (Course) -> Unit,
@@ -67,6 +73,9 @@ fun CourseManageScreen(
     }
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    // ponytail: 兄弟backdrop源纹理+糊顶栏；顶栏是Scaffold兄弟槽，不进内容树，不断环
+    val backdrop = androidx.compose.ui.graphics.rememberGraphicsLayer()
+    var srcPos by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         // ponytail: 顶栏自己吃系统栏，内容区不再重复垫（双重Insets留白根因）
@@ -79,7 +88,7 @@ fun CourseManageScreen(
                 MaterialTheme.typography.titleLarge.fontSize,
                 fraction
             )
-            LargeTopAppBar(
+            com.ty.gkschedule.ui.theme.BlurLargeTopBar(
                 windowInsets = WindowInsets(0, 0, 0, 0),
                 title = {
                     Column {
@@ -107,7 +116,10 @@ fun CourseManageScreen(
                         }
                     }
                 },
-                scrollBehavior = scrollBehavior
+                scrollBehavior = scrollBehavior,
+                backdrop = backdrop,
+                srcPos = srcPos,
+                blurEnabled = blurEnabled
             )
         },
         floatingActionButton = {
@@ -119,7 +131,17 @@ fun CourseManageScreen(
             }
         }
     ) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+        // ponytail: 源层只包内容(顶栏兄弟)，录纹理给糊顶栏吃
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .onGloballyPositioned { srcPos = it.positionInRoot() }
+                .drawWithContent {
+                    backdrop.record { with(this@drawWithContent) { drawContent() } }
+                    drawLayer(backdrop)
+                }
+        ) {
             if (courses.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
