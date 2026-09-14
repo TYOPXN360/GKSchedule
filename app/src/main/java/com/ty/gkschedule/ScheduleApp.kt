@@ -430,13 +430,14 @@ fun ScheduleApp(
                 navController = navController,
                 startDestination = startPage,
                 // ponytail: M3 SharedAxisX仅推进（300ms+FastOutSlowIn；tab按左右镜像）
+                // ponytail: coerceAtLeast必须包在乘法内——包外面会把-dir的负值钳成+30，返程方向错乱
                 enterTransition = {
                     val from = initialState.destination.route
                     val to = targetState.destination.route
                     val dir = if (isTabRoute(from) && isTabRoute(to) && tabIndexOf(to) < tabIndexOf(from)) -1 else 1
                     slideInHorizontally(
                         animationSpec = tween(300, easing = FastOutSlowInEasing),
-                        initialOffsetX = { dir * (it * 0.1f).toInt().coerceAtLeast(30) }
+                        initialOffsetX = { dir * ((it * 0.1f).toInt().coerceAtLeast(30)) }
                     )
                 },
                 exitTransition = {
@@ -445,7 +446,7 @@ fun ScheduleApp(
                     val dir = if (isTabRoute(from) && isTabRoute(to) && tabIndexOf(to) < tabIndexOf(from)) -1 else 1
                     slideOutHorizontally(
                         animationSpec = tween(300, easing = FastOutSlowInEasing),
-                        targetOffsetX = { -dir * (it * 0.1f).toInt().coerceAtLeast(30) }
+                        targetOffsetX = { -dir * ((it * 0.1f).toInt().coerceAtLeast(30)) }
                     )
                 },
                 popEnterTransition = {
@@ -454,7 +455,7 @@ fun ScheduleApp(
                     val dir = if (isTabRoute(from) && isTabRoute(to) && tabIndexOf(to) < tabIndexOf(from)) -1 else 1
                     slideInHorizontally(
                         animationSpec = tween(300, easing = FastOutSlowInEasing),
-                        initialOffsetX = { dir * (it * 0.1f).toInt().coerceAtLeast(30) }
+                        initialOffsetX = { dir * ((it * 0.1f).toInt().coerceAtLeast(30)) }
                     )
                 },
                 popExitTransition = {
@@ -463,7 +464,7 @@ fun ScheduleApp(
                     val dir = if (isTabRoute(from) && isTabRoute(to) && tabIndexOf(to) < tabIndexOf(from)) -1 else 1
                     slideOutHorizontally(
                         animationSpec = tween(300, easing = FastOutSlowInEasing),
-                        targetOffsetX = { -dir * (it * 0.1f).toInt().coerceAtLeast(30) }
+                        targetOffsetX = { -dir * ((it * 0.1f).toInt().coerceAtLeast(30)) }
                     )
                 },
                 modifier = Modifier.fillMaxSize()
