@@ -112,6 +112,7 @@ fun CourseManageScreen(
         floatingActionButton = {
             // ponytail: clip shape与按钮外轮廓同源——不一致必漏角
             // ponytail: 品牌色放onDrawSurface（糊之后图标之前），Surface不再画第二层抢色
+            // ponytail: 糊度对齐课表5FAB——同70%透，颜色正糊感一致
             val fabShape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
             val fabBrand = MaterialTheme.colorScheme.primary
             val fabOnBrand = MaterialTheme.colorScheme.onPrimary
@@ -123,7 +124,7 @@ fun CourseManageScreen(
                     backdrop = backdrop,
                     shape = { fabShape },
                     effects = { blur(28.dp.toPx()) },
-                    onDrawSurface = { drawRect(fabBrand.copy(alpha = 0.70f)) }
+                    onDrawSurface = { drawRect(fabBrand.copy(alpha = 0.75f)) }
                 ),
                 containerColor = androidx.compose.ui.graphics.Color.Transparent,
                 contentColor = fabOnBrand
