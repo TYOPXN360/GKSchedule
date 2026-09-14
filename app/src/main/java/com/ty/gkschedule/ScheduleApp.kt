@@ -423,15 +423,29 @@ fun ScheduleApp(
     val backdrop = rememberLayerBackdrop()
     Scaffold(
         containerColor = mainScaffoldBg,
+        // ponytail: 默认底栏snackbar回Scaffold默认槽（底栏占位自动顶起）；悬浮pill才自挂贴边
+        snackbarHost = {
+            if (!compactNavBar) SnackbarHost(hostState = snackbarHostState)
+        },
         bottomBar = {
             // ponytail: 普通底栏走Scaffold槽位常驻位移；悬浮pill走内容区Box覆盖层，两套互斥
+            // ponytail: 底栏糊——drawBackdrop吃主源（与pill/snackbar同源），容器透明+onDrawSurface单层底
             if (!compactNavBar) {
                 androidx.compose.animation.AnimatedVisibility(
                     visible = showBottomBar,
                     enter = slideInVertically(initialOffsetY = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideInSpec()),
                     exit = slideOutVertically(targetOffsetY = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideOutSpec())
                 ) {
-                    NavigationBar {
+                    val barBg = MaterialTheme.colorScheme.surfaceContainer
+                    NavigationBar(
+                        modifier = if (blurEffect) Modifier.drawBackdrop(
+                            backdrop = backdrop,
+                            shape = { androidx.compose.foundation.shape.RoundedCornerShape(0.dp) },
+                            effects = { blur(28.dp.toPx()) },
+                            onDrawSurface = { drawRect(barBg.copy(alpha = 0.85f)) }
+                        ) else Modifier,
+                        containerColor = androidx.compose.ui.graphics.Color.Transparent
+                    ) {
                         navItemList().forEach { (screen, triple) ->
                             NavigationBarItem(
                                 icon = { Icon(triple.first, contentDescription = triple.second) },
@@ -557,10 +571,7 @@ fun ScheduleApp(
                 }
             }
         } else {
-            // ponytail: 普通底栏模式——snackbar走Scaffold槽位（底栏占位，自动顶起）
-            Box(Modifier.fillMaxSize()) {
-                SnackbarHost(hostState = snackbarHostState)
-            }
+            // ponytail: 默认底栏snackbar已回Scaffold默认槽，这里不再自挂
         } // pill兄弟层
     }
     }
