@@ -534,21 +534,28 @@ fun ScheduleApp(
         } // pill兄弟层
     }
     }
-    // ponytail: PredictiveBackHandler接管手势流——拖拽空转吞进度（页面静止无窥探），松手瞬切回今日；
-    // 今日页disabled放行系统回桌面预测；取消（滑回边缘）安全吞掉无跳变
+    // ponytail: Compose自定义预测动画断根——NavigationBackHandler后注册抢占NavHost内部Seekable跟手；
+    // tab页onBackCompleted直接popBackStack秒切（无位移无窥探），首页isBackEnabled=false放行系统回桌面
     val isAtHome = currentRoute == startPage
-    PredictiveBackHandler(enabled = showBottomBar && !isAtHome) { progress ->
-        try {
-            progress.collect { }
-            val popped = navController.popBackStack()
-            if (!popped) {
-                navController.navigate(startPage) {
-                    popUpTo(startPage) { inclusive = false }
-                    launchSingleTop = true
+    navBackStackEntry?.let { entry ->
+        androidx.navigationevent.compose.NavigationBackHandler(
+            state = androidx.navigationevent.compose.rememberNavigationEventState(
+                currentInfo = androidx.navigation.compose.NavBackStackEntryInfo(entry),
+                backInfo = emptyList(),
+                forwardInfo = emptyList()
+            ),
+            isBackEnabled = showBottomBar && !isAtHome,
+            onBackCompleted = {
+                val popped = navController.popBackStack()
+                if (!popped) {
+                    navController.navigate(startPage) {
+                        popUpTo(startPage) { inclusive = false }
+                        launchSingleTop = true
+                    }
                 }
-            }
-        } catch (e: CancellationException) {
-        }
+            },
+            onBackCancelled = { }
+        )
     }
 }
 
