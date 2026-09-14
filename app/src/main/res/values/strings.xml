@@ -130,6 +130,11 @@
     <string name="reminder_live_update">Course Progress Notification</string>
     <string name="reminder_live_update_desc">Show course notification while class is in progress</string>
     <string name="reminder_exam_live_update">Exam Progress Notification</string>
+    <string name="reminder_mode">Reminder mode</string>
+    <string name="reminder_mode_notify">Notify only</string>
+    <string name="reminder_mode_notify_desc">One-shot reminder at time</string>
+    <string name="reminder_mode_countdown">Countdown</string>
+    <string name="reminder_mode_countdown_desc">Live Update countdown, stays until class starts</string>
     <string name="hidden_tag">Hidden</string>
     <!-- Auto Sync -->
     <string name="settings_category_sync">Auto Sync</string>

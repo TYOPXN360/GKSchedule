@@ -39,6 +39,7 @@ class SettingsDataStore(private val context: Context) {
         private val SHOW_DATE_IN_HEADER = booleanPreferencesKey("show_date_in_header")
         private val HIDE_EMPTY_WEEKS = booleanPreferencesKey("hide_empty_weeks")
         private val REMINDER_MINUTES = intPreferencesKey("reminder_minutes") // 0=off,5,10,15,30
+        private val REMINDER_MODE = stringPreferencesKey("reminder_mode") // notify=仅通知，countdown=倒计时Live Update
         private val REMINDER_LIVE_UPDATE = booleanPreferencesKey("reminder_live_update")
         private val REMINDER_EXAM_LIVE_UPDATE = booleanPreferencesKey("reminder_exam_live_update")
         private val AUTO_SYNC_ON_START = booleanPreferencesKey("auto_sync_on_start")
@@ -97,6 +98,7 @@ class SettingsDataStore(private val context: Context) {
     val showDateInHeader: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[SHOW_DATE_IN_HEADER] ?: false }
     val hideEmptyWeeks: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[HIDE_EMPTY_WEEKS] ?: false }
     val reminderMinutes: Flow<Int> = context.dataStore.data.map { prefs -> prefs[REMINDER_MINUTES] ?: 0 }
+    val reminderMode: Flow<String> = context.dataStore.data.map { prefs -> prefs[REMINDER_MODE] ?: "notify" }
     val reminderLiveUpdate: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[REMINDER_LIVE_UPDATE] ?: true }
     val reminderExamLiveUpdate: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[REMINDER_EXAM_LIVE_UPDATE] ?: false }
     val autoSyncOnStart: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[AUTO_SYNC_ON_START] ?: true }
@@ -178,6 +180,7 @@ class SettingsDataStore(private val context: Context) {
     suspend fun setShowDateInHeader(show: Boolean) { context.dataStore.edit { it[SHOW_DATE_IN_HEADER] = show } }
     suspend fun setHideEmptyWeeks(hide: Boolean) { context.dataStore.edit { it[HIDE_EMPTY_WEEKS] = hide } }
     suspend fun setReminderMinutes(min: Int) { context.dataStore.edit { it[REMINDER_MINUTES] = min } }
+    suspend fun setReminderMode(mode: String) { context.dataStore.edit { it[REMINDER_MODE] = mode } }
     suspend fun setReminderLiveUpdate(enabled: Boolean) { context.dataStore.edit { it[REMINDER_LIVE_UPDATE] = enabled } }
     suspend fun setReminderExamLiveUpdate(enabled: Boolean) { context.dataStore.edit { it[REMINDER_EXAM_LIVE_UPDATE] = enabled } }
     suspend fun setAutoSyncOnStart(enabled: Boolean) { context.dataStore.edit { it[AUTO_SYNC_ON_START] = enabled } }

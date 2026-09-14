@@ -16,6 +16,7 @@ class ReminderReceiver : BroadcastReceiver() {
         const val CHANNEL_ID = "course_reminder"
         const val EVENT_REMINDER = "reminder"
         const val EVENT_PROGRESS = "progress"
+        const val EVENT_COUNTDOWN = "countdown"
         const val EVENT_END = "end"
         const val EVENT_ROLLOVER = "rollover"
         const val EXTRA_EVENT_TYPE = "event_type"
@@ -67,7 +68,21 @@ class ReminderReceiver : BroadcastReceiver() {
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
         if (eventType == EVENT_END) {
-            nm.cancel(notificationId)
+            // ponytail: 倒计时→进度接力靠startEpoch>0区分；真正下课才解散
+            val isHandoff = startEpoch > 0L && System.currentTimeMillis() < endEpoch
+            if (isHandoff) {
+                val pending = goAsync()
+                kotlin.concurrent.thread {
+                    try {
+                        ReminderScheduler.scheduleTodayFromStore(context)
+                    } catch (_: Exception) {
+                    } finally {
+                        pending.finish()
+                    }
+                }
+            } else {
+                nm.cancel(notificationId)
+            }
             return
         }
 
@@ -82,31 +97,44 @@ class ReminderReceiver : BroadcastReceiver() {
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setOnlyAlertOnce(eventType == EVENT_PROGRESS)
 
-        if (eventType == EVENT_PROGRESS) {
+        if (eventType == EVENT_PROGRESS || eventType == EVENT_COUNTDOWN) {
             val percent = progressPercent(startEpoch, endEpoch)
-            val titlePrefix = if (itemType == "exam") "正在考试" else "正在上课"
+            val isCountdown = eventType == EVENT_COUNTDOWN
+            // ponytail: 倒计时chip走剩余分钟，进度走百分比；同Live Update一套
+            val chipText = if (isCountdown) countdownChipText(startEpoch) else "$percent%"
+            val titlePrefix = when {
+                isCountdown && itemType == "exam" -> "考试倒计时"
+                isCountdown -> "上课倒计时"
+                itemType == "exam" -> "正在考试"
+                else -> "正在上课"
+            }
 
             // ponytail: 看齐InstallerX——smallIcon固定品牌图标，百分比走系统chip文字（setShortCriticalText），
             // 系统字体渲染才够大；自己画位图在状态栏24dp下物理极限，再自适应也糊
             builder.setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
-                .setShortCriticalText("$percent%")
+                .setShortCriticalText(chipText)
 
             // 尝试使用 ProgressStyle (Live Update API)
             try {
                 val progressStyle = NotificationCompat.ProgressStyle()
                     .setProgress(percent)
+                // ponytail: 倒计时正文走剩余时间，进度正文走百分比
+                val contentText = if (isCountdown) "${countdownBodyText(startEpoch)} · ${body.ifEmpty { "即将开始" }}"
+                else "${percent}% · ${body.ifEmpty { "进行中" }}"
                 builder
                     .setContentTitle("$titlePrefix：$courseName")
-                    .setContentText("${percent}% · ${body.ifEmpty { "进行中" }}")
+                    .setContentText(contentText)
                     .setStyle(progressStyle)
                     .setOngoing(true)
                     .setAutoCancel(false)
                     .setRequestPromotedOngoing(true)
             } catch (_: Throwable) {
                 // Fallback: 标准进度条（ponytail: Error如NoClassDefFoundError也得接住，否则一响就崩）
+                val contentText = if (isCountdown) "${countdownBodyText(startEpoch)} · ${body.ifEmpty { "即将开始" }}"
+                else "${percent}% · ${body.ifEmpty { "进行中" }}"
                 builder
                     .setContentTitle("$titlePrefix：$courseName")
-                    .setContentText("${percent}% · ${body.ifEmpty { "进行中" }}")
+                    .setContentText(contentText)
                     .setProgress(100, percent, false)
                     .setOngoing(true)
                     .setAutoCancel(false)
@@ -136,6 +164,19 @@ class ReminderReceiver : BroadcastReceiver() {
 
     private fun stableNotificationId(itemType: String, name: String, startEpoch: Long): Int =
         "$itemType|$name|$startEpoch".hashCode()
+
+    // ponytail: 倒计时chip/正文——剩余分钟，<1分钟显示秒
+    private fun countdownChipText(startEpoch: Long): String {
+        val remainMs = (startEpoch - System.currentTimeMillis()).coerceAtLeast(0L)
+        val mins = (remainMs / 60000L).toInt()
+        return if (mins >= 1) "${mins}分" else "${(remainMs / 1000L).toInt()}秒"
+    }
+
+    private fun countdownBodyText(startEpoch: Long): String {
+        val remainMs = (startEpoch - System.currentTimeMillis()).coerceAtLeast(0L)
+        val mins = (remainMs / 60000L).toInt()
+        return if (mins >= 1) "还有${mins}分钟" else "还有${(remainMs / 1000L).toInt()}秒"
+    }
 
     private fun createNotificationChannel(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

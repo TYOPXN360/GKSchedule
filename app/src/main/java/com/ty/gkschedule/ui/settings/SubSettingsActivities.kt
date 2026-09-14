@@ -122,13 +122,15 @@ class SubSettingsNotificationActivity : SubSettingsBaseActivity() {
     @Composable
     override fun SubContent(vm: ScheduleViewModel, finish: () -> Unit) {
         val reminderMinutes by vm.reminderMinutes.collectAsState(initial = 0)
+        val reminderMode by vm.reminderMode.collectAsState(initial = "notify")
         val reminderLiveUpdate by vm.reminderLiveUpdate.collectAsState(initial = true)
         val reminderExamLiveUpdate by vm.reminderExamLiveUpdate.collectAsState(initial = false)
         val blurEffect by vm.blurEffect.collectAsState(initial = true)
         NotificationPage(
-            reminderMinutes = reminderMinutes, reminderLiveUpdate = reminderLiveUpdate,
+            reminderMinutes = reminderMinutes, reminderMode = reminderMode, reminderLiveUpdate = reminderLiveUpdate,
             reminderExamLiveUpdate = reminderExamLiveUpdate,
             onReminderMinutesChange = { vm.setReminderMinutes(it) },
+            onReminderModeChange = { vm.setReminderMode(it) },
             onReminderLiveUpdateChange = { vm.setReminderLiveUpdate(it) },
             onReminderExamLiveUpdateChange = { vm.setReminderExamLiveUpdate(it) },
             onBack = finish, blurEnabled = blurEffect

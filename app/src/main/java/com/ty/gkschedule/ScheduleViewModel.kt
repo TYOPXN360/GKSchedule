@@ -30,6 +30,7 @@ private data class ReminderConfig(
     val courses: List<Course>,
     val exams: List<ExamEntity>,
     val reminderMinutes: Int,
+    val reminderMode: String,
     val liveUpdate: Boolean,
     val examLiveUpdate: Boolean,
     val semesterStart: LocalDate,
@@ -73,6 +74,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     val hideEmptyWeeks: Flow<Boolean> = settings.hideEmptyWeeks
     val themeColorIndex: Flow<Int> = settings.themeColorIndex
     val reminderMinutes: Flow<Int> = settings.reminderMinutes
+    val reminderMode: Flow<String> = settings.reminderMode
     val reminderLiveUpdate: Flow<Boolean> = settings.reminderLiveUpdate
     val reminderExamLiveUpdate: Flow<Boolean> = settings.reminderExamLiveUpdate
     val autoSyncOnStart: Flow<Boolean> = settings.autoSyncOnStart
@@ -174,20 +176,34 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
         // Schedule reminders when courses or settings change
         // ponytail: 一天≤30个闹钟，IO线程排；<=0时只删不排
         viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
-            combine(courses, examList, settings.reminderMinutes, settings.reminderLiveUpdate, settings.reminderExamLiveUpdate, settings.semesterStart, settings.totalWeeks) { values ->
+            combine(courses, examList, settings.reminderMinutes, settings.reminderMode, settings.reminderLiveUpdate, settings.reminderExamLiveUpdate, settings.semesterStart, settings.totalWeeks) { values ->
                 @Suppress("UNCHECKED_CAST")
                 ReminderConfig(
                     courses = values[0] as List<Course>,
                     exams = values[1] as List<ExamEntity>,
                     reminderMinutes = values[2] as Int,
-                    liveUpdate = values[3] as Boolean,
-                    examLiveUpdate = values[4] as Boolean,
-                    semesterStart = values[5] as LocalDate,
-                    totalWeeks = values[6] as Int
+                    reminderMode = values[3] as String,
+                    liveUpdate = values[4] as Boolean,
+                    examLiveUpdate = values[5] as Boolean,
+                    semesterStart = values[6] as LocalDate,
+                    totalWeeks = values[7] as Int
                 )
             }.collect { config ->
                 // ponytail: 任一开就排，全关才删——进度通知独立于课前提醒
                 if (config.reminderMinutes > 0 || config.liveUpdate || config.examLiveUpdate) {
+                    ReminderScheduler.scheduleUpcomingReminders(
+                        context = getApplication(),
+                        courses = config.courses,
+                        exams = config.exams,
+                        semesterStart = config.semesterStart,
+                        totalWeeks = config.totalWeeks,
+                        reminderMinutes = config.reminderMinutes,
+                        reminderMode = config.reminderMode,
+                        liveUpdate = config.liveUpdate,
+                        examLiveUpdate = config.examLiveUpdate,
+                        getStartTime = ::getStartTime,
+                        getEndTime = ::getEndTime
+                    )
                     ReminderScheduler.scheduleUpcomingReminders(
                         context = getApplication(),
                         courses = config.courses,
@@ -280,6 +296,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     fun setHideEmptyWeeks(hide: Boolean) { viewModelScope.launch { settings.setHideEmptyWeeks(hide) } }
     fun setThemeColorIndex(idx: Int) { viewModelScope.launch { settings.setThemeColorIndex(idx) } }
     fun setReminderMinutes(min: Int) { viewModelScope.launch { settings.setReminderMinutes(min) } }
+    fun setReminderMode(mode: String) { viewModelScope.launch { settings.setReminderMode(mode) } }
     fun setReminderLiveUpdate(enabled: Boolean) { viewModelScope.launch { settings.setReminderLiveUpdate(enabled) } }
     fun setReminderExamLiveUpdate(enabled: Boolean) { viewModelScope.launch { settings.setReminderExamLiveUpdate(enabled) } }
     fun setAutoSyncOnStart(enabled: Boolean) { viewModelScope.launch { settings.setAutoSyncOnStart(enabled) } }

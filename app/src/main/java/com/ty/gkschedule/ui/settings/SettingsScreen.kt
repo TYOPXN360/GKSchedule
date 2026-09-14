@@ -57,6 +57,7 @@ fun SettingsScreen(
     hideEmptyWeeks: Boolean,
     showDateInHeader: Boolean,
     reminderMinutes: Int,
+    reminderMode: String = "notify",
     reminderLiveUpdate: Boolean,
     reminderExamLiveUpdate: Boolean,
     autoSyncOnStart: Boolean,
@@ -87,6 +88,7 @@ fun SettingsScreen(
     onHideEmptyWeeksChange: (Boolean) -> Unit,
     onShowDateInHeaderChange: (Boolean) -> Unit,
     onReminderMinutesChange: (Int) -> Unit,
+    onReminderModeChange: (String) -> Unit = {},
     onReminderLiveUpdateChange: (Boolean) -> Unit,
     onReminderExamLiveUpdateChange: (Boolean) -> Unit,
     onAutoSyncOnStartChange: (Boolean) -> Unit,
@@ -461,9 +463,11 @@ internal fun ScheduleStylePage(
 @Composable
 internal fun NotificationPage(
     reminderMinutes: Int,
+    reminderMode: String = "notify",
     reminderLiveUpdate: Boolean,
     reminderExamLiveUpdate: Boolean,
     onReminderMinutesChange: (Int) -> Unit,
+    onReminderModeChange: (String) -> Unit = {},
     onReminderLiveUpdateChange: (Boolean) -> Unit,
     onReminderExamLiveUpdateChange: (Boolean) -> Unit,
     onBack: () -> Unit,
@@ -483,6 +487,15 @@ internal fun NotificationPage(
                     if (v > 0 && reminderMinutes == 0) { pendingReminder = v; requestBg() }
                     else onReminderMinutesChange(v)
                 })
+            // ponytail: 开启后展开模式二选一，默认仅通知
+            AnimatedVisibility(visible = reminderMinutes > 0, enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) {
+                Column {
+                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
+                    DropdownItem(Icons.Default.Style, stringResource(R.string.reminder_mode),
+                        listOf("notify" to "${stringResource(R.string.reminder_mode_notify)} · ${stringResource(R.string.reminder_mode_notify_desc)}", "countdown" to "${stringResource(R.string.reminder_mode_countdown)} · ${stringResource(R.string.reminder_mode_countdown_desc)}"),
+                        reminderMode, onSelect = onReminderModeChange)
+                }
+            }
             AnimatedVisibility(visible = true, enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) {
                 Column {
                     HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))

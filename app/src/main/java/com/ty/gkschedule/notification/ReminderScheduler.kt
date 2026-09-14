@@ -39,11 +39,12 @@ object ReminderScheduler {
         semesterStart: LocalDate,
         totalWeeks: Int,
         reminderMinutes: Int,
+        reminderMode: String = "notify",
         liveUpdate: Boolean,
         examLiveUpdate: Boolean,
         getStartTime: (Int) -> String,
         getEndTime: (Int) -> String
-    ) = scheduleToday(context, courses, exams, semesterStart, totalWeeks, reminderMinutes, liveUpdate, examLiveUpdate, getStartTime, getEndTime)
+    ) = scheduleToday(context, courses, exams, semesterStart, totalWeeks, reminderMinutes, reminderMode, liveUpdate, examLiveUpdate, getStartTime, getEndTime)
 
     // 午夜重排入口：读DB排当天，不依赖调用方传参
     fun scheduleTodayFromStore(context: Context) {
@@ -61,8 +62,9 @@ object ReminderScheduler {
         }
         val semesterStart = runBlocking { settings.semesterStart.first() }
         val totalWeeks = runBlocking { settings.totalWeeks.first() }
+        val reminderMode = runBlocking { settings.reminderMode.first() }
         val exams = runBlocking { db.examDao().getAllExams().first() }
-        scheduleToday(context, courses, exams, semesterStart, totalWeeks, reminderMinutes, liveUpdate, examLiveUpdate, { p -> settings.getStartTime(p) }, { p -> settings.getEndTime(p) })
+        scheduleToday(context, courses, exams, semesterStart, totalWeeks, reminderMinutes, reminderMode, liveUpdate, examLiveUpdate, { p -> settings.getStartTime(p) }, { p -> settings.getEndTime(p) })
     }
 
     private fun scheduleToday(
@@ -72,6 +74,7 @@ object ReminderScheduler {
         semesterStart: LocalDate,
         totalWeeks: Int,
         reminderMinutes: Int,
+        reminderMode: String = "notify",
         liveUpdate: Boolean,
         examLiveUpdate: Boolean,
         getStartTime: (Int) -> String,
@@ -99,9 +102,39 @@ object ReminderScheduler {
             .filter { it.end.isAfter(now) }
             .forEach { session ->
                 val notificationId = notificationId(session)
-                // ponytail: 课前提醒只在分钟数>0时排，独立于进度开关
+                val countdown = reminderMode == "countdown"
+                // ponytail: 倒计时常驻Live Update（课前提醒点→上课），上课后进度链自动接管
+                if (countdown && reminderMinutes > 0 && session.start.isAfter(now)) {
+                    val cdTime = session.start.minusMinutes(reminderMinutes.toLong())
+                    if (cdTime.isAfter(now)) {
+                        scheduleEvent(
+                            context = context,
+                            alarmManager = alarmManager,
+                            session = session,
+                            eventType = ReminderReceiver.EVENT_COUNTDOWN,
+                            triggerAt = cdTime,
+                            notificationId = notificationId,
+                            reminderMinutes = reminderMinutes,
+                            requestCodes = newRequestCodes
+                        )
+                    }
+                    // ponytail: 到点自动转进度——END闹钟当接力棒，Receiver里重排当天触发PROGRESS
+                    if (session.end.isAfter(now)) {
+                        scheduleEvent(
+                            context = context,
+                            alarmManager = alarmManager,
+                            session = session,
+                            eventType = ReminderReceiver.EVENT_END,
+                            triggerAt = session.start,
+                            notificationId = notificationId,
+                            reminderMinutes = reminderMinutes,
+                            requestCodes = newRequestCodes
+                        )
+                    }
+                }
+                // ponytail: 课前提醒只在分钟数>0时排，独立于进度开关；倒计时模式不弹一次性提醒
                 val reminderTime = session.start.minusMinutes(reminderMinutes.toLong())
-                if (reminderMinutes > 0 && reminderTime.isAfter(now)) {
+                if (!countdown && reminderMinutes > 0 && reminderTime.isAfter(now)) {
                     scheduleEvent(
                         context = context,
                         alarmManager = alarmManager,

@@ -100,6 +100,7 @@ class SettingsActivity : AppCompatActivity() {
                     val hideEmptyWeeks by vm.hideEmptyWeeks.collectAsState(initial = false)
                     val showDateInHeader by vm.showDateInHeader.collectAsState(initial = false)
                     val reminderMinutes by vm.reminderMinutes.collectAsState(initial = 0)
+                    val reminderMode by vm.reminderMode.collectAsState(initial = "notify")
                     val reminderLiveUpdate by vm.reminderLiveUpdate.collectAsState(initial = true)
                     val reminderExamLiveUpdate by vm.reminderExamLiveUpdate.collectAsState(initial = false)
                     val autoSyncOnStart by vm.autoSyncOnStart.collectAsState(initial = true)
@@ -136,6 +137,7 @@ class SettingsActivity : AppCompatActivity() {
                         hideEmptyWeeks = hideEmptyWeeks,
                         showDateInHeader = showDateInHeader,
                         reminderMinutes = reminderMinutes,
+                        reminderMode = reminderMode,
                         reminderLiveUpdate = reminderLiveUpdate,
                         reminderExamLiveUpdate = reminderExamLiveUpdate,
                         autoSyncOnStart = autoSyncOnStart,
@@ -172,6 +174,7 @@ class SettingsActivity : AppCompatActivity() {
                         onHideEmptyWeeksChange = { vm.setHideEmptyWeeks(it) },
                         onShowDateInHeaderChange = { vm.setShowDateInHeader(it) },
                         onReminderMinutesChange = { vm.setReminderMinutes(it) },
+                        onReminderModeChange = { vm.setReminderMode(it) },
                         onReminderLiveUpdateChange = { vm.setReminderLiveUpdate(it) },
                         onReminderExamLiveUpdateChange = { vm.setReminderExamLiveUpdate(it) },
                         onAutoSyncOnStartChange = { vm.setAutoSyncOnStart(it) },
