@@ -127,9 +127,9 @@
     <string name="reminder">Reminder</string>
     <string name="reminder_off">Off</string>
     <string name="reminder_format">%1$d min before</string>
-    <string name="reminder_live_update">Live Update</string>
-    <string name="reminder_live_update_desc">Show progress while class is in progress</string>
-    <string name="reminder_exam_live_update">Exam Live Update</string>
+    <string name="reminder_live_update">Course Progress Notification</string>
+    <string name="reminder_live_update_desc">Show course notification while class is in progress</string>
+    <string name="reminder_exam_live_update">Exam Progress Notification</string>
     <string name="hidden_tag">Hidden</string>
     <!-- Auto Sync -->
     <string name="settings_category_sync">Auto Sync</string>

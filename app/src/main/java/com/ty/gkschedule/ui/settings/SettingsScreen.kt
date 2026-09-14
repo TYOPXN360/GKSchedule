@@ -483,7 +483,7 @@ internal fun NotificationPage(
                     if (v > 0 && reminderMinutes == 0) { pendingReminder = v; requestBg() }
                     else onReminderMinutesChange(v)
                 })
-            AnimatedVisibility(visible = reminderMinutes > 0, enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) {
+            AnimatedVisibility(visible = true, enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) {
                 Column {
                     HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
                     // ponytail: desc改i弹窗（心跳同款BlurCard），行内只留标题+开关
@@ -522,12 +522,8 @@ internal fun NotificationPage(
                             }
                         }
                     }
-                    AnimatedVisibility(visible = reminderLiveUpdate, enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) {
-                        Column {
-                            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
-                            SwitchItem(Icons.Default.Event, stringResource(R.string.reminder_exam_live_update), reminderExamLiveUpdate, onReminderExamLiveUpdateChange)
-                        }
-                    }
+                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
+                    SwitchItem(Icons.Default.Event, stringResource(R.string.reminder_exam_live_update), reminderExamLiveUpdate, onReminderExamLiveUpdateChange)
                 }
             }
         }

@@ -127,9 +127,9 @@
     <string name="reminder">课程提醒</string>
     <string name="reminder_off">关闭</string>
     <string name="reminder_format">课前%1$d分钟</string>
-    <string name="reminder_live_update">课程进度提醒</string>
-    <string name="reminder_live_update_desc">上课进行中时，显示课程进度</string>
-    <string name="reminder_exam_live_update">考试也显示进度</string>
+    <string name="reminder_live_update">课程进度通知</string>
+    <string name="reminder_live_update_desc">上课进行中时，显示课程通知</string>
+    <string name="reminder_exam_live_update">考试显示进度通知</string>
     <string name="hidden_tag">已隐藏</string>
     <!-- Settings - Auto Sync -->
     <string name="settings_category_sync">自动同步</string>

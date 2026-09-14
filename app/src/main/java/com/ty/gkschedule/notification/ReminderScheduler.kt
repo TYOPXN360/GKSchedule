@@ -51,16 +51,16 @@ object ReminderScheduler {
         val courses: List<Course>
         val db = com.ty.gkschedule.data.CourseDatabase.getDatabase(context)
         courses = runBlocking { db.courseDao().getAllCourses().first() }
-        // ponytail: 关闭时也要先删残留闹钟再return，否则午夜重排会留下当天的旧闹钟
+        // ponytail: 全关才删完return；任一开都进scheduleToday，里面各自独立判断
         val reminderMinutes = runBlocking { settings.reminderMinutes.first() }
-        if (reminderMinutes <= 0) {
+        val liveUpdate = runBlocking { settings.reminderLiveUpdate.first() }
+        val examLiveUpdate = runBlocking { settings.reminderExamLiveUpdate.first() }
+        if (reminderMinutes <= 0 && !liveUpdate && !examLiveUpdate) {
             cancelAll(context, courses)
             return
         }
         val semesterStart = runBlocking { settings.semesterStart.first() }
         val totalWeeks = runBlocking { settings.totalWeeks.first() }
-        val liveUpdate = runBlocking { settings.reminderLiveUpdate.first() }
-        val examLiveUpdate = runBlocking { settings.reminderExamLiveUpdate.first() }
         val exams = runBlocking { db.examDao().getAllExams().first() }
         scheduleToday(context, courses, exams, semesterStart, totalWeeks, reminderMinutes, liveUpdate, examLiveUpdate, { p -> settings.getStartTime(p) }, { p -> settings.getEndTime(p) })
     }
@@ -77,9 +77,9 @@ object ReminderScheduler {
         getStartTime: (Int) -> String,
         getEndTime: (Int) -> String
     ) {
-        // ponytail: 先删后排；关闭(<=0)时直接return，残留闹钟已在上面删掉
+        // ponytail: 先删后排；双开关全关才return——课程提醒与进度通知各自独立
         cancelAll(context, courses)
-        if (reminderMinutes <= 0) return
+        if (reminderMinutes <= 0 && !liveUpdate && !examLiveUpdate) return
 
         val now = LocalDateTime.now()
         val today = LocalDate.now()
@@ -99,8 +99,9 @@ object ReminderScheduler {
             .filter { it.end.isAfter(now) }
             .forEach { session ->
                 val notificationId = notificationId(session)
+                // ponytail: 课前提醒只在分钟数>0时排，独立于进度开关
                 val reminderTime = session.start.minusMinutes(reminderMinutes.toLong())
-                if (reminderTime.isAfter(now)) {
+                if (reminderMinutes > 0 && reminderTime.isAfter(now)) {
                     scheduleEvent(
                         context = context,
                         alarmManager = alarmManager,
@@ -112,7 +113,7 @@ object ReminderScheduler {
                         requestCodes = newRequestCodes
                     )
                 }
-                // ponytail: Live进度只在开关开时排；考试另受考试子开关控制
+                // ponytail: Live进度独立开关，不再依附课程提醒；考试另受考试子开关控制
                 val liveOn = liveUpdate && (session.kind == KIND_COURSE || examLiveUpdate)
                 if (liveOn) {
                     val progressTime = if (now.isAfter(session.start) && now.isBefore(session.end)) now.plusSeconds(2) else session.start
