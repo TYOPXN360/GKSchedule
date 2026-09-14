@@ -87,6 +87,8 @@ class ReminderReceiver : BroadcastReceiver() {
             val percent = progressPercent(startEpoch, endEpoch)
             val titlePrefix = if (itemType == "exam") "正在考试" else "正在上课"
 
+            // ponytail: 状态栏小图标挂百分比数字——setNumber，Launcher/状态栏按需显
+            builder.setNumber(percent)
             // 尝试使用 ProgressStyle (Live Update API)
             try {
                 val progressStyle = NotificationCompat.ProgressStyle()
