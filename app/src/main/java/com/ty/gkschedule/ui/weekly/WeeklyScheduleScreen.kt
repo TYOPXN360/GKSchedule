@@ -719,12 +719,12 @@ fun ScheduleItemDetailSheet(item: ScheduleItem, getStartTime: (Int) -> String, g
         ) {
             // ponytail: 自画把手进BlurCard覆盖区，与卡片同底色
             Box(
-                modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 4.dp),
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 8.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Box(
-                    modifier = Modifier.width(32.dp).height(4.dp)
-                        .clip(RoundedCornerShape(2.dp))
+                    modifier = Modifier.width(32.dp).height(5.dp)
+                        .clip(RoundedCornerShape(2.5.dp))
                         .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
                 )
             }
@@ -800,12 +800,12 @@ private fun WeekPickerSheet(totalWeeks: Int, currentWeek: Int, onWeekSelected: (
                 .padding(bottom = 32.dp)
         ) {
             Box(
-                modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 4.dp),
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 8.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Box(
-                    modifier = Modifier.width(32.dp).height(4.dp)
-                        .clip(RoundedCornerShape(2.dp))
+                    modifier = Modifier.width(32.dp).height(5.dp)
+                        .clip(RoundedCornerShape(2.5.dp))
                         .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
                 )
             }
