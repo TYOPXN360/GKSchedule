@@ -64,7 +64,12 @@ fun AboutScreen(
                 .fillMaxSize()
                 .statusBarsPadding()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp),
+                // ponytail: B走穿底配套——停底栏上（管理页穿底出玻璃感，其他页占位）
+                .padding(
+                    start = 16.dp,
+                    end = 16.dp,
+                    bottom = 80.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+                ),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
         Spacer(modifier = Modifier.height(16.dp))

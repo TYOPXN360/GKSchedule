@@ -47,7 +47,9 @@ fun CourseManageScreen(
     onDeleteCourse: (Course) -> Unit,
     onDeleteAll: () -> Unit,
     onBack: (() -> Unit)? = null,
-    onScrollHidePill: (Boolean) -> Unit = {}
+    onScrollHidePill: (Boolean) -> Unit = {},
+    // ponytail: B走穿底——默认底栏高传参抬FAB/列表（悬浮pill传0.dp不抬）
+    bottomBarHeight: androidx.compose.ui.unit.Dp = 0.dp
 ) {
     var showDeleteAllDialog by remember { mutableStateOf(false) }
     var courseToDelete by remember { mutableStateOf<Course?>(null) }
@@ -113,9 +115,11 @@ fun CourseManageScreen(
             // ponytail: clip shape与按钮外轮廓同源——不一致必漏角
             // ponytail: 品牌色放onDrawSurface（糊之后图标之前），Surface不再画第二层抢色
             // ponytail: 糊度对齐课表5FAB——同70%透，颜色正糊感一致
+            // ponytail: B走穿底——FAB抬到底栏上（bottomBarHeight由ScheduleApp传80.dp）
             val fabShape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
             val fabBrand = MaterialTheme.colorScheme.primary
             val fabOnBrand = MaterialTheme.colorScheme.onPrimary
+            Box(modifier = Modifier.padding(bottom = bottomBarHeight)) {
             FloatingActionButton(
                 onClick = onAddCourse,
                 shape = fabShape,
@@ -130,6 +134,7 @@ fun CourseManageScreen(
                 contentColor = fabOnBrand
             ) {
                 Icon(Icons.Default.Add, stringResource(R.string.add_course))
+            }
             }
         }
     ) { padding ->
@@ -155,7 +160,7 @@ fun CourseManageScreen(
                 LazyColumn(
                     state = listState,
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = collapsedTopPadding, bottom = 88.dp),
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = collapsedTopPadding, bottom = 88.dp + bottomBarHeight),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     // ponytail: 首项Spacer跟heightOffset联动，顶栏扩张多少就推多少，同帧同步

@@ -522,7 +522,8 @@ fun WeeklyScheduleScreen(
             animationSpec = spring(dampingRatio = 0.85f, stiffness = 300f),
             label = "expandHeight"
         )
-        Box(modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp)) {
+        // ponytail: B走穿底配套——FAB抬到底栏上防沉底
+        Box(modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp).padding(bottom = 80.dp)) {
             // Toggle — bottom right
             // ponytail: FAB糊——miuix drawBackdrop吃课表源，关模糊开关时回退纯色；blurEffect开关透传
             // ponytail: clip shape与按钮外轮廓同源——不一致必漏角
