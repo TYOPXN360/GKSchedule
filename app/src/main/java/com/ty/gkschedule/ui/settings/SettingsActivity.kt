@@ -18,15 +18,32 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class SettingsActivity : AppCompatActivity() {
-    // ponytail: Lineage同款EXTRA_SHOW_FRAGMENT——外部直达子页，不经过main
+    // ponytail: Lineage同款EXTRA_SHOW_FRAGMENT——外部直达子Activity，不经过main
     companion object {
         const val EXTRA_SHOW_FRAGMENT = ":settings:show_fragment"
+        private fun activityFor(route: String) = when (route) {
+            "semester" -> SubSettingsSemesterActivity::class.java
+            "appearance" -> SubSettingsAppearanceActivity::class.java
+            "schedule_style" -> SubSettingsScheduleStyleActivity::class.java
+            "notification" -> SubSettingsNotificationActivity::class.java
+            "sync" -> SubSettingsSyncActivity::class.java
+            "data" -> SubSettingsDataActivity::class.java
+            else -> null
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // ponytail: 直达子页直接转交对应Activity，自己退场不留空壳
+        intent.getStringExtra(EXTRA_SHOW_FRAGMENT)?.takeIf { it.isNotBlank() }?.let { route ->
+            activityFor(route)?.let {
+                startActivity(android.content.Intent(this, it))
+                finish()
+                return
+            }
+        }
         enableEdgeToEdge()
-        val settingsStart = intent.getStringExtra(EXTRA_SHOW_FRAGMENT)?.takeIf { it.isNotBlank() } ?: "main"
+        val settingsStart = "main"
 
         setContent {
             val vm: ScheduleViewModel = viewModel()

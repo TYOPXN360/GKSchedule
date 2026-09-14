@@ -119,116 +119,20 @@ fun SettingsScreen(
         ) {
             composable("main") {
                 SettingsMainPage(
-                    onOpenPage = { navController.navigate(it) },
+                    // ponytail: Lineage同款真SubSettings——起独立Activity，系统管返回+预测动画
+                    onOpenPage = {
+                        val cls = when (it) {
+                            "semester" -> SubSettingsSemesterActivity::class.java
+                            "appearance" -> SubSettingsAppearanceActivity::class.java
+                            "schedule_style" -> SubSettingsScheduleStyleActivity::class.java
+                            "notification" -> SubSettingsNotificationActivity::class.java
+                            "sync" -> SubSettingsSyncActivity::class.java
+                            "data" -> SubSettingsDataActivity::class.java
+                            else -> null
+                        }
+                        cls?.let { c -> context.startActivity(android.content.Intent(context, c)) }
+                    },
                     onExit = { (context as? android.app.Activity)?.finish() },
-                    blurEnabled = blurEffect
-                )
-            }
-            composable("semester") {
-                SemesterPage(
-                    semesterStart = semesterStart,
-                    totalWeeks = totalWeeks,
-                    periodsPerDay = periodsPerDay,
-                    firstDayOfWeek = firstDayOfWeek,
-                    hideEmptyWeeks = hideEmptyWeeks,
-                    onSemesterStartChange = onSemesterStartChange,
-                    onTotalWeeksChange = onTotalWeeksChange,
-                    onPeriodsPerDayChange = onPeriodsPerDayChange,
-                    onFirstDayOfWeekChange = onFirstDayOfWeekChange,
-                    onHideEmptyWeeksChange = onHideEmptyWeeksChange,
-                    onBack = { navController.popBackStack() },
-                    blurEnabled = blurEffect
-                )
-            }
-            composable("appearance") {
-                AppearancePage(
-                    darkMode = darkMode,
-                    language = language,
-                    startPage = startPage,
-                    blurEffect = blurEffect,
-                    onDarkModeChange = onDarkModeChange,
-                    onLanguageChange = onLanguageChange,
-                    onStartPageChange = onStartPageChange,
-                    onBlurEffectChange = onBlurEffectChange,
-                    onBack = { navController.popBackStack() },
-                    blurEnabled = blurEffect
-                )
-            }
-            composable("schedule_style") {
-                ScheduleStylePage(
-                    gridHeight = gridHeight,
-                    gridCorner = gridCorner,
-                    gridSpacing = gridSpacing,
-                    showPeriodLabel = showPeriodLabel,
-                    autoGridHeight = autoGridHeight,
-                    mergeConsecutive = mergeConsecutive,
-                    showTimeLabel = showTimeLabel,
-                    detailedSplit = detailedSplit,
-                    colorEngine = colorEngine,
-                    colorGroupMode = colorGroupMode,
-                    showDateInHeader = showDateInHeader,
-                    onGridHeightChange = onGridHeightChange,
-                    onGridCornerChange = onGridCornerChange,
-                    onGridSpacingChange = onGridSpacingChange,
-                    onShowPeriodLabelChange = onShowPeriodLabelChange,
-                    onAutoGridHeightChange = onAutoGridHeightChange,
-                    onMergeConsecutiveChange = onMergeConsecutiveChange,
-                    onShowTimeLabelChange = onShowTimeLabelChange,
-                    onDetailedSplitChange = onDetailedSplitChange,
-                    onColorEngineChange = onColorEngineChange,
-                    onColorGroupModeChange = onColorGroupModeChange,
-                    onShowDateInHeaderChange = onShowDateInHeaderChange,
-                    diffColorPerWeek = diffColorPerWeek,
-                    onDiffColorPerWeekChange = onDiffColorPerWeekChange,
-                    showHiddenCourses = showHiddenCourses,
-                    onShowHiddenCoursesChange = onShowHiddenCoursesChange,
-                    compactNavBar = compactNavBar,
-                    onCompactNavBarChange = onCompactNavBarChange,
-                    pillContentMode = pillContentMode,
-                    onPillContentModeChange = onPillContentModeChange,
-                    onBack = { navController.popBackStack() },
-                    blurEnabled = blurEffect
-                )
-            }
-            composable("notification") {
-                NotificationPage(
-                    reminderMinutes = reminderMinutes,
-                    reminderLiveUpdate = reminderLiveUpdate,
-                    reminderExamLiveUpdate = reminderExamLiveUpdate,
-                    onReminderMinutesChange = onReminderMinutesChange,
-                    onReminderLiveUpdateChange = onReminderLiveUpdateChange,
-                    onReminderExamLiveUpdateChange = onReminderExamLiveUpdateChange,
-                    onBack = { navController.popBackStack() },
-                    blurEnabled = blurEffect
-                )
-            }
-            composable("sync") {
-                SyncPage(
-                    autoSyncOnStart = autoSyncOnStart,
-                    autoSyncIntervalValue = autoSyncIntervalValue,
-                    autoSyncIntervalUnit = autoSyncIntervalUnit,
-                    tokenHeartbeat = tokenHeartbeat,
-                    showExamSchedule = showExamSchedule,
-                    examLookaheadWeeks = examLookaheadWeeks,
-                    diffColorPerWeek = diffColorPerWeek,
-                    onAutoSyncOnStartChange = onAutoSyncOnStartChange,
-                    onAutoSyncIntervalValueChange = onAutoSyncIntervalValueChange,
-                    onAutoSyncIntervalUnitChange = onAutoSyncIntervalUnitChange,
-                    onTokenHeartbeatChange = onTokenHeartbeatChange,
-                    onShowExamScheduleChange = onShowExamScheduleChange,
-                    onExamLookaheadWeeksChange = onExamLookaheadWeeksChange,
-                    onDiffColorPerWeekChange = onDiffColorPerWeekChange,
-                    onFetchExam = onFetchExam,
-                    onBack = { navController.popBackStack() },
-                    blurEnabled = blurEffect
-                )
-            }
-            composable("data") {
-                DataPage(
-                    onExportJson = onExportJson,
-                    onImportJson = onImportJson,
-                    onExportIcs = onExportIcs,
-                    onBack = { navController.popBackStack() },
                     blurEnabled = blurEffect
                 )
             }
@@ -410,7 +314,7 @@ private fun SubPage(
 // === Semester ===
 
 @Composable
-private fun SemesterPage(
+internal fun SemesterPage(
     semesterStart: LocalDate, totalWeeks: Int, periodsPerDay: Int, firstDayOfWeek: Int,
     hideEmptyWeeks: Boolean,
     onSemesterStartChange: (LocalDate) -> Unit, onTotalWeeksChange: (Int) -> Unit,
@@ -432,7 +336,7 @@ private fun SemesterPage(
 // === Appearance ===
 
 @Composable
-private fun AppearancePage(
+internal fun AppearancePage(
     darkMode: String, language: String, startPage: String, blurEffect: Boolean,
     onDarkModeChange: (String) -> Unit, onLanguageChange: (String) -> Unit,
     onStartPageChange: (String) -> Unit, onBlurEffectChange: (Boolean) -> Unit, onBack: () -> Unit,
@@ -460,7 +364,7 @@ private fun AppearancePage(
 // === Schedule Style ===
 
 @Composable
-private fun ScheduleStylePage(
+internal fun ScheduleStylePage(
     gridHeight: Int, gridCorner: Int, gridSpacing: Int, showPeriodLabel: Boolean,
     autoGridHeight: Boolean, mergeConsecutive: Boolean, showTimeLabel: Boolean,
     detailedSplit: Boolean, colorEngine: Int, colorGroupMode: Int, showDateInHeader: Boolean,
@@ -555,7 +459,7 @@ private fun ScheduleStylePage(
 // === Notification ===
 
 @Composable
-private fun NotificationPage(
+internal fun NotificationPage(
     reminderMinutes: Int,
     reminderLiveUpdate: Boolean,
     reminderExamLiveUpdate: Boolean,
@@ -595,7 +499,7 @@ private fun NotificationPage(
 // === Sync ===
 
 @Composable
-private fun SyncPage(
+internal fun SyncPage(
     autoSyncOnStart: Boolean,
     autoSyncIntervalValue: Int,
     autoSyncIntervalUnit: String,
@@ -747,7 +651,7 @@ private fun SyncPage(
 // === Data ===
 
 @Composable
-private fun DataPage(onExportJson: () -> Unit, onImportJson: () -> Unit, onExportIcs: () -> Unit, onBack: () -> Unit, blurEnabled: Boolean = true) {
+internal fun DataPage(onExportJson: () -> Unit, onImportJson: () -> Unit, onExportIcs: () -> Unit, onBack: () -> Unit, blurEnabled: Boolean = true) {
     SubPage(stringResource(R.string.settings_category_data), onBack, blurEnabled = blurEnabled) {
         SettingsCard {
             SettingsItem(Icons.Default.FileUpload, stringResource(R.string.import_json), onClick = onImportJson)

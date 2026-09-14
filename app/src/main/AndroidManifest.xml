@@ -58,6 +58,32 @@
             android:exported="true"
             android:windowSoftInputMode="adjustResize" />
 
+        <!-- ponytail: Lineage同款真SubSettings——6子页各独立Activity，Fragment式进出+系统预测返回 -->
+        <activity
+            android:name=".ui.settings.SubSettingsSemesterActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".ui.settings.SubSettingsAppearanceActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".ui.settings.SubSettingsScheduleStyleActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".ui.settings.SubSettingsNotificationActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".ui.settings.SubSettingsSyncActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".ui.settings.SubSettingsDataActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
         <activity
             android:name=".ui.exam.ExamActivity"
             android:exported="true"
