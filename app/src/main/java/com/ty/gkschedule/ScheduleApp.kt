@@ -431,20 +431,20 @@ fun ScheduleApp(
             // ponytail: 普通底栏走Scaffold槽位常驻位移；悬浮pill走内容区Box覆盖层，两套互斥
             // ponytail: 底栏糊——drawBackdrop吃主源（与pill/snackbar同源），容器透明+onDrawSurface单层底
             if (!compactNavBar) {
-                // ponytail: 糊挂AnimatedVisibility外层（DeepSeek建议：挂NavigationBar内层采不到源时外移一级；源层顺序/backdrop实例已对，跳过前两步）
+                // ponytail: 红底验证通过=采样链路通——问题在85%盖太厚+糊挂AnimatedVisibility外层整块红；糊回NavigationBar内层，底降55%
                 val barBg = MaterialTheme.colorScheme.surfaceContainer
                 androidx.compose.animation.AnimatedVisibility(
                     visible = showBottomBar,
                     enter = slideInVertically(initialOffsetY = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideInSpec()),
-                    exit = slideOutVertically(targetOffsetY = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideOutSpec()),
-                    modifier = if (blurEffect) Modifier.drawBackdrop(
-                        backdrop = backdrop,
-                        shape = { androidx.compose.foundation.shape.RoundedCornerShape(0.dp) },
-                        effects = { blur(28.dp.toPx()) },
-                        onDrawSurface = { drawRect(barBg.copy(alpha = 0.85f)) }
-                    ) else Modifier
+                    exit = slideOutVertically(targetOffsetY = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideOutSpec())
                 ) {
                     NavigationBar(
+                        modifier = if (blurEffect) Modifier.drawBackdrop(
+                            backdrop = backdrop,
+                            shape = { androidx.compose.foundation.shape.RoundedCornerShape(0.dp) },
+                            effects = { blur(28.dp.toPx()) },
+                            onDrawSurface = { drawRect(barBg.copy(alpha = 0.55f)) }
+                        ) else Modifier,
                         containerColor = androidx.compose.ui.graphics.Color.Transparent
                     ) {
                         navItemList().forEach { (screen, triple) ->
