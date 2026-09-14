@@ -110,8 +110,9 @@ class ReminderReceiver : BroadcastReceiver() {
                 else -> "正在上课"
             }
 
-            // ponytail: smallIcon复用软件launcher图标（mipmap自适应，状态栏自动套单色）
-            builder.setSmallIcon(com.ty.gkschedule.R.drawable.ic_notif_class)
+            // ponytail: Live smallIcon用favicon白模剪影（状态栏只取alpha），largeIcon用彩色favicon
+            builder.setSmallIcon(com.ty.gkschedule.R.drawable.ic_notif_live)
+                .setLargeIcon(android.graphics.BitmapFactory.decodeResource(context.resources, com.ty.gkschedule.R.drawable.ic_notif_live_large))
                 .setShortCriticalText(chipText)
 
             // 尝试使用 ProgressStyle (Live Update API)

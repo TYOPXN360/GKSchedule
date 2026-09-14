@@ -17,6 +17,7 @@
 *.har
 *.png
 !app/src/main/res/mipmap-*/*.png
+!app/src/main/res/drawable-nodpi/ic_notif_live*.png
 *.db
 *.db-wal
 *.db-shm
