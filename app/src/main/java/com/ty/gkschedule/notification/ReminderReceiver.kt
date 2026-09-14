@@ -136,6 +136,7 @@ class ReminderReceiver : BroadcastReceiver() {
         "$itemType|$name|$startEpoch".hashCode()
 
     // ponytail: 百分比画进smallIcon位图——状态栏只认单色alpha，文字白画剩透明，系统自动套色
+    // ponytail: 字号按位数自适应撑满48dp安全框，1位0.55/2位0.42/3位0.32，超宽再缩到贴边
     private fun percentSmallIcon(context: Context, percent: Int): androidx.core.graphics.drawable.IconCompat {
         val p = percent.coerceIn(0, 100)
         val text = "$p"
@@ -145,10 +146,13 @@ class ReminderReceiver : BroadcastReceiver() {
         val canvas = android.graphics.Canvas(bitmap)
         val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
             color = android.graphics.Color.WHITE
-            textSize = size * (if (text.length >= 3) 0.34f else 0.42f)
+            textSize = size * (if (text.length >= 3) 0.32f else if (text.length >= 2) 0.42f else 0.55f)
             textAlign = android.graphics.Paint.Align.CENTER
             typeface = android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD)
         }
+        // ponytail: 实测宽度贴边再缩，保证1~100都不裁边
+        val w = paint.measureText(text)
+        if (w > size * 0.92f) paint.textSize *= (size * 0.92f / w)
         val y = size / 2f - (paint.descent() + paint.ascent()) / 2f
         canvas.drawText(text, size / 2f, y, paint)
         return androidx.core.graphics.drawable.IconCompat.createWithBitmap(bitmap)
