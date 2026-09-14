@@ -24,7 +24,14 @@ class AboutActivity : AppCompatActivity() {
             val darkMode by vm.darkMode.collectAsState(initial = "system")
 
             GKScheduleTheme(darkTheme = darkMode) {
-                Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                // ponytail: 底色必须与主App源层同值（亮surfaceContainer/暗surface）。
+                // 用 background 在亮色下更白一档：背景纯白、卡片反显不白，且铺到顶让状态栏也发白
+                val pageBg = if (com.ty.gkschedule.ui.theme.LocalAppIsDark.current) {
+                    MaterialTheme.colorScheme.surface
+                } else {
+                    MaterialTheme.colorScheme.surfaceContainer
+                }
+                Surface(modifier = Modifier.fillMaxSize(), color = pageBg) {
                     val blurEffect by vm.blurEffect.collectAsState(initial = true)
                     AboutDetailPage(onBack = { finish() }, blurEnabled = blurEffect)
                 }

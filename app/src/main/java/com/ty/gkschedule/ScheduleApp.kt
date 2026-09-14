@@ -464,17 +464,13 @@ fun ScheduleApp(
     ) { innerPadding ->
         // ponytail: miuix源层——内容标layerBackdrop吃糊；药丸挂兄弟层(环=RenderThread栈溢出，见08c190d)
         // ponytail: 外层不垫状态栏，各Tab自己吃（今日/课表无顶栏挂statusBarsPadding，管理页顶栏自己吃）
+        // ponytail: 源层必须全屏不被底栏截断，否则默认底栏只能糊到靠上一小条；避让下移到NavHost
         Box(
-            Modifier
+            modifier = Modifier
                 .fillMaxSize()
-                .padding(bottom = innerPadding.calculateBottomPadding())
+                .layerBackdrop(backdrop)
+                .background(mainScaffoldBg)
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .layerBackdrop(backdrop)
-                    .background(mainScaffoldBg)
-            ) {
             NavHost(
                 navController = navController,
                 startDestination = "tabs",
@@ -491,7 +487,7 @@ fun ScheduleApp(
                 popExitTransition = {
                     fadeOut(animationSpec = tween(200, easing = LinearEasing))
                 },
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize().padding(bottom = innerPadding.calculateBottomPadding())
             ) {
             composable("tabs") {
                 androidx.compose.runtime.CompositionLocalProvider(
@@ -573,7 +569,6 @@ fun ScheduleApp(
         } else {
             // ponytail: 默认底栏snackbar已回Scaffold默认槽，这里不再自挂
         } // pill兄弟层
-    }
     }
     // ponytail: Pager即栈——返回=回第0页（ReSukiSU同款普通BackHandler）；首页放行回桌面
     androidx.activity.compose.BackHandler(enabled = showBottomBar && uiSelectedPage != 0) {
