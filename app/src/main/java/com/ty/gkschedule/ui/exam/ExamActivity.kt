@@ -61,30 +61,8 @@ class ExamActivity : AppCompatActivity() {
                     if (initialExamId > 0) editingExam = examList.find { it.id == initialExamId }
                 }
 
-                when {
-                    creating || editingExam != null -> ExamEditScreen(
-                        exam = editingExam,
-                        semesterStart = semesterStart,
-                        onSave = { entities ->
-                            vm.saveExams(entities)
-                            scope.launch {
-                                vm.messages.collect { msg ->
-                                    android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()
-                                    return@collect
-                                }
-                            }
-                            android.widget.Toast.makeText(context, "成功导入 ${entities.size} 场考试！", android.widget.Toast.LENGTH_SHORT).show()
-                            creating = false
-                            editingExam = null
-                        },
-                        onDelete = { entity ->
-                            vm.deleteExamById(entity.id)
-                            creating = false
-                            editingExam = null
-                        },
-                        onBack = { creating = false; editingExam = null },
-                        blurEnabled = blurEffect                    )
-                    else -> ExamScreen(
+                // ponytail: 添加/编辑走独立ExamEditActivity（SubSettings同款），本页只留列表
+                ExamScreen(
                         exams = examList,
                         colorCourses = courses,
                         customExams = emptyList(),
@@ -98,8 +76,8 @@ class ExamActivity : AppCompatActivity() {
                         showExamSchedule = showExamSchedule,
                         onShowExamScheduleChange = { vm.setShowExamSchedule(it) },
                         onExamLookaheadWeeksChange = { vm.setExamLookaheadWeeks(it) },
-                        onAddExam = { creating = true },
-                        onEditExam = { editingExam = it },
+                        onAddExam = { context.startActivity(android.content.Intent(context, ExamEditActivity::class.java)) },
+                        onEditExam = { context.startActivity(android.content.Intent(context, ExamEditActivity::class.java).apply { putExtra("examId", it.id) }) },
                         getStartTime = { vm.getStartTime(it) },
                         getEndTime = { vm.getEndTime(it) },
                         currentWeek = selectedWeek,
@@ -115,7 +93,6 @@ class ExamActivity : AppCompatActivity() {
                         onBack = { finish() },
                         blurEnabled = blurEffect
                     )
-                }
             }
         }
     }

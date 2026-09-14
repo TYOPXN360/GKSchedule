@@ -90,6 +90,12 @@
             android:exported="true"
             android:windowSoftInputMode="adjustResize" />
 
+        <!-- ponytail: Lineage SubSettings同款——考试添加/编辑独立Activity，系统管返回+预测动画 -->
+        <activity
+            android:name=".ui.exam.ExamEditActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
         <activity
             android:name=".ui.about.AboutActivity"
             android:exported="true"

@@ -10,6 +10,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import top.yukonga.miuix.kmp.blur.blur
+import top.yukonga.miuix.kmp.blur.drawBackdrop
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Refresh
@@ -121,11 +123,19 @@ fun ExamScreen(
             )
         },
         floatingActionButton = {
+            // ponytail: 糊度对齐课表/管理FAB——同28dp+75%透
+            val fabShape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
             FloatingActionButton(
                 onClick = onAddExam,
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-                modifier = Modifier.padding(bottom = 64.dp)
+                shape = fabShape,
+                elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp),
+                modifier = if (blurEnabled) Modifier.drawBackdrop(
+                    backdrop = backdrop,
+                    shape = { fabShape },
+                    effects = { blur(28.dp.toPx()) }
+                ) else Modifier,
+                containerColor = if (blurEnabled) MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f) else MaterialTheme.colorScheme.primary,
+                contentColor = if (blurEnabled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onPrimary
             ) {
                 Icon(Icons.Default.Add, contentDescription = "添加考试")
             }
