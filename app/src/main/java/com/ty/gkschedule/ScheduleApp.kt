@@ -3,6 +3,8 @@ package com.ty.gkschedule
 import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.PredictiveBackHandler
+import kotlinx.coroutines.CancellationException
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
@@ -447,17 +449,17 @@ fun ScheduleApp(
                     slideOutHorizontally(targetOffsetX = { -it / 4 }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.pageExitSpec()) + fadeOut(com.ty.gkschedule.ui.theme.M3Motion.subPageExitSpec())
                 }
             },
-            // ponytail: 系统级预测返回只播popExit+popEnter；tab间pop是平级回栈无意义，零位移+瞬间=无跟手无抽搐
+            // ponytail: tab间回退走None瞬切（tween毫秒在Seekable跟手下无效）；子页返回保留动效
             popEnterTransition = {
                 val from = initialState.destination.route
                 val to = targetState.destination.route
-                if (isTabRoute(from) && isTabRoute(to)) fadeIn(animationSpec = tween(1))
+                if (isTabRoute(from) && isTabRoute(to)) EnterTransition.None
                 else fadeIn(animationSpec = tween(150))
             },
             popExitTransition = {
                 val from = initialState.destination.route
                 val to = targetState.destination.route
-                if (isTabRoute(from) && isTabRoute(to)) fadeOut(animationSpec = tween(1))
+                if (isTabRoute(from) && isTabRoute(to)) ExitTransition.None
                 else slideOutHorizontally(targetOffsetX = { (it * 0.15f).toInt() }, animationSpec = tween(300)) + fadeOut(animationSpec = tween(150))
             }
         ) {
@@ -532,11 +534,21 @@ fun ScheduleApp(
         } // pill兄弟层
     }
     }
-    // ponytail: BackHandler挂函数末尾=后注册先回调，压过NavHost内部返回拦截；tab页吞预测秒回，首页放行
+    // ponytail: PredictiveBackHandler接管手势流——拖拽空转吞进度（页面静止无窥探），松手瞬切回今日；
+    // 今日页disabled放行系统回桌面预测；取消（滑回边缘）安全吞掉无跳变
     val isAtHome = currentRoute == startPage
-    BackHandler(enabled = showBottomBar && !isAtHome) {
-        val popped = navController.popBackStack()
-        if (!popped) (context as? android.app.Activity)?.finish()
+    PredictiveBackHandler(enabled = showBottomBar && !isAtHome) { progress ->
+        try {
+            progress.collect { }
+            val popped = navController.popBackStack()
+            if (!popped) {
+                navController.navigate(startPage) {
+                    popUpTo(startPage) { inclusive = false }
+                    launchSingleTop = true
+                }
+            }
+        } catch (e: CancellationException) {
+        }
     }
 }
 
