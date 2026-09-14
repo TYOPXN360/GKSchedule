@@ -218,6 +218,7 @@ private fun CourseListItem(
         courseName = course.name,
         classroom = course.classroom
     )
+    // ponytail: 白天竖杠用浅色container（与今日/考试页同源），不用深content
 
     com.ty.gkschedule.ui.theme.Md3Card(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
@@ -233,7 +234,7 @@ private fun CourseListItem(
                     .width(4.dp)
                     .height(36.dp)
                     .clip(RoundedCornerShape(2.dp))
-                    .background(courseColor.content)
+                    .background(courseColor.container)
             )
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
