@@ -504,35 +504,20 @@ fun ScheduleApp(
                 Box(Modifier.fillMaxSize().padding(bottom = 108.dp), contentAlignment = Alignment.BottomCenter) {
                     SnackbarHost(snackbarHostState) { snackbarData ->
                         val snackShape = MaterialTheme.shapes.small
-                        Box(
+                        // ponytail: 回Snackbar原生（手写Row丢dismissAction/换行逻辑），分层靠容器透明单层糊
+                        Snackbar(
+                            snackbarData = snackbarData,
                             modifier = if (blurEffect) Modifier.drawBackdrop(
                                 backdrop = backdrop,
                                 shape = { snackShape },
-                                effects = { blur(12.dp.toPx()) }
-                            ) else Modifier
-                                .clip(snackShape)
-                                .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .background(
-                                        if (blurEffect) MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f) else androidx.compose.ui.graphics.Color.Transparent,
-                                        snackShape
-                                    )
-                                    .padding(horizontal = 16.dp, vertical = 14.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    snackbarData.visuals.message,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    modifier = Modifier.weight(1f, fill = false)
-                                )
-                                snackbarData.visuals.actionLabel?.let { label ->
-                                    TextButton(onClick = { snackbarData.performAction() }) { Text(label) }
-                                }
-                            }
-                        }
+                                effects = { blur(28.dp.toPx()) }
+                            ) else Modifier,
+                            shape = snackShape,
+                            containerColor = androidx.compose.ui.graphics.Color.Transparent,
+                            contentColor = MaterialTheme.colorScheme.onSurface,
+                            actionContentColor = MaterialTheme.colorScheme.primary,
+                            dismissActionContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                 }
             }
@@ -542,35 +527,20 @@ fun ScheduleApp(
                 SnackbarHost(snackbarHostState) { snackbarData ->
                     val snackShape = MaterialTheme.shapes.small
                     // ponytail: 手写单层糊——M3 Snackbar内部Surface+containerColor双层叠色是分层根因
-                    Box(
+                    // ponytail: 回Snackbar原生（手写Row丢dismissAction/换行逻辑），分层靠容器透明单层糊
+                    Snackbar(
+                        snackbarData = snackbarData,
                         modifier = if (blurEffect) Modifier.drawBackdrop(
                             backdrop = backdrop,
                             shape = { snackShape },
-                            effects = { blur(12.dp.toPx()) }
-                        ) else Modifier
-                            .clip(snackShape)
-                            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .background(
-                                    if (blurEffect) MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f) else androidx.compose.ui.graphics.Color.Transparent,
-                                    snackShape
-                                )
-                                .padding(horizontal = 16.dp, vertical = 14.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                snackbarData.visuals.message,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurface,
-                                modifier = Modifier.weight(1f, fill = false)
-                            )
-                            snackbarData.visuals.actionLabel?.let { label ->
-                                TextButton(onClick = { snackbarData.performAction() }) { Text(label) }
-                            }
-                        }
-                    }
+                            effects = { blur(28.dp.toPx()) }
+                        ) else Modifier,
+                        shape = snackShape,
+                        containerColor = androidx.compose.ui.graphics.Color.Transparent,
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                        actionContentColor = MaterialTheme.colorScheme.primary,
+                        dismissActionContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
         } // pill兄弟层
