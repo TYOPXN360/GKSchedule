@@ -9,6 +9,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -427,7 +428,23 @@ fun ScheduleApp(
             NavHost(
                 navController = navController,
                 startDestination = startPage,
-                // ponytail: 转场全用官方默认（DefaultNavTransitions，不传即官方）；tab/子页不再手写方向滑
+                // ponytail: M3官方FadeThrough（m3 motion：先淡出90ms再淡入210ms，LinearEasing）
+                enterTransition = {
+                    fadeIn(animationSpec = tween(210, easing = LinearEasing), initialAlpha = 0f) + scaleIn(
+                        animationSpec = tween(210, easing = LinearEasing), initialScale = 0.92f
+                    )
+                },
+                exitTransition = {
+                    fadeOut(animationSpec = tween(90, easing = LinearEasing))
+                },
+                popEnterTransition = {
+                    fadeIn(animationSpec = tween(210, easing = LinearEasing), initialAlpha = 0f) + scaleIn(
+                        animationSpec = tween(210, easing = LinearEasing), initialScale = 0.92f
+                    )
+                },
+                popExitTransition = {
+                    fadeOut(animationSpec = tween(90, easing = LinearEasing))
+                },
                 modifier = Modifier.fillMaxSize()
             ) {
             composable(Screen.Today.route) { TodayScreen(courses = displayCourses, colorCourses = courses, currentWeek = realCurrentWeek, colorEngine = colorEngine, colorGroupMode = colorGroupMode, exams = examList, showExamSchedule = showExamSchedule, examLookaheadWeeks = examLookaheadWeeks, semesterStart = semesterStart, getStartTime = { viewModel.getStartTime(it) }, getEndTime = { viewModel.getEndTime(it) }, onCourseLongPress = { context.startActivity(Intent(context, com.ty.gkschedule.ui.course.CourseEditActivity::class.java).apply { putExtra("courseId", it.id) }) }, onExamEdit = { context.startActivity(Intent(context, com.ty.gkschedule.ui.exam.ExamActivity::class.java).apply { putExtra("examId", it.id) }) }, diffColorPerWeek = diffColorPerWeek) }
