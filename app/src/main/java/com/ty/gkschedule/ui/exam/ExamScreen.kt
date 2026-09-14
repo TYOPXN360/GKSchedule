@@ -123,8 +123,10 @@ fun ExamScreen(
             )
         },
         floatingActionButton = {
-            // ponytail: 糊度对齐课表/管理FAB——同28dp+75%透
+            // ponytail: 糊度对齐管理FAB——主题色放onDrawSurface（糊之后图标之前），容器透明不抢色
             val fabShape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
+            val fabBrand = MaterialTheme.colorScheme.primary
+            val fabOnBrand = MaterialTheme.colorScheme.onPrimary
             FloatingActionButton(
                 onClick = onAddExam,
                 shape = fabShape,
@@ -132,10 +134,11 @@ fun ExamScreen(
                 modifier = if (blurEnabled) Modifier.drawBackdrop(
                     backdrop = backdrop,
                     shape = { fabShape },
-                    effects = { blur(28.dp.toPx()) }
+                    effects = { blur(28.dp.toPx()) },
+                    onDrawSurface = { drawRect(fabBrand.copy(alpha = 0.75f)) }
                 ) else Modifier,
-                containerColor = if (blurEnabled) MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f) else MaterialTheme.colorScheme.primary,
-                contentColor = if (blurEnabled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onPrimary
+                containerColor = if (blurEnabled) androidx.compose.ui.graphics.Color.Transparent else fabBrand,
+                contentColor = if (blurEnabled) fabOnBrand else fabOnBrand
             ) {
                 Icon(Icons.Default.Add, contentDescription = "添加考试")
             }
