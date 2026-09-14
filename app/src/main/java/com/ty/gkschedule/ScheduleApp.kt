@@ -16,6 +16,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import top.yukonga.miuix.kmp.blur.blur
+import top.yukonga.miuix.kmp.blur.drawBackdrop
+import top.yukonga.miuix.kmp.blur.layerBackdrop
+import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.unit.dp
@@ -363,11 +367,25 @@ fun ScheduleApp(
     fun isTabRoute(route: String?): Boolean = route != null && tabIndex.keys.any { route.startsWith(it) }
 
     // Simple approach: NavHost with conditional bottom bar
+    // ponytail: snackbar糊要吃主源——backdrop提Scaffold外，内容层与snackbar同源
+    val backdrop = rememberLayerBackdrop()
     Scaffold(
         containerColor = mainScaffoldBg,
         snackbarHost = {
             SnackbarHost(snackbarHostState) { snackbarData ->
-                Snackbar(snackbarData = snackbarData, containerColor = MaterialTheme.colorScheme.surfaceContainerHigh, contentColor = MaterialTheme.colorScheme.onSurface, shape = MaterialTheme.shapes.small)
+                // ponytail: 同FAB糊——drawBackdrop吃主源，关模糊回退纯色
+                val snackShape = MaterialTheme.shapes.small
+                Snackbar(
+                    snackbarData = snackbarData,
+                    modifier = if (blurEffect) Modifier.drawBackdrop(
+                        backdrop = backdrop,
+                        shape = { snackShape },
+                        effects = { blur(28.dp.toPx()) }
+                    ) else Modifier,
+                    containerColor = if (blurEffect) MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f) else MaterialTheme.colorScheme.surfaceContainerHigh,
+                    contentColor = MaterialTheme.colorScheme.onSurface,
+                    shape = snackShape
+                )
             }
         },
         bottomBar = {
@@ -402,7 +420,6 @@ fun ScheduleApp(
     ) { innerPadding ->
         // ponytail: miuix源层——内容标layerBackdrop吃糊；药丸挂兄弟层(环=RenderThread栈溢出，见08c190d)
         // ponytail: 外层不垫状态栏，各Tab自己吃（今日/课表无顶栏挂statusBarsPadding，管理页顶栏自己吃）
-        val backdrop = top.yukonga.miuix.kmp.blur.rememberLayerBackdrop()
         Box(
             Modifier
                 .fillMaxSize()
