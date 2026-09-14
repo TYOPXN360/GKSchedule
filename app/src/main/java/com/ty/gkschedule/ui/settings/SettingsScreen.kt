@@ -486,13 +486,42 @@ internal fun NotificationPage(
             AnimatedVisibility(visible = reminderMinutes > 0, enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) {
                 Column {
                     HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
-                    SwitchItem(Icons.Default.Autorenew, stringResource(R.string.reminder_live_update), reminderLiveUpdate, onReminderLiveUpdateChange)
-                    Text(
-                        stringResource(R.string.reminder_live_update_desc),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    // ponytail: desc改i弹窗（心跳同款BlurCard），行内只留标题+开关
+                    var showLiveInfo by remember { mutableStateOf(false) }
+                    ListItem(
+                        headlineContent = { Text(stringResource(R.string.reminder_live_update)) },
+                        leadingContent = { Icon(Icons.Default.Autorenew, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+                        trailingContent = {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                IconButton(onClick = { showLiveInfo = true }) {
+                                    Icon(Icons.Default.Info, "Info", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                                GKSwitch(checked = reminderLiveUpdate, onCheckedChange = onReminderLiveUpdateChange)
+                            }
+                        },
+                        colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                     )
+                    if (showLiveInfo) {
+                        androidx.compose.ui.window.Dialog(onDismissRequest = { showLiveInfo = false }) {
+                            com.ty.gkschedule.ui.theme.BlurCard(
+                                enabled = true,
+                                modifier = Modifier.fillMaxWidth(),
+                                radiusDp = 36f,
+                                backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.48f),
+                                cornerRadiusDp = 28f
+                            ) {
+                                Column(modifier = Modifier.padding(24.dp)) {
+                                    Text(stringResource(R.string.reminder_live_update), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    Text(stringResource(R.string.reminder_live_update_desc), style = MaterialTheme.typography.bodyMedium)
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                                        TextButton(onClick = { showLiveInfo = false }) { Text("OK") }
+                                    }
+                                }
+                            }
+                        }
+                    }
                     AnimatedVisibility(visible = reminderLiveUpdate, enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) {
                         Column {
                             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
@@ -652,11 +681,26 @@ internal fun SyncPage(
                 colors = ListItemDefaults.colors(containerColor = Color.Transparent)
             )
             if (showHeartbeatInfo) {
-                AlertDialog(
-                    onDismissRequest = { showHeartbeatInfo = false },
-                    text = { Text(stringResource(R.string.token_heartbeat_desc)) },
-                    confirmButton = { TextButton(onClick = { showHeartbeatInfo = false }) { Text("OK") } }
-                )
+                // ponytail: 重登录同款BlurCard毛玻璃Dialog（dim 12%+底48%+半径36）
+                androidx.compose.ui.window.Dialog(onDismissRequest = { showHeartbeatInfo = false }) {
+                    com.ty.gkschedule.ui.theme.BlurCard(
+                        enabled = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        radiusDp = 36f,
+                        backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.48f),
+                        cornerRadiusDp = 28f
+                    ) {
+                        Column(modifier = Modifier.padding(24.dp)) {
+                            Text(stringResource(R.string.token_heartbeat), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(stringResource(R.string.token_heartbeat_desc), style = MaterialTheme.typography.bodyMedium)
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                                TextButton(onClick = { showHeartbeatInfo = false }) { Text("OK") }
+                            }
+                        }
+                    }
+                }
             }
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
             // showExamSchedule moved to ExamScreen
