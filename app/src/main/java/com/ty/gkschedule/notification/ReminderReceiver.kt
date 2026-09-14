@@ -86,8 +86,10 @@ class ReminderReceiver : BroadcastReceiver() {
             val percent = progressPercent(startEpoch, endEpoch)
             val titlePrefix = if (itemType == "exam") "正在考试" else "正在上课"
 
-            // ponytail: Live Update规范——状态栏chip取自smallIcon，闹钟换百分比位图
-            builder.setSmallIcon(percentSmallIcon(context, percent))
+            // ponytail: 看齐InstallerX——smallIcon固定品牌图标，百分比走系统chip文字（setShortCriticalText），
+            // 系统字体渲染才够大；自己画位图在状态栏24dp下物理极限，再自适应也糊
+            builder.setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
+                .setShortCriticalText("$percent%")
 
             // 尝试使用 ProgressStyle (Live Update API)
             try {
@@ -134,29 +136,6 @@ class ReminderReceiver : BroadcastReceiver() {
 
     private fun stableNotificationId(itemType: String, name: String, startEpoch: Long): Int =
         "$itemType|$name|$startEpoch".hashCode()
-
-    // ponytail: 百分比画进smallIcon位图——状态栏只认单色alpha，文字白画剩透明，系统自动套色
-    // ponytail: 字号按位数自适应撑满48dp安全框，1位0.55/2位0.42/3位0.32，超宽再缩到贴边
-    private fun percentSmallIcon(context: Context, percent: Int): androidx.core.graphics.drawable.IconCompat {
-        val p = percent.coerceIn(0, 100)
-        val text = "$p"
-        val density = context.resources.displayMetrics.density
-        val size = (24 * density).toInt().coerceAtLeast(48)
-        val bitmap = android.graphics.Bitmap.createBitmap(size, size, android.graphics.Bitmap.Config.ARGB_8888)
-        val canvas = android.graphics.Canvas(bitmap)
-        val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
-            color = android.graphics.Color.WHITE
-            textSize = size * (if (text.length >= 3) 0.32f else if (text.length >= 2) 0.42f else 0.55f)
-            textAlign = android.graphics.Paint.Align.CENTER
-            typeface = android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD)
-        }
-        // ponytail: 实测宽度贴边再缩，保证1~100都不裁边
-        val w = paint.measureText(text)
-        if (w > size * 0.92f) paint.textSize *= (size * 0.92f / w)
-        val y = size / 2f - (paint.descent() + paint.ascent()) / 2f
-        canvas.drawText(text, size / 2f, y, paint)
-        return androidx.core.graphics.drawable.IconCompat.createWithBitmap(bitmap)
-    }
 
     private fun createNotificationChannel(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
