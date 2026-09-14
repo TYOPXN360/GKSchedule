@@ -50,23 +50,16 @@ fun BlurCard(
     val shape = RoundedCornerShape(cornerRadiusDp.dp)
 
     // ponytail: Dialog默认60%黑幕压死底子，降到12%才透光；窗口级糊背后Activity
+    // ponytail: DisposableEffect时view可能还没attach（parent链没接好就null），post+attach监听重试，否则窗糊一次流产
     DisposableEffect(view, radiusDp) {
-        val window = view.findDialogWindow()
-        window?.let { w ->
-            w.setDimAmount(0.12f)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                runCatching {
-                    val density = view.resources.displayMetrics.density
-                    val px = (radiusDp * density).toInt().coerceIn(1, 150)
-                    w.attributes = w.attributes.also {
-                        it.blurBehindRadius = px
-                    }
-                    w.addFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND)
-                    w.setBackgroundBlurRadius(px)
-                }
-            }
+        view.applyDialogWindowBlur(radiusDp)
+        view.post { view.applyDialogWindowBlur(radiusDp) }
+        val winListener = object : View.OnAttachStateChangeListener {
+            override fun onViewAttachedToWindow(v: View) = v.applyDialogWindowBlur(radiusDp)
+            override fun onViewDetachedFromWindow(v: View) {}
         }
-        onDispose {}
+        view.addOnAttachStateChangeListener(winListener)
+        onDispose { view.removeOnAttachStateChangeListener(winListener) }
     }
 
     Box(modifier = modifier.clip(shape)) {
@@ -103,6 +96,24 @@ fun BlurCard(
             Spacer(Modifier.matchParentSize().background(backgroundColor))
         }
         content()
+    }
+}
+
+// ponytail: View扩展——同一套窗糊逻辑，Effect+attach监听共用
+private fun View.applyDialogWindowBlur(radiusDp: Float) {
+    findDialogWindow()?.let { w ->
+        w.setDimAmount(0.12f)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            runCatching {
+                val density = resources.displayMetrics.density
+                val px = (radiusDp * density).toInt().coerceIn(1, 150)
+                w.attributes = w.attributes.also {
+                    it.blurBehindRadius = px
+                }
+                w.addFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND)
+                w.setBackgroundBlurRadius(px)
+            }
+        }
     }
 }
 
