@@ -152,8 +152,10 @@ fun ExamScreen(
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         var yearExpanded by remember { mutableStateOf(false) }
-                        val currentYear = LocalDate.now().year
-                        val years = ((currentYear - 3)..currentYear).map { "$it-${it + 1}" }.reversed()
+                        // ponytail: 上下各2年智能生成，当前学年置顶
+                        val nowYear = LocalDate.now()
+                        val curStart = if (nowYear.monthValue >= 9) nowYear.year else nowYear.year - 1
+                        val years = ((curStart - 2)..(curStart + 2)).map { "$it-${it + 1}" }.reversed()
                         OutlinedCard(onClick = { yearExpanded = true }, modifier = Modifier.weight(1f)) {
                             Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                                 Text(examYear.ifEmpty { "学年" }, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
