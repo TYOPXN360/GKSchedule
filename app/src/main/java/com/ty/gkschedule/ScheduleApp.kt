@@ -404,7 +404,8 @@ fun ScheduleApp(
             if (!pagerAnimating) uiSelectedPage = page
         }
     }
-    val showBottomBar = currentRoute == null || currentRoute in bottomBarScreens
+    // ponytail: NavHost只剩tabs+子页——tabs常驻时route=tabs，子页时route=子页名
+    val showBottomBar = currentRoute == null || currentRoute == "tabs"
     fun navigateTab(route: String) {
         (tabIndexMap[route])?.let { handlePageChange(it) }
     }
