@@ -24,6 +24,19 @@ class AboutActivity : AppCompatActivity() {
             val darkMode by vm.darkMode.collectAsState(initial = "system")
 
             GKScheduleTheme(darkTheme = darkMode) {
+                // ponytail: 独立Activity必须自管状态栏图标——enableEdgeToEdge默认跟系统/主题走，
+                // 不读App的darkMode；亮色下漏设=白底白图标（与MainActivity同款修复）
+                val view = androidx.compose.ui.platform.LocalView.current
+                val isDark = when (darkMode) {
+                    "dark" -> true
+                    "light" -> false
+                    else -> androidx.compose.foundation.isSystemInDarkTheme()
+                }
+                LaunchedEffect(isDark) {
+                    val window = (view.context as? android.app.Activity)?.window ?: return@LaunchedEffect
+                    androidx.core.view.WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !isDark
+                    androidx.core.view.WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = !isDark
+                }
                 // ponytail: 底色必须与主App源层同值（亮surfaceContainer/暗surface）。
                 // 用 background 在亮色下更白一档：背景纯白、卡片反显不白，且铺到顶让状态栏也发白
                 val pageBg = if (com.ty.gkschedule.ui.theme.LocalAppIsDark.current) {
