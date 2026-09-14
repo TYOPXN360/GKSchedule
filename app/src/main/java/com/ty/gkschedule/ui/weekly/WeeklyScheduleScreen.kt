@@ -568,22 +568,7 @@ fun WeeklyScheduleScreen(
                         }
                     }
                 }
-                AnimatedVisibility(visible = fabExpanded, enter = slideInVertically(initialOffsetY = { it }) + fadeIn(), exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()) {
-                    FloatingActionButton(
-                        onClick = { com.ty.gkschedule.util.HapticFeedback.medium(hapticView); onAddCourse() },
-                shape = fabShape,
-                        elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp),
-                        modifier = Modifier.drawBackdrop(
-                            backdrop = backdrop,
-                            shape = { fabShape },
-                            effects = { blur(28.dp.toPx()) }
-                        ),
-                        containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.75f),
-                        contentColor = MaterialTheme.colorScheme.onPrimary
-                    ) {
-                        Icon(Icons.Default.Add, stringResource(R.string.add_course))
-                    }
-                }
+                // ponytail: 加号已删（与课程管理重复），剩刷新+截图
                 AnimatedVisibility(visible = fabExpanded, enter = slideInVertically(initialOffsetY = { it }) + fadeIn(), exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()) {
                     FloatingActionButton(onClick = {
                         com.ty.gkschedule.util.HapticFeedback.medium(hapticView)
