@@ -20,9 +20,9 @@ abstract class SubSettingsBaseActivity : AppCompatActivity() {
         enableEdgeToEdge()
         // ponytail: 悬浮底栏样式页仅抽屉进入——子页Activity从底滑入，不从左推入
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            overrideActivityTransition(OVERRIDE_TRANSITION_OPEN, android.R.anim.slide_in_left, android.R.anim.fade_out)
+            overrideActivityTransition(OVERRIDE_TRANSITION_OPEN, com.ty.gkschedule.R.anim.slide_in_bottom, com.ty.gkschedule.R.anim.no_move)
         } else {
-            @Suppress("DEPRECATION") overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.fade_out)
+            @Suppress("DEPRECATION") overridePendingTransition(com.ty.gkschedule.R.anim.slide_in_bottom, com.ty.gkschedule.R.anim.no_move)
         }
         setContent {
             val vm: ScheduleViewModel = viewModel()
