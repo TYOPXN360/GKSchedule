@@ -42,10 +42,25 @@ fun BlurCard(
     val shape = RoundedCornerShape(cornerRadiusDp.dp)
 
     // ponytail: Dialog默认60%黑幕先压死底子，对齐Sheet降到12%才透光
-    DisposableEffect(view) {
+    // ponytail: BackgroundBlurDrawable只糊同窗口内，Dialog卡片背后是透明区=白糊；
+    // 跨窗口糊背后Activity靠window级blurBehindRadius+FLAG_BLUR_BEHIND（S31+），和ExamActivity同套路
+    DisposableEffect(view, radiusDp) {
         val window = (view.parent as? DialogWindowProvider)?.window
             ?: (view.context as? DialogWindowProvider)?.window
-        window?.let { w -> w.setDimAmount(0.12f) }
+        window?.let { w ->
+            w.setDimAmount(0.12f)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                runCatching {
+                    val density = view.resources.displayMetrics.density
+                    val px = (radiusDp * density).toInt().coerceIn(1, 150)
+                    w.attributes = w.attributes.also {
+                        it.blurBehindRadius = px
+                    }
+                    w.addFlags(android.view.WindowManager.LayoutParams.FLAG_BLUR_BEHIND)
+                    w.setBackgroundBlurRadius(px)
+                }
+            }
+        }
         onDispose {}
     }
 
