@@ -487,13 +487,57 @@ internal fun NotificationPage(
                     if (v > 0 && reminderMinutes == 0) { pendingReminder = v; requestBg() }
                     else onReminderMinutesChange(v)
                 })
-            // ponytail: 开启后展开模式二选一，默认仅通知
+            // ponytail: 开启后展开模式二选一，默认仅通知；简介放i弹窗（心跳同款）
             AnimatedVisibility(visible = reminderMinutes > 0, enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) {
                 Column {
                     HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
-                    DropdownItem(Icons.Default.Style, stringResource(R.string.reminder_mode),
-                        listOf("notify" to "${stringResource(R.string.reminder_mode_notify)} · ${stringResource(R.string.reminder_mode_notify_desc)}", "countdown" to "${stringResource(R.string.reminder_mode_countdown)} · ${stringResource(R.string.reminder_mode_countdown_desc)}"),
-                        reminderMode, onSelect = onReminderModeChange)
+                    var showModeInfo by remember { mutableStateOf(false) }
+                    ListItem(
+                        headlineContent = { Text(stringResource(R.string.reminder_mode)) },
+                        leadingContent = { Icon(Icons.Default.Style, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+                        trailingContent = {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                IconButton(onClick = { showModeInfo = true }) {
+                                    Icon(Icons.Default.Info, "Info", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                                Box {
+                                    var modeExpanded by remember { mutableStateOf(false) }
+                                    TextButton(onClick = { modeExpanded = true }) {
+                                        Text(if (reminderMode == "countdown") stringResource(R.string.reminder_mode_countdown) else stringResource(R.string.reminder_mode_notify))
+                                        Icon(Icons.Default.ArrowDropDown, null, modifier = Modifier.size(18.dp))
+                                    }
+                                    com.ty.gkschedule.ui.theme.BlurDropdownMenu(expanded = modeExpanded, onDismissRequest = { modeExpanded = false }) {
+                                        DropdownMenuItem(text = { Text(stringResource(R.string.reminder_mode_notify)) }, onClick = { onReminderModeChange("notify"); modeExpanded = false })
+                                        DropdownMenuItem(text = { Text(stringResource(R.string.reminder_mode_countdown)) }, onClick = { onReminderModeChange("countdown"); modeExpanded = false })
+                                    }
+                                }
+                            }
+                        },
+                        colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+                    )
+                    if (showModeInfo) {
+                        androidx.compose.ui.window.Dialog(onDismissRequest = { showModeInfo = false }) {
+                            com.ty.gkschedule.ui.theme.BlurCard(
+                                enabled = true,
+                                modifier = Modifier.fillMaxWidth(),
+                                radiusDp = 36f,
+                                backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.48f),
+                                cornerRadiusDp = 28f
+                            ) {
+                                Column(modifier = Modifier.padding(24.dp)) {
+                                    Text(stringResource(R.string.reminder_mode), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    Text("${stringResource(R.string.reminder_mode_notify)}：${stringResource(R.string.reminder_mode_notify_desc)}", style = MaterialTheme.typography.bodyMedium)
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text("${stringResource(R.string.reminder_mode_countdown)}：${stringResource(R.string.reminder_mode_countdown_desc)}", style = MaterialTheme.typography.bodyMedium)
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                                        TextButton(onClick = { showModeInfo = false }) { Text("OK") }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
             AnimatedVisibility(visible = true, enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) {
