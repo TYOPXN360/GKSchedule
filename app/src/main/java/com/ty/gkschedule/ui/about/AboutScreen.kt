@@ -47,7 +47,9 @@ fun AboutScreen(
     onRefreshCaptcha: () -> Unit = {},
     onOpenSettings: () -> Unit,
     onOpenAbout: () -> Unit,
-    onOpenExam: () -> Unit = {}
+    onOpenExam: () -> Unit = {},
+    // ponytail: 默认底栏避让开关——悬浮pill不占位，传false不留白
+    applyBottomBarInset: Boolean = true
 ) {
     var showReloginDialog by remember { mutableStateOf(false) }
 
@@ -64,11 +66,11 @@ fun AboutScreen(
                 .fillMaxSize()
                 .statusBarsPadding()
                 .verticalScroll(rememberScrollState())
-                // ponytail: 停底栏上（管理页穿底出糊，其他页占位）
+                // ponytail: 停底栏上（仅默认底栏；悬浮pill不占位不留白）
                 .padding(
                     start = 16.dp,
                     end = 16.dp,
-                    bottom = 80.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+                    bottom = (if (applyBottomBarInset) 80.dp else 0.dp) + (if (applyBottomBarInset) WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() else 0.dp)
                 ),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -276,10 +278,10 @@ fun AboutScreen(
             text = stringResource(R.string.about_copyright),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-            // ponytail: 停底栏上（管理页穿底出糊，其他页占位）
+            // ponytail: 停底栏上（仅默认底栏；悬浮pill不占位不留白）
             modifier = Modifier.padding(
-                bottom = 16.dp + 80.dp +
-                    WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+                bottom = 16.dp + (if (applyBottomBarInset) 80.dp else 0.dp) +
+                    (if (applyBottomBarInset) WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() else 0.dp)
             )
         )
         } // Column

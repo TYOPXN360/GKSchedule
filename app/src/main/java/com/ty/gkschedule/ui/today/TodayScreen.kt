@@ -45,7 +45,9 @@ fun TodayScreen(
     getEndTime: (Int) -> String,
     onCourseLongPress: (Course) -> Unit,
     onExamEdit: (com.ty.gkschedule.data.ExamEntity) -> Unit = {},
-    diffColorPerWeek: Boolean = false
+    diffColorPerWeek: Boolean = false,
+    // ponytail: 默认底栏避让开关——悬浮pill不占位，传false不留白
+    applyBottomBarInset: Boolean = true
 ) {
     val today = LocalDate.now()
     val todayDow = today.dayOfWeek.value
@@ -350,12 +352,12 @@ fun TodayScreen(
             }
         }
 
-        // ponytail: 停底栏上（管理页穿底出糊，其他页占位）
+        // ponytail: 停底栏上（仅默认底栏；悬浮pill不占位不留白）
         item {
             Spacer(
                 modifier = Modifier.height(
-                    16.dp + 80.dp +
-                        WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+                    16.dp + (if (applyBottomBarInset) 80.dp else 0.dp) +
+                        (if (applyBottomBarInset) WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() else 0.dp)
                 )
             )
         }

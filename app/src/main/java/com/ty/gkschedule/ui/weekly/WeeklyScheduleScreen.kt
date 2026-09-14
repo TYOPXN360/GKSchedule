@@ -91,6 +91,8 @@ fun WeeklyScheduleScreen(
     firstDayOfWeek: Int = 1,
     diffColorPerWeek: Boolean = false,
     blurEnabled: Boolean = true,
+    // ponytail: 默认底栏避让开关——悬浮pill不占位，传false不留白
+    applyBottomBarInset: Boolean = true,
     getStartTime: (Int) -> String = { "" },
     getEndTime: (Int) -> String = { "" }
 ) {
@@ -240,10 +242,10 @@ fun WeeklyScheduleScreen(
                 .layerBackdrop(backdrop)
                 .background(if (com.ty.gkschedule.ui.theme.LocalAppIsDark.current) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainer)
                 .statusBarsPadding()
-                // ponytail: 停底栏上——视口底垫（Box滚动容器加尾垫无效，内容堆叠不累加；视口压缩才管用）
+                // ponytail: 停底栏上（仅默认底栏；悬浮pill不占位不留白）
                 .padding(
-                    bottom = 80.dp +
-                        WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+                    bottom = (if (applyBottomBarInset) 80.dp else 0.dp) +
+                        (if (applyBottomBarInset) WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() else 0.dp)
                 )
         ) {
             // Week selector — track top edge in pixels
@@ -521,8 +523,8 @@ fun WeeklyScheduleScreen(
             animationSpec = spring(dampingRatio = 0.85f, stiffness = 300f),
             label = "expandHeight"
         )
-        // ponytail: B走穿底配套——FAB抬到底栏上防沉底
-        Box(modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp).padding(bottom = 80.dp)) {
+        // ponytail: FAB抬升只给默认底栏——悬浮pill不占位不抬
+        Box(modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp).padding(bottom = if (applyBottomBarInset) 80.dp else 0.dp)) {
             // Toggle — bottom right
             // ponytail: FAB糊——miuix drawBackdrop吃课表源，关模糊开关时回退纯色；blurEffect开关透传
             // ponytail: clip shape与按钮外轮廓同源——不一致必漏角
