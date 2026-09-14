@@ -183,7 +183,7 @@ fun CourseManageScreen(
     }
 
     courseToDelete?.let { course ->
-        AlertDialog(
+        com.ty.gkschedule.ui.theme.BlurAlertDialog(
             onDismissRequest = { courseToDelete = null },
             title = { Text(stringResource(R.string.confirm_delete)) },
             text = { Text(stringResource(R.string.confirm_delete_msg)) },
@@ -192,7 +192,7 @@ fun CourseManageScreen(
         )
     }
     if (showDeleteAllDialog) {
-        AlertDialog(
+        com.ty.gkschedule.ui.theme.BlurAlertDialog(
             onDismissRequest = { showDeleteAllDialog = false },
             title = { Text(stringResource(R.string.confirm_delete_all)) },
             text = { Text(stringResource(R.string.confirm_delete_all_msg)) },

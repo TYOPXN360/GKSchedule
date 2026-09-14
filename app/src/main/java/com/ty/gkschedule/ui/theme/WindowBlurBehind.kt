@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -113,7 +114,67 @@ private fun applyBlur(
     blur
 }.getOrNull()
 
-// ponytail: DropdownMenu小菜单糊——包一层Box吃insets，菜单项糊底色与重登录Dialog同款
+// ponytail: 原生AlertDialog/DatePickerDialog毛玻璃化——容器透明+BlurCard包全部槽位，同重登录Dialog
+@Composable
+fun BlurAlertDialog(
+    onDismissRequest: () -> Unit,
+    modifier: Modifier = Modifier,
+    icon: (@Composable () -> Unit)? = null,
+    title: (@Composable () -> Unit)? = null,
+    text: (@Composable () -> Unit)? = null,
+    confirmButton: @Composable () -> Unit,
+    dismissButton: (@Composable () -> Unit)? = null
+) {
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onDismissRequest,
+        modifier = modifier,
+        containerColor = androidx.compose.ui.graphics.Color.Transparent,
+        icon = icon?.let { { BlurDialogSlot { it() } } },
+        title = title?.let { { BlurDialogSlot { it() } } },
+        text = text?.let { { BlurDialogSlot { it() } } },
+        confirmButton = { BlurDialogSlot { confirmButton() } },
+        dismissButton = dismissButton?.let { { BlurDialogSlot { it() } } }
+    )
+}
+
+// ponytail: 单槽位糊底——AlertDialog每个槽独立Surface，逐槽包才糊得全
+@Composable
+private fun BlurDialogSlot(content: @Composable BoxScope.() -> Unit) {
+    BlurCard(
+        enabled = true,
+        modifier = Modifier.fillMaxWidth(),
+        radiusDp = 28f,
+        backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f),
+        cornerRadiusDp = 12f,
+        content = content
+    )
+}
+
+// ponytail: DatePickerDialog毛玻璃化——容器透明+内容包BlurCard
+@Composable
+fun BlurDatePickerDialog(
+    onDismissRequest: () -> Unit,
+    modifier: Modifier = Modifier,
+    confirmButton: @Composable () -> Unit,
+    dismissButton: (@Composable () -> Unit)? = null,
+    content: @Composable BoxScope.() -> Unit
+) {
+    androidx.compose.material3.DatePickerDialog(
+        onDismissRequest = onDismissRequest,
+        modifier = modifier,
+        confirmButton = { BlurDialogSlot { confirmButton() } },
+        dismissButton = dismissButton?.let { { BlurDialogSlot { it() } } }
+    ) {
+        BlurCard(
+            enabled = true,
+            modifier = Modifier.fillMaxWidth(),
+            radiusDp = 28f,
+            backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f),
+            cornerRadiusDp = 12f,
+            content = content
+        )
+    }
+}
 @Composable
 fun BlurDropdownMenu(
     expanded: Boolean,

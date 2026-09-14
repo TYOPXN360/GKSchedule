@@ -281,10 +281,11 @@ Column(
                     Text(
                         text = "教务系统登录过期",
                         style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.height(16.dp))
-                    Text("请输入验证码重新登录", style = MaterialTheme.typography.bodyMedium)
+                    Text("请输入验证码重新登录", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(modifier = Modifier.height(12.dp))
                     if (captchaImageBase64 != null && captchaImageBase64.isNotEmpty()) {
                         val bitmap = remember(captchaImageBase64) {

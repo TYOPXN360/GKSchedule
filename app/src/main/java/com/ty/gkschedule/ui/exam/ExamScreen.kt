@@ -190,7 +190,7 @@ fun ExamScreen(
                         Text(text = "请在校园网下获取", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
                         Button(
                             onClick = onRefresh,
-                            enabled = !isLoading && examYear.isNotEmpty(),
+                            enabled = !isLoading,
                             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp)
                         ) {
                             if (isLoading) {
@@ -369,9 +369,9 @@ fun ExamScreen(
                 backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.48f),
             ) {
             Column(modifier = Modifier.padding(24.dp)) {
-                Text("教务系统登录过期", style = MaterialTheme.typography.headlineSmall)
+                Text("教务系统登录过期", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.onSurface)
                 Spacer(modifier = Modifier.height(16.dp))
-                Text("请输入验证码重新登录", style = MaterialTheme.typography.bodyMedium)
+                Text("请输入验证码重新登录", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(modifier = Modifier.height(12.dp))
                 if (!captchaImageBase64.isNullOrEmpty()) {
                     val bitmap = remember(captchaImageBase64) {

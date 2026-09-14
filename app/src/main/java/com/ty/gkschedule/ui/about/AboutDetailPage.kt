@@ -349,7 +349,7 @@ fun AboutDetailPage(
 
     // Disclaimer dialog
     if (showDisclaimerDialog) {
-        AlertDialog(
+        com.ty.gkschedule.ui.theme.BlurAlertDialog(
             onDismissRequest = { showDisclaimerDialog = false },
             title = { Text(stringResource(R.string.disclaimer_title)) },
             text = {
@@ -375,7 +375,7 @@ fun AboutDetailPage(
 
     // Update dialog
     if (showUpdateDialog && updateInfo != null) {
-        AlertDialog(
+        com.ty.gkschedule.ui.theme.BlurAlertDialog(
             onDismissRequest = { showUpdateDialog = false },
             icon = { Icon(Icons.Default.SystemUpdate, null, tint = MaterialTheme.colorScheme.primary) },
             title = { Text(stringResource(R.string.update_available)) },
