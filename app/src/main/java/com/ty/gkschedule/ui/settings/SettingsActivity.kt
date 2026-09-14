@@ -26,7 +26,7 @@ class SettingsActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        val startPage = intent.getStringExtra(EXTRA_SHOW_FRAGMENT)?.takeIf { it.isNotBlank() } ?: "main"
+        val settingsStart = intent.getStringExtra(EXTRA_SHOW_FRAGMENT)?.takeIf { it.isNotBlank() } ?: "main"
 
         setContent {
             val vm: ScheduleViewModel = viewModel()
@@ -97,7 +97,7 @@ class SettingsActivity : AppCompatActivity() {
                     val pillContentMode by vm.pillContentMode.collectAsState(initial = 0)
 
                     SettingsScreen(
-                        startDestination = startPage,
+                        startDestination = settingsStart,
                         semesterStart = semesterStart,
                         totalWeeks = totalWeeks,
                         periodsPerDay = periodsPerDay,
