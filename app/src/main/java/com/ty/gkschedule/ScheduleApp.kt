@@ -503,20 +503,10 @@ fun ScheduleApp(
             if (showBottomBar) {
                 Box(Modifier.fillMaxSize().padding(bottom = 108.dp), contentAlignment = Alignment.BottomCenter) {
                     SnackbarHost(snackbarHostState) { snackbarData ->
-                        val snackShape = MaterialTheme.shapes.small
-                        // ponytail: 回Snackbar原生（手写Row丢dismissAction/换行逻辑），分层靠容器透明单层糊
-                        Snackbar(
+                        com.ty.gkschedule.ui.theme.BlurSnackbar(
                             snackbarData = snackbarData,
-                            modifier = if (blurEffect) Modifier.drawBackdrop(
-                                backdrop = backdrop,
-                                shape = { snackShape },
-                                effects = { blur(28.dp.toPx()) }
-                            ) else Modifier,
-                            shape = snackShape,
-                            containerColor = androidx.compose.ui.graphics.Color.Transparent,
-                            contentColor = MaterialTheme.colorScheme.onSurface,
-                            actionContentColor = MaterialTheme.colorScheme.primary,
-                            dismissActionContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                            backdrop = backdrop,
+                            blurEnabled = blurEffect
                         )
                     }
                 }
@@ -525,21 +515,10 @@ fun ScheduleApp(
             // ponytail: 普通底栏模式——snackbar走Scaffold槽位（底栏占位，自动顶起）
             Box(Modifier.fillMaxSize()) {
                 SnackbarHost(snackbarHostState) { snackbarData ->
-                    val snackShape = MaterialTheme.shapes.small
-                    // ponytail: 手写单层糊——M3 Snackbar内部Surface+containerColor双层叠色是分层根因
-                    // ponytail: 回Snackbar原生（手写Row丢dismissAction/换行逻辑），分层靠容器透明单层糊
-                    Snackbar(
+                    com.ty.gkschedule.ui.theme.BlurSnackbar(
                         snackbarData = snackbarData,
-                        modifier = if (blurEffect) Modifier.drawBackdrop(
-                            backdrop = backdrop,
-                            shape = { snackShape },
-                            effects = { blur(28.dp.toPx()) }
-                        ) else Modifier,
-                        shape = snackShape,
-                        containerColor = androidx.compose.ui.graphics.Color.Transparent,
-                        contentColor = MaterialTheme.colorScheme.onSurface,
-                        actionContentColor = MaterialTheme.colorScheme.primary,
-                        dismissActionContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        backdrop = backdrop,
+                        blurEnabled = blurEffect
                     )
                 }
             }

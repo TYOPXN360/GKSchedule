@@ -19,6 +19,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
+import top.yukonga.miuix.kmp.blur.blur
+import top.yukonga.miuix.kmp.blur.drawBackdrop
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
@@ -245,9 +247,35 @@ fun BlurDatePickerDialog(
     }
 }
 
+// ponytail: 规范SnackbarData槽+onDrawSurface单层底——容器透明后M3内部Surface tonal色罩是分层根因，
+// 底色只画糊后一层（85%质感），文本/action/dismiss走SnackbarData原生三槽
 @Composable
-fun BlurDropdownMenu(
-    expanded: Boolean,
+fun BlurSnackbar(
+    snackbarData: androidx.compose.material3.SnackbarData,
+    backdrop: top.yukonga.miuix.kmp.blur.LayerBackdrop,
+    blurEnabled: Boolean,
+    modifier: Modifier = Modifier
+) {
+    val snackShape = MaterialTheme.shapes.small
+    val snackBg = MaterialTheme.colorScheme.surfaceContainerHigh
+    androidx.compose.material3.Snackbar(
+        snackbarData = snackbarData,
+        modifier = if (blurEnabled) modifier.drawBackdrop(
+            backdrop = backdrop,
+            shape = { snackShape },
+            effects = { blur(28.dp.toPx()) },
+            onDrawSurface = { drawRect(snackBg.copy(alpha = 0.85f)) }
+        ) else modifier,
+        shape = snackShape,
+        containerColor = Color.Transparent,
+        contentColor = MaterialTheme.colorScheme.onSurface,
+        actionContentColor = MaterialTheme.colorScheme.primary,
+        dismissActionContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+    )
+}
+
+@Composable
+fun BlurDropdownMenu(    expanded: Boolean,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit
