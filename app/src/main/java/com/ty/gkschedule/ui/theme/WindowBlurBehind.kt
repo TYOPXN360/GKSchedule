@@ -5,17 +5,14 @@ import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.LayerDrawable
 import android.os.Build
 import android.view.View
+import android.view.Window
+import android.view.WindowManager
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -23,17 +20,28 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
 
+// ponytail: 递归找Dialog真实Window——DialogLayout本身就是DialogWindowProvider，只查parent/context永远null
+fun View.findDialogWindow(): Window? {
+    var current: View? = this
+    while (current != null) {
+        if (current is DialogWindowProvider) return current.window
+        current = current.parent as? View
+    }
+    val ctx = this.context
+    if (ctx is DialogWindowProvider) return ctx.window
+    return null
+}
+
 // ponytail: 卡片区域毛玻璃——BackgroundBlurDrawable矩形=载体bounds，只糊卡片不糊全屏
-// decor全屏挂会整屏糊，载体等大View+LayerDrawable合成才是doubaoime原意
-// ponytail: attach时序——factory瞬间未挂载getViewRootImpl=null，监听+post+update三保险重试
-// ponytail: DropdownMenu小菜单糊——Popup独立窗口，BlurCard挂菜单根，同重登录Dialog一套
+// ponytail: 跨窗口糊背后Activity靠window级blurBehindRadius+FLAG_BLUR_BEHIND（S31+）
 @Composable
 fun BlurCard(
     enabled: Boolean,
     modifier: Modifier = Modifier,
-    radiusDp: Float = 28f,
+    radiusDp: Float = 32f,
     backgroundColor: Color = Color.Unspecified,
     cornerRadiusDp: Float = 28f,
     content: @Composable BoxScope.() -> Unit,
@@ -41,12 +49,9 @@ fun BlurCard(
     val view = LocalView.current
     val shape = RoundedCornerShape(cornerRadiusDp.dp)
 
-    // ponytail: Dialog默认60%黑幕先压死底子，对齐Sheet降到12%才透光
-    // ponytail: BackgroundBlurDrawable只糊同窗口内，Dialog卡片背后是透明区=白糊；
-    // 跨窗口糊背后Activity靠window级blurBehindRadius+FLAG_BLUR_BEHIND（S31+），和ExamActivity同套路
+    // ponytail: Dialog默认60%黑幕压死底子，降到12%才透光；窗口级糊背后Activity
     DisposableEffect(view, radiusDp) {
-        val window = (view.parent as? DialogWindowProvider)?.window
-            ?: (view.context as? DialogWindowProvider)?.window
+        val window = view.findDialogWindow()
         window?.let { w ->
             w.setDimAmount(0.12f)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -56,7 +61,7 @@ fun BlurCard(
                     w.attributes = w.attributes.also {
                         it.blurBehindRadius = px
                     }
-                    w.addFlags(android.view.WindowManager.LayoutParams.FLAG_BLUR_BEHIND)
+                    w.addFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND)
                     w.setBackgroundBlurRadius(px)
                 }
             }
@@ -117,7 +122,6 @@ private fun applyBlur(
         blur.javaClass.getDeclaredMethod("setCornerRadius", Float::class.javaPrimitiveType)
             .apply { isAccessible = true }.invoke(blur, cornerPx)
     }
-    // ponytail: GradientDrawable带圆角，ColorDrawable直角会盖住模糊层
     val tintDrawable = if (backgroundColor != Color.Unspecified) {
         GradientDrawable().apply {
             setColor(backgroundColor.toArgb())
@@ -129,67 +133,111 @@ private fun applyBlur(
     blur
 }.getOrNull()
 
-// ponytail: 原生AlertDialog/DatePickerDialog毛玻璃化——容器透明+BlurCard包全部槽位，同重登录Dialog
+// ponytail: 整卡包裹毛玻璃AlertDialog——BasicAlertDialog无自带实心底，整张BlurCard一体成型
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BlurAlertDialog(
     onDismissRequest: () -> Unit,
+    confirmButton: @Composable () -> Unit,
     modifier: Modifier = Modifier,
+    dismissButton: (@Composable () -> Unit)? = null,
     icon: (@Composable () -> Unit)? = null,
     title: (@Composable () -> Unit)? = null,
     text: (@Composable () -> Unit)? = null,
-    confirmButton: @Composable () -> Unit,
-    dismissButton: (@Composable () -> Unit)? = null
 ) {
-    androidx.compose.material3.AlertDialog(
+    BasicAlertDialog(
         onDismissRequest = onDismissRequest,
-        modifier = modifier,
-        containerColor = androidx.compose.ui.graphics.Color.Transparent,
-        icon = icon?.let { { BlurDialogSlot { it() } } },
-        title = title?.let { { BlurDialogSlot { it() } } },
-        text = text?.let { { BlurDialogSlot { it() } } },
-        confirmButton = { BlurDialogSlot { confirmButton() } },
-        dismissButton = dismissButton?.let { { BlurDialogSlot { it() } } }
-    )
-}
-
-// ponytail: 单槽位糊底——AlertDialog每个槽独立Surface，逐槽包才糊得全
-@Composable
-private fun BlurDialogSlot(content: @Composable BoxScope.() -> Unit) {
-    BlurCard(
-        enabled = true,
-        modifier = Modifier.fillMaxWidth(),
-        radiusDp = 28f,
-        backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f),
-        cornerRadiusDp = 12f,
-        content = content
-    )
-}
-
-// ponytail: DatePickerDialog毛玻璃化——容器透明+内容包BlurCard
-@Composable
-fun BlurDatePickerDialog(
-    onDismissRequest: () -> Unit,
-    modifier: Modifier = Modifier,
-    confirmButton: @Composable () -> Unit,
-    dismissButton: (@Composable () -> Unit)? = null,
-    content: @Composable BoxScope.() -> Unit
-) {
-    androidx.compose.material3.DatePickerDialog(
-        onDismissRequest = onDismissRequest,
-        modifier = modifier,
-        confirmButton = { BlurDialogSlot { confirmButton() } },
-        dismissButton = dismissButton?.let { { BlurDialogSlot { it() } } }
+        modifier = modifier
     ) {
         BlurCard(
             enabled = true,
             modifier = Modifier.fillMaxWidth(),
-            radiusDp = 28f,
-            backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f),
-            cornerRadiusDp = 12f,
-            content = content
-        )
+            radiusDp = 32f,
+            backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.55f),
+            cornerRadiusDp = 28f
+        ) {
+            Column(modifier = Modifier.padding(24.dp)) {
+                if (icon != null) {
+                    Box(
+                        modifier = Modifier
+                            .padding(bottom = 16.dp)
+                            .align(Alignment.CenterHorizontally)
+                    ) { icon() }
+                }
+                if (title != null) {
+                    Box(modifier = Modifier.padding(bottom = 16.dp)) {
+                        CompositionLocalProvider(
+                            LocalTextStyle provides MaterialTheme.typography.headlineSmall
+                        ) { title() }
+                    }
+                }
+                if (text != null) {
+                    Box(
+                        modifier = Modifier
+                            .weight(weight = 1f, fill = false)
+                            .padding(bottom = 24.dp)
+                    ) {
+                        CompositionLocalProvider(
+                            LocalTextStyle provides MaterialTheme.typography.bodyMedium
+                        ) { text() }
+                    }
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    dismissButton?.invoke()
+                    Spacer(modifier = Modifier.width(8.dp))
+                    confirmButton()
+                }
+            }
+        }
     }
 }
+
+// ponytail: 整卡包裹毛玻璃DatePickerDialog——DatePicker自身底色调用点置透明
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun BlurDatePickerDialog(
+    onDismissRequest: () -> Unit,
+    confirmButton: @Composable () -> Unit,
+    modifier: Modifier = Modifier,
+    dismissButton: (@Composable () -> Unit)? = null,
+    content: @Composable () -> Unit
+) {
+    BasicAlertDialog(
+        onDismissRequest = onDismissRequest,
+        modifier = modifier.wrapContentHeight(),
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        BlurCard(
+            enabled = true,
+            modifier = Modifier
+                .width(360.dp)
+                .wrapContentHeight(),
+            radiusDp = 32f,
+            backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.55f),
+            cornerRadiusDp = 28f
+        ) {
+            Column(modifier = Modifier.padding(vertical = 12.dp)) {
+                content()
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(end = 16.dp, top = 8.dp),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    dismissButton?.invoke()
+                    Spacer(modifier = Modifier.width(8.dp))
+                    confirmButton()
+                }
+            }
+        }
+    }
+}
+
 @Composable
 fun BlurDropdownMenu(
     expanded: Boolean,
@@ -201,7 +249,7 @@ fun BlurDropdownMenu(
         expanded = expanded,
         onDismissRequest = onDismissRequest,
         modifier = modifier,
-        containerColor = androidx.compose.ui.graphics.Color.Transparent,
+        containerColor = Color.Transparent,
         shadowElevation = 6.dp
     ) {
         BlurCard(
@@ -211,7 +259,7 @@ fun BlurDropdownMenu(
             backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f),
             cornerRadiusDp = 12f
         ) {
-            androidx.compose.foundation.layout.Column { content() }
+            Column { content() }
         }
     }
 }
