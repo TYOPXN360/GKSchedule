@@ -304,7 +304,6 @@ fun ScheduleApp(
     viewModel: ScheduleViewModel = viewModel()
 ) {
     val navController = rememberNavController()
-    val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -366,13 +365,48 @@ fun ScheduleApp(
     // ponytail: 官方规范——选中走hierarchy判（嵌套图/参数路由不漏），切换pop到graph.findStartDestination
     val bottomBarScreens = listOf("today", "weekly", "courses", "about")
     val currentRoute = currentDestination?.route
-    val showBottomBar = currentRoute in bottomBarScreens
-    fun navigateTab(route: String) {
-        navController.navigate(route) {
-            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-            launchSingleTop = true
-            restoreState = true
+    // ponytail: ReSukiSU同款——4 tab常驻HorizontalPager（NavHost只留子页），底栏切=animateScrollToPage横滑
+    val tabRoutes = listOf("today", "weekly", "courses", "about")
+    val tabIndexMap = mapOf("today" to 0, "weekly" to 1, "courses" to 2, "about" to 3)
+    val scope = rememberCoroutineScope()
+    val startTabIndex = (tabIndexMap[startPage] ?: 0).coerceIn(0, 3)
+    val pagerState = androidx.compose.foundation.pager.rememberPagerState(
+        initialPage = startTabIndex,
+        pageCount = { tabRoutes.size }
+    )
+    var uiSelectedPage by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableIntStateOf(startTabIndex) }
+    var pagerAnimating by remember { mutableStateOf(false) }
+    // ponytail: 启动页可切——startPage变化且pager还没动过时对齐
+    LaunchedEffect(startPage) {
+        val target = (tabIndexMap[startPage] ?: 0).coerceIn(0, 3)
+        if (pagerState.currentPage == startTabIndex && target != startTabIndex) {
+            pagerState.scrollToPage(target)
+            uiSelectedPage = target
         }
+    }
+    val handlePageChange: (Int) -> Unit = remember(pagerState, scope) {
+        { page ->
+            uiSelectedPage = page
+            if (page != pagerState.currentPage) {
+                scope.launch {
+                    pagerAnimating = true
+                    try {
+                        pagerState.animateScrollToPage(page)
+                    } finally {
+                        pagerAnimating = false
+                    }
+                }
+            }
+        }
+    }
+    LaunchedEffect(pagerState) {
+        androidx.compose.runtime.snapshotFlow { pagerState.currentPage }.collect { page ->
+            if (!pagerAnimating) uiSelectedPage = page
+        }
+    }
+    val showBottomBar = currentRoute == null || currentRoute in bottomBarScreens
+    fun navigateTab(route: String) {
+        (tabIndexMap[route])?.let { handlePageChange(it) }
     }
     // ponytail: BackHandler必须在NavHost之后注册才优先（后加先调），放函数末尾；tab页吞预测秒回，首页放行回桌面
     val navView = androidx.compose.ui.platform.LocalView.current
@@ -401,7 +435,7 @@ fun ScheduleApp(
                             NavigationBarItem(
                                 icon = { Icon(triple.first, contentDescription = triple.second) },
                                 label = { Text(triple.second) },
-                                selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
+                                selected = uiSelectedPage == (tabIndexMap[screen.route] ?: 0),
                                 onClick = {
                                     com.ty.gkschedule.util.HapticFeedback.light(navView)
                                     navigateTab(screen.route)
@@ -428,9 +462,8 @@ fun ScheduleApp(
             ) {
             NavHost(
                 navController = navController,
-                startDestination = startPage,
-                // ponytail: M3官方Top level（m3.motion/transitions：点底栏=quick fade，不建立屏间关联；
-                // 禁lateral整宽滑——暗示可横滑切页，与轮播/滑动条手势冲突）
+                startDestination = "tabs",
+                // ponytail: tabs页常驻Pager（ReSukiSU同款横滑），子页走Top level快淡
                 enterTransition = {
                     fadeIn(animationSpec = tween(200, easing = LinearEasing))
                 },
@@ -445,17 +478,39 @@ fun ScheduleApp(
                 },
                 modifier = Modifier.fillMaxSize()
             ) {
-            composable(Screen.Today.route) { TodayScreen(courses = displayCourses, colorCourses = courses, currentWeek = realCurrentWeek, colorEngine = colorEngine, colorGroupMode = colorGroupMode, exams = examList, showExamSchedule = showExamSchedule, examLookaheadWeeks = examLookaheadWeeks, semesterStart = semesterStart, getStartTime = { viewModel.getStartTime(it) }, getEndTime = { viewModel.getEndTime(it) }, onCourseLongPress = { context.startActivity(Intent(context, com.ty.gkschedule.ui.course.CourseEditActivity::class.java).apply { putExtra("courseId", it.id) }) }, onExamEdit = { context.startActivity(Intent(context, com.ty.gkschedule.ui.exam.ExamActivity::class.java).apply { putExtra("examId", it.id) }) }, diffColorPerWeek = diffColorPerWeek) }
-            composable(Screen.Weekly.route) { WeeklyScheduleScreen(courses = displayCourses, colorCourses = courses, currentWeek = selectedWeek, totalWeeks = totalWeeks, periodsPerDay = periodsPerDay, gridHeight = gridHeight, gridCorner = gridCorner, gridSpacing = gridSpacing, showPeriodLabel = showPeriodLabel, autoGridHeight = autoGridHeight, firstDayOfWeek = firstDayOfWeek, mergeConsecutive = mergeConsecutive, showTimeLabel = showTimeLabel, detailedSplit = detailedSplit, colorEngine = colorEngine, colorGroupMode = colorGroupMode, showDateInHeader = showDateInHeader, hideEmptyWeeks = hideEmptyWeeks, semesterStart = semesterStart, exams = examList, showExamSchedule = showExamSchedule, realCurrentWeek = realCurrentWeek, isRefreshing = isRefreshing, onWeekChange = { viewModel.setWeek(it.coerceIn(1, totalWeeks)) }, onCourseClick = { }, onCourseLongPress = { context.startActivity(Intent(context, com.ty.gkschedule.ui.course.CourseEditActivity::class.java).apply { putExtra("courseId", it.id) }) }, onExamEdit = { context.startActivity(Intent(context, com.ty.gkschedule.ui.exam.ExamActivity::class.java).apply { putExtra("examId", it.id) }) }, onAddCourse = { context.startActivity(Intent(context, com.ty.gkschedule.ui.course.CourseEditActivity::class.java)) }, onRefresh = { viewModel.refreshFromSchool() }, onScreenshotHidePill = { screenshotHidden = true }, onScreenshotRestorePill = { screenshotHidden = false }, blurEnabled = blurEffect, getStartTime = { viewModel.getStartTime(it) }, getEndTime = { viewModel.getEndTime(it) }, diffColorPerWeek = diffColorPerWeek) }
-            composable(Screen.Courses.route) { CourseManageScreen(courses = courses, blurEnabled = blurEffect, colorEngine = colorEngine, colorGroupMode = colorGroupMode, onCourseClick = { context.startActivity(Intent(context, com.ty.gkschedule.ui.course.CourseEditActivity::class.java).apply { putExtra("courseId", it.id) }) }, onAddCourse = { context.startActivity(Intent(context, com.ty.gkschedule.ui.course.CourseEditActivity::class.java)) }, onDeleteCourse = { viewModel.deleteCourse(it) }, onDeleteAll = { viewModel.deleteAllCourses() }, onScrollHidePill = { viewModel.setPillHidden(it) }) }
-            composable(Screen.About.route) {
-                val savedStudentId by viewModel.savedStudentIdFlow.collectAsState()
-                val savedRealName by viewModel.savedRealName.collectAsState(initial = "")
-                val savedDeptName by viewModel.savedDeptName.collectAsState(initial = "")
-                val totalWeeksVal by viewModel.totalWeeks.collectAsState(initial = 20)
-                val periodsPerDayVal by viewModel.periodsPerDay.collectAsState(initial = 10)
-                val displayWeeks = if (hideEmptyWeeks && courses.isNotEmpty()) { val weeksWithCourses = courses.flatMap { course -> (1..totalWeeksVal).filter { course.isInWeek(it) } }.toSet(); weeksWithCourses.size.coerceAtLeast(1) } else totalWeeksVal
-                AboutScreen(loginState = loginState, savedStudentId = savedStudentId, savedRealName = savedRealName, savedDeptName = savedDeptName, semesterStart = semesterStart, totalWeeks = displayWeeks, periodsPerDay = periodsPerDayVal, captchaImageBase64 = captchaImage, onLogin = { navController.navigate(Screen.Login.route) }, onLogout = { viewModel.logout() }, onQuickRelogin = { cap -> viewModel.quickRelogin(cap) }, onRefreshCaptcha = { viewModel.refreshCaptcha() }, onOpenSettings = { context.startActivity(Intent(context, com.ty.gkschedule.ui.settings.SettingsActivity::class.java)) }, onOpenAbout = { context.startActivity(Intent(context, com.ty.gkschedule.ui.about.AboutActivity::class.java)) }, onOpenExam = { context.startActivity(Intent(context, com.ty.gkschedule.ui.exam.ExamActivity::class.java)) })
+            composable("tabs") {
+                androidx.compose.runtime.CompositionLocalProvider(
+                    com.ty.gkschedule.ui.util.LocalPagerState provides pagerState,
+                    com.ty.gkschedule.ui.util.LocalSelectedPage provides uiSelectedPage,
+                    com.ty.gkschedule.ui.util.LocalHandlePageChange provides handlePageChange
+                ) {
+                    androidx.compose.foundation.pager.HorizontalPager(
+                        state = pagerState,
+                        modifier = Modifier.fillMaxSize(),
+                        // ponytail: 课表页内嵌周HorizontalPager——外层禁手滑，只许点底栏横滑，防手势打架
+                        userScrollEnabled = false,
+                        beyondViewportPageCount = 1
+                    ) { pageIndex ->
+                        androidx.compose.runtime.CompositionLocalProvider(
+                            com.ty.gkschedule.ui.util.LocalPagerPage provides pageIndex
+                        ) {
+                            when (tabRoutes[pageIndex]) {
+                                "today" -> TodayScreen(courses = displayCourses, colorCourses = courses, currentWeek = realCurrentWeek, colorEngine = colorEngine, colorGroupMode = colorGroupMode, exams = examList, showExamSchedule = showExamSchedule, examLookaheadWeeks = examLookaheadWeeks, semesterStart = semesterStart, getStartTime = { viewModel.getStartTime(it) }, getEndTime = { viewModel.getEndTime(it) }, onCourseLongPress = { context.startActivity(Intent(context, com.ty.gkschedule.ui.course.CourseEditActivity::class.java).apply { putExtra("courseId", it.id) }) }, onExamEdit = { context.startActivity(Intent(context, com.ty.gkschedule.ui.exam.ExamActivity::class.java).apply { putExtra("examId", it.id) }) }, diffColorPerWeek = diffColorPerWeek)
+                                "weekly" -> WeeklyScheduleScreen(courses = displayCourses, colorCourses = courses, currentWeek = selectedWeek, totalWeeks = totalWeeks, periodsPerDay = periodsPerDay, gridHeight = gridHeight, gridCorner = gridCorner, gridSpacing = gridSpacing, showPeriodLabel = showPeriodLabel, autoGridHeight = autoGridHeight, firstDayOfWeek = firstDayOfWeek, mergeConsecutive = mergeConsecutive, showTimeLabel = showTimeLabel, detailedSplit = detailedSplit, colorEngine = colorEngine, colorGroupMode = colorGroupMode, showDateInHeader = showDateInHeader, hideEmptyWeeks = hideEmptyWeeks, semesterStart = semesterStart, exams = examList, showExamSchedule = showExamSchedule, realCurrentWeek = realCurrentWeek, isRefreshing = isRefreshing, onWeekChange = { viewModel.setWeek(it.coerceIn(1, totalWeeks)) }, onCourseClick = { }, onCourseLongPress = { context.startActivity(Intent(context, com.ty.gkschedule.ui.course.CourseEditActivity::class.java).apply { putExtra("courseId", it.id) }) }, onExamEdit = { context.startActivity(Intent(context, com.ty.gkschedule.ui.exam.ExamActivity::class.java).apply { putExtra("examId", it.id) }) }, onAddCourse = { context.startActivity(Intent(context, com.ty.gkschedule.ui.course.CourseEditActivity::class.java)) }, onRefresh = { viewModel.refreshFromSchool() }, onScreenshotHidePill = { screenshotHidden = true }, onScreenshotRestorePill = { screenshotHidden = false }, blurEnabled = blurEffect, getStartTime = { viewModel.getStartTime(it) }, getEndTime = { viewModel.getEndTime(it) }, diffColorPerWeek = diffColorPerWeek)
+                                "courses" -> CourseManageScreen(courses = courses, blurEnabled = blurEffect, colorEngine = colorEngine, colorGroupMode = colorGroupMode, onCourseClick = { context.startActivity(Intent(context, com.ty.gkschedule.ui.course.CourseEditActivity::class.java).apply { putExtra("courseId", it.id) }) }, onAddCourse = { context.startActivity(Intent(context, com.ty.gkschedule.ui.course.CourseEditActivity::class.java)) }, onDeleteCourse = { viewModel.deleteCourse(it) }, onDeleteAll = { viewModel.deleteAllCourses() }, onScrollHidePill = { viewModel.setPillHidden(it) })
+                                else -> {
+                                    val savedStudentId by viewModel.savedStudentIdFlow.collectAsState()
+                                    val savedRealName by viewModel.savedRealName.collectAsState(initial = "")
+                                    val savedDeptName by viewModel.savedDeptName.collectAsState(initial = "")
+                                    val totalWeeksVal by viewModel.totalWeeks.collectAsState(initial = 20)
+                                    val periodsPerDayVal by viewModel.periodsPerDay.collectAsState(initial = 10)
+                                    val displayWeeks = if (hideEmptyWeeks && courses.isNotEmpty()) { val weeksWithCourses = courses.flatMap { course -> (1..totalWeeksVal).filter { course.isInWeek(it) } }.toSet(); weeksWithCourses.size.coerceAtLeast(1) } else totalWeeksVal
+                                    AboutScreen(loginState = loginState, savedStudentId = savedStudentId, savedRealName = savedRealName, savedDeptName = savedDeptName, semesterStart = semesterStart, totalWeeks = displayWeeks, periodsPerDay = periodsPerDayVal, captchaImageBase64 = captchaImage, onLogin = { navController.navigate(Screen.Login.route) }, onLogout = { viewModel.logout() }, onQuickRelogin = { cap -> viewModel.quickRelogin(cap) }, onRefreshCaptcha = { viewModel.refreshCaptcha() }, onOpenSettings = { context.startActivity(Intent(context, com.ty.gkschedule.ui.settings.SettingsActivity::class.java)) }, onOpenAbout = { context.startActivity(Intent(context, com.ty.gkschedule.ui.about.AboutActivity::class.java)) }, onOpenExam = { context.startActivity(Intent(context, com.ty.gkschedule.ui.exam.ExamActivity::class.java)) })
+                                }
+                            }
+                        }
+                    }
+                }
             }
             composable(Screen.Login.route) {
                 val hasSavedCredentials by viewModel.hasSavedCredentials.collectAsState(initial = false)
@@ -476,7 +531,7 @@ fun ScheduleApp(
             val pillCollapsed by viewModel.pillCollapsed.collectAsState(initial = false)
             Box(Modifier.fillMaxSize().padding(bottom = 24.dp), contentAlignment = Alignment.BottomCenter) {
                 FloatingPillNavBar(
-                    currentRoute = currentRoute, pillContentMode = pillContentMode, screenshotHidden = screenshotHidden,
+                    currentRoute = tabRoutes.getOrElse(uiSelectedPage) { "today" }, pillContentMode = pillContentMode, screenshotHidden = screenshotHidden,
                     blurEnabled = blurEffect, backdrop = backdrop,
                     collapsed = pillCollapsed, onCollapsedChange = { viewModel.setPillCollapsed(it) },
                     visible = showBottomBar && !(pillHidden && !pillCollapsed)
@@ -511,28 +566,9 @@ fun ScheduleApp(
         } // pill兄弟层
     }
     }
-    // ponytail: Compose自定义预测动画断根——NavigationBackHandler后注册抢占NavHost内部Seekable跟手；
-    // tab页onBackCompleted直接popBackStack秒切（无位移无窥探），首页isBackEnabled=false放行系统回桌面
-    val isAtHome = currentRoute == startPage
-    navBackStackEntry?.let { entry ->
-        androidx.navigationevent.compose.NavigationBackHandler(
-            state = androidx.navigationevent.compose.rememberNavigationEventState(
-                currentInfo = androidx.navigation.compose.NavBackStackEntryInfo(entry),
-                backInfo = emptyList(),
-                forwardInfo = emptyList()
-            ),
-            isBackEnabled = showBottomBar && !isAtHome,
-            onBackCompleted = {
-                val popped = navController.popBackStack()
-                if (!popped) {
-                    navController.navigate(startPage) {
-                        popUpTo(startPage) { inclusive = false }
-                        launchSingleTop = true
-                    }
-                }
-            },
-            onBackCancelled = { }
-        )
+    // ponytail: Pager即栈——返回=回第0页（ReSukiSU同款普通BackHandler）；首页放行回桌面
+    androidx.activity.compose.BackHandler(enabled = showBottomBar && uiSelectedPage != 0) {
+        handlePageChange(0)
     }
 }
 
