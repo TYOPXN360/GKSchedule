@@ -240,6 +240,11 @@ fun WeeklyScheduleScreen(
                 .layerBackdrop(backdrop)
                 .background(if (com.ty.gkschedule.ui.theme.LocalAppIsDark.current) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainer)
                 .statusBarsPadding()
+                // ponytail: 停底栏上——视口底垫（Box滚动容器加尾垫无效，内容堆叠不累加；视口压缩才管用）
+                .padding(
+                    bottom = 80.dp +
+                        WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+                )
         ) {
             // Week selector — track top edge in pixels
             Card(
@@ -355,11 +360,6 @@ fun WeeklyScheduleScreen(
                         modifier = Modifier
                             .fillMaxSize()
                             .verticalScroll(rememberScrollState())
-                            // ponytail: 停底栏上——滚动尾垫避让（内容底垫，视口不动）
-                            .padding(
-                                bottom = 80.dp +
-                                    WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-                            )
                     ) {
                         // Layer 1: Grid background
                         Column(modifier = Modifier.fillMaxWidth().height(totalGridHeight)) {
