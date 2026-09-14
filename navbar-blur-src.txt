@@ -1,0 +1,3557 @@
+===== FILE: app/src/main/java/com/ty/gkschedule/ScheduleApp.kt =====
+package com.ty.gkschedule
+
+import android.content.Intent
+import android.net.Uri
+import androidx.activity.compose.BackHandler
+import androidx.activity.compose.PredictiveBackHandler
+import kotlinx.coroutines.CancellationException
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.*
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import top.yukonga.miuix.kmp.blur.blur
+import top.yukonga.miuix.kmp.blur.drawBackdrop
+import top.yukonga.miuix.kmp.blur.layerBackdrop
+import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ChevronLeft
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.automirrored.filled.LibraryBooks
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Today
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.draw.shadow
+import com.ty.gkschedule.ui.theme.LocalAppIsDark
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.NavDestination.Companion.hasRoute
+import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import com.ty.gkschedule.data.Course
+import com.ty.gkschedule.ui.about.AboutScreen
+import com.ty.gkschedule.ui.login.LoginScreen
+import com.ty.gkschedule.ui.login.WebViewLoginScreen
+import com.ty.gkschedule.ui.manage.CourseManageScreen
+import com.ty.gkschedule.ui.settings.SettingsScreen
+import com.ty.gkschedule.ui.today.TodayScreen
+import com.ty.gkschedule.ui.weekly.WeeklyScheduleScreen
+import kotlinx.coroutines.launch
+import top.yukonga.miuix.kmp.blur.blur
+import top.yukonga.miuix.kmp.blur.drawBackdrop
+import top.yukonga.miuix.kmp.blur.layerBackdrop
+import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
+
+sealed class Screen(val route: String) {
+    data object Today : Screen("today")
+    data object Weekly : Screen("weekly")
+    data object Courses : Screen("courses")
+    data object About : Screen("about")
+    data object Login : Screen("login")
+    data object WebViewLogin : Screen("webview_login")
+}
+
+@Composable
+private fun navItemList(): List<Pair<Screen, Triple<androidx.compose.ui.graphics.vector.ImageVector, String, String>>> =
+    listOf(
+        Screen.Today to Triple(Icons.Default.Today, "今日", "today"),
+        Screen.Weekly to Triple(Icons.Default.DateRange, "课表", "weekly"),
+        Screen.Courses to Triple(Icons.AutoMirrored.Filled.LibraryBooks, "课程", "courses"),
+        Screen.About to Triple(Icons.Default.Person, "我的", "about")
+    )
+
+// 悬浮药丸底栏：展开居中底部；收起整条左滑，只剩左边半胶囊书签
+// ponytail: 单Animatable进度p驱动双graphicsLayer位移（方案B）；选中补全用静态if，无涟漪抖动
+@Composable
+private fun FloatingPillNavBar(
+    currentRoute: String?,
+    pillContentMode: Int,
+    screenshotHidden: Boolean = false,
+    blurEnabled: Boolean = true,
+    backdrop: top.yukonga.miuix.kmp.blur.LayerBackdrop,
+    collapsed: Boolean,
+    onCollapsedChange: (Boolean) -> Unit,
+    visible: Boolean,
+    onNavigate: (Screen) -> Unit
+) {
+    // ponytail: 一份进度+一份spring，两个视图时序物理上不错开
+    val p = remember { Animatable(if (collapsed) 1f else 0f) }
+    LaunchedEffect(collapsed) {
+        p.animateTo(
+            if (collapsed) 1f else 0f,
+            spring(dampingRatio = 0.9f, stiffness = 380f)
+        )
+    }
+    // ponytail: 滚动隐藏走位移不断组合，collapsed/p保住不断动画
+    // ponytail: 位移挂Row自身(size=barH)，挂全屏Box会位移整屏高=瞬间消失
+    // ponytail: 280ms FastOutSlowIn向下淡出，位移自身高+底边距确保完全滑出
+    val slide = remember { Animatable(0f) }
+    LaunchedEffect(visible) {
+        slide.animateTo(
+            targetValue = if (visible) 0f else 1f,
+            animationSpec = tween(durationMillis = 280, easing = androidx.compose.animation.core.FastOutSlowInEasing)
+        )
+    }
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        // ponytail: 截屏瞬间整条gone，比alpha=0少一帧合成，rootView.draw抓不到残影
+        if (screenshotHidden) return@BoxWithConstraints
+        val screenW = maxWidth
+        // 尺寸档：按屏宽分三档，小屏不再硬塞，全部等比缩小
+        val iconSize = when {
+            screenW < 340.dp -> 18.dp
+            screenW < 400.dp -> 20.dp
+            else -> 22.dp
+        }
+        val barBottom = 24.dp
+        val pillHPad = when {
+            screenW < 340.dp -> 5.dp
+            screenW < 400.dp -> 6.dp
+            else -> 7.dp
+        }
+        val itemHPadBoth = when {
+            screenW < 340.dp -> 9.dp
+            screenW < 400.dp -> 10.dp
+            else -> 12.dp
+        }
+        val itemHPadSingle = when {
+            screenW < 340.dp -> 8.dp
+            screenW < 400.dp -> 9.dp
+            else -> 10.dp
+        }
+        val itemVPad = when {
+            screenW < 340.dp -> 8.dp
+            else -> 9.dp
+        }
+        val textStyle = MaterialTheme.typography.labelMedium
+        val gapW = when {
+            screenW < 340.dp -> 3.dp
+            else -> 4.dp
+        }
+        // ponytail: 高度锁死同一barH，显式等高=同行，不靠padding凑
+        val barH = iconSize + itemVPad * 2 + pillHPad * 2
+        val swPx = with(LocalDensity.current) { screenW.toPx() }
+        // 药丸：BottomCenter，p=1时右边缘越过x=0整条出左屏
+        // ponytail: miuix同窗口backdrop糊（窗口级API只糊别家窗口，同窗口必须走这条）
+        // ponytail: 纯色背景Blur(C)=C无反差——shadow+Highest色阶+1dp描边接管轮廓，糊只管彩色区
+        val pillShape = androidx.compose.foundation.shape.CircleShape
+        val isDark = LocalAppIsDark.current
+        val pillBg = MaterialTheme.colorScheme.surfaceContainerHighest.copy(
+            alpha = if (blurEnabled) 0.65f else 1f
+        )
+        Row(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = barBottom)
+                .height(barH)
+                .graphicsLayer {
+                    translationX = -p.value * (swPx / 2f + size.width / 2f)
+                    translationY = slide.value * (size.height + barBottom.toPx())
+                    alpha = (1f - slide.value).coerceIn(0f, 1f)
+                }
+                .shadow(
+                    elevation = 6.dp,
+                    shape = pillShape,
+                    spotColor = Color.Black.copy(alpha = 0.35f),
+                    ambientColor = Color.Black.copy(alpha = 0.25f)
+                )
+                .clip(pillShape)
+                .then(
+                    if (blurEnabled) Modifier.drawBackdrop(
+                        backdrop = backdrop,
+                        shape = { pillShape },
+                        effects = { blur(28.dp.toPx()) }
+                    ) else Modifier.background(pillBg)
+                )
+                .background(pillBg)
+                .border(
+                    width = 1.dp,
+                    color = if (isDark) Color.White.copy(alpha = 0.12f)
+                    else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.40f),
+                    shape = pillShape
+                )
+                .padding(horizontal = pillHPad, vertical = pillHPad),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            navItemList().forEach { (screen, triple) ->
+                var expanded by remember(screen.route) { mutableStateOf(true) }
+                val selected = currentRoute == screen.route
+                val showBoth = pillContentMode == 0
+                val showText = if (showBoth) true else pillContentMode == 2
+                val showIcon = if (showBoth) true else pillContentMode == 1
+                // 选中项强制补全另一半；expanded只管收起，不参与补全
+                val visibleText = (showText || selected) && (expanded || selected)
+                val visibleIcon = showIcon || selected || !visibleText
+                // ponytail: 选中底只给55%透明，透出药丸糊层，不盖糊
+                val bg = if (selected) MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.75f) else Color.Transparent
+                val fg = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                Row(
+                    modifier = Modifier
+                        .clip(androidx.compose.foundation.shape.CircleShape)
+                        .background(bg)
+                        .clickable(onClick = {
+                            if (selected) expanded = !expanded
+                            else onNavigate(screen)
+                        })
+                        .padding(horizontal = if (visibleText && visibleIcon) itemHPadBoth else itemHPadSingle, vertical = itemVPad),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (visibleIcon) Icon(triple.first, contentDescription = triple.second, tint = fg, modifier = Modifier.size(iconSize))
+                    if (visibleText) {
+                        if (visibleIcon) Spacer(modifier = Modifier.width(gapW))
+                        Text(triple.second, style = textStyle, color = fg, maxLines = 1)
+                    }
+                }
+            }
+            HorizontalDivider(
+                modifier = Modifier
+                    .height(20.dp)
+                    .width(1.dp),
+                color = MaterialTheme.colorScheme.outlineVariant
+            )
+            Row(
+                modifier = Modifier
+                    .clip(androidx.compose.foundation.shape.CircleShape)
+                    .clickable(onClick = { onCollapsedChange(true) })
+                    .padding(horizontal = itemHPadSingle, vertical = itemVPad),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    Icons.Default.ChevronLeft, contentDescription = "收起",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(iconSize)
+                )
+            }
+        }
+        // 书签：BottomStart静止位即贴边；p=0时藏到屏外
+        val bookmarkShape = androidx.compose.foundation.shape.RoundedCornerShape(
+            topStart = 0.dp, bottomStart = 0.dp,
+            topEnd = barH / 2, bottomEnd = barH / 2
+        )
+        Row(
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(bottom = barBottom)
+                .height(barH)
+                .graphicsLayer {
+                    translationX = -(1f - p.value) * size.width
+                    translationY = slide.value * (size.height + barBottom.toPx())
+                    alpha = (1f - slide.value).coerceIn(0f, 1f)
+                }
+                .shadow(
+                    elevation = 6.dp,
+                    shape = bookmarkShape,
+                    spotColor = Color.Black.copy(alpha = 0.35f),
+                    ambientColor = Color.Black.copy(alpha = 0.25f)
+                )
+                .clip(bookmarkShape)
+                .then(
+                    if (blurEnabled) Modifier.drawBackdrop(
+                        backdrop = backdrop,
+                        shape = { bookmarkShape },
+                        effects = { blur(28.dp.toPx()) }
+                    ) else Modifier.background(pillBg)
+                )
+                .background(pillBg)
+                .border(
+                    width = 1.dp,
+                    color = if (isDark) Color.White.copy(alpha = 0.12f)
+                    else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.40f),
+                    shape = bookmarkShape
+                )
+                .clickable(enabled = p.value > 0.5f) { onCollapsedChange(false) }
+                .padding(start = 6.dp, end = 12.dp, top = itemVPad, bottom = itemVPad),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                Icons.Default.ChevronRight, contentDescription = "展开",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(iconSize)
+            )
+        }
+    }
+}
+
+@Composable
+fun ScheduleApp(
+    viewModel: ScheduleViewModel = viewModel()
+) {
+    val navController = rememberNavController()
+    val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    val courses by viewModel.courses.collectAsState(initial = emptyList())
+    val selectedWeek by viewModel.selectedWeek.collectAsState()
+    val realCurrentWeek by viewModel.currentWeek.collectAsState(initial = 1)
+    val totalWeeks by viewModel.totalWeeks.collectAsState(initial = 20)
+    val periodsPerDay by viewModel.periodsPerDay.collectAsState(initial = 10)
+    val firstDayOfWeek by viewModel.firstDayOfWeek.collectAsState(initial = 1)
+    val gridHeight by viewModel.gridHeight.collectAsState(initial = 52)
+    val gridCorner by viewModel.gridCorner.collectAsState(initial = 8)
+    val gridSpacing by viewModel.gridSpacing.collectAsState(initial = 2)
+    val showPeriodLabel by viewModel.showPeriodLabel.collectAsState(initial = true)
+    val autoGridHeight by viewModel.autoGridHeight.collectAsState(initial = true)
+    val mergeConsecutive by viewModel.mergeConsecutive.collectAsState(initial = true)
+    val showTimeLabel by viewModel.showTimeLabel.collectAsState(initial = true)
+    val detailedSplit by viewModel.detailedSplit.collectAsState(initial = false)
+    val colorEngine by viewModel.colorEngine.collectAsState(initial = 0)
+    val colorGroupMode by viewModel.colorGroupMode.collectAsState(initial = 2)
+    val showDateInHeader by viewModel.showDateInHeader.collectAsState(initial = false)
+    val hideEmptyWeeks by viewModel.hideEmptyWeeks.collectAsState(initial = false)
+    val isRefreshing by viewModel.isRefreshing.collectAsState(initial = false)
+    val semesterStart by viewModel.semesterStart.collectAsState(initial = java.time.LocalDate.now())
+    val darkMode by viewModel.darkMode.collectAsState(initial = "system")
+    val language by viewModel.language.collectAsState(initial = "system")
+    val loginState by viewModel.loginState.collectAsState()
+    val captchaImage by viewModel.captchaImage.collectAsState()
+    val examLookaheadWeeks by viewModel.examLookaheadWeeks.collectAsState(initial = 1)
+    val diffColorPerWeek by viewModel.diffColorPerWeek.collectAsState(initial = false)
+    val showHiddenCourses by viewModel.showHiddenCourses.collectAsState(initial = false)
+    val compactNavBar by viewModel.compactNavBar.collectAsState(initial = true)
+    val pillContentMode by viewModel.pillContentMode.collectAsState(initial = 0)
+    val blurEffect by viewModel.blurEffect.collectAsState(initial = true)
+    val startPage by viewModel.startPage.collectAsState(initial = "today")
+    val displayCourses = if (showHiddenCourses) courses else courses.filter { !it.isHidden }
+    val examList by viewModel.examList.collectAsState(initial = emptyList())
+    val showExamSchedule by viewModel.showExamSchedule.collectAsState(initial = false)
+
+    LaunchedEffect(Unit) {
+        viewModel.messages.collect { message ->
+            snackbarHostState.showSnackbar(message, duration = SnackbarDuration.Short)
+        }
+    }
+
+    // 专门给截图用的无动画拔除状态，严禁与日常滚动 pillHidden 混用！
+    var screenshotHidden by remember { mutableStateOf(false) }
+
+    val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        uri?.let {
+            try {
+                val json = context.contentResolver.openInputStream(it)?.bufferedReader()?.readText()
+                if (json != null) viewModel.importJson(json)
+            } catch (_: Exception) {}
+        }
+    }
+
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentDestination = navBackStackEntry?.destination
+    // ponytail: 官方规范——选中走hierarchy判（嵌套图/参数路由不漏），切换pop到graph.findStartDestination
+    val bottomBarScreens = listOf("today", "weekly", "courses", "about")
+    val currentRoute = currentDestination?.route
+    // ponytail: ReSukiSU同款——4 tab常驻HorizontalPager（NavHost只留子页），底栏切=animateScrollToPage横滑
+    val tabRoutes = listOf("today", "weekly", "courses", "about")
+    val tabIndexMap = mapOf("today" to 0, "weekly" to 1, "courses" to 2, "about" to 3)
+    val scope = rememberCoroutineScope()
+    val startTabIndex = (tabIndexMap[startPage] ?: 0).coerceIn(0, 3)
+    val pagerState = androidx.compose.foundation.pager.rememberPagerState(
+        initialPage = startTabIndex,
+        pageCount = { tabRoutes.size }
+    )
+    var uiSelectedPage by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableIntStateOf(startTabIndex) }
+    var pagerAnimating by remember { mutableStateOf(false) }
+    // ponytail: 启动页可切——startPage变化且pager还没动过时对齐
+    LaunchedEffect(startPage) {
+        val target = (tabIndexMap[startPage] ?: 0).coerceIn(0, 3)
+        if (pagerState.currentPage == startTabIndex && target != startTabIndex) {
+            pagerState.scrollToPage(target)
+            uiSelectedPage = target
+        }
+    }
+    val handlePageChange: (Int) -> Unit = remember(pagerState, scope) {
+        { page ->
+            uiSelectedPage = page
+            if (page != pagerState.currentPage) {
+                scope.launch {
+                    pagerAnimating = true
+                    try {
+                        pagerState.animateScrollToPage(page)
+                    } finally {
+                        pagerAnimating = false
+                    }
+                }
+            }
+        }
+    }
+    LaunchedEffect(pagerState) {
+        androidx.compose.runtime.snapshotFlow { pagerState.currentPage }.collect { page ->
+            if (!pagerAnimating) uiSelectedPage = page
+        }
+    }
+    // ponytail: NavHost只剩tabs+子页——tabs常驻时route=tabs，子页时route=子页名
+    val showBottomBar = currentRoute == null || currentRoute == "tabs"
+    fun navigateTab(route: String) {
+        (tabIndexMap[route])?.let { handlePageChange(it) }
+    }
+    // ponytail: BackHandler必须在NavHost之后注册才优先（后加先调），放函数末尾；tab页吞预测秒回，首页放行回桌面
+    val navView = androidx.compose.ui.platform.LocalView.current
+    val mainScaffoldBg = if (com.ty.gkschedule.ui.theme.LocalAppIsDark.current) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainer
+
+    val tabIndex = mapOf("today" to 0, "weekly" to 1, "courses" to 2, "about" to 3)
+    // ponytail: 子页(login/webview/exam/edit…)无tab序号 → tabIndexOf回0；导航靠isTabRoute分支而非序号比较
+    fun tabIndexOf(route: String?): Int = tabIndex.entries.firstOrNull { route?.startsWith(it.key) == true }?.value ?: 0
+    fun isTabRoute(route: String?): Boolean = route != null && tabIndex.keys.any { route.startsWith(it) }
+
+    // Simple approach: NavHost with conditional bottom bar
+    // ponytail: snackbar糊要吃主源——backdrop提Scaffold外，内容层与snackbar同源
+    val backdrop = rememberLayerBackdrop()
+    Scaffold(
+        containerColor = mainScaffoldBg,
+        // ponytail: 默认底栏snackbar回Scaffold默认槽（底栏占位自动顶起）；悬浮pill才自挂贴边
+        snackbarHost = {
+            if (!compactNavBar) SnackbarHost(hostState = snackbarHostState)
+        },
+        bottomBar = {
+            // ponytail: 普通底栏走Scaffold槽位常驻位移；悬浮pill走内容区Box覆盖层，两套互斥
+            // ponytail: 底栏糊——drawBackdrop吃主源（与pill/snackbar同源），容器透明+onDrawSurface单层底
+            if (!compactNavBar) {
+                // ponytail: B走穿底——底栏糊有素材（管理页穿底出玻璃感），其他三页补避让停底栏上；底75%
+                val barBg = MaterialTheme.colorScheme.surfaceContainer
+                androidx.compose.animation.AnimatedVisibility(
+                    visible = showBottomBar,
+                    enter = slideInVertically(initialOffsetY = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideInSpec()),
+                    exit = slideOutVertically(targetOffsetY = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideOutSpec())
+                ) {
+                    NavigationBar(
+                        modifier = if (blurEffect) Modifier.drawBackdrop(
+                            backdrop = backdrop,
+                            shape = { androidx.compose.foundation.shape.RoundedCornerShape(0.dp) },
+                            effects = { blur(28.dp.toPx()) },
+                            onDrawSurface = { drawRect(barBg.copy(alpha = 0.75f)) }
+                        ) else Modifier,
+                        containerColor = androidx.compose.ui.graphics.Color.Transparent
+                    ) {
+                        navItemList().forEach { (screen, triple) ->
+                            NavigationBarItem(
+                                icon = { Icon(triple.first, contentDescription = triple.second) },
+                                label = { Text(triple.second) },
+                                selected = uiSelectedPage == (tabIndexMap[screen.route] ?: 0),
+                                onClick = {
+                                    com.ty.gkschedule.util.HapticFeedback.light(navView)
+                                    navigateTab(screen.route)
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    ) { innerPadding ->
+        // ponytail: miuix源层——内容标layerBackdrop吃糊；药丸挂兄弟层(环=RenderThread栈溢出，见08c190d)
+        // ponytail: 外层不垫状态栏，各Tab自己吃（今日/课表无顶栏挂statusBarsPadding，管理页顶栏自己吃）
+        // ponytail: 源层必须全屏不被底栏截断，否则默认底栏只能糊到靠上一小条；避让下移到NavHost
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .layerBackdrop(backdrop)
+                .background(mainScaffoldBg)
+        ) {
+            NavHost(
+                navController = navController,
+                startDestination = "tabs",
+                // ponytail: tabs页常驻Pager（ReSukiSU同款横滑），子页走Top level快淡
+                enterTransition = {
+                    fadeIn(animationSpec = tween(200, easing = LinearEasing))
+                },
+                exitTransition = {
+                    fadeOut(animationSpec = tween(200, easing = LinearEasing))
+                },
+                popEnterTransition = {
+                    fadeIn(animationSpec = tween(200, easing = LinearEasing))
+                },
+                popExitTransition = {
+                    fadeOut(animationSpec = tween(200, easing = LinearEasing))
+                },
+                modifier = Modifier.fillMaxSize()
+            ) {
+            composable("tabs") {
+                androidx.compose.runtime.CompositionLocalProvider(
+                    com.ty.gkschedule.ui.util.LocalPagerState provides pagerState,
+                    com.ty.gkschedule.ui.util.LocalSelectedPage provides uiSelectedPage,
+                    com.ty.gkschedule.ui.util.LocalHandlePageChange provides handlePageChange
+                ) {
+                    androidx.compose.foundation.pager.HorizontalPager(
+                        state = pagerState,
+                        modifier = Modifier.fillMaxSize(),
+                        // ponytail: 课表页内嵌周HorizontalPager——外层禁手滑，只许点底栏横滑，防手势打架
+                        userScrollEnabled = false,
+                        beyondViewportPageCount = 1
+                    ) { pageIndex ->
+                        androidx.compose.runtime.CompositionLocalProvider(
+                            com.ty.gkschedule.ui.util.LocalPagerPage provides pageIndex
+                        ) {
+                            when (tabRoutes[pageIndex]) {
+                                "today" -> TodayScreen(courses = displayCourses, colorCourses = courses, currentWeek = realCurrentWeek, colorEngine = colorEngine, colorGroupMode = colorGroupMode, exams = examList, showExamSchedule = showExamSchedule, examLookaheadWeeks = examLookaheadWeeks, semesterStart = semesterStart, getStartTime = { viewModel.getStartTime(it) }, getEndTime = { viewModel.getEndTime(it) }, onCourseLongPress = { context.startActivity(Intent(context, com.ty.gkschedule.ui.course.CourseEditActivity::class.java).apply { putExtra("courseId", it.id) }) }, onExamEdit = { context.startActivity(Intent(context, com.ty.gkschedule.ui.exam.ExamActivity::class.java).apply { putExtra("examId", it.id) }) }, diffColorPerWeek = diffColorPerWeek)
+                                "weekly" -> WeeklyScheduleScreen(courses = displayCourses, colorCourses = courses, currentWeek = selectedWeek, totalWeeks = totalWeeks, periodsPerDay = periodsPerDay, gridHeight = gridHeight, gridCorner = gridCorner, gridSpacing = gridSpacing, showPeriodLabel = showPeriodLabel, autoGridHeight = autoGridHeight, firstDayOfWeek = firstDayOfWeek, mergeConsecutive = mergeConsecutive, showTimeLabel = showTimeLabel, detailedSplit = detailedSplit, colorEngine = colorEngine, colorGroupMode = colorGroupMode, showDateInHeader = showDateInHeader, hideEmptyWeeks = hideEmptyWeeks, semesterStart = semesterStart, exams = examList, showExamSchedule = showExamSchedule, realCurrentWeek = realCurrentWeek, isRefreshing = isRefreshing, onWeekChange = { viewModel.setWeek(it.coerceIn(1, totalWeeks)) }, onCourseClick = { }, onCourseLongPress = { context.startActivity(Intent(context, com.ty.gkschedule.ui.course.CourseEditActivity::class.java).apply { putExtra("courseId", it.id) }) }, onExamEdit = { context.startActivity(Intent(context, com.ty.gkschedule.ui.exam.ExamActivity::class.java).apply { putExtra("examId", it.id) }) }, onAddCourse = { context.startActivity(Intent(context, com.ty.gkschedule.ui.course.CourseEditActivity::class.java)) }, onRefresh = { viewModel.refreshFromSchool() }, onScreenshotHidePill = { screenshotHidden = true }, onScreenshotRestorePill = { screenshotHidden = false }, blurEnabled = blurEffect, getStartTime = { viewModel.getStartTime(it) }, getEndTime = { viewModel.getEndTime(it) }, diffColorPerWeek = diffColorPerWeek)
+                                "courses" -> CourseManageScreen(courses = courses, blurEnabled = blurEffect, colorEngine = colorEngine, colorGroupMode = colorGroupMode, bottomBarHeight = 80.dp, onCourseClick = { context.startActivity(Intent(context, com.ty.gkschedule.ui.course.CourseEditActivity::class.java).apply { putExtra("courseId", it.id) }) }, onAddCourse = { context.startActivity(Intent(context, com.ty.gkschedule.ui.course.CourseEditActivity::class.java)) }, onDeleteCourse = { viewModel.deleteCourse(it) }, onDeleteAll = { viewModel.deleteAllCourses() }, onScrollHidePill = { viewModel.setPillHidden(it) })
+                                else -> {
+                                    val savedStudentId by viewModel.savedStudentIdFlow.collectAsState()
+                                    val savedRealName by viewModel.savedRealName.collectAsState(initial = "")
+                                    val savedDeptName by viewModel.savedDeptName.collectAsState(initial = "")
+                                    val totalWeeksVal by viewModel.totalWeeks.collectAsState(initial = 20)
+                                    val periodsPerDayVal by viewModel.periodsPerDay.collectAsState(initial = 10)
+                                    val displayWeeks = if (hideEmptyWeeks && courses.isNotEmpty()) { val weeksWithCourses = courses.flatMap { course -> (1..totalWeeksVal).filter { course.isInWeek(it) } }.toSet(); weeksWithCourses.size.coerceAtLeast(1) } else totalWeeksVal
+                                    AboutScreen(loginState = loginState, savedStudentId = savedStudentId, savedRealName = savedRealName, savedDeptName = savedDeptName, semesterStart = semesterStart, totalWeeks = displayWeeks, periodsPerDay = periodsPerDayVal, captchaImageBase64 = captchaImage, onLogin = { navController.navigate(Screen.Login.route) }, onLogout = { viewModel.logout() }, onQuickRelogin = { cap -> viewModel.quickRelogin(cap) }, onRefreshCaptcha = { viewModel.refreshCaptcha() }, onOpenSettings = { context.startActivity(Intent(context, com.ty.gkschedule.ui.settings.SettingsActivity::class.java)) }, onOpenAbout = { context.startActivity(Intent(context, com.ty.gkschedule.ui.about.AboutActivity::class.java)) }, onOpenExam = { context.startActivity(Intent(context, com.ty.gkschedule.ui.exam.ExamActivity::class.java)) })
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            composable(Screen.Login.route) {
+                val hasSavedCredentials by viewModel.hasSavedCredentials.collectAsState(initial = false)
+                LoginScreen(loginState = loginState, captchaImageBase64 = captchaImage, hasSavedCredentials = hasSavedCredentials, onRefreshCaptcha = { viewModel.refreshCaptcha() }, onLogin = { sid, pwd, cap -> viewModel.login(sid, pwd, cap) }, onQuickRelogin = { cap -> viewModel.quickRelogin(cap) }, onWebViewLogin = { navController.navigate(Screen.WebViewLogin.route) }, onBack = { viewModel.clearLoginError(); navController.popBackStack() }, blurEnabled = blurEffect)
+                LaunchedEffect(Unit) { viewModel.clearLoginError(); if (captchaImage == null) viewModel.refreshCaptcha() }
+                LaunchedEffect(loginState) { if (loginState is LoginState.Success || loginState is LoginState.ImportResult) { kotlinx.coroutines.delay(500); navController.popBackStack() } }
+            }
+            composable(Screen.WebViewLogin.route) { WebViewLoginScreen(loginState = loginState, api = viewModel.api, onLoginSuccess = { loginCode -> viewModel.webViewLogin(loginCode) }, onBack = { navController.popBackStack() }, blurEnabled = blurEffect)
+                // ponytail: 扫码成功直接回我的页，跳过中间账号密码页
+                LaunchedEffect(loginState) { if (loginState is LoginState.Success || loginState is LoginState.ImportResult) { kotlinx.coroutines.delay(1200); navController.popBackStack(Screen.Login.route, inclusive = true) } }
+            }
+        }
+        } // 源层Box只含NavHost
+        // 悬浮pill：跟随tab显隐做位移，内部收/展另有自己的左右对滑；
+        // ponytail: 源层兄弟节点(断环)；滚动隐藏走位移不断组合，收起态常驻
+        if (compactNavBar) {
+            val pillHidden by viewModel.pillHidden.collectAsState(initial = false)
+            val pillCollapsed by viewModel.pillCollapsed.collectAsState(initial = false)
+            Box(Modifier.fillMaxSize().padding(bottom = 24.dp), contentAlignment = Alignment.BottomCenter) {
+                FloatingPillNavBar(
+                    currentRoute = tabRoutes.getOrElse(uiSelectedPage) { "today" }, pillContentMode = pillContentMode, screenshotHidden = screenshotHidden,
+                    blurEnabled = blurEffect, backdrop = backdrop,
+                    collapsed = pillCollapsed, onCollapsedChange = { viewModel.setPillCollapsed(it) },
+                    visible = showBottomBar && !(pillHidden && !pillCollapsed)
+                ) { screen ->
+                    com.ty.gkschedule.util.HapticFeedback.light(navView)
+                    navigateTab(screen.route)
+                }
+            }
+            // ponytail: snackbar贴pill上——pill高barH+底边24，snack底=24+barH+8贴上沿
+            if (showBottomBar) {
+                androidx.compose.foundation.layout.BoxWithConstraints(
+                    Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter
+                ) {
+                    // ponytail: barH三档屏宽22/20/18图标——snack底垫同步三档，否则小屏错位
+                    val icon = if (maxWidth < 340.dp) 18.dp else if (maxWidth < 400.dp) 20.dp else 22.dp
+                    val vPad = if (maxWidth < 340.dp) 8.dp else 9.dp
+                    val hPad = if (maxWidth < 340.dp) 5.dp else if (maxWidth < 400.dp) 6.dp else 7.dp
+                    val snackBottom = 24.dp + icon + vPad * 2 + hPad * 2 + 8.dp
+                    Box(Modifier.fillMaxSize().padding(bottom = snackBottom), contentAlignment = Alignment.BottomCenter) {
+                        SnackbarHost(hostState = snackbarHostState)
+                    }
+                }
+            }
+        } else {
+            // ponytail: 默认底栏snackbar已回Scaffold默认槽，这里不再自挂
+        } // pill兄弟层
+    }
+    // ponytail: Pager即栈——返回=回第0页（ReSukiSU同款普通BackHandler）；首页放行回桌面
+    androidx.activity.compose.BackHandler(enabled = showBottomBar && uiSelectedPage != 0) {
+        handlePageChange(0)
+    }
+}
+
+@Composable
+fun ScheduleGridForExport(courses: List<Course>, periodsPerDay: Int, gridHeight: Int, gridCorner: Int, gridSpacing: Int) {
+    val daysOfWeek = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+    val courseMap = mutableMapOf<String, Course>()
+    courses.forEach { course -> for (p in course.startPeriod..course.endPeriod()) { courseMap["${course.dayOfWeek}_$p"] = course } }
+    Column(modifier = Modifier.padding(8.dp)) {
+        Row { Box(modifier = Modifier.weight(1f)); daysOfWeek.forEach { day -> Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) { Text(day, style = MaterialTheme.typography.labelSmall) } } }
+        (1..periodsPerDay).forEach { period -> Row { Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) { Text("$period", style = MaterialTheme.typography.labelSmall) }; for (day in 1..7) { val course = courseMap["${day}_$period"]; if (course != null && course.startPeriod == period) { Box(modifier = Modifier.weight(1f).padding(gridSpacing.dp).height((gridHeight * course.periods).dp).clip(RoundedCornerShape(gridCorner.dp)).background(androidx.compose.ui.graphics.Color(0xFFE8F5E9)).padding(4.dp)) { Text(course.name, style = MaterialTheme.typography.labelSmall, color = androidx.compose.ui.graphics.Color(0xFF2E7D32)) } } else if (course == null) { Spacer(modifier = Modifier.weight(1f).padding(gridSpacing.dp).height(gridHeight.dp)) } } } }
+    }
+}
+
+===== FILE: app/src/main/java/com/ty/gkschedule/ui/today/TodayScreen.kt =====
+package com.ty.gkschedule.ui.today
+
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import com.ty.gkschedule.R
+import com.ty.gkschedule.data.Course
+import com.ty.gkschedule.data.ScheduleResolver
+import com.ty.gkschedule.ui.theme.Md3Card
+import com.ty.gkschedule.ui.theme.Md3CardVariant
+import com.ty.gkschedule.util.CourseColors
+import kotlinx.coroutines.flow.first
+import java.time.LocalDate
+import java.time.LocalTime
+import androidx.compose.ui.text.style.TextOverflow
+
+@Composable
+fun TodayScreen(
+    courses: List<Course>,
+    colorCourses: List<Course> = courses,
+    currentWeek: Int,
+    colorEngine: Int = 0,
+    colorGroupMode: Int = 2,
+    exams: List<com.ty.gkschedule.data.ExamEntity> = emptyList(),
+    showExamSchedule: Boolean = false,
+    examLookaheadWeeks: Int = 2,
+    semesterStart: java.time.LocalDate = java.time.LocalDate.now(),
+    getStartTime: (Int) -> String,
+    getEndTime: (Int) -> String,
+    onCourseLongPress: (Course) -> Unit,
+    onExamEdit: (com.ty.gkschedule.data.ExamEntity) -> Unit = {},
+    diffColorPerWeek: Boolean = false
+) {
+    val today = LocalDate.now()
+    val todayDow = today.dayOfWeek.value
+    val tomorrowWeek = if (today.dayOfWeek.value == 7) currentWeek + 1 else currentWeek
+
+    val todayCourses = remember(courses, currentWeek, today) {
+        ScheduleResolver.todayCourses(courses, currentWeek, today)
+    }
+
+    val todayExams = remember(exams, showExamSchedule, today) {
+        ScheduleResolver.todayExams(exams, showExamSchedule, today)
+    }
+
+    val allTodayCourses = todayCourses
+
+    val tomorrowCourses = remember(courses, currentWeek, today) {
+        ScheduleResolver.tomorrowCourses(courses, currentWeek, today)
+    }
+
+    val dayNames = mapOf(
+        1 to stringResource(R.string.mon), 2 to stringResource(R.string.tue),
+        3 to stringResource(R.string.wed), 4 to stringResource(R.string.thu),
+        5 to stringResource(R.string.fri), 6 to stringResource(R.string.sat),
+        7 to stringResource(R.string.sun)
+    )
+
+    val now = LocalTime.now()
+    val currentTimeMinutes = now.hour * 60 + now.minute
+    val currentPeriod = findCurrentPeriod(allTodayCourses, getStartTime, getEndTime, currentTimeMinutes)
+    var detailCourse by remember { mutableStateOf<Pair<Course, Int>?>(null) }
+    var detailExam by remember { mutableStateOf<com.ty.gkschedule.data.ScheduleItem.ExamItem?>(null) }
+    // Only trigger animation once per app session, not on course refresh
+    var animationPlayed by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    val maxStagger = (allTodayCourses.size - 1) * 200L
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    LaunchedEffect(allTodayCourses.size) {
+        if (!animationPlayed) {
+            lifecycleOwner.lifecycle.currentStateFlow.first { it == androidx.lifecycle.Lifecycle.State.RESUMED }
+            kotlinx.coroutines.delay(500 + maxStagger + 700)
+            animationPlayed = true
+        }
+    }
+    val isDark = com.ty.gkschedule.ui.theme.LocalAppIsDark.current
+    val themeHue = CourseColors.currentThemeHue()
+    val colorScheduleItems = remember(colorCourses, exams, semesterStart, getStartTime, getEndTime) {
+        ScheduleResolver.buildItems(colorCourses, exams, true, semesterStart, getStartTime, getEndTime)
+    }
+    val colorAssignments = remember(colorScheduleItems, colorGroupMode, diffColorPerWeek) {
+        ScheduleResolver.buildColorAssignments(colorScheduleItems, colorGroupMode, diffColorPerWeek)
+    }
+    val upcomingExams = remember(exams, showExamSchedule, today, examLookaheadWeeks) {
+        ScheduleResolver.upcomingExams(exams, showExamSchedule, today, examLookaheadWeeks)
+    }
+
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .statusBarsPadding()
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        // Header
+        item {
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = stringResource(R.string.today_title),
+                style = MaterialTheme.typography.headlineMedium
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = stringResource(R.string.date_format,
+                    dayNames[todayDow] ?: "", today.monthValue, today.dayOfMonth),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                text = stringResource(R.string.week_format, currentWeek),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+
+        // Today's courses
+        if (allTodayCourses.isEmpty()) {
+            item {
+                EmptyCard(stringResource(R.string.no_course_today))
+            }
+        } else {
+            // Pre-compute stagger delays for all courses (by progress, highest first)
+            val coursesWithProgress = allTodayCourses.map { course ->
+                val startMins = parseTime(course.getActualStartTime(getStartTime))
+                val endMins = parseTime(course.getActualEndTime(getEndTime))
+                val nowMins = LocalTime.now().hour * 60 + LocalTime.now().minute
+                val p = when {
+                    nowMins > endMins -> 1f
+                    nowMins < startMins -> 0f
+                    else -> ((nowMins - startMins).toFloat() / (endMins - startMins)).coerceIn(0f, 1f)
+                }
+                course.id to p
+            }.sortedByDescending { it.second }
+
+            val staggerMap = coursesWithProgress.mapIndexed { index, (id, _) ->
+                id to index * 200L
+            }.toMap()
+
+            items(allTodayCourses) { course ->
+                val isCurrent = currentPeriod in course.startPeriod..course.endPeriod()
+                val currentTimeMinutes = LocalTime.now().hour * 60 + LocalTime.now().minute
+                val courseStartMinutes = parseTime(course.getActualStartTime(getStartTime))
+                val courseEndMinutes = parseTime(course.getActualEndTime(getEndTime))
+                val isPast = currentTimeMinutes > courseEndMinutes
+                val isFuture = currentTimeMinutes < courseStartMinutes
+                val firstFuture = allTodayCourses.firstOrNull {
+                    parseTime(it.getActualStartTime(getStartTime)) > currentTimeMinutes
+                }
+                val isNext = !isCurrent && !isPast && isFuture && firstFuture?.id == course.id
+
+                val colorAssignment = colorAssignments.get(
+                    courseName = course.name,
+                    classroom = course.classroom,
+                    week = currentWeek,
+                    colorGroupMode = colorGroupMode,
+                    diffColorPerWeek = diffColorPerWeek
+                )
+                val courseColor = CourseColors.getColorSync(
+                    engine = colorEngine,
+                    groupMode = colorGroupMode,
+                    courseName = course.name,
+                    classroom = course.classroom,
+                    classroomIndex = colorAssignment.classroomColorIndex,
+                    colorIndex = colorAssignment.colorIndex,
+                    week = currentWeek,
+                    diffColorPerWeek = diffColorPerWeek,
+                    isDark = isDark,
+                    themeHue = themeHue
+                )
+                CourseCard(
+                    course = course,
+                    startTime = course.getActualStartTime(getStartTime),
+                    endTime = course.getActualEndTime(getEndTime),
+                    isCurrent = isCurrent,
+                    isNext = isNext,
+                    isPast = isPast,
+                    animDelay = if (animationPlayed) 0L else staggerMap[course.id] ?: 0L,
+                    skipAnim = animationPlayed,
+                    barColor = courseColor.container,
+                    indicatorColor = courseColor.content,
+                    onClick = { detailCourse = course to currentWeek }
+                )
+            }
+        }
+
+        // Today's exams (native ExamCard, no Course conversion)
+        if (todayExams.isNotEmpty()) {
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+                HorizontalDivider()
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.School, contentDescription = "今日考试", modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.error)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("今日考试", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.error)
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+            }
+            items(todayExams) { exam ->
+                val examWeek = ScheduleResolver.examWeek(exam, semesterStart, currentWeek)
+                val colorAssignment = colorAssignments.get(
+                    courseName = exam.courseName,
+                    classroom = exam.classroom,
+                    week = examWeek,
+                    colorGroupMode = colorGroupMode,
+                    diffColorPerWeek = diffColorPerWeek
+                )
+                val examColor = CourseColors.getColorSync(
+                    engine = colorEngine,
+                    groupMode = colorGroupMode,
+                    courseName = exam.courseName,
+                    classroom = exam.classroom,
+                    classroomIndex = colorAssignment.classroomColorIndex,
+                    colorIndex = colorAssignment.colorIndex,
+                    week = examWeek,
+                    diffColorPerWeek = diffColorPerWeek,
+                    isDark = isDark,
+                    themeHue = themeHue
+                )
+                ExamCard(
+                    exam = exam,
+                    examColor = examColor,
+                    onClick = { detailExam = ScheduleResolver.examItem(exam, semesterStart, getStartTime, getEndTime) }
+                )
+            }
+        }
+
+        // Tomorrow preview — only show between 16:00 and 23:59
+        if (currentTimeMinutes >= 960) {
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+                HorizontalDivider()
+                Spacer(modifier = Modifier.height(8.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            Icons.Default.WbSunny, contentDescription = "明日课程",
+                            modifier = Modifier.size(20.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = stringResource(R.string.tomorrow_title),
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                    }
+                Spacer(modifier = Modifier.height(4.dp))
+            }
+
+            if (tomorrowCourses.isEmpty()) {
+                item {
+                    EmptyCard(stringResource(R.string.no_course_tomorrow))
+                }
+            } else {
+                items(tomorrowCourses) { course ->
+                    val colorAssignment = colorAssignments.get(
+                        courseName = course.name,
+                        classroom = course.classroom,
+                        week = tomorrowWeek,
+                        colorGroupMode = colorGroupMode,
+                        diffColorPerWeek = diffColorPerWeek
+                    )
+                    val courseColor = CourseColors.getColorSync(
+                        engine = colorEngine,
+                        groupMode = colorGroupMode,
+                        courseName = course.name,
+                        classroom = course.classroom,
+                        classroomIndex = colorAssignment.classroomColorIndex,
+                        colorIndex = colorAssignment.colorIndex,
+                        week = tomorrowWeek,
+                        diffColorPerWeek = diffColorPerWeek,
+                        isDark = isDark,
+                        themeHue = themeHue
+                    )
+                    CourseCard(
+                        course = course,
+                        startTime = course.getActualStartTime(getStartTime),
+                        endTime = course.getActualEndTime(getEndTime),
+                        isCurrent = false,
+                        isNext = false,
+                        barColor = courseColor.container,
+                        indicatorColor = courseColor.content,
+                        onClick = { detailCourse = course to tomorrowWeek }
+                    )
+                }
+            }
+        }
+
+        // Upcoming exams section
+        if (upcomingExams.isNotEmpty()) {
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+                HorizontalDivider()
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Default.School, contentDescription = "考试",
+                        modifier = Modifier.size(20.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "近期考试",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+            }
+            items(upcomingExams) { exam ->
+                val examWeek = ScheduleResolver.examWeek(exam, semesterStart, currentWeek)
+                val colorAssignment = colorAssignments.get(
+                    courseName = exam.courseName,
+                    classroom = exam.classroom,
+                    week = examWeek,
+                    colorGroupMode = colorGroupMode,
+                    diffColorPerWeek = diffColorPerWeek
+                )
+                val examColor = CourseColors.getColorSync(
+                    engine = colorEngine,
+                    groupMode = colorGroupMode,
+                    courseName = exam.courseName,
+                    classroom = exam.classroom,
+                    classroomIndex = colorAssignment.classroomColorIndex,
+                    colorIndex = colorAssignment.colorIndex,
+                    week = examWeek,
+                    diffColorPerWeek = diffColorPerWeek,
+                    isDark = isDark,
+                    themeHue = themeHue
+                )
+                ExamCard(
+                    exam = exam,
+                    examColor = examColor,
+                    onClick = { detailExam = ScheduleResolver.examItem(exam, semesterStart, getStartTime, getEndTime) }
+                )
+            }
+        }
+
+        // ponytail: 默认底栏透底避让——内容滚到底栏下出糊，末项防盖（DeepSeek四处diff之二）
+        item {
+            Spacer(
+                modifier = Modifier.height(
+                    16.dp + 80.dp +
+                        WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+                )
+            )
+        }
+    }
+
+    // Detail sheet
+    detailCourse?.let { (course, detailWeek) ->
+        val colorAssignment = colorAssignments.get(
+            courseName = course.name,
+            classroom = course.classroom,
+            week = detailWeek,
+            colorGroupMode = colorGroupMode,
+            diffColorPerWeek = diffColorPerWeek
+        )
+        com.ty.gkschedule.ui.weekly.ScheduleItemDetailSheet(
+            item = com.ty.gkschedule.data.ScheduleItem.CourseItem(course),
+            getStartTime = getStartTime,
+            getEndTime = getEndTime,
+            onDismiss = { detailCourse = null },
+            onEdit = { detailCourse = null; onCourseLongPress(course) },
+            colorEngine = colorEngine,
+            colorGroupMode = colorGroupMode,
+            colorIndex = colorAssignment.colorIndex,
+            classroomColorIndex = colorAssignment.classroomColorIndex,
+            currentWeek = detailWeek,
+            diffColorPerWeek = diffColorPerWeek
+        )
+    }
+
+    detailExam?.let { item ->
+        val detailWeek = item.weekRange.toIntOrNull() ?: currentWeek
+        val colorAssignment = colorAssignments.get(
+            item = item,
+            week = detailWeek,
+            colorGroupMode = colorGroupMode,
+            diffColorPerWeek = diffColorPerWeek
+        )
+        com.ty.gkschedule.ui.weekly.ScheduleItemDetailSheet(
+            item = item,
+            getStartTime = getStartTime,
+            getEndTime = getEndTime,
+            onDismiss = { detailExam = null },
+            onEdit = {
+                detailExam = null
+                onExamEdit(item.exam)
+            },
+            colorEngine = colorEngine,
+            colorGroupMode = colorGroupMode,
+            colorIndex = colorAssignment.colorIndex,
+            classroomColorIndex = colorAssignment.classroomColorIndex,
+            currentWeek = detailWeek,
+            diffColorPerWeek = diffColorPerWeek
+        )
+    }
+}
+
+@Composable
+private fun EmptyCard(text: String) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(80.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(
+                Icons.Default.Schedule, contentDescription = "暂无课程",
+                modifier = Modifier.size(32.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = text,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+            )
+        }
+    }
+}
+
+@Composable
+private fun CourseCard(
+    course: Course,
+    startTime: String,
+    endTime: String,
+    isCurrent: Boolean,
+    isNext: Boolean,
+    isPast: Boolean = false,
+    animDelay: Long = 0,
+    skipAnim: Boolean = false,
+    barColor: Color = MaterialTheme.colorScheme.outline,
+    indicatorColor: Color = barColor,
+    onClick: () -> Unit
+) {
+    // Real-time isPast check — only for today's courses, updates every 30 seconds
+    var realIsPast by remember { mutableStateOf(isPast) }
+    // ponytail: 进度tick——每30秒刷一次nowMins，否则progressнодуш只在重组时算，切页回来才动
+    var tickMins by remember { mutableIntStateOf(LocalTime.now().hour * 60 + LocalTime.now().minute) }
+    val isTodayCourse = isCurrent || isPast
+    LaunchedEffect(isTodayCourse) {
+        if (isTodayCourse) {
+            while (true) {
+                val now = LocalTime.now()
+                val endMins = parseTime(endTime)
+                val nowMins = now.hour * 60 + now.minute
+                realIsPast = nowMins > endMins
+                tickMins = nowMins
+                kotlinx.coroutines.delay(30_000)
+            }
+        }
+    }
+
+    // Progress calculation
+    val progress = when {
+        isCurrent -> {
+            val startMins = parseTime(startTime)
+            val endMins = parseTime(endTime)
+            ((tickMins - startMins).toFloat() / (endMins - startMins)).coerceIn(0f, 1f)
+        }
+        realIsPast -> 1f
+        else -> 0f
+    }
+
+    // Animated progress — starts from 0, animates to target after splash screen
+    // rememberSaveable keeps state across tab switches
+    var startAnimation by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(skipAnim) }
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    LaunchedEffect(skipAnim) {
+        if (!skipAnim) {
+            lifecycleOwner.lifecycle.currentStateFlow.first { it == androidx.lifecycle.Lifecycle.State.RESUMED }
+            kotlinx.coroutines.delay(animDelay)
+            startAnimation = true
+        }
+    }
+    val animSpec = androidx.compose.animation.core.tween<Float>(durationMillis = 600, easing = androidx.compose.animation.core.FastOutSlowInEasing)
+    val animatedProgress by androidx.compose.animation.core.animateFloatAsState(
+        targetValue = if (startAnimation) progress else 0f,
+        animationSpec = animSpec,
+        label = "progress"
+    )
+    val animDone by remember { derivedStateOf { startAnimation && progress > 0f && (progress - animatedProgress) < 0.01f } }
+
+    Md3Card(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        variant = Md3CardVariant.Elevated,
+        shape = MaterialTheme.shapes.small
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min).padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(modifier = Modifier.width(4.dp).fillMaxHeight().clip(CircleShape).background(barColor)) {
+                Box(modifier = Modifier.fillMaxWidth().fillMaxHeight(animatedProgress).clip(CircleShape).background(indicatorColor.copy(alpha = 0.2f))) {}
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (isCurrent) {
+                        Box(modifier = Modifier.background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(4.dp)).padding(horizontal = 5.dp, vertical = 2.dp), contentAlignment = Alignment.Center) {
+                            Text("${(progress * 100).toInt()}%", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Spacer(modifier = Modifier.width(6.dp))
+                    }
+                    if (isNext) {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(MaterialTheme.colorScheme.primary)
+                                .padding(horizontal = 5.dp, vertical = 2.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = stringResource(R.string.next_course),
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(6.dp))
+                    }
+                    Text(course.name, style = MaterialTheme.typography.titleMedium)
+                    if (realIsPast) {
+                        androidx.compose.animation.AnimatedVisibility(visible = animDone, enter = androidx.compose.animation.scaleIn() + androidx.compose.animation.fadeIn()) {
+                            Icon(Icons.Default.Check, null, modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    val periodText = if (course.periods > 1) "${course.startPeriod}-${course.endPeriod()}" else "${course.startPeriod}"
+                    Text(stringResource(R.string.period_format_short, periodText), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Medium)
+                    if (course.teacher.isNotEmpty()) { Spacer(modifier = Modifier.width(8.dp)); Text(course.teacher, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                    if (course.classroom.isNotEmpty()) { Spacer(modifier = Modifier.width(8.dp)); Text(course.classroom, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                }
+            }
+            Text("$startTime\n$endTime", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+private fun findCurrentPeriod(
+    courses: List<Course>,
+    getStartTime: (Int) -> String,
+    getEndTime: (Int) -> String,
+    currentTimeMinutes: Int
+): Int {
+    for (course in courses) {
+        val start = parseTime(course.getActualStartTime(getStartTime))
+        val end = parseTime(course.getActualEndTime(getEndTime))
+        if (currentTimeMinutes in start..end) return course.startPeriod
+    }
+    return 0
+}
+
+private fun parseTime(time: String): Int {
+    val parts = time.split(":")
+    return (parts.getOrNull(0)?.toIntOrNull() ?: 0) * 60 + (parts.getOrNull(1)?.toIntOrNull() ?: 0)
+}
+
+@Composable
+private fun ExamCard(exam: com.ty.gkschedule.data.ExamEntity, examColor: com.ty.gkschedule.util.CourseColors.CourseColorPair, onClick: () -> Unit = {}) {
+    val examDate = try { java.time.LocalDate.parse(exam.examDate) } catch (_: Exception) { null }
+    val now = java.time.LocalDate.now()
+    val today = examDate != null && examDate == now
+
+    // Parse exam time range for time-aware state
+    val timeParts = exam.examTimeRange.split("-")
+    val startMins = if (timeParts.size == 2) { val p = timeParts[0].trim().split(":"); p.getOrNull(0)?.toIntOrNull()?.let { h -> h * 60 + (p.getOrNull(1)?.toIntOrNull() ?: 0) } } else null
+    val endMins = if (timeParts.size == 2) { val p = timeParts[1].trim().split(":"); p.getOrNull(0)?.toIntOrNull()?.let { h -> h * 60 + (p.getOrNull(1)?.toIntOrNull() ?: 0) } } else null
+    // ponytail: 考试进度同课程tick，每30秒重组，否则切页回来才动
+    var examTickMins by remember { mutableIntStateOf(java.time.LocalTime.now().hour * 60 + java.time.LocalTime.now().minute) }
+    LaunchedEffect(today, startMins, endMins) {
+        if (today && startMins != null && endMins != null) {
+            while (true) {
+                examTickMins = java.time.LocalTime.now().hour * 60 + java.time.LocalTime.now().minute
+                kotlinx.coroutines.delay(30_000)
+            }
+        }
+    }
+    val nowMins = examTickMins
+
+    val isPast = when {
+        examDate?.isBefore(now) == true -> true
+        today && endMins != null && nowMins > endMins -> true
+        else -> false
+    }
+    val isNow = today && startMins != null && endMins != null && nowMins in startMins..endMins
+    val alpha = if (isPast) 0.5f else 1f
+    val daysLeft = if (examDate != null && !isPast && !isNow) java.time.temporal.ChronoUnit.DAYS.between(now, examDate) else -1L
+    val progress = if (isPast) {
+        1f
+    } else if (isNow) {
+        val start = startMins ?: 0
+        val end = endMins ?: start
+        val duration = end - start
+        if (duration > 0) ((nowMins - start).toFloat() / duration).coerceIn(0f, 1f) else 0f
+    } else {
+        0f
+    }
+
+    com.ty.gkschedule.ui.theme.Md3Card(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+        variant = com.ty.gkschedule.ui.theme.Md3CardVariant.Elevated,
+        shape = MaterialTheme.shapes.small
+    ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier.width(4.dp).height(48.dp).clip(RoundedCornerShape(2.dp))
+                        .background(if (isPast) examColor.container.copy(alpha = 0.2f) else examColor.container)
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(exam.courseName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        if (isPast) {
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Surface(shape = CircleShape, color = MaterialTheme.colorScheme.surfaceVariant) {
+                                Text("已结束", modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                    style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        } else if (isNow) {
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Surface(shape = CircleShape, color = examColor.container) {
+                                Text("进行中", modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                    style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = examColor.content)
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (exam.examDate.isNotEmpty()) { Text(exam.examDate + " " + exam.examTimeRange, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha)) }
+                        if (exam.classroom.isNotEmpty()) { Spacer(modifier = Modifier.width(8.dp)); Text(exam.classroom, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha)) }
+                    }
+                    if (exam.examMethod.isNotEmpty()) { Text(exam.examMethod, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha * 0.7f)) }
+                }
+                if (!isPast && !isNow && daysLeft >= 0) {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Surface(shape = CircleShape, color = if (daysLeft == 0L) MaterialTheme.colorScheme.errorContainer else examColor.container,
+                        contentColor = if (daysLeft == 0L) MaterialTheme.colorScheme.onErrorContainer else examColor.content) {
+                        Text(if (daysLeft == 0L) "今天" else "剩 ${daysLeft} 天", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
+                    }
+                }
+            }
+            // Progress bar for in-progress or recently finished exams
+            if (isNow || (isPast && today)) {
+                LinearProgressIndicator(
+                    progress = { progress },
+                    modifier = Modifier.fillMaxWidth().height(3.dp).padding(horizontal = 12.dp).padding(bottom = 8.dp),
+                    color = examColor.container,
+                    trackColor = examColor.container.copy(alpha = 0.15f)
+                )
+            }
+        }
+    }
+}
+
+===== FILE: app/src/main/java/com/ty/gkschedule/ui/weekly/WeeklyScheduleScreen.kt =====
+package com.ty.gkschedule.ui.weekly
+
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.*
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CropFree
+import androidx.compose.material.icons.filled.ChevronLeft
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Today
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import kotlinx.coroutines.launch
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import com.ty.gkschedule.ui.theme.BlurCard
+import top.yukonga.miuix.kmp.blur.blur
+import top.yukonga.miuix.kmp.blur.drawBackdrop
+import top.yukonga.miuix.kmp.blur.layerBackdrop
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import com.ty.gkschedule.R
+import com.ty.gkschedule.data.Course
+import com.ty.gkschedule.data.ScheduleResolver
+import com.ty.gkschedule.data.ScheduleItem
+import com.ty.gkschedule.util.CourseColors
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun WeeklyScheduleScreen(
+    courses: List<Course>,
+    colorCourses: List<Course> = courses,
+    currentWeek: Int,
+    totalWeeks: Int,
+    periodsPerDay: Int,
+    gridHeight: Int,
+    gridCorner: Int,
+    gridSpacing: Int,
+    showPeriodLabel: Boolean,
+    autoGridHeight: Boolean,
+    mergeConsecutive: Boolean,
+    showTimeLabel: Boolean,
+    detailedSplit: Boolean,
+    colorEngine: Int,
+    colorGroupMode: Int,
+    hideEmptyWeeks: Boolean,
+    showDateInHeader: Boolean,
+    semesterStart: java.time.LocalDate,
+    isRefreshing: Boolean,
+    exams: List<com.ty.gkschedule.data.ExamEntity> = emptyList(),
+    showExamSchedule: Boolean = false,
+    onWeekChange: (Int) -> Unit,
+    onCourseClick: (Course) -> Unit,
+    onCourseLongPress: (Course) -> Unit,
+    onExamEdit: (com.ty.gkschedule.data.ExamEntity) -> Unit = {},
+    onAddCourse: () -> Unit,
+    onRefresh: () -> Unit,
+    onScreenshotHidePill: () -> Unit = {},
+    onScreenshotRestorePill: () -> Unit = {},
+    realCurrentWeek: Int = currentWeek,
+    firstDayOfWeek: Int = 1,
+    diffColorPerWeek: Boolean = false,
+    blurEnabled: Boolean = true,
+    getStartTime: (Int) -> String = { "" },
+    getEndTime: (Int) -> String = { "" }
+) {
+    // Reorder days based on firstDayOfWeek setting (1=Monday, 7=Sunday)
+    val startDay = firstDayOfWeek.coerceIn(1, 7)
+    val allDays = listOf(R.string.mon, R.string.tue, R.string.wed, R.string.thu, R.string.fri, R.string.sat, R.string.sun)
+    val daysOfWeek = allDays.drop(startDay - 1) + allDays.take(startDay - 1)
+    // Map course dayOfWeek (1=Mon..7=Sun) to visual column position
+    fun dayToColumn(courseDay: Int): Int {
+        return ((courseDay - startDay + 7) % 7) + 1
+    }
+    var showWeekPicker by remember { mutableStateOf(false) }
+    var detailItem by remember { mutableStateOf<ScheduleItem?>(null) }
+    var detailColorIndex by remember { mutableStateOf<Int?>(null) }
+    var detailClassroomColorIndex by remember { mutableIntStateOf(0) }
+    // ponytail: miuix源层，FAB组drawBackdrop吃糊
+    val backdrop = top.yukonga.miuix.kmp.blur.rememberLayerBackdrop()
+    val hapticContext = androidx.compose.ui.platform.LocalContext.current
+    val hapticView = androidx.compose.ui.platform.LocalView.current
+    val labelWidthDp = if (showPeriodLabel) { if (showTimeLabel) 64.dp else 36.dp } else 0.dp
+
+    // Build unified schedule items (replaces id<0 hack)
+    val scheduleItems = remember(courses, exams, showExamSchedule, semesterStart, getStartTime, getEndTime) {
+        ScheduleResolver.buildItems(courses, exams, showExamSchedule, semesterStart, getStartTime, getEndTime)
+    }
+    val colorScheduleItems = remember(colorCourses, exams, semesterStart, getStartTime, getEndTime) {
+        ScheduleResolver.buildItems(colorCourses, exams, true, semesterStart, getStartTime, getEndTime)
+    }
+
+    // Compute visible weeks (skip empty weeks if hideEmptyWeeks is on)
+    // 🔥 防死锁：强制包含 currentWeek 和 realCurrentWeek，防止 indexOf 返回 -1
+    val visibleWeeks = remember(scheduleItems, totalWeeks, hideEmptyWeeks, currentWeek, realCurrentWeek) {
+        ScheduleResolver.visibleWeeks(scheduleItems, totalWeeks, hideEmptyWeeks, currentWeek, realCurrentWeek)
+    }
+
+    // Pager: maps visible index → actual week number
+    val pagerState = rememberPagerState(
+        initialPage = visibleWeeks.indexOf(currentWeek).coerceAtLeast(0),
+        pageCount = { visibleWeeks.size }
+    )
+    val coroutineScope = rememberCoroutineScope()
+    val realWeek = remember { mutableIntStateOf(currentWeek) }
+
+    // Sync pager → week
+    LaunchedEffect(pagerState.settledPage) {
+        val week = visibleWeeks.getOrElse(pagerState.settledPage) { currentWeek }
+        if (week != currentWeek) onWeekChange(week)
+    }
+    // Sync week → pager (from arrow buttons / picker)
+    // 🔥 防死锁：直接在 LaunchedEffect 作用域内挂起，不再嵌套 coroutineScope.launch
+    LaunchedEffect(currentWeek, visibleWeeks) {
+        val targetPage = visibleWeeks.indexOf(currentWeek).coerceAtLeast(0)
+        if (pagerState.currentPage != targetPage) {
+            pagerState.animateScrollToPage(targetPage)
+        }
+    }
+
+    // Predictive back
+    BackHandler(enabled = currentWeek != realWeek.intValue) {
+        onWeekChange(realWeek.intValue)
+    }
+
+    val ptrState = androidx.compose.material3.pulltorefresh.rememberPullToRefreshState()
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = {
+            com.ty.gkschedule.util.HapticFeedback.medium(hapticView)
+            onRefresh()
+        },
+        modifier = Modifier.fillMaxSize(),
+        state = ptrState,
+        // ponytail: 下拉头自组毛玻璃球——位移公式与尺寸复刻官方 IndicatorBox，花团用官方 ContainedLoadingIndicator
+        indicator = {
+            val hlDark = com.ty.gkschedule.ui.theme.LocalAppIsDark.current
+            val hlStroke = if (hlDark) {
+                top.yukonga.miuix.kmp.blur.highlight.Highlight.GlassStrokeSmallDark
+            } else {
+                top.yukonga.miuix.kmp.blur.highlight.Highlight.GlassStrokeSmallLight
+            }
+            val density = androidx.compose.ui.platform.LocalDensity.current
+            val maxDistancePx = with(density) { 160.dp.toPx() }
+            @OptIn(androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class)
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    // 官方同款：fraction*maxDistance - 自身高 ⇒ 起始完全藏在顶边之上，下拉才从屏幕顶边探出
+                    .graphicsLayer {
+                        translationY = ptrState.distanceFraction * maxDistancePx - size.height
+                    }
+                    .drawBackdrop(
+                        backdrop = backdrop,
+                        shape = { androidx.compose.foundation.shape.CircleShape },
+                        effects = { blur(28.dp.toPx()) },
+                        highlight = { hlStroke },
+                    )
+                    .background(
+                        MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.40f),
+                        androidx.compose.foundation.shape.CircleShape,
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                // ponytail: 官方同款分支——刷新中不能喂 progress，否则 distanceFraction 停在 1f，花团被钉死在满进度那一帧
+                androidx.compose.animation.Crossfade(targetState = isRefreshing) { refreshing ->
+                    if (refreshing) {
+                        @OptIn(androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class)
+                        androidx.compose.material3.ContainedLoadingIndicator(
+                            modifier = Modifier.size(
+                                width = androidx.compose.material3.LoadingIndicatorDefaults.ContainerWidth,
+                                height = androidx.compose.material3.LoadingIndicatorDefaults.ContainerHeight,
+                            ),
+                            containerColor = androidx.compose.ui.graphics.Color.Transparent,
+                            indicatorColor = MaterialTheme.colorScheme.primary,
+                        )
+                    } else {
+                        @OptIn(androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class)
+                        androidx.compose.material3.ContainedLoadingIndicator(
+                            progress = { ptrState.distanceFraction },
+                            modifier = Modifier
+                                .size(
+                                    width = androidx.compose.material3.LoadingIndicatorDefaults.ContainerWidth,
+                                    height = androidx.compose.material3.LoadingIndicatorDefaults.ContainerHeight,
+                                )
+                                // 官方同款：超过 1 之后整颗连续自转，避免跳变
+                                .graphicsLayer {
+                                    val f = ptrState.distanceFraction
+                                    if (f > 1f) rotationZ = -(f - 1f) * 180f
+                                },
+                            containerColor = androidx.compose.ui.graphics.Color.Transparent,
+                            indicatorColor = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                }
+            }
+        }
+    ) {
+        val coroutineScope = rememberCoroutineScope()
+        val context = androidx.compose.ui.platform.LocalContext.current
+        val rootView = androidx.compose.ui.platform.LocalView.current
+        var cropTopPx by remember { mutableIntStateOf(0) }
+        var cropBottomPx by remember { mutableIntStateOf(0) }
+        var hideFabs by remember { mutableStateOf(false) }
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                // ponytail: 底色与今日/我的统一——暗surface/亮surfaceContainer（ScheduleApp主源同值）
+                .layerBackdrop(backdrop)
+                .background(if (com.ty.gkschedule.ui.theme.LocalAppIsDark.current) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainer)
+                .statusBarsPadding()
+        ) {
+            // Week selector — track top edge in pixels
+            Card(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
+                    .clickable { showWeekPicker = true }
+                    .onGloballyPositioned { cropTopPx = it.positionInRoot().y.toInt() },
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    IconButton(onClick = {
+                        com.ty.gkschedule.util.HapticFeedback.light(hapticView)
+                        val idx = visibleWeeks.indexOf(currentWeek)
+                        if (idx > 0) onWeekChange(visibleWeeks[idx - 1])
+                        else if (currentWeek > 1) onWeekChange(currentWeek - 1) // 兜底抗沉没
+                    }) {
+                        Icon(Icons.Default.ChevronLeft, "Prev", tint = MaterialTheme.colorScheme.onPrimaryContainer)
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (currentWeek == realCurrentWeek) {
+                            Box(
+                                modifier = Modifier
+                                    .padding(end = 6.dp)
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(MaterialTheme.colorScheme.primary)
+                                    .padding(horizontal = 4.dp, vertical = 1.dp)
+                            ) {
+                                Text("今", style = MaterialTheme.typography.titleSmall,
+                                    color = MaterialTheme.colorScheme.onPrimary)
+                            }
+                        }
+                        Text(stringResource(R.string.week_format, currentWeek),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer)
+                    }
+                    IconButton(onClick = {
+                        com.ty.gkschedule.util.HapticFeedback.light(hapticView)
+                        val idx = visibleWeeks.indexOf(currentWeek)
+                        if (idx >= 0 && idx < visibleWeeks.size - 1) onWeekChange(visibleWeeks[idx + 1])
+                        else if (currentWeek < totalWeeks) onWeekChange(currentWeek + 1) // 兜底抗沉没
+                    }) {
+                        Icon(Icons.Default.ChevronRight, "Next", tint = MaterialTheme.colorScheme.onPrimaryContainer)
+                    }
+                }
+            }
+
+            // Header: unified day+date grid with today highlight
+            Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                if (showPeriodLabel) Spacer(modifier = Modifier.width(labelWidthDp))
+                val todayDate = java.time.LocalDate.now()
+                val todayDow = todayDate.dayOfWeek.value
+                for (index in 0 until 7) {
+                    val dayRes = daysOfWeek[index]
+                    val courseDay = ((startDay - 1 + index) % 7) + 1
+                    val isToday = courseDay == todayDow && currentWeek == realCurrentWeek
+                    Column(
+                        modifier = Modifier.weight(1f).padding(horizontal = 2.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(if (isToday) MaterialTheme.colorScheme.primaryContainer else Color.Transparent)
+                            .padding(vertical = 6.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(stringResource(dayRes), style = MaterialTheme.typography.labelMedium,
+                            fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal,
+                            color = if (isToday) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant)
+                        if (showDateInHeader) {
+                            val date = semesterStart.plusDays(((currentWeek - 1) * 7 + (courseDay - 1)).toLong())
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text("${date.monthValue}/${date.dayOfMonth}", style = MaterialTheme.typography.labelSmall,
+                                fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal,
+                                color = if (isToday) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f))
+                        }
+                    }
+                }
+            }
+
+            // 🔥 Fix: 使用 LocalAppIsDark 统一暗色模式判定源头（提到 Pager 外部供 detail sheet 使用）
+            val isDark = com.ty.gkschedule.ui.theme.LocalAppIsDark.current
+            val themeHue = CourseColors.currentThemeHue()
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.weight(1f).fillMaxWidth()
+                    .onGloballyPositioned { cropBottomPx = it.positionInRoot().y.toInt() + it.size.height }
+            ) { page ->
+                val week = visibleWeeks.getOrElse(page) { currentWeek }
+                val weekBlocks = remember(week, colorGroupMode, diffColorPerWeek, scheduleItems, colorScheduleItems, mergeConsecutive, detailedSplit, periodsPerDay, getStartTime, getEndTime) {
+                    ScheduleResolver.buildRenderBlocks(
+                        items = scheduleItems,
+                        week = week,
+                        colorGroupMode = colorGroupMode,
+                        diffColorPerWeek = diffColorPerWeek,
+                        mergeConsecutive = mergeConsecutive,
+                        detailedSplit = detailedSplit,
+                        periodsPerDay = periodsPerDay,
+                        getStartTime = getStartTime,
+                        getEndTime = getEndTime,
+                        colorItems = colorScheduleItems
+                    )
+                }
+
+                BoxWithConstraints(
+                    modifier = Modifier.fillMaxSize().padding(horizontal = 4.dp)
+                ) {
+                    // 🎯 智能多轨高度计算，动态恢复 autoGridHeight 功能
+                    val rowH = if (autoGridHeight) maxHeight / periodsPerDay else gridHeight.dp
+                    val totalGridHeight = rowH * periodsPerDay
+                    val cellW = (maxWidth - labelWidthDp) / 7
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
+                    ) {
+                        // Layer 1: Grid background
+                        // ponytail: 默认底栏透底避让——拉高网格扩滚动区，课程offset绝对坐标不动（DeepSeek四处diff之三）
+                        Column(
+                            modifier = Modifier.fillMaxWidth().height(
+                                totalGridHeight + 80.dp +
+                                    WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+                            )
+                        ) {
+                            for (period in 1..periodsPerDay) {
+                                Row(modifier = Modifier.fillMaxWidth().height(rowH)) {
+                                    if (showPeriodLabel) {
+                                        Box(modifier = Modifier.width(labelWidthDp).fillMaxHeight(), contentAlignment = Alignment.Center) {
+                                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                                Text("$period", style = MaterialTheme.typography.labelMedium,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                                if (showTimeLabel) {
+                                                    Text("${getStartTime(period)}\n${getEndTime(period)}",
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                                                        textAlign = TextAlign.Center)
+                                                }
+                                            }
+                                        }
+                                    }
+                                    for (day in 1..7) {
+                                        Box(modifier = Modifier.weight(1f).fillMaxHeight().padding(gridSpacing.dp)
+                                            .clip(RoundedCornerShape(gridCorner.dp))
+                                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)))
+                                    }
+                                }
+                            }
+                        }
+
+                        // Layer 2: Canvas for course block colors
+                        val blockBaseColors = remember(weekBlocks, colorEngine, colorGroupMode, diffColorPerWeek, isDark, themeHue) {
+                            weekBlocks.map { block ->
+                                CourseColors.getColorSync(
+                                    engine = colorEngine,
+                                    groupMode = colorGroupMode,
+                                    courseName = block.item.name,
+                                    classroom = block.item.classroom,
+                                    classroomIndex = block.classroomColorIdx,
+                                    colorIndex = block.colorIdx,
+                                    week = week,
+                                    diffColorPerWeek = diffColorPerWeek,
+                                    isDark = isDark,
+                                    themeHue = themeHue
+                                ).container
+                            }
+                        }
+
+                        val density = LocalDensity.current
+                        val rowHPx = with(density) { rowH.toPx() }
+                        val labelWidthPx = with(density) { labelWidthDp.toPx() }
+
+                        Canvas(modifier = Modifier.fillMaxWidth().height(totalGridHeight)) {
+                            val cellW2 = (size.width - labelWidthPx) / 7
+                            val spacing = gridSpacing.dp.toPx()
+                            val corner = gridCorner.dp.toPx()
+
+                            weekBlocks.forEachIndexed { idx, block ->
+                                val x = labelWidthPx + cellW2 * (dayToColumn(block.day) - 1) + spacing
+                                val y = rowHPx * block.startLine + spacing
+                                val bw = cellW2 - spacing * 2
+                                val bh = rowHPx * (block.endLine - block.startLine) - spacing * 2
+                                drawRoundRect(
+                                    color = blockBaseColors[idx],
+                                    topLeft = Offset(x, y),
+                                    size = Size(bw.coerceAtLeast(24.dp.toPx()), bh.coerceAtLeast(24.dp.toPx())),
+                                    cornerRadius = CornerRadius(corner)
+                                )
+                            }
+
+                            for (i in weekBlocks.indices) {
+                                for (j in i + 1 until weekBlocks.size) {
+                                    val a = weekBlocks[i]; val b = weekBlocks[j]
+                                    if (a.day == b.day && a.startLine < b.endLine && a.endLine > b.startLine) {
+                                        val overlapStart = maxOf(a.startLine, b.startLine)
+                                        val overlapEnd = minOf(a.endLine, b.endLine)
+                                        val ox = labelWidthPx + cellW2 * (dayToColumn(a.day) - 1) + spacing
+                                        val oy = rowHPx * overlapStart + spacing
+                                        val ow = cellW2 - spacing * 2
+                                        val oh = rowHPx * (overlapEnd - overlapStart) - spacing * 2
+                                        val blend = Color(
+                                            (blockBaseColors[i].red + blockBaseColors[j].red) / 2f,
+                                            (blockBaseColors[i].green + blockBaseColors[j].green) / 2f,
+                                            (blockBaseColors[i].blue + blockBaseColors[j].blue) / 2f,
+                                            (blockBaseColors[i].alpha + blockBaseColors[j].alpha) / 2f
+                                        )
+                                        drawRoundRect(color = blend, topLeft = Offset(ox, oy), size = Size(ow, oh), cornerRadius = CornerRadius(corner))
+                                    }
+                                }
+                            }
+                        }
+
+                        // Layer 3: Course text overlay
+                        weekBlocks.forEach { block ->
+                            val x = labelWidthDp + cellW * (dayToColumn(block.day) - 1) + gridSpacing.dp
+                            val y = rowH * block.startLine + gridSpacing.dp
+                            val w = cellW - gridSpacing.dp * 2
+                            val h = rowH * (block.endLine - block.startLine) - gridSpacing.dp * 2
+
+                            Box(
+                                modifier = Modifier.offset(x = x, y = y)
+                                    .size(width = w.coerceAtLeast(24.dp), height = h.coerceAtLeast(24.dp))
+                                    .clickable {
+                                        com.ty.gkschedule.util.HapticFeedback.medium(hapticView)
+                                        detailItem = block.item
+                                        detailColorIndex = block.colorIdx
+                                        detailClassroomColorIndex = block.classroomColorIdx
+                                    }
+                                    .semantics { contentDescription = block.item.name }
+                                    .padding(4.dp)
+                            ) {
+                                val textColor = remember(block, colorEngine, colorGroupMode, diffColorPerWeek, isDark, themeHue) {
+                                    CourseColors.getColorSync(
+                                        engine = colorEngine,
+                                        groupMode = colorGroupMode,
+                                        courseName = block.item.name,
+                                        classroom = block.item.classroom,
+                                        classroomIndex = block.classroomColorIdx,
+                                        colorIndex = block.colorIdx,
+                                        week = week,
+                                        diffColorPerWeek = diffColorPerWeek,
+                                        isDark = isDark,
+                                        themeHue = themeHue
+                                    ).content
+                                }
+                                Column {
+                                    if (block.item.isExam) {
+                                        Box(
+                                            modifier = Modifier.padding(bottom = 2.dp).clip(RoundedCornerShape(4.dp)).background(textColor.copy(alpha = 0.2f)).padding(horizontal = 4.dp, vertical = 1.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text("考试", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = textColor, maxLines = 1)
+                                        }
+                                    }
+                                    val isHidden = block.item.let { it is ScheduleItem.CourseItem && it.course.isHidden }
+                                    if (isHidden) {
+                                        Box(
+                                            modifier = Modifier.padding(bottom = 2.dp).clip(RoundedCornerShape(4.dp)).background(textColor.copy(alpha = 0.2f)).padding(horizontal = 4.dp, vertical = 1.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text("隐藏", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = textColor, maxLines = 1)
+                                        }
+                                    }
+                                    Text(block.item.name, style = MaterialTheme.typography.labelMedium, color = textColor, overflow = TextOverflow.Ellipsis)
+                                    if (block.item.classroom.isNotEmpty()) {
+                                        Text(block.item.classroom, style = MaterialTheme.typography.labelSmall, color = textColor.copy(alpha = 0.7f), overflow = TextOverflow.Ellipsis)
+                                    }
+                                }
+                            }
+                        }
+                    } // scrollable Box
+                } // BoxWithConstraints
+            } // HorizontalPager
+        }
+
+        // FABs
+        if (!hideFabs) {
+        var fabExpanded by remember { mutableStateOf(true) }
+        val expandHeight by animateDpAsState(
+            targetValue = if (fabExpanded) (2 * 56 + 2 * 12).dp else 0.dp,
+            animationSpec = spring(dampingRatio = 0.85f, stiffness = 300f),
+            label = "expandHeight"
+        )
+        // ponytail: B走穿底配套——FAB抬到底栏上防沉底
+        Box(modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp).padding(bottom = 80.dp)) {
+            // Toggle — bottom right
+            // ponytail: FAB糊——miuix drawBackdrop吃课表源，关模糊开关时回退纯色；blurEffect开关透传
+            // ponytail: clip shape与按钮外轮廓同源——不一致必漏角
+            val fabShape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
+            FloatingActionButton(
+                onClick = { com.ty.gkschedule.util.HapticFeedback.light(hapticView); fabExpanded = !fabExpanded },
+                shape = fabShape,
+                elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp),
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .drawBackdrop(
+                        backdrop = backdrop,
+                        shape = { fabShape },
+                        effects = { blur(28.dp.toPx()) }
+                    ),
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f),
+                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+            ) { Text(if (fabExpanded) "—" else "+", style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center, modifier = Modifier.width(20.dp)) }
+
+            // Column: expandable buttons only (declared first so back-to-week draws on top)
+            Column(
+                modifier = Modifier.align(Alignment.BottomEnd).padding(bottom = 68.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                AnimatedVisibility(visible = fabExpanded, enter = slideInVertically(initialOffsetY = { it }) + fadeIn(), exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()) {
+                    FloatingActionButton(
+                        onClick = { com.ty.gkschedule.util.HapticFeedback.medium(hapticView); onRefresh() },
+                shape = fabShape,
+                        elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp),
+                        modifier = Modifier.drawBackdrop(
+                            backdrop = backdrop,
+                            shape = { fabShape },
+                            effects = { blur(28.dp.toPx()) }
+                        ),
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.75f),
+                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                    ) {
+                        // ponytail: 官方LoadingIndicator(M3 1.5.0-alpha27 pin版，BOM不管)
+                        if (isRefreshing) {
+                            @OptIn(androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class)
+                            androidx.compose.material3.LoadingIndicator(
+                                modifier = Modifier.size(36.dp),
+                                color = MaterialTheme.colorScheme.onSecondaryContainer
+                            )
+                        } else {
+                            Icon(Icons.Default.Refresh, "Refresh", modifier = Modifier.size(28.dp))
+                        }
+                    }
+                }
+                // ponytail: 加号已删（与课程管理重复），剩刷新+截图
+                AnimatedVisibility(visible = fabExpanded, enter = slideInVertically(initialOffsetY = { it }) + fadeIn(), exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()) {
+                    FloatingActionButton(onClick = {
+                        com.ty.gkschedule.util.HapticFeedback.medium(hapticView)
+                        // ponytail: 截图前藏FAB+悬浮pill，截完恢复；pill藏显走ViewModel，跨组件
+                        coroutineScope.launch {
+                            try {
+                                hideFabs = true
+                                onScreenshotHidePill()
+                                kotlinx.coroutines.delay(300)
+                                val fb = android.graphics.Bitmap.createBitmap(rootView.width, rootView.height, android.graphics.Bitmap.Config.ARGB_8888)
+                                rootView.draw(android.graphics.Canvas(fb))
+                                hideFabs = false
+                                onScreenshotRestorePill()
+                                val c = android.graphics.Bitmap.createBitmap(fb, 0, cropTopPx.coerceIn(0, fb.height), fb.width, cropBottomPx.coerceIn(cropTopPx.coerceIn(0, fb.height), fb.height) - cropTopPx.coerceIn(0, fb.height))
+                                val s = com.ty.gkschedule.util.ImageExport.saveBitmapToGallery(context, c, "Pictures/Screenshots/schedule_${System.currentTimeMillis()}.png")
+                                android.widget.Toast.makeText(context, if (s) "已保存到 Pictures/Screenshots" else "保存失败", android.widget.Toast.LENGTH_SHORT).show()
+                            } catch (e: Exception) {
+                                hideFabs = false
+                                onScreenshotRestorePill()
+                                android.widget.Toast.makeText(context, "截图失败: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }, shape = fabShape, elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp),
+                        modifier = Modifier.drawBackdrop(
+                            backdrop = backdrop,
+                            shape = { fabShape },
+                            effects = { blur(28.dp.toPx()) }
+                        ),
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.75f), contentColor = MaterialTheme.colorScheme.onTertiaryContainer) { Icon(Icons.Default.CropFree, "Screenshot") }
+                    }
+            } // HorizontalPager
+
+            // Back to current week — horizontal slide + fade, no clip bounds
+            AnimatedVisibility(
+                visible = currentWeek != realCurrentWeek,
+                enter = slideInHorizontally(initialOffsetX = { it / 2 }) + fadeIn(),
+                exit = slideOutHorizontally(targetOffsetX = { it / 2 }) + fadeOut(),
+                modifier = Modifier.align(Alignment.BottomEnd).padding(bottom = 68.dp).offset(y = -expandHeight)
+            ) {
+                FloatingActionButton(
+                    onClick = { com.ty.gkschedule.util.HapticFeedback.medium(hapticView); onWeekChange(realCurrentWeek) },
+                shape = fabShape,
+                    elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp),
+                    modifier = Modifier.drawBackdrop(
+                        backdrop = backdrop,
+                        shape = { fabShape },
+                        effects = { blur(28.dp.toPx()) }
+                    ),
+                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.75f),
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                ) { Icon(if (currentWeek > realCurrentWeek) Icons.Default.ChevronLeft else Icons.Default.ChevronRight, stringResource(R.string.back_to_current_week)) }
+            }
+        } // Box
+        } // if (!hideFabs)
+    } // PullToRefreshBox
+
+    // Detail sheet — 🔥 归一：无论是否考试课，统一走 HCT 动态分配
+    detailItem?.let { item ->
+        val isDark = com.ty.gkschedule.ui.theme.LocalAppIsDark.current
+        val targetWeek = if (item.isExam) item.weekRange.toIntOrNull() ?: currentWeek else currentWeek
+        ScheduleItemDetailSheet(item = item, getStartTime = getStartTime, getEndTime = getEndTime,
+            onDismiss = { detailItem = null }, onEdit = {
+                detailItem = null
+                when (item) {
+                    is ScheduleItem.CourseItem -> onCourseLongPress(item.course)
+                    is ScheduleItem.ExamItem -> onExamEdit(item.exam)
+                }
+            },
+            colorEngine = colorEngine,
+            colorGroupMode = colorGroupMode,
+            colorIndex = detailColorIndex,
+            classroomColorIndex = detailClassroomColorIndex,
+            currentWeek = targetWeek,
+            diffColorPerWeek = diffColorPerWeek)
+    }
+
+    if (showWeekPicker) {
+        WeekPickerSheet(totalWeeks, currentWeek, { onWeekChange(it); showWeekPicker = false }, { showWeekPicker = false })
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ScheduleItemDetailSheet(item: ScheduleItem, getStartTime: (Int) -> String, getEndTime: (Int) -> String, onDismiss: () -> Unit, onEdit: () -> Unit, colorEngine: Int = 0, colorGroupMode: Int = 0, colorIndex: Int? = null, classroomColorIndex: Int = 0, dotColor: Color? = null, currentWeek: Int = 0, diffColorPerWeek: Boolean = false) {
+    val isDark = com.ty.gkschedule.ui.theme.LocalAppIsDark.current
+    val themeHue = CourseColors.currentThemeHue()
+    val hctColors = remember(item, colorEngine, colorGroupMode, colorIndex, classroomColorIndex, currentWeek, diffColorPerWeek, isDark, themeHue) {
+        val targetWeek = if (item.isExam) item.weekRange.toIntOrNull() ?: currentWeek else currentWeek
+        CourseColors.getColorSync(
+            engine = colorEngine,
+            groupMode = colorGroupMode,
+            courseName = item.name,
+            classroom = item.classroom,
+            classroomIndex = classroomColorIndex,
+            colorIndex = colorIndex,
+            week = targetWeek,
+            diffColorPerWeek = diffColorPerWeek,
+            isDark = isDark,
+            themeHue = themeHue
+        )
+    }
+
+    // Smart remark cleaner: filter time lines + strip "考试" text
+    val cleanedRemark = remember(item.remark, item.isExam) {
+        if (!item.isExam) item.remark
+        else item.remark.split("\n")
+            .filter { line -> !line.contains(":") && !line.contains("时间") && line.isNotBlank() }
+            .map { it.replace("考试", "").trim() }
+            .filter { it.isNotBlank() }
+            .joinToString("\n")
+    }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        // ponytail: 只糊卡片不糊全屏——BlurCard载体等大+LayerDrawable合成；handle自画进覆盖区
+        containerColor = Color.Transparent,
+        scrimColor = Color.Transparent,
+        dragHandle = { },
+        contentWindowInsets = { WindowInsets(0, 0, 0, 0) }
+    ) {
+        BlurCard(
+            enabled = true,
+            modifier = Modifier.fillMaxWidth(),
+            backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f),
+        ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(max = 520.dp)
+                .padding(horizontal = 24.dp, vertical = 8.dp)
+                .padding(bottom = 32.dp)
+        ) {
+            // ponytail: 自画把手进BlurCard覆盖区，与卡片同底色
+            Box(
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 12.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    modifier = Modifier.width(32.dp).height(5.dp)
+                        .clip(RoundedCornerShape(2.5.dp))
+                        .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
+                )
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                val detailDotColor = dotColor ?: hctColors.container
+                Box(modifier = Modifier.size(12.dp).clip(RoundedCornerShape(50)).background(detailDotColor))
+                Spacer(modifier = Modifier.width(12.dp))
+                if (item.isExam) {
+                    Box(
+                        modifier = Modifier.padding(end = 8.dp).clip(RoundedCornerShape(4.dp)).background(hctColors.content.copy(alpha = 0.2f)).padding(horizontal = 4.dp, vertical = 1.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("考试", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = hctColors.content, maxLines = 1)
+                    }
+                }
+                Text(item.name, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f, fill = false), maxLines = 2, overflow = TextOverflow.Ellipsis)
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            val dayNames = listOf("", "周一", "周二", "周三", "周四", "周五", "周六", "周日")
+            DetailRow("星期", dayNames.getOrElse(item.dayOfWeek) { "" })
+            if (item.isCustomTime) {
+                DetailRow("时间", "${item.customStartTime} - ${item.customEndTime}")
+            } else {
+                DetailRow("节次", "${item.startPeriod}-${item.endPeriod()}节")
+                DetailRow("时间", "${getStartTime(item.startPeriod)} - ${getEndTime(item.endPeriod())}")
+            }
+            if (item.teacher.isNotEmpty()) DetailRow("教师", item.teacher)
+            if (item.classroom.isNotEmpty()) DetailRow("教室", item.classroom)
+            DetailRow("周次", item.weekRange)
+            if (cleanedRemark.isNotEmpty()) DetailRow("备注", cleanedRemark)
+            Spacer(modifier = Modifier.height(16.dp))
+            FilledTonalButton(
+                onClick = onEdit,
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.medium
+            ) {
+                Text("编辑")
+            }
+        }
+        }
+    }
+}
+
+@Composable
+private fun DetailRow(label: String, value: String) {
+    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.width(60.dp))
+        Text(value, style = MaterialTheme.typography.bodyMedium)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun WeekPickerSheet(totalWeeks: Int, currentWeek: Int, onWeekSelected: (Int) -> Unit, onDismiss: () -> Unit) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        containerColor = Color.Transparent,
+        scrimColor = Color.Transparent,
+        dragHandle = { },
+        contentWindowInsets = { WindowInsets(0, 0, 0, 0) }
+    ) {
+        BlurCard(
+            enabled = true,
+            modifier = Modifier.fillMaxWidth(),
+            backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f),
+        ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(max = 520.dp)
+                .padding(horizontal = 24.dp, vertical = 8.dp)
+                .padding(bottom = 32.dp)
+        ) {
+            Box(
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 12.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    modifier = Modifier.width(32.dp).height(5.dp)
+                        .clip(RoundedCornerShape(2.5.dp))
+                        .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
+                )
+            }
+            Text(stringResource(R.string.select_week), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(bottom = 16.dp))
+            for (row in 0 until (totalWeeks + 4) / 5) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    for (col in 0 until 5) {
+                        val week = row * 5 + col + 1
+                        if (week <= totalWeeks) {
+                            val pickerView = androidx.compose.ui.platform.LocalView.current
+                            FilledTonalButton(onClick = {
+                                com.ty.gkschedule.util.HapticFeedback.light(pickerView)
+                                onWeekSelected(week)
+                            }, modifier = Modifier.weight(1f).padding(vertical = 4.dp),
+                                colors = if (week == currentWeek) ButtonDefaults.filledTonalButtonColors(containerColor = MaterialTheme.colorScheme.primary) else ButtonDefaults.filledTonalButtonColors()) {
+                                Text("$week", color = if (week == currentWeek) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface)
+                            }
+                        } else Spacer(modifier = Modifier.weight(1f))
+                    }
+                }
+        }
+        }
+    }
+}
+}
+
+===== FILE: app/src/main/java/com/ty/gkschedule/ui/about/AboutScreen.kt =====
+package com.ty.gkschedule.ui.about
+
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Article
+import androidx.compose.material.icons.automirrored.filled.Login
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import com.ty.gkschedule.LoginState
+import com.ty.gkschedule.R
+import com.ty.gkschedule.ui.theme.BadgeColorPalette
+import com.ty.gkschedule.ui.theme.Md3Card
+import com.ty.gkschedule.ui.theme.Md3CardVariant
+import com.ty.gkschedule.ui.theme.MonetIconBadge
+
+@Composable
+fun AboutScreen(
+    loginState: LoginState?,
+    savedStudentId: String,
+    savedRealName: String,
+    savedDeptName: String,
+    semesterStart: java.time.LocalDate,
+    totalWeeks: Int,
+    periodsPerDay: Int,
+    captchaImageBase64: String? = null,
+    onLogin: () -> Unit,
+    onLogout: () -> Unit,
+    onQuickRelogin: (String) -> Unit = {},
+    onRefreshCaptcha: () -> Unit = {},
+    onOpenSettings: () -> Unit,
+    onOpenAbout: () -> Unit,
+    onOpenExam: () -> Unit = {}
+) {
+    var showReloginDialog by remember { mutableStateOf(false) }
+
+    // ponytail: 底色与今日/课表/管理统一——暗surface/亮surfaceContainer（ScheduleApp主源同值）
+    androidx.compose.foundation.layout.Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(if (com.ty.gkschedule.ui.theme.LocalAppIsDark.current) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainer),
+        contentAlignment = Alignment.TopCenter
+    ) {
+    Column(
+            modifier = Modifier
+                .widthIn(max = 560.dp)
+                .fillMaxSize()
+                .statusBarsPadding()
+                .verticalScroll(rememberScrollState())
+                // ponytail: B走穿底配套——停底栏上（管理页穿底出玻璃感，其他页占位）
+                .padding(
+                    start = 16.dp,
+                    end = 16.dp,
+                    bottom = 80.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+                ),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Account card
+        val isLoggedIn = loginState is LoginState.Success || loginState is LoginState.ImportResult || loginState is LoginState.TokenExpired
+        val isTokenExpired = loginState is LoginState.TokenExpired
+
+        Card(
+            onClick = { if (!isLoggedIn) onLogin() },
+            enabled = !isLoggedIn,
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.medium,
+            colors = CardDefaults.cardColors(
+                // ponytail: 未登录surfaceVariant太跳——换surfaceContainerLow与卡片组同阶
+                containerColor = if (isLoggedIn) {
+                    if (isTokenExpired) MaterialTheme.colorScheme.surfaceContainerHigh
+                    else MaterialTheme.colorScheme.primaryContainer
+                } else MaterialTheme.colorScheme.surfaceContainerLow
+            )
+        ) {
+            if (isLoggedIn) {
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(20.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        // Avatar circle
+                        Surface(
+                            modifier = Modifier.size(72.dp),
+                            shape = CircleShape,
+                            color = if (isTokenExpired) MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
+                                    else MaterialTheme.colorScheme.primary
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Text(
+                                    text = savedRealName.take(1),
+                                    style = MaterialTheme.typography.headlineLarge,
+                                    color = if (isTokenExpired) MaterialTheme.colorScheme.onSurface
+                                            else MaterialTheme.colorScheme.onPrimary
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = savedRealName.ifEmpty { "已登录" },
+                            style = MaterialTheme.typography.titleLarge,
+                            color = if (isTokenExpired) MaterialTheme.colorScheme.onSurface
+                                    else MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        val subTextColor = if (isTokenExpired) MaterialTheme.colorScheme.onSurfaceVariant
+                                          else MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                        if (savedStudentId.isNotEmpty()) {
+                            Text(text = savedStudentId, style = MaterialTheme.typography.bodyMedium, color = subTextColor)
+                        }
+                        if (savedDeptName.isNotEmpty()) {
+                            Text(text = savedDeptName, style = MaterialTheme.typography.bodyMedium, color = subTextColor)
+                        }
+                        if (isTokenExpired) {
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Surface(
+                                shape = CircleShape,
+                                color = MaterialTheme.colorScheme.errorContainer,
+                                contentColor = MaterialTheme.colorScheme.onErrorContainer
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(Icons.Default.Warning, null, modifier = Modifier.size(14.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(text = "登录已过期，请重新验证", style = MaterialTheme.typography.labelSmall)
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Button(
+                                onClick = { onRefreshCaptcha(); showReloginDialog = true },
+                                modifier = Modifier.fillMaxWidth(0.6f),
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                            ) {
+                                Icon(Icons.AutoMirrored.Filled.Login, null, modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("重新登录")
+                            }
+                        }
+                    }
+                    // Logout icon — no extra Surface wrapper, blends into card color
+                    IconButton(
+                        onClick = onLogout,
+                        modifier = Modifier.align(Alignment.TopEnd).padding(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.Logout,
+                            contentDescription = stringResource(R.string.logout),
+                            modifier = Modifier.size(22.dp),
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                        )
+                    }
+                }
+            } else {
+                // Not logged in — card itself is the click target, no nested Button
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Surface(
+                        modifier = Modifier.size(56.dp),
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.surfaceContainer
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                Icons.Default.Person,
+                                contentDescription = null,
+                                modifier = Modifier.size(28.dp),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = stringResource(R.string.login_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = stringResource(R.string.about_login_desc),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = stringResource(R.string.login_button),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Group 1: 学期信息
+        Md3Card(modifier = Modifier.fillMaxWidth(), variant = Md3CardVariant.Elevated) {
+            Column {
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.semester_start)) },
+                    supportingContent = { Text(semesterStart.toString()) },
+                    leadingContent = { val bc = com.ty.gkschedule.util.CourseColors.getSettingsBadgeColor(0); Surface(modifier = Modifier.size(40.dp), shape = MaterialTheme.shapes.small, color = bc.container, contentColor = bc.content) { Box(contentAlignment = Alignment.Center) { Icon(Icons.Default.CalendarMonth, null, modifier = Modifier.size(22.dp)) } } },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+                )
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.total_weeks)) },
+                    supportingContent = { Text("$totalWeeks") },
+                    leadingContent = { val bc = com.ty.gkschedule.util.CourseColors.getSettingsBadgeColor(1); Surface(modifier = Modifier.size(40.dp), shape = MaterialTheme.shapes.small, color = bc.container, contentColor = bc.content) { Box(contentAlignment = Alignment.Center) { Icon(Icons.Default.DateRange, null, modifier = Modifier.size(22.dp)) } } },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+                )
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.periods_per_day)) },
+                    supportingContent = { Text("$periodsPerDay") },
+                    leadingContent = { val bc = com.ty.gkschedule.util.CourseColors.getSettingsBadgeColor(2); Surface(modifier = Modifier.size(40.dp), shape = MaterialTheme.shapes.small, color = bc.container, contentColor = bc.content) { Box(contentAlignment = Alignment.Center) { Icon(Icons.Default.AccessTime, null, modifier = Modifier.size(22.dp)) } } },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(12.dp))
+        // Group 2: 功能入口
+        Md3Card(modifier = Modifier.fillMaxWidth(), variant = Md3CardVariant.Elevated) {
+            Column {
+                ListItem(
+                    headlineContent = { Text("考试安排") },
+                    supportingContent = { Text("查看考试时间和考场") },
+                    leadingContent = { val bc = com.ty.gkschedule.util.CourseColors.getSettingsBadgeColor(3); Surface(modifier = Modifier.size(40.dp), shape = MaterialTheme.shapes.small, color = bc.container, contentColor = bc.content) { Box(contentAlignment = Alignment.Center) { Icon(Icons.Default.School, null, modifier = Modifier.size(22.dp)) } } },
+                    trailingContent = { Icon(Icons.Default.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                    modifier = Modifier.clickable(onClick = onOpenExam)
+                )
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.settings_title)) },
+                    supportingContent = { Text(stringResource(R.string.about_settings_desc)) },
+                    leadingContent = { val bc = com.ty.gkschedule.util.CourseColors.getSettingsBadgeColor(4); Surface(modifier = Modifier.size(40.dp), shape = MaterialTheme.shapes.small, color = bc.container, contentColor = bc.content) { Box(contentAlignment = Alignment.Center) { Icon(Icons.Default.Settings, null, modifier = Modifier.size(22.dp)) } } },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                    modifier = Modifier.clickable(onClick = onOpenSettings)
+                )
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.about_title)) },
+                    supportingContent = { Text(stringResource(R.string.about_school)) },
+                    leadingContent = { val bc = com.ty.gkschedule.util.CourseColors.getSettingsBadgeColor(5); Surface(modifier = Modifier.size(40.dp), shape = MaterialTheme.shapes.small, color = bc.container, contentColor = bc.content) { Box(contentAlignment = Alignment.Center) { Icon(Icons.AutoMirrored.Filled.Article, null, modifier = Modifier.size(22.dp)) } } },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                    modifier = Modifier.clickable { onOpenAbout() }
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.weight(1f))
+
+        Text(
+            text = stringResource(R.string.about_copyright),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+            // ponytail: 默认底栏透底避让（DeepSeek四处diff之四）
+            modifier = Modifier.padding(
+                bottom = 16.dp + 80.dp +
+                    WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+            )
+        )
+        } // Column
+    } // 背景Box
+
+    // Re-login dialog (captcha only) — 只糊卡片不糊全屏，Dialog + BlurCard 载体等大
+    if (showReloginDialog) {
+        var captcha by remember { mutableStateOf("") }
+        androidx.compose.ui.window.Dialog(onDismissRequest = { showReloginDialog = false }) {
+            com.ty.gkschedule.ui.theme.BlurCard(
+                enabled = true,
+                modifier = Modifier.fillMaxWidth(),
+                radiusDp = 36f,
+                backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.48f),
+                cornerRadiusDp = 28f
+            ) {
+                Column(modifier = Modifier.padding(24.dp)) {
+                    Text(
+                        text = "教务系统登录过期",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("请输入验证码重新登录", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Spacer(modifier = Modifier.height(12.dp))
+                    if (captchaImageBase64 != null && captchaImageBase64.isNotEmpty()) {
+                        val bitmap = remember(captchaImageBase64) {
+                            try {
+                                val bytes = android.util.Base64.decode(captchaImageBase64, android.util.Base64.DEFAULT)
+                                android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                            } catch (_: Exception) { null }
+                        }
+                        if (bitmap != null) {
+                            Card(
+                                modifier = Modifier.size(width = 120.dp, height = 56.dp)
+                                    .clickable { onRefreshCaptcha() },
+                                shape = MaterialTheme.shapes.small
+                            ) {
+                                Image(bitmap = bitmap.asImageBitmap(), contentDescription = "Captcha",
+                                    modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Fit)
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = captcha,
+                        onValueChange = { captcha = it },
+                        label = { Text(stringResource(R.string.login_captcha)) },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        TextButton(onClick = { showReloginDialog = false }) { Text(stringResource(R.string.cancel)) }
+                        TextButton(
+                            onClick = {
+                                if (captcha.isNotBlank()) {
+                                    onQuickRelogin(captcha)
+                                    showReloginDialog = false
+                                }
+                            },
+                            enabled = captcha.isNotBlank()
+                        ) { Text("登录") }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CreditItem(label: String, value: String) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text("$label: ", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+        Text(value, style = MaterialTheme.typography.bodyMedium)
+    }
+}
+
+===== FILE: app/src/main/java/com/ty/gkschedule/ui/manage/CourseManageScreen.kt =====
+package com.ty.gkschedule.ui.manage
+
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DeleteSweep
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.lerp
+import com.ty.gkschedule.R
+import com.ty.gkschedule.data.Course
+import com.ty.gkschedule.util.CourseColors
+import top.yukonga.miuix.kmp.blur.blendColors
+import top.yukonga.miuix.kmp.blur.blur
+import top.yukonga.miuix.kmp.blur.drawBackdrop
+import top.yukonga.miuix.kmp.blur.layerBackdrop
+import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CourseManageScreen(
+    courses: List<Course>,
+    colorEngine: Int = 0,
+    colorGroupMode: Int = 0,
+    blurEnabled: Boolean = true,
+    onCourseClick: (Course) -> Unit,
+    onAddCourse: () -> Unit,
+    onDeleteCourse: (Course) -> Unit,
+    onDeleteAll: () -> Unit,
+    onBack: (() -> Unit)? = null,
+    onScrollHidePill: (Boolean) -> Unit = {},
+    // ponytail: B走穿底——默认底栏高传参抬FAB/列表（悬浮pill传0.dp不抬）
+    bottomBarHeight: androidx.compose.ui.unit.Dp = 0.dp
+) {
+    var showDeleteAllDialog by remember { mutableStateOf(false) }
+    var courseToDelete by remember { mutableStateOf<Course?>(null) }
+
+    val courseGroups = remember(courses) { courses.groupBy { it.name } }
+    val uniqueCourses = remember(courseGroups) { courseGroups.values.map { it.first() }.sortedBy { it.name } }
+
+    val listState = rememberLazyListState()
+    // ponytail: pill跟滚动方向走——下滑内容(手指上推)立即藏，上滑立即现；顶部不强制现
+    var lastOffset by remember { mutableIntStateOf(0) }
+    var lastIndex by remember { mutableIntStateOf(0) }
+    LaunchedEffect(listState.firstVisibleItemIndex, listState.firstVisibleItemScrollOffset) {
+        val idx = listState.firstVisibleItemIndex
+        val off = listState.firstVisibleItemScrollOffset
+        // ponytail: 24px阈值防停顿抖动翻转；跨item同步lastOffset防旧值翻转
+        if (idx != lastIndex) { onScrollHidePill(idx > lastIndex); lastOffset = off; lastIndex = idx }
+        else if (kotlin.math.abs(off - lastOffset) > 24) { onScrollHidePill(off > lastOffset); lastOffset = off }
+    }
+
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    // ponytail: miuix源层，顶栏drawBackdrop吃糊
+    val backdrop = top.yukonga.miuix.kmp.blur.rememberLayerBackdrop()
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    // ponytail: 基础避让锚折叠高，展开差由首项Spacer跟heightOffset联动补，不提前露空洞
+    Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        // ponytail: 顶栏自己吃系统栏，内容区不再重复垫（双重Insets留白根因）
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        topBar = {
+            // ponytail: Large展开/折叠自然形态；字号lerp双重缩放已删，M3内部自带大小标题切换
+            val fraction = scrollBehavior.state.collapsedFraction
+            com.ty.gkschedule.ui.theme.BlurLargeTopBar(
+                title = {
+                    Column {
+                        Text(
+                            stringResource(R.string.course_manage_title),
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1
+                        )
+                        Text(
+                            stringResource(R.string.course_count_format, courses.size),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                                alpha = 1f - fraction * 0.3f
+                            ),
+                            maxLines = 1
+                        )
+                    }
+                },
+                actions = {
+                    if (courses.isNotEmpty()) {
+                        IconButton(onClick = { showDeleteAllDialog = true }) {
+                            Icon(Icons.Default.DeleteSweep, contentDescription = null, tint = MaterialTheme.colorScheme.error)
+                        }
+                    }
+                },
+                scrollBehavior = scrollBehavior,
+                backdrop = backdrop,
+                blurEnabled = blurEnabled
+            )
+        },
+        floatingActionButton = {
+            // ponytail: clip shape与按钮外轮廓同源——不一致必漏角
+            // ponytail: 品牌色放onDrawSurface（糊之后图标之前），Surface不再画第二层抢色
+            // ponytail: 糊度对齐课表5FAB——同70%透，颜色正糊感一致
+            // ponytail: B走穿底——FAB抬到底栏上（bottomBarHeight由ScheduleApp传80.dp）
+            val fabShape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
+            val fabBrand = MaterialTheme.colorScheme.primary
+            val fabOnBrand = MaterialTheme.colorScheme.onPrimary
+            Box(modifier = Modifier.padding(bottom = bottomBarHeight)) {
+            FloatingActionButton(
+                onClick = onAddCourse,
+                shape = fabShape,
+                elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp),
+                modifier = Modifier.drawBackdrop(
+                    backdrop = backdrop,
+                    shape = { fabShape },
+                    effects = { blur(28.dp.toPx()) },
+                    onDrawSurface = { drawRect(fabBrand.copy(alpha = 0.75f)) }
+                ),
+                containerColor = androidx.compose.ui.graphics.Color.Transparent,
+                contentColor = fabOnBrand
+            ) {
+                Icon(Icons.Default.Add, stringResource(R.string.add_course))
+            }
+            }
+        }
+    ) { padding ->
+        // ponytail: 基础padding锚折叠高不露洞；展开88dp由首项Spacer跟heightOffset同步推
+        val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+        val collapsedTopPadding = statusBarTop + 64.dp + 8.dp
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                // ponytail: 底色与今日/我的统一——暗surface/亮surfaceContainer（ScheduleApp主源同值）
+                .layerBackdrop(backdrop)
+                .background(if (com.ty.gkschedule.ui.theme.LocalAppIsDark.current) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainer)
+        ) {
+            if (courses.isEmpty()) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(Icons.Default.Schedule, null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(text = stringResource(R.string.no_course_today), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
+                    }
+                }
+            } else {
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = collapsedTopPadding, bottom = 88.dp + bottomBarHeight),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // ponytail: 首项Spacer跟heightOffset联动，顶栏扩张多少就推多少，同帧同步
+                    item(key = "header_expansion_spacer") {
+                        val heightOffsetDp = with(density) { scrollBehavior.state.heightOffset.toDp() }
+                        val expansionDelta = (88.dp + heightOffsetDp).coerceIn(0.dp, 88.dp)
+                        if (expansionDelta > 0.dp) {
+                            Spacer(modifier = Modifier.height(expansionDelta))
+                        }
+                    }
+                    // ponytail: 门数跟标题走了，列表头不再摆第二份
+                    items(uniqueCourses, key = { it.id }) { course ->
+                        val count = courseGroups[course.name].orEmpty().size
+                        CourseListItem(
+                            course = course,
+                            instanceCount = count,
+                            colorEngine = colorEngine,
+                            colorGroupMode = colorGroupMode,
+                            onClick = { onCourseClick(course) },
+                            onDelete = { courseToDelete = course }
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    courseToDelete?.let { course ->
+        com.ty.gkschedule.ui.theme.BlurAlertDialog(
+            onDismissRequest = { courseToDelete = null },
+            title = { Text(stringResource(R.string.confirm_delete)) },
+            text = { Text(stringResource(R.string.confirm_delete_msg)) },
+            confirmButton = { TextButton(onClick = { onDeleteCourse(course); courseToDelete = null }) { Text(stringResource(R.string.delete)) } },
+            dismissButton = { TextButton(onClick = { courseToDelete = null }) { Text(stringResource(R.string.cancel)) } }
+        )
+    }
+    if (showDeleteAllDialog) {
+        com.ty.gkschedule.ui.theme.BlurAlertDialog(
+            onDismissRequest = { showDeleteAllDialog = false },
+            title = { Text(stringResource(R.string.confirm_delete_all)) },
+            text = { Text(stringResource(R.string.confirm_delete_all_msg)) },
+            confirmButton = { TextButton(onClick = { onDeleteAll(); showDeleteAllDialog = false }) { Text(stringResource(R.string.delete)) } },
+            dismissButton = { TextButton(onClick = { showDeleteAllDialog = false }) { Text(stringResource(R.string.cancel)) } }
+        )
+    }
+}
+
+@Composable
+private fun CourseListItem(
+    course: Course,
+    instanceCount: Int = 1,
+    colorEngine: Int,
+    colorGroupMode: Int,
+    onClick: () -> Unit,
+    onDelete: () -> Unit
+) {
+    val courseColor = CourseColors.getColor(
+        engine = colorEngine,
+        groupMode = colorGroupMode,
+        courseName = course.name,
+        classroom = course.classroom
+    )
+    // ponytail: 白天竖杠用浅色container（与今日/考试页同源），不用深content
+
+    com.ty.gkschedule.ui.theme.Md3Card(
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        variant = com.ty.gkschedule.ui.theme.Md3CardVariant.Elevated,
+        shape = MaterialTheme.shapes.medium
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .width(4.dp)
+                    .height(36.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(courseColor.container)
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = course.name,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+                    if (instanceCount > 1) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Surface(shape = CircleShape, color = courseColor.container) {
+                            Text(
+                                text = "${instanceCount}节",
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = courseColor.content
+                            )
+                        }
+                    }
+                    if (course.isHidden) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Surface(
+                            shape = RoundedCornerShape(4.dp),
+                            color = MaterialTheme.colorScheme.surfaceVariant,
+                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        ) {
+                            Text(
+                                text = stringResource(R.string.hidden_tag),
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+                if (course.classroom.isNotEmpty() || course.teacher.isNotEmpty()) {
+                    Text(
+                        text = listOfNotNull(
+                            course.teacher.ifEmpty { null },
+                            course.classroom.ifEmpty { null }
+                        ).joinToString(" · "),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Text(
+                    text = course.weekRange,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = courseColor.content.copy(alpha = 0.8f)
+                )
+            }
+            IconButton(onClick = onDelete) {
+                Icon(
+                    Icons.Default.Delete,
+                    contentDescription = stringResource(R.string.delete),
+                    tint = MaterialTheme.colorScheme.error.copy(alpha = 0.8f),
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        }
+    }
+}
+
+===== FILE: app/src/main/java/com/ty/gkschedule/ui/about/AboutDetailPage.kt =====
+package com.ty.gkschedule.ui.about
+
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import com.ty.gkschedule.R
+import com.ty.gkschedule.util.UpdateChecker
+import com.ty.gkschedule.util.UpdateInfo
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import top.yukonga.miuix.kmp.blur.layerBackdrop
+import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AboutDetailPage(
+    onBack: () -> Unit,
+    blurEnabled: Boolean = true
+) {
+    val context = LocalContext.current
+    var showDisclaimerDialog by remember { mutableStateOf(false) }
+    var showUpdateDialog by remember { mutableStateOf(false) }
+    var updateInfo by remember { mutableStateOf<UpdateInfo?>(null) }
+    var isCheckingUpdate by remember { mutableStateOf(false) }
+    var updateError by remember { mutableStateOf<String?>(null) }
+
+    // Force update: 1 min 内点击超过 3 次强制弹窗
+    var clickCount by remember { mutableIntStateOf(0) }
+    var firstClickTime by remember { mutableLongStateOf(0L) }
+    var forceShowDialog by remember { mutableStateOf(false) }
+
+    val currentVersion = remember { UpdateChecker.getCurrentVersion(context) }
+
+    // ponytail: miuix源层
+    val backdrop = top.yukonga.miuix.kmp.blur.rememberLayerBackdrop()
+    Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+        topBar = {
+            com.ty.gkschedule.ui.theme.BlurTopBar(
+                title = { Text(stringResource(R.string.about_title)) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "返回")
+                    }
+                },
+                backdrop = backdrop,
+                blurEnabled = blurEnabled
+            )
+        }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .layerBackdrop(backdrop)
+                .background(MaterialTheme.colorScheme.surfaceContainer)
+                                // ponytail: 避让走滚动内padding，源纹理全屏录(含顶栏身后)
+                .verticalScroll(rememberScrollState())
+                .padding(top = padding.calculateTopPadding()),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // App icon
+            Image(
+                painter = painterResource(id = R.mipmap.ic_launcher),
+                contentDescription = "App Icon",
+                modifier = Modifier
+                    .size(96.dp)
+                    .clip(RoundedCornerShape(24.dp)),
+                contentScale = ContentScale.Crop
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // App name
+            Text(
+                text = stringResource(R.string.app_name),
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            // Version
+            Text(
+                text = "v$currentVersion",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Description
+            Text(
+                text = stringResource(R.string.about_desc),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 32.dp)
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Update check section
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    // Current version
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = stringResource(R.string.update_current_version),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = currentVersion,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Check update button
+                    Button(
+                        onClick = {
+                            if (!isCheckingUpdate) {
+                                // Track clicks for force update
+                                val now = System.currentTimeMillis()
+                                if (now - firstClickTime > 60_000) {
+                                    clickCount = 1
+                                    firstClickTime = now
+                                } else {
+                                    clickCount++
+                                }
+                                // 1 min 内超过 3 次，强制弹窗
+                                if (clickCount >= 3) {
+                                    clickCount = 0
+                                    forceShowDialog = true
+                                }
+
+                                isCheckingUpdate = true
+                                updateError = null
+                                GlobalScope.launch(Dispatchers.IO) {
+                                    UpdateChecker.checkForUpdate(context)
+                                        .onSuccess { info ->
+                                            withContext(Dispatchers.Main) {
+                                                updateInfo = info
+                                                isCheckingUpdate = false
+                                                if (info.isUpdateAvailable || forceShowDialog) {
+                                                    showUpdateDialog = true
+                                                    forceShowDialog = false
+                                                }
+                                            }
+                                        }
+                                        .onFailure { e ->
+                                            withContext(Dispatchers.Main) {
+                                                updateError = e.message
+                                                isCheckingUpdate = false
+                                            }
+                                        }
+                                }
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !isCheckingUpdate
+                    ) {
+                        if (isCheckingUpdate) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                        } else {
+                            Icon(Icons.Default.Refresh, null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                        }
+                        Text(stringResource(R.string.settings_category_update))
+                    }
+
+                    // Error message
+                    if (updateError != null) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(8.dp),
+                            color = MaterialTheme.colorScheme.errorContainer
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(Icons.Default.Error, null, tint = MaterialTheme.colorScheme.error)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = updateError!!,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onErrorContainer
+                                )
+                            }
+                        }
+                    }
+
+                    // No update available message
+                    if (updateInfo != null && !updateInfo!!.isUpdateAvailable && updateError == null) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(8.dp),
+                            color = MaterialTheme.colorScheme.surfaceContainerLowest
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(Icons.Default.CheckCircle, null, tint = MaterialTheme.colorScheme.primary)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = stringResource(R.string.update_not_available),
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Credits section
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = stringResource(R.string.credits_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    CreditItem(stringResource(R.string.credits_language), "Jetpack Compose (Kotlin)")
+                    CreditItem(stringResource(R.string.credits_design), "Material Design 3 Expressive")
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // AI Assistants section
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = stringResource(R.string.credits_ai),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    AIItem("GPT-5.5")
+                    AIItem("Deepseek-v4-pro")
+                    AIItem("XiaoMi-Mimo-V2.5")
+                    AIItem("XiaoMi-Mimo-V2.5-pro")
+                    AIItem("Google-Gemini-v3.5-flash")
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Reference projects section
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = stringResource(R.string.credits_projects),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text("• SchedU", style = MaterialTheme.typography.bodyMedium)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text("• 拾光课程表", style = MaterialTheme.typography.bodyMedium)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text("• TimeFlow", style = MaterialTheme.typography.bodyMedium)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Disclaimer button
+            OutlinedButton(
+                onClick = { showDisclaimerDialog = true },
+                modifier = Modifier.padding(horizontal = 16.dp)
+            ) {
+                Text(stringResource(R.string.disclaimer_title))
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Copyright
+            Text(
+                text = stringResource(R.string.about_copyright),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
+        }
+    }
+
+    // Disclaimer dialog
+    if (showDisclaimerDialog) {
+        com.ty.gkschedule.ui.theme.BlurAlertDialog(
+            onDismissRequest = { showDisclaimerDialog = false },
+            title = { Text(stringResource(R.string.disclaimer_title)) },
+            text = {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 400.dp)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    Text(
+                        text = stringResource(R.string.disclaimer_text),
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showDisclaimerDialog = false }) {
+                    Text("OK")
+                }
+            }
+        )
+    }
+
+    // Update dialog
+    if (showUpdateDialog && updateInfo != null) {
+        com.ty.gkschedule.ui.theme.BlurAlertDialog(
+            onDismissRequest = { showUpdateDialog = false },
+            icon = { Icon(Icons.Default.SystemUpdate, null, tint = MaterialTheme.colorScheme.primary) },
+            title = { Text(stringResource(R.string.update_available)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = "${stringResource(R.string.update_current_version)}: v$currentVersion",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Text(
+                        text = "${stringResource(R.string.update_latest_version)}: v${updateInfo!!.latestVersion}",
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium
+                    )
+                    if (updateInfo!!.fileSize > 0) {
+                        Text(
+                            text = "${stringResource(R.string.update_size)}: ${formatFileSize(updateInfo!!.fileSize)}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    if (updateInfo!!.releaseNotes.isNotEmpty()) {
+                        HorizontalDivider()
+                        Text(
+                            text = updateInfo!!.releaseNotes,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = 150.dp)
+                                .verticalScroll(rememberScrollState())
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showUpdateDialog = false
+                        val url = updateInfo?.downloadUrl.orEmpty()
+                        if (url.isNotEmpty()) {
+                            // ponytail: 下载走系统DownloadManager（通知栏/断点/完成安装全托管）
+                            UpdateChecker.enqueueDownload(
+                                context, url,
+                                "GKSchedule-v${updateInfo!!.latestVersion}.apk"
+                            )
+                            android.widget.Toast.makeText(context, "已开始下载，可在通知栏查看进度", android.widget.Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    enabled = updateInfo?.downloadUrl?.isNotEmpty() == true
+                ) {
+                    Icon(Icons.Default.Download, null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(R.string.update_download))
+                }
+            },
+            dismissButton = {
+                Row {
+                    TextButton(onClick = {
+                        showUpdateDialog = false
+                        val url = updateInfo?.downloadUrl.orEmpty()
+                        if (url.isNotEmpty()) UpdateChecker.openInBrowser(context, url)
+                    }) {
+                        Text(stringResource(R.string.update_browser))
+                    }
+                    TextButton(onClick = { showUpdateDialog = false }) {
+                        Text(stringResource(R.string.cancel))
+                    }
+                }
+            }
+        )
+    }
+}
+
+@Composable
+private fun CreditItem(label: String, value: String) {
+    Row {
+        Text(
+            text = "$label: ",
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium
+        )
+    }
+    Spacer(modifier = Modifier.height(8.dp))
+}
+
+@Composable
+private fun AIItem(name: String) {
+    Row(
+        modifier = Modifier.padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = "• ",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.primary
+        )
+        Text(
+            text = name,
+            style = MaterialTheme.typography.bodyMedium
+        )
+    }
+}
+
+private fun formatFileSize(bytes: Long): String {
+    return when {
+        bytes < 1024 -> "$bytes B"
+        bytes < 1024 * 1024 -> "${bytes / 1024} KB"
+        else -> "${"%.1f".format(bytes / (1024.0 * 1024.0))} MB"
+    }
+}
+
+===== FILE: app/src/main/java/com/ty/gkschedule/ui/theme/Md3Card.kt =====
+package com.ty.gkschedule.ui.theme
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import com.google.android.material.color.utilities.Hct
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+
+enum class Md3CardVariant { Elevated, Filled, Outlined }
+
+@Composable
+fun Md3Card(
+    modifier: Modifier = Modifier,
+    variant: Md3CardVariant = Md3CardVariant.Elevated,
+    shape: Shape = MaterialTheme.shapes.medium,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    val isDark = LocalAppIsDark.current
+    // ponytail: Elevated亮模式surfaceContainerLow——底surfaceContainer上浮一阶，弃纯白surface
+    val elevatedColor = if (isDark) MaterialTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surfaceContainerLow
+
+    when (variant) {
+        Md3CardVariant.Elevated -> Surface(
+            modifier = modifier,
+            shape = shape,
+            color = elevatedColor,
+            tonalElevation = if (isDark) 6.dp else 0.dp,
+            shadowElevation = if (isDark) 1.dp else 0.5.dp
+        ) {
+            Column { content() }
+        }
+        Md3CardVariant.Filled -> Card(
+            modifier = modifier,
+            shape = shape,
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHighest),
+            content = content
+        )
+        Md3CardVariant.Outlined -> OutlinedCard(
+            modifier = modifier,
+            shape = shape,
+            content = content
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun Md3Card(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    variant: Md3CardVariant = Md3CardVariant.Elevated,
+    shape: Shape = MaterialTheme.shapes.medium,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    val isDark = LocalAppIsDark.current
+    // ponytail: Elevated亮模式surfaceContainerLow——底surfaceContainer上浮一阶，弃纯白surface
+    val elevatedColor = if (isDark) MaterialTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surfaceContainerLow
+
+    when (variant) {
+        Md3CardVariant.Elevated -> Surface(
+            onClick = onClick,
+            modifier = modifier,
+            shape = shape,
+            color = elevatedColor,
+            tonalElevation = if (isDark) 6.dp else 0.dp,
+            shadowElevation = if (isDark) 1.dp else 0.5.dp
+        ) {
+            Column { content() }
+        }
+        Md3CardVariant.Filled -> Card(
+            onClick = onClick,
+            modifier = modifier,
+            shape = shape,
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHighest),
+            content = content
+        )
+        Md3CardVariant.Outlined -> OutlinedCard(
+            onClick = onClick,
+            modifier = modifier,
+            shape = shape,
+            content = content
+        )
+    }
+}
+
+@Composable
+fun SettingsIconBadge(
+    icon: ImageVector,
+    containerColor: Color,
+    iconColor: Color,
+    modifier: Modifier = Modifier,
+    size: Dp = 42.dp,
+    iconSize: Dp = 22.dp
+) {
+    Box(
+        modifier = modifier
+            .size(size)
+            .background(containerColor, RoundedCornerShape(12.dp)),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            modifier = Modifier.size(iconSize),
+            tint = iconColor
+        )
+    }
+}
+
+@Composable
+fun monetCardColor(seedColor: Color): Color {
+    val isDark = LocalAppIsDark.current
+    val hue = Hct.fromInt(seedColor.toArgb()).hue
+    val tone = if (isDark) 30.0 else 90.0
+    return Color(Hct.from(hue, 70.0, tone).toInt())
+}
+
+===== FILE: app/src/main/java/com/ty/gkschedule/ui/theme/Theme.kt =====
+package com.ty.gkschedule.ui.theme
+
+import android.os.Build
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
+
+val LocalAppIsDark = compositionLocalOf { false }
+
+val ExpressiveShapes = Shapes(
+    extraSmall = RoundedCornerShape(4.dp),
+    small = RoundedCornerShape(8.dp),
+    medium = RoundedCornerShape(12.dp),
+    large = RoundedCornerShape(16.dp),
+    extraLarge = RoundedCornerShape(28.dp)
+)
+
+private val LightColorScheme = lightColorScheme()
+private val DarkColorScheme = darkColorScheme()
+
+@Composable
+fun GKScheduleTheme(
+    darkTheme: String = "system",
+    content: @Composable () -> Unit
+) {
+    val isDark = when (darkTheme) {
+        "dark" -> true
+        "light" -> false
+        else -> isSystemInDarkTheme()
+    }
+    val context = LocalContext.current
+    val colorScheme = when {
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && isDark -> dynamicDarkColorScheme(context)
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> dynamicLightColorScheme(context)
+        isDark -> DarkColorScheme
+        else -> LightColorScheme
+    }
+
+    CompositionLocalProvider(LocalAppIsDark provides isDark) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = Typography,
+            shapes = ExpressiveShapes,
+            content = content
+        )
+    }
+}
+
+===== FILE: app/src/main/java/com/ty/gkschedule/ui/theme/BlurTopBar.kt =====
+package com.ty.gkschedule.ui.theme
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.LargeTopAppBar
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.TopAppBarScrollBehavior
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.unit.dp
+import top.yukonga.miuix.kmp.blur.Backdrop
+import top.yukonga.miuix.kmp.blur.blur
+import top.yukonga.miuix.kmp.blur.drawBackdrop
+
+// ponytail: 顶栏miuix糊——drawBackdrop吃backdrop源，RuntimeShader真模糊；关开关回退纯色
+// ponytail: 糊矩形=Box bounds（含状态栏）；内层顶栏windowInsets=0+透明底，不叠第二层
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun BlurLargeTopBar(
+    title: @Composable () -> Unit,
+    navigationIcon: @Composable () -> Unit = {},
+    actions: @Composable RowScope.() -> Unit = {},
+    backdrop: Backdrop? = null,
+    blurEnabled: Boolean = true,
+    scrollBehavior: TopAppBarScrollBehavior? = null
+) {
+    val useBlur = blurEnabled && backdrop != null
+    val barBg = MaterialTheme.colorScheme.surface.copy(
+        alpha = if (useBlur) 0.40f else 1f
+    )
+    // ponytail: Large顶栏真折叠——miuix糊跟栏高收缩走，折叠黑条是糊层没跟上
+    // ponytail: windowInsets交还M3（外层statusBarsPadding会推歪两行measure基线）
+    Box(
+        modifier = Modifier
+            .then(
+                if (useBlur) Modifier.drawBackdrop(
+                    backdrop = backdrop!!,
+                    shape = { RectangleShape },
+                    effects = { blur(28.dp.toPx()) }
+                ) else Modifier
+            )
+            .background(barBg)
+    ) {
+        LargeTopAppBar(
+            title = title,
+            navigationIcon = navigationIcon,
+            actions = actions,
+            windowInsets = TopAppBarDefaults.windowInsets,
+            scrollBehavior = scrollBehavior,
+            colors = TopAppBarDefaults.topAppBarColors(
+                containerColor = Color.Transparent,
+                scrolledContainerColor = Color.Transparent
+            )
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun BlurTopBar(
+    title: @Composable () -> Unit,
+    navigationIcon: @Composable () -> Unit = {},
+    actions: @Composable RowScope.() -> Unit = {},
+    backdrop: Backdrop? = null,
+    blurEnabled: Boolean = true,
+    scrollBehavior: TopAppBarScrollBehavior? = null
+) {
+    val useBlur = blurEnabled && backdrop != null
+    val barBg = MaterialTheme.colorScheme.surface.copy(
+        alpha = if (useBlur) 0.40f else 1f
+    )
+    Box(
+        modifier = Modifier
+            .then(
+                if (useBlur) Modifier.drawBackdrop(
+                    backdrop = backdrop!!,
+                    shape = { RectangleShape },
+                    effects = { blur(28.dp.toPx()) }
+                ) else Modifier
+            )
+            .background(barBg)
+    ) {
+        TopAppBar(
+            title = title,
+            navigationIcon = navigationIcon,
+            actions = actions,
+            scrollBehavior = scrollBehavior,
+            colors = TopAppBarDefaults.topAppBarColors(
+                containerColor = Color.Transparent,
+                scrolledContainerColor = Color.Transparent
+            )
+        )
+    }
+}
+
