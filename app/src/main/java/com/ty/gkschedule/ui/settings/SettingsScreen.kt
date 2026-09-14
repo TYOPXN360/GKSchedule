@@ -35,6 +35,7 @@ import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
+    startDestination: String = "main",
     semesterStart: LocalDate,
     totalWeeks: Int,
     periodsPerDay: Int,
@@ -111,7 +112,8 @@ fun SettingsScreen(
 
         NavHost(
             navController = navController,
-            startDestination = "main",
+            // ponytail: startDestination外部可指定——Lineage EXTRA_SHOW_FRAGMENT同款直达
+            startDestination = startDestination,
             // ponytail: 设置内页统一右进左出，与主NavHost子页同规范；tab spec只给主tab用
                 enterTransition = {
                     slideInHorizontally(com.ty.gkschedule.ui.theme.M3Motion.pageEnterSpec()) { it } + fadeIn(com.ty.gkschedule.ui.theme.M3Motion.subPageEnterSpec())

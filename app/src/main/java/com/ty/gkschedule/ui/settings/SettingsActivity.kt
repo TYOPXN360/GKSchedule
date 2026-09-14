@@ -18,9 +18,15 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class SettingsActivity : AppCompatActivity() {
+    // ponytail: Lineage同款EXTRA_SHOW_FRAGMENT——外部直达子页，不经过main
+    companion object {
+        const val EXTRA_SHOW_FRAGMENT = ":settings:show_fragment"
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        val startPage = intent.getStringExtra(EXTRA_SHOW_FRAGMENT)?.takeIf { it.isNotBlank() } ?: "main"
 
         setContent {
             val vm: ScheduleViewModel = viewModel()
@@ -91,6 +97,7 @@ class SettingsActivity : AppCompatActivity() {
                     val pillContentMode by vm.pillContentMode.collectAsState(initial = 0)
 
                     SettingsScreen(
+                        startDestination = startPage,
                         semesterStart = semesterStart,
                         totalWeeks = totalWeeks,
                         periodsPerDay = periodsPerDay,
