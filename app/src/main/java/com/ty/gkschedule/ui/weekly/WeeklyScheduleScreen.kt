@@ -357,7 +357,13 @@ fun WeeklyScheduleScreen(
                             .verticalScroll(rememberScrollState())
                     ) {
                         // Layer 1: Grid background
-                        Column(modifier = Modifier.fillMaxWidth().height(totalGridHeight)) {
+                        // ponytail: 停底栏上（管理页穿底出糊，其他页占位）
+                        Column(
+                            modifier = Modifier.fillMaxWidth().height(
+                                totalGridHeight + 80.dp +
+                                    WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+                            )
+                        ) {
                             for (period in 1..periodsPerDay) {
                                 Row(modifier = Modifier.fillMaxWidth().height(rowH)) {
                                     if (showPeriodLabel) {

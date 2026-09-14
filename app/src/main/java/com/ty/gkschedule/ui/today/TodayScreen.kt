@@ -350,7 +350,15 @@ fun TodayScreen(
             }
         }
 
-        item { Spacer(modifier = Modifier.height(16.dp)) }
+        // ponytail: 停底栏上（管理页穿底出糊，其他页占位）
+        item {
+            Spacer(
+                modifier = Modifier.height(
+                    16.dp + 80.dp +
+                        WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+                )
+            )
+        }
     }
 
     // Detail sheet
