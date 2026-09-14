@@ -142,7 +142,7 @@ class SubSettingsSyncActivity : SubSettingsBaseActivity() {
         val autoSyncOnStart by vm.autoSyncOnStart.collectAsState(initial = true)
         val autoSyncIntervalValue by vm.autoSyncIntervalValue.collectAsState(initial = 1)
         val autoSyncIntervalUnit by vm.autoSyncIntervalUnit.collectAsState(initial = "d")
-        val tokenHeartbeat by vm.tokenHeartbeat.collectAsState(initial = true)
+        val tokenHeartbeat by vm.tokenHeartbeat.collectAsState(initial = false)
         val showExamSchedule by vm.showExamSchedule.collectAsState(initial = false)
         val examLookaheadWeeks by vm.examLookaheadWeeks.collectAsState(initial = 1)
         val diffColorPerWeek by vm.diffColorPerWeek.collectAsState(initial = false)

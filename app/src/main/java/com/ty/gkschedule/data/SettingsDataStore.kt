@@ -102,7 +102,7 @@ class SettingsDataStore(private val context: Context) {
     val autoSyncOnStart: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[AUTO_SYNC_ON_START] ?: true }
     val autoSyncIntervalValue: Flow<Int> = context.dataStore.data.map { prefs -> prefs[AUTO_SYNC_INTERVAL_VALUE] ?: 1 }
     val autoSyncIntervalUnit: Flow<String> = context.dataStore.data.map { prefs -> prefs[AUTO_SYNC_INTERVAL_UNIT] ?: "d" }
-    val tokenHeartbeat: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[TOKEN_HEARTBEAT] ?: true }
+    val tokenHeartbeat: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[TOKEN_HEARTBEAT] ?: false }
     val showExamSchedule: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[SHOW_EXAM_SCHEDULE] ?: false }
     val examLookaheadWeeks: Flow<Int> = context.dataStore.data.map { prefs -> prefs[EXAM_LOOKAHEAD_WEEKS] ?: 1 }
     val casTicket: Flow<String> = context.dataStore.data.map { prefs -> prefs[CAS_TICKET] ?: "" }

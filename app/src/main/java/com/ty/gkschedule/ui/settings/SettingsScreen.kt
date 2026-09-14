@@ -470,10 +470,19 @@ internal fun NotificationPage(
     blurEnabled: Boolean = true
 ) {
     SubPage(stringResource(R.string.settings_category_notification), onBack, blurEnabled = blurEnabled) {
+        // ponytail: 开通知=要后台，先弹系统"允许后台运行吗"，允许才真正打开
+        var pendingReminder by remember { mutableStateOf(5) }
+        val requestBg = com.ty.gkschedule.util.BackgroundRun.rememberRequester { allowed ->
+            if (allowed) onReminderMinutesChange(pendingReminder)
+        }
         SettingsCard {
             DropdownItem(Icons.Default.Notifications, stringResource(R.string.reminder),
                 listOf("0" to stringResource(R.string.reminder_off), "5" to stringResource(R.string.reminder_format, 5), "10" to stringResource(R.string.reminder_format, 10), "15" to stringResource(R.string.reminder_format, 15), "30" to stringResource(R.string.reminder_format, 30)),
-                reminderMinutes.toString(), onSelect = { onReminderMinutesChange(it.toInt()) })
+                reminderMinutes.toString(), onSelect = {
+                    val v = it.toInt()
+                    if (v > 0 && reminderMinutes == 0) { pendingReminder = v; requestBg() }
+                    else onReminderMinutesChange(v)
+                })
             AnimatedVisibility(visible = reminderMinutes > 0, enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) {
                 Column {
                     HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
@@ -618,6 +627,10 @@ internal fun SyncPage(
         Spacer(modifier = Modifier.height(16.dp))
 
         SettingsCard {
+            // ponytail: 开心跳=要后台，先弹系统页，允许才真正打开；默认关闭
+            val requestBgHb = com.ty.gkschedule.util.BackgroundRun.rememberRequester { allowed ->
+                if (allowed) onTokenHeartbeatChange(true)
+            }
             var showHeartbeatInfo by remember { mutableStateOf(false) }
             ListItem(
                 headlineContent = { Text(stringResource(R.string.token_heartbeat)) },
@@ -629,7 +642,10 @@ internal fun SyncPage(
                         }
                         GKSwitch(
                             checked = tokenHeartbeat,
-                            onCheckedChange = onTokenHeartbeatChange
+                            onCheckedChange = { v ->
+                                if (v && !tokenHeartbeat) requestBgHb()
+                                else onTokenHeartbeatChange(v)
+                            }
                         )
                     }
                 },
