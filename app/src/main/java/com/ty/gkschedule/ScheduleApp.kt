@@ -210,6 +210,7 @@ private fun FloatingPillNavBar(
                 val visibleText = (showText || selected) && (expanded || selected)
                 val visibleIcon = showIcon || selected || !visibleText
                 // ponytail: 选中底只给55%透明，透出药丸糊层，不盖糊
+                // ponytail: 样式切换仅抽屉（AnimatedVisibility expand/shrinkVertical），不用推入
                 val bg = if (selected) MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.75f) else Color.Transparent
                 val fg = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
                 Row(
@@ -223,10 +224,17 @@ private fun FloatingPillNavBar(
                         .padding(horizontal = if (visibleText && visibleIcon) itemHPadBoth else itemHPadSingle, vertical = itemVPad),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    // ponytail: 仅抽屉——图标常驻，文字expand/shrinkVertical展开，不推入
                     if (visibleIcon) Icon(triple.first, contentDescription = triple.second, tint = fg, modifier = Modifier.size(iconSize))
-                    if (visibleText) {
-                        if (visibleIcon) Spacer(modifier = Modifier.width(gapW))
-                        Text(triple.second, style = textStyle, color = fg, maxLines = 1)
+                    androidx.compose.animation.AnimatedVisibility(
+                        visible = visibleText,
+                        enter = androidx.compose.animation.expandHorizontally(expandFrom = Alignment.Start) + androidx.compose.animation.fadeIn(),
+                        exit = androidx.compose.animation.shrinkHorizontally(shrinkTowards = Alignment.Start) + androidx.compose.animation.fadeOut()
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            if (visibleIcon) Spacer(modifier = Modifier.width(gapW))
+                            Text(triple.second, style = textStyle, color = fg, maxLines = 1)
+                        }
                     }
                 }
             }
