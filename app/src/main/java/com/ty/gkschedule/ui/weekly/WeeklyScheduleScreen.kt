@@ -513,7 +513,7 @@ fun WeeklyScheduleScreen(
         if (!hideFabs) {
         var fabExpanded by remember { mutableStateOf(true) }
         val expandHeight by animateDpAsState(
-            targetValue = if (fabExpanded) (3 * 56 + 3 * 12).dp else 0.dp,
+            targetValue = if (fabExpanded) (2 * 56 + 2 * 12).dp else 0.dp,
             animationSpec = spring(dampingRatio = 0.85f, stiffness = 300f),
             label = "expandHeight"
         )

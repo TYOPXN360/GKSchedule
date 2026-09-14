@@ -253,12 +253,15 @@ fun BlurDropdownMenu(    expanded: Boolean,
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit
 ) {
+    // ponytail: 阴影只留一层——DropdownMenu自带tonal表面色+BlurCard糊底叠色=双层直角；
+    // 容器透明+阴影0，形状全交BlurCard圆角
     androidx.compose.material3.DropdownMenu(
         expanded = expanded,
         onDismissRequest = onDismissRequest,
         modifier = modifier,
         containerColor = Color.Transparent,
-        shadowElevation = 6.dp
+        shadowElevation = 0.dp,
+        tonalElevation = 0.dp
     ) {
         BlurCard(
             enabled = true,
