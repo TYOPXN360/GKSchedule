@@ -50,6 +50,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.NavDestination.Companion.hasRoute
+import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import com.ty.gkschedule.data.Course
 import com.ty.gkschedule.ui.about.AboutScreen
 import com.ty.gkschedule.ui.login.LoginScreen
@@ -357,9 +360,18 @@ fun ScheduleApp(
     }
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route
+    val currentDestination = navBackStackEntry?.destination
+    // ponytail: 官方规范——选中走hierarchy判（嵌套图/参数路由不漏），切换pop到graph.findStartDestination
     val bottomBarScreens = listOf("today", "weekly", "courses", "about")
+    val currentRoute = currentDestination?.route
     val showBottomBar = currentRoute in bottomBarScreens
+    fun navigateTab(route: String) {
+        navController.navigate(route) {
+            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+            launchSingleTop = true
+            restoreState = true
+        }
+    }
     // ponytail: BackHandler必须在NavHost之后注册才优先（后加先调），放函数末尾；tab页吞预测秒回，首页放行回桌面
     val navView = androidx.compose.ui.platform.LocalView.current
     val mainScaffoldBg = if (com.ty.gkschedule.ui.theme.LocalAppIsDark.current) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainer
@@ -387,15 +399,10 @@ fun ScheduleApp(
                             NavigationBarItem(
                                 icon = { Icon(triple.first, contentDescription = triple.second) },
                                 label = { Text(triple.second) },
-                                selected = currentRoute == screen.route,
+                                selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
                                 onClick = {
                                     com.ty.gkschedule.util.HapticFeedback.light(navView)
-                                    if (currentRoute != screen.route) {
-                                        navController.navigate(screen.route) {
-                                            popUpTo(startPage) { saveState = true }
-                                            launchSingleTop = true; restoreState = true
-                                        }
-                                    }
+                                    navigateTab(screen.route)
                                 }
                             )
                         }
@@ -500,12 +507,7 @@ fun ScheduleApp(
                     visible = showBottomBar && !(pillHidden && !pillCollapsed)
                 ) { screen ->
                     com.ty.gkschedule.util.HapticFeedback.light(navView)
-                    if (currentRoute != screen.route) {
-                        navController.navigate(screen.route) {
-                            popUpTo(startPage) { saveState = true }
-                            launchSingleTop = true; restoreState = true
-                        }
-                    }
+                    navigateTab(screen.route)
                 }
             }
             // ponytail: snackbar贴pill上——悬浮模式Scaffold无snackbarHost槽，pill兄弟层自挂一份
