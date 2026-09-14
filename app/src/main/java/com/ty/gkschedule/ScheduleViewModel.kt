@@ -186,7 +186,8 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                     totalWeeks = values[6] as Int
                 )
             }.collect { config ->
-                if (config.reminderMinutes > 0) {
+                // ponytail: 任一开就排，全关才删——进度通知独立于课前提醒
+                if (config.reminderMinutes > 0 || config.liveUpdate || config.examLiveUpdate) {
                     ReminderScheduler.scheduleUpcomingReminders(
                         context = getApplication(),
                         courses = config.courses,

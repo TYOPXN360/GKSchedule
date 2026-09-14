@@ -113,8 +113,8 @@ object ReminderScheduler {
                         requestCodes = newRequestCodes
                     )
                 }
-                // ponytail: Live进度独立开关，不再依附课程提醒；考试另受考试子开关控制
-                val liveOn = liveUpdate && (session.kind == KIND_COURSE || examLiveUpdate)
+                // ponytail: 课程/考试进度各看各开关，互不为附属
+                val liveOn = (session.kind == KIND_COURSE && liveUpdate) || (session.kind == KIND_EXAM && examLiveUpdate)
                 if (liveOn) {
                     val progressTime = if (now.isAfter(session.start) && now.isBefore(session.end)) now.plusSeconds(2) else session.start
                     if (progressTime.isAfter(now) && progressTime.isBefore(session.end)) {

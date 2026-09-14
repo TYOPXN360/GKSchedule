@@ -22,14 +22,13 @@ class BootReceiver : BroadcastReceiver() {
                     database.courseDao().getAllCourses().first()
                 }
                 val reminderMinutes = runBlocking { settings.reminderMinutes.first() }
-                // ponytail: 关闭时先删残留闹钟再return，否则开机后旧闹钟继续响
-                if (reminderMinutes <= 0) {
+                val liveUpdate = runBlocking { settings.reminderLiveUpdate.first() }
+                val examLiveUpdate = runBlocking { settings.reminderExamLiveUpdate.first() }
+                // ponytail: 全关才删完return；任一开都排，进度独立于课前提醒
+                if (reminderMinutes <= 0 && !liveUpdate && !examLiveUpdate) {
                     ReminderScheduler.cancelAll(context, courses)
                     return@thread
                 }
-
-                val liveUpdate = runBlocking { settings.reminderLiveUpdate.first() }
-                val examLiveUpdate = runBlocking { settings.reminderExamLiveUpdate.first() }
                 val semesterStart = runBlocking { settings.semesterStart.first() }
                 val totalWeeks = runBlocking { settings.totalWeeks.first() }
                 val exams = runBlocking {
