@@ -113,20 +113,9 @@ fun SettingsScreen(
         NavHost(
             navController = navController,
             // ponytail: startDestination外部可指定——Lineage EXTRA_SHOW_FRAGMENT同款直达
-            startDestination = startDestination,
-            // ponytail: 设置内页统一右进左出，与主NavHost子页同规范；tab spec只给主tab用
-                enterTransition = {
-                    slideInHorizontally(com.ty.gkschedule.ui.theme.M3Motion.pageEnterSpec()) { it } + fadeIn(com.ty.gkschedule.ui.theme.M3Motion.subPageEnterSpec())
-                },
-                exitTransition = {
-                    slideOutHorizontally(com.ty.gkschedule.ui.theme.M3Motion.pageExitSpec()) { -it / 4 } + fadeOut(com.ty.gkschedule.ui.theme.M3Motion.subPageExitSpec())
-                },
-                popEnterTransition = {
-                    slideInHorizontally(com.ty.gkschedule.ui.theme.M3Motion.pageEnterSpec()) { -it / 4 } + fadeIn(com.ty.gkschedule.ui.theme.M3Motion.subPageEnterSpec())
-                },
-                popExitTransition = {
-                    slideOutHorizontally(com.ty.gkschedule.ui.theme.M3Motion.pageExitSpec()) { it } + fadeOut(com.ty.gkschedule.ui.theme.M3Motion.subPageExitSpec())
-            }
+            startDestination = startDestination
+            // ponytail: Lineage同款零内容动画——SubSettings transaction.replace()无setCustomAnimations；
+            // 预测返回只播系统窗口动画，自播slide+fade会双层错位+seek抽搐
         ) {
             composable("main") {
                 SettingsMainPage(
