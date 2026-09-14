@@ -358,6 +358,13 @@ fun ScheduleApp(
     val currentRoute = navBackStackEntry?.destination?.route
     val bottomBarScreens = listOf("today", "weekly", "courses", "about")
     val showBottomBar = currentRoute in bottomBarScreens
+    // ponytail: tab页返回直接popBackStack吞预测——转场零动画管的是播什么，管不住系统跟不跟手；
+    // 首页放行回桌面（系统Activity级动画保留）
+    val isAtHome = currentRoute == startPage
+    BackHandler(enabled = showBottomBar && !isAtHome) {
+        val popped = navController.popBackStack()
+        if (!popped) (context as? android.app.Activity)?.finish()
+    }
     val navView = androidx.compose.ui.platform.LocalView.current
     val mainScaffoldBg = if (com.ty.gkschedule.ui.theme.LocalAppIsDark.current) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainer
 
