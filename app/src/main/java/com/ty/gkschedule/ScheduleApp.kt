@@ -371,28 +371,6 @@ fun ScheduleApp(
     val backdrop = rememberLayerBackdrop()
     Scaffold(
         containerColor = mainScaffoldBg,
-        snackbarHost = {
-            SnackbarHost(snackbarHostState) { snackbarData ->
-                // ponytail: 糊贴bar走——Snackbar无content槽，直接糊外层；羽化收半（28dp糊大一圈），强度不变
-                val snackShape = MaterialTheme.shapes.small
-                Snackbar(
-                    modifier = if (blurEffect) Modifier.drawBackdrop(
-                        backdrop = backdrop,
-                        shape = { snackShape },
-                        effects = { blur(12.dp.toPx()) }
-                    ) else Modifier,
-                    action = snackbarData.visuals.actionLabel?.let { label ->
-                        { TextButton(onClick = { snackbarData.performAction() }) { Text(label) } }
-                    },
-                    shape = snackShape,
-                    containerColor = if (blurEffect) MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f) else MaterialTheme.colorScheme.surfaceContainerHigh,
-                    contentColor = MaterialTheme.colorScheme.onSurface,
-                    actionContentColor = MaterialTheme.colorScheme.primary
-                ) {
-                    Text(snackbarData.visuals.message)
-                }
-            }
-        },
         bottomBar = {
             // ponytail: 普通底栏走Scaffold槽位常驻位移；悬浮pill走内容区Box覆盖层，两套互斥
             if (!compactNavBar) {
@@ -518,6 +496,53 @@ fun ScheduleApp(
                             popUpTo(startPage) { saveState = true }
                             launchSingleTop = true; restoreState = true
                         }
+                    }
+                }
+            }
+            // ponytail: snackbar贴pill上——悬浮模式Scaffold无snackbarHost槽，pill兄弟层自挂一份
+            if (showBottomBar) {
+                Box(Modifier.fillMaxSize().padding(bottom = 108.dp), contentAlignment = Alignment.BottomCenter) {
+                    SnackbarHost(snackbarHostState) { snackbarData ->
+                        val snackShape = MaterialTheme.shapes.small
+                        Snackbar(
+                            modifier = if (blurEffect) Modifier.drawBackdrop(
+                                backdrop = backdrop,
+                                shape = { snackShape },
+                                effects = { blur(12.dp.toPx()) }
+                            ) else Modifier,
+                            action = snackbarData.visuals.actionLabel?.let { label ->
+                                { TextButton(onClick = { snackbarData.performAction() }) { Text(label) } }
+                            },
+                            shape = snackShape,
+                            containerColor = if (blurEffect) MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f) else MaterialTheme.colorScheme.surfaceContainerHigh,
+                            contentColor = MaterialTheme.colorScheme.onSurface,
+                            actionContentColor = MaterialTheme.colorScheme.primary
+                        ) {
+                            Text(snackbarData.visuals.message)
+                        }
+                    }
+                }
+            }
+        } else {
+            // ponytail: 普通底栏模式——snackbar走Scaffold槽位（底栏占位，自动顶起）
+            Box(Modifier.fillMaxSize()) {
+                SnackbarHost(snackbarHostState) { snackbarData ->
+                    val snackShape = MaterialTheme.shapes.small
+                    Snackbar(
+                        modifier = if (blurEffect) Modifier.drawBackdrop(
+                            backdrop = backdrop,
+                            shape = { snackShape },
+                            effects = { blur(12.dp.toPx()) }
+                        ) else Modifier,
+                        action = snackbarData.visuals.actionLabel?.let { label ->
+                            { TextButton(onClick = { snackbarData.performAction() }) { Text(label) } }
+                        },
+                        shape = snackShape,
+                        containerColor = if (blurEffect) MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f) else MaterialTheme.colorScheme.surfaceContainerHigh,
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                        actionContentColor = MaterialTheme.colorScheme.primary
+                    ) {
+                        Text(snackbarData.visuals.message)
                     }
                 }
             }

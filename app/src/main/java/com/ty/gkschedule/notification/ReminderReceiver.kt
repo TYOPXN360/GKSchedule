@@ -110,9 +110,8 @@ class ReminderReceiver : BroadcastReceiver() {
                 else -> "正在上课"
             }
 
-            // ponytail: 看齐InstallerX——smallIcon固定品牌图标，百分比走系统chip文字（setShortCriticalText），
-            // 系统字体渲染才够大；自己画位图在状态栏24dp下物理极限，再自适应也糊
-            builder.setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
+            // ponytail: smallIcon复用软件launcher图标（mipmap自适应，状态栏自动套单色）
+            builder.setSmallIcon(com.ty.gkschedule.R.mipmap.ic_launcher)
                 .setShortCriticalText(chipText)
 
             // 尝试使用 ProgressStyle (Live Update API)
@@ -146,7 +145,7 @@ class ReminderReceiver : BroadcastReceiver() {
             val detail = body.ifEmpty { fallback }
             val contentText = if (reminderMinutes > 0) "${reminderMinutes}分钟后 · $detail" else detail
             builder
-                .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
+                .setSmallIcon(com.ty.gkschedule.R.mipmap.ic_launcher)
                 .setContentTitle("$titlePrefix：$courseName")
                 .setContentText(contentText)
                 .setAutoCancel(true)
