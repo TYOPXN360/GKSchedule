@@ -350,7 +350,15 @@ fun TodayScreen(
             }
         }
 
-        item { Spacer(modifier = Modifier.height(16.dp)) }
+        // ponytail: 默认底栏透底避让——内容滚到底栏下出糊，末项防盖（DeepSeek四处diff之二）
+        item {
+            Spacer(
+                modifier = Modifier.height(
+                    16.dp + 80.dp +
+                        WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+                )
+            )
+        }
     }
 
     // Detail sheet

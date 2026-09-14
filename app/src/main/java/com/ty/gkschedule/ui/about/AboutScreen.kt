@@ -271,7 +271,11 @@ fun AboutScreen(
             text = stringResource(R.string.about_copyright),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-            modifier = Modifier.padding(bottom = 16.dp)
+            // ponytail: 默认底栏透底避让（DeepSeek四处diff之四）
+            modifier = Modifier.padding(
+                bottom = 16.dp + 80.dp +
+                    WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+            )
         )
         } // Column
     } // 背景Box

@@ -488,7 +488,7 @@ fun ScheduleApp(
                 popExitTransition = {
                     fadeOut(animationSpec = tween(200, easing = LinearEasing))
                 },
-                modifier = Modifier.fillMaxSize().padding(bottom = innerPadding.calculateBottomPadding())
+                modifier = Modifier.fillMaxSize()
             ) {
             composable("tabs") {
                 androidx.compose.runtime.CompositionLocalProvider(
