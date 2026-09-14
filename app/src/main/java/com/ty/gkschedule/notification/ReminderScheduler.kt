@@ -146,7 +146,7 @@ object ReminderScheduler {
                         requestCodes = newRequestCodes
                     )
                 }
-                // ponytail: 课程/考试进度各看各开关，互不为附属
+                // ponytail: 课程/考试进度各看各开关，互不为附属；PROGRESS只发首帧并埋下分钟链
                 val liveOn = (session.kind == KIND_COURSE && liveUpdate) || (session.kind == KIND_EXAM && examLiveUpdate)
                 if (liveOn) {
                     val progressTime = if (now.isAfter(session.start) && now.isBefore(session.end)) now.plusSeconds(2) else session.start
@@ -159,6 +159,7 @@ object ReminderScheduler {
                             triggerAt = progressTime,
                             notificationId = notificationId,
                             reminderMinutes = reminderMinutes,
+                            triggerTick = true,
                             requestCodes = newRequestCodes
                         )
                     }
@@ -313,6 +314,7 @@ object ReminderScheduler {
         triggerAt: LocalDateTime,
         notificationId: Int,
         reminderMinutes: Int,
+        triggerTick: Boolean = false,
         requestCodes: MutableSet<Int>
     ) {
         val triggerTime = triggerAt.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
@@ -329,6 +331,7 @@ object ReminderScheduler {
             putExtra(ReminderReceiver.EXTRA_END_EPOCH_MILLIS, epochMillis(session.end))
             putExtra(ReminderReceiver.EXTRA_NOTIFICATION_ID, notificationId)
             putExtra(ReminderReceiver.EXTRA_REMINDER_MINUTES, reminderMinutes)
+            putExtra(ReminderReceiver.EXTRA_TRIGGER_TICK, triggerTick)
         }
         val pendingIntent = PendingIntent.getBroadcast(
             context,

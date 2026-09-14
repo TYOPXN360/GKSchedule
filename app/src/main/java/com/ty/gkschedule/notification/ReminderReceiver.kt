@@ -30,6 +30,7 @@ class ReminderReceiver : BroadcastReceiver() {
         const val EXTRA_END_EPOCH_MILLIS = "end_epoch_millis"
         const val EXTRA_NOTIFICATION_ID = "notification_id"
         const val EXTRA_REMINDER_MINUTES = "reminder_minutes"
+        const val EXTRA_TRIGGER_TICK = "trigger_tick"
     }
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -152,6 +153,41 @@ class ReminderReceiver : BroadcastReceiver() {
         }
 
         nm.notify(notificationId, builder.build())
+
+        // ponytail: Live分钟链——PROGRESS首帧带tick标记，每分钟自排下一跳；重启才更新就是链断在这里
+        if ((eventType == EVENT_PROGRESS || eventType == EVENT_COUNTDOWN) && intent.getBooleanExtra(EXTRA_TRIGGER_TICK, false)) {
+            val nextMinute = ((System.currentTimeMillis() / 60000L) + 1) * 60000L
+            if (nextMinute < endEpoch) {
+                val next = Intent(context, ReminderReceiver::class.java).apply {
+                    putExtra(EXTRA_EVENT_TYPE, eventType)
+                    putExtra(EXTRA_ITEM_TYPE, itemType)
+                    putExtra(EXTRA_COURSE_NAME, courseName)
+                    putExtra(EXTRA_CLASSROOM, classroom)
+                    putExtra(EXTRA_TEACHER, teacher)
+                    putExtra(EXTRA_START_TIME, startTime)
+                    putExtra(EXTRA_END_TIME, endTime)
+                    putExtra(EXTRA_START_EPOCH_MILLIS, startEpoch)
+                    putExtra(EXTRA_END_EPOCH_MILLIS, endEpoch)
+                    putExtra(EXTRA_NOTIFICATION_ID, notificationId)
+                    putExtra(EXTRA_REMINDER_MINUTES, reminderMinutes)
+                    putExtra(EXTRA_TRIGGER_TICK, true)
+                }
+                val am = context.getSystemService(Context.ALARM_SERVICE) as android.app.AlarmManager
+                val pi = android.app.PendingIntent.getBroadcast(
+                    context,
+                    "$itemType|$courseName|$startEpoch|$eventType|tick|$nextMinute".hashCode(),
+                    next,
+                    android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE
+                )
+                runCatching {
+                    if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.S || am.canScheduleExactAlarms()) {
+                        am.setExactAndAllowWhileIdle(android.app.AlarmManager.RTC_WAKEUP, nextMinute, pi)
+                    } else {
+                        am.set(android.app.AlarmManager.RTC_WAKEUP, nextMinute, pi)
+                    }
+                }
+            }
+        }
     }
 
     private fun progressPercent(startEpoch: Long, endEpoch: Long): Int {
