@@ -357,12 +357,13 @@ fun WeeklyScheduleScreen(
                             .verticalScroll(rememberScrollState())
                     ) {
                         // Layer 1: Grid background
-                        // ponytail: 停底栏上（管理页穿底出糊，其他页占位）
+                        // ponytail: 停底栏上——网格底垫避让（Canvas同高不管，课程offset绝对不动）
                         Column(
-                            modifier = Modifier.fillMaxWidth().height(
-                                totalGridHeight + 80.dp +
-                                    WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-                            )
+                            modifier = Modifier.fillMaxWidth().height(totalGridHeight)
+                                .padding(
+                                    bottom = 80.dp +
+                                        WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+                                )
                         ) {
                             for (period in 1..periodsPerDay) {
                                 Row(modifier = Modifier.fillMaxWidth().height(rowH)) {
