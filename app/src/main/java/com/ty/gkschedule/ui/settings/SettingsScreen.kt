@@ -425,7 +425,12 @@ internal fun ScheduleStylePage(
         SectionHeader(stringResource(R.string.style_section_navbar))
         SettingsCard {
             SwitchItem(Icons.Default.Dashboard, stringResource(R.string.compact_nav_bar), compactNavBar, onCompactNavBarChange)
-            androidx.compose.animation.AnimatedVisibility(visible = compactNavBar) {
+            // ponytail: 悬浮底栏开关仅抽屉——expand/shrinkVertical上下拉出，同文件其他展开同款
+            androidx.compose.animation.AnimatedVisibility(
+                visible = compactNavBar,
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
                 Column {
                     HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
                     DropdownItem(
