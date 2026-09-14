@@ -444,6 +444,8 @@ private fun CourseCard(
 ) {
     // Real-time isPast check — only for today's courses, updates every 30 seconds
     var realIsPast by remember { mutableStateOf(isPast) }
+    // ponytail: 进度tick——每30秒刷一次nowMins，否则progressнодуш只在重组时算，切页回来才动
+    var tickMins by remember { mutableIntStateOf(LocalTime.now().hour * 60 + LocalTime.now().minute) }
     val isTodayCourse = isCurrent || isPast
     LaunchedEffect(isTodayCourse) {
         if (isTodayCourse) {
@@ -452,6 +454,7 @@ private fun CourseCard(
                 val endMins = parseTime(endTime)
                 val nowMins = now.hour * 60 + now.minute
                 realIsPast = nowMins > endMins
+                tickMins = nowMins
                 kotlinx.coroutines.delay(30_000)
             }
         }
@@ -460,11 +463,9 @@ private fun CourseCard(
     // Progress calculation
     val progress = when {
         isCurrent -> {
-            val now = LocalTime.now()
             val startMins = parseTime(startTime)
             val endMins = parseTime(endTime)
-            val nowMins = now.hour * 60 + now.minute
-            ((nowMins - startMins).toFloat() / (endMins - startMins)).coerceIn(0f, 1f)
+            ((tickMins - startMins).toFloat() / (endMins - startMins)).coerceIn(0f, 1f)
         }
         realIsPast -> 1f
         else -> 0f
@@ -577,7 +578,17 @@ private fun ExamCard(exam: com.ty.gkschedule.data.ExamEntity, examColor: com.ty.
     val timeParts = exam.examTimeRange.split("-")
     val startMins = if (timeParts.size == 2) { val p = timeParts[0].trim().split(":"); p.getOrNull(0)?.toIntOrNull()?.let { h -> h * 60 + (p.getOrNull(1)?.toIntOrNull() ?: 0) } } else null
     val endMins = if (timeParts.size == 2) { val p = timeParts[1].trim().split(":"); p.getOrNull(0)?.toIntOrNull()?.let { h -> h * 60 + (p.getOrNull(1)?.toIntOrNull() ?: 0) } } else null
-    val nowMins = java.time.LocalTime.now().hour * 60 + java.time.LocalTime.now().minute
+    // ponytail: 考试进度同课程tick，每30秒重组，否则切页回来才动
+    var examTickMins by remember { mutableIntStateOf(java.time.LocalTime.now().hour * 60 + java.time.LocalTime.now().minute) }
+    LaunchedEffect(today, startMins, endMins) {
+        if (today && startMins != null && endMins != null) {
+            while (true) {
+                examTickMins = java.time.LocalTime.now().hour * 60 + java.time.LocalTime.now().minute
+                kotlinx.coroutines.delay(30_000)
+            }
+        }
+    }
+    val nowMins = examTickMins
 
     val isPast = when {
         examDate?.isBefore(now) == true -> true
