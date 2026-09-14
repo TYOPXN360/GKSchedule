@@ -1,6 +1,7 @@
 package com.ty.gkschedule.ui.about
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -50,7 +51,14 @@ fun AboutScreen(
 ) {
     var showReloginDialog by remember { mutableStateOf(false) }
 
-Column(
+    // ponytail: 底色与今日/课表/管理统一——暗surface/亮surfaceContainer（ScheduleApp主源同值）
+    androidx.compose.foundation.layout.Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(if (com.ty.gkschedule.ui.theme.LocalAppIsDark.current) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainer),
+        contentAlignment = Alignment.TopCenter
+    ) {
+    Column(
             modifier = Modifier
                 .widthIn(max = 560.dp)
                 .fillMaxSize()
@@ -71,10 +79,11 @@ Column(
             modifier = Modifier.fillMaxWidth(),
             shape = MaterialTheme.shapes.medium,
             colors = CardDefaults.cardColors(
+                // ponytail: 未登录surfaceVariant太跳——换surfaceContainerLow与卡片组同阶
                 containerColor = if (isLoggedIn) {
                     if (isTokenExpired) MaterialTheme.colorScheme.surfaceContainerHigh
                     else MaterialTheme.colorScheme.primaryContainer
-                } else MaterialTheme.colorScheme.surfaceVariant
+                } else MaterialTheme.colorScheme.surfaceContainerLow
             )
         ) {
             if (isLoggedIn) {
@@ -264,7 +273,8 @@ Column(
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
             modifier = Modifier.padding(bottom = 16.dp)
         )
-    }
+        } // Column
+    } // 背景Box
 
     // Re-login dialog (captcha only) — 只糊卡片不糊全屏，Dialog + BlurCard 载体等大
     if (showReloginDialog) {

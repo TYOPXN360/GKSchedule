@@ -30,7 +30,8 @@ fun Md3Card(
     content: @Composable ColumnScope.() -> Unit
 ) {
     val isDark = LocalAppIsDark.current
-    val elevatedColor = if (isDark) MaterialTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surface
+    // ponytail: Elevated亮模式surfaceContainerLow——底surfaceContainer上浮一阶，弃纯白surface
+    val elevatedColor = if (isDark) MaterialTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surfaceContainerLow
 
     when (variant) {
         Md3CardVariant.Elevated -> Surface(
@@ -66,7 +67,8 @@ fun Md3Card(
     content: @Composable ColumnScope.() -> Unit
 ) {
     val isDark = LocalAppIsDark.current
-    val elevatedColor = if (isDark) MaterialTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surface
+    // ponytail: Elevated亮模式surfaceContainerLow——底surfaceContainer上浮一阶，弃纯白surface
+    val elevatedColor = if (isDark) MaterialTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surfaceContainerLow
 
     when (variant) {
         Md3CardVariant.Elevated -> Surface(
