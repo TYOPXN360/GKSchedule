@@ -800,7 +800,7 @@ private fun DropdownItem(icon: androidx.compose.ui.graphics.vector.ImageVector, 
                         Text(label)
                         Icon(Icons.Default.ArrowDropDown, null, modifier = Modifier.size(18.dp))
                     }
-                    DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                    com.ty.gkschedule.ui.theme.BlurDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                         options.forEach { (key, text) ->
                             DropdownMenuItem(text = { Text(text) }, onClick = { onSelect(key); expanded = false })
                         }

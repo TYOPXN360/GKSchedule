@@ -163,7 +163,7 @@ fun ExamScreen(
                             }
                         }
                         Box {
-                            DropdownMenu(expanded = yearExpanded, onDismissRequest = { yearExpanded = false }) {
+                            com.ty.gkschedule.ui.theme.BlurDropdownMenu(expanded = yearExpanded, onDismissRequest = { yearExpanded = false }) {
                                 years.forEach { y -> DropdownMenuItem(text = { Text(y) }, onClick = { onYearChange(y); yearExpanded = false }) }
                             }
                         }
@@ -176,7 +176,7 @@ fun ExamScreen(
                             }
                         }
                         Box {
-                            DropdownMenu(expanded = semExpanded, onDismissRequest = { semExpanded = false }) {
+                            com.ty.gkschedule.ui.theme.BlurDropdownMenu(expanded = semExpanded, onDismissRequest = { semExpanded = false }) {
                                 DropdownMenuItem(text = { Text("第一学期") }, onClick = { onSemesterChange("1"); semExpanded = false })
                                 DropdownMenuItem(text = { Text("第二学期") }, onClick = { onSemesterChange("2"); semExpanded = false })
                             }

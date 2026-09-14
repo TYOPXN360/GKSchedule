@@ -8,9 +8,11 @@ import android.view.View
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Modifier
@@ -25,6 +27,7 @@ import androidx.compose.ui.window.DialogWindowProvider
 // ponytail: 卡片区域毛玻璃——BackgroundBlurDrawable矩形=载体bounds，只糊卡片不糊全屏
 // decor全屏挂会整屏糊，载体等大View+LayerDrawable合成才是doubaoime原意
 // ponytail: attach时序——factory瞬间未挂载getViewRootImpl=null，监听+post+update三保险重试
+// ponytail: DropdownMenu小菜单糊——Popup独立窗口，BlurCard挂菜单根，同重登录Dialog一套
 @Composable
 fun BlurCard(
     enabled: Boolean,
@@ -109,3 +112,30 @@ private fun applyBlur(
     host.background = LayerDrawable(layers)
     blur
 }.getOrNull()
+
+// ponytail: DropdownMenu小菜单糊——包一层Box吃insets，菜单项糊底色与重登录Dialog同款
+@Composable
+fun BlurDropdownMenu(
+    expanded: Boolean,
+    onDismissRequest: () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    androidx.compose.material3.DropdownMenu(
+        expanded = expanded,
+        onDismissRequest = onDismissRequest,
+        modifier = modifier,
+        containerColor = androidx.compose.ui.graphics.Color.Transparent,
+        shadowElevation = 6.dp
+    ) {
+        BlurCard(
+            enabled = true,
+            modifier = Modifier,
+            radiusDp = 28f,
+            backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f),
+            cornerRadiusDp = 12f
+        ) {
+            androidx.compose.foundation.layout.Column { content() }
+        }
+    }
+}
