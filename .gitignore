@@ -39,3 +39,4 @@ M3_AUDIT.md
 PLAN.md
 PLAN_PHASE2.md
 *.txt
+/build.sh
