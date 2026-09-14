@@ -139,8 +139,9 @@ fun CourseManageScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                // ponytail: 底色与今日/我的统一——暗surface/亮surfaceContainer（ScheduleApp主源同值）
                 .layerBackdrop(backdrop)
-                .background(MaterialTheme.colorScheme.surface)
+                .background(if (com.ty.gkschedule.ui.theme.LocalAppIsDark.current) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainer)
         ) {
             if (courses.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

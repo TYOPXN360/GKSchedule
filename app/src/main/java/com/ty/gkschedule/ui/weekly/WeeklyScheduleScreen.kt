@@ -236,10 +236,9 @@ fun WeeklyScheduleScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                // ponytail: layerBackdrop→background 在前、statusBarsPadding 在最后：
-                // 源纹理必须含状态栏那一段（否则贴顶的糊层采到空洞=黑），避让只作用于内容
+                // ponytail: 底色与今日/我的统一——暗surface/亮surfaceContainer（ScheduleApp主源同值）
                 .layerBackdrop(backdrop)
-                .background(MaterialTheme.colorScheme.surface)
+                .background(if (com.ty.gkschedule.ui.theme.LocalAppIsDark.current) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainer)
                 .statusBarsPadding()
         ) {
             // Week selector — track top edge in pixels

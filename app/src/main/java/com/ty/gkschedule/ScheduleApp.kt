@@ -541,10 +541,19 @@ fun ScheduleApp(
                     navigateTab(screen.route)
                 }
             }
-            // ponytail: snackbar贴pill上——悬浮模式Scaffold无snackbarHost槽，pill兄弟层自挂一份
+            // ponytail: snackbar贴pill上——pill高barH+底边24，snack底=24+barH+8贴上沿
             if (showBottomBar) {
-                Box(Modifier.fillMaxSize().padding(bottom = 108.dp), contentAlignment = Alignment.BottomCenter) {
-                    SnackbarHost(hostState = snackbarHostState)
+                androidx.compose.foundation.layout.BoxWithConstraints(
+                    Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter
+                ) {
+                    // ponytail: barH三档屏宽22/20/18图标——snack底垫同步三档，否则小屏错位
+                    val icon = if (maxWidth < 340.dp) 18.dp else if (maxWidth < 400.dp) 20.dp else 22.dp
+                    val vPad = if (maxWidth < 340.dp) 8.dp else 9.dp
+                    val hPad = if (maxWidth < 340.dp) 5.dp else if (maxWidth < 400.dp) 6.dp else 7.dp
+                    val snackBottom = 24.dp + icon + vPad * 2 + hPad * 2 + 8.dp
+                    Box(Modifier.fillMaxSize().padding(bottom = snackBottom), contentAlignment = Alignment.BottomCenter) {
+                        SnackbarHost(hostState = snackbarHostState)
+                    }
                 }
             }
         } else {
