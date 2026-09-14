@@ -111,7 +111,7 @@ class ReminderReceiver : BroadcastReceiver() {
             }
 
             // ponytail: smallIcon复用软件launcher图标（mipmap自适应，状态栏自动套单色）
-            builder.setSmallIcon(com.ty.gkschedule.R.mipmap.ic_launcher)
+            builder.setSmallIcon(com.ty.gkschedule.R.drawable.ic_notif_class)
                 .setShortCriticalText(chipText)
 
             // 尝试使用 ProgressStyle (Live Update API)
@@ -145,7 +145,7 @@ class ReminderReceiver : BroadcastReceiver() {
             val detail = body.ifEmpty { fallback }
             val contentText = if (reminderMinutes > 0) "${reminderMinutes}分钟后 · $detail" else detail
             builder
-                .setSmallIcon(com.ty.gkschedule.R.mipmap.ic_launcher)
+                .setSmallIcon(com.ty.gkschedule.R.drawable.ic_notif_class)
                 .setContentTitle("$titlePrefix：$courseName")
                 .setContentText(contentText)
                 .setAutoCancel(true)

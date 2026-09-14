@@ -504,21 +504,34 @@ fun ScheduleApp(
                 Box(Modifier.fillMaxSize().padding(bottom = 108.dp), contentAlignment = Alignment.BottomCenter) {
                     SnackbarHost(snackbarHostState) { snackbarData ->
                         val snackShape = MaterialTheme.shapes.small
-                        Snackbar(
+                        Box(
                             modifier = if (blurEffect) Modifier.drawBackdrop(
                                 backdrop = backdrop,
                                 shape = { snackShape },
                                 effects = { blur(12.dp.toPx()) }
-                            ) else Modifier,
-                            action = snackbarData.visuals.actionLabel?.let { label ->
-                                { TextButton(onClick = { snackbarData.performAction() }) { Text(label) } }
-                            },
-                            shape = snackShape,
-                            containerColor = if (blurEffect) MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f) else MaterialTheme.colorScheme.surfaceContainerHigh,
-                            contentColor = MaterialTheme.colorScheme.onSurface,
-                            actionContentColor = MaterialTheme.colorScheme.primary
+                            ) else Modifier
+                                .clip(snackShape)
+                                .background(MaterialTheme.colorScheme.surfaceContainerHigh)
                         ) {
-                            Text(snackbarData.visuals.message)
+                            Row(
+                                modifier = Modifier
+                                    .background(
+                                        if (blurEffect) MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f) else androidx.compose.ui.graphics.Color.Transparent,
+                                        snackShape
+                                    )
+                                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    snackbarData.visuals.message,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    modifier = Modifier.weight(1f, fill = false)
+                                )
+                                snackbarData.visuals.actionLabel?.let { label ->
+                                    TextButton(onClick = { snackbarData.performAction() }) { Text(label) }
+                                }
+                            }
                         }
                     }
                 }
@@ -528,21 +541,35 @@ fun ScheduleApp(
             Box(Modifier.fillMaxSize()) {
                 SnackbarHost(snackbarHostState) { snackbarData ->
                     val snackShape = MaterialTheme.shapes.small
-                    Snackbar(
+                    // ponytail: 手写单层糊——M3 Snackbar内部Surface+containerColor双层叠色是分层根因
+                    Box(
                         modifier = if (blurEffect) Modifier.drawBackdrop(
                             backdrop = backdrop,
                             shape = { snackShape },
                             effects = { blur(12.dp.toPx()) }
-                        ) else Modifier,
-                        action = snackbarData.visuals.actionLabel?.let { label ->
-                            { TextButton(onClick = { snackbarData.performAction() }) { Text(label) } }
-                        },
-                        shape = snackShape,
-                        containerColor = if (blurEffect) MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f) else MaterialTheme.colorScheme.surfaceContainerHigh,
-                        contentColor = MaterialTheme.colorScheme.onSurface,
-                        actionContentColor = MaterialTheme.colorScheme.primary
+                        ) else Modifier
+                            .clip(snackShape)
+                            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
                     ) {
-                        Text(snackbarData.visuals.message)
+                        Row(
+                            modifier = Modifier
+                                .background(
+                                    if (blurEffect) MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f) else androidx.compose.ui.graphics.Color.Transparent,
+                                    snackShape
+                                )
+                                .padding(horizontal = 16.dp, vertical = 14.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                snackbarData.visuals.message,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.weight(1f, fill = false)
+                            )
+                            snackbarData.visuals.actionLabel?.let { label ->
+                                TextButton(onClick = { snackbarData.performAction() }) { Text(label) }
+                            }
+                        }
                     }
                 }
             }
