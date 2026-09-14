@@ -357,13 +357,7 @@ fun WeeklyScheduleScreen(
                             .verticalScroll(rememberScrollState())
                     ) {
                         // Layer 1: Grid background
-                        // ponytail: 默认底栏透底避让——拉高网格扩滚动区，课程offset绝对坐标不动（DeepSeek四处diff之三）
-                        Column(
-                            modifier = Modifier.fillMaxWidth().height(
-                                totalGridHeight + 80.dp +
-                                    WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-                            )
-                        ) {
+                        Column(modifier = Modifier.fillMaxWidth().height(totalGridHeight)) {
                             for (period in 1..periodsPerDay) {
                                 Row(modifier = Modifier.fillMaxWidth().height(rowH)) {
                                     if (showPeriodLabel) {

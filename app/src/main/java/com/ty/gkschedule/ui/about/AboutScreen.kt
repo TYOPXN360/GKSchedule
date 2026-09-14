@@ -64,12 +64,8 @@ fun AboutScreen(
                 .fillMaxSize()
                 .statusBarsPadding()
                 .verticalScroll(rememberScrollState())
-                // ponytail: B走穿底配套——停底栏上（管理页穿底出玻璃感，其他页占位）
-                .padding(
-                    start = 16.dp,
-                    end = 16.dp,
-                    bottom = 80.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-                ),
+                // ponytail: overlay盖底——内容穿底栏下出糊，末项被挡一点接受；FAB抬升保留
+                .padding(horizontal = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
         Spacer(modifier = Modifier.height(16.dp))
@@ -276,11 +272,7 @@ fun AboutScreen(
             text = stringResource(R.string.about_copyright),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-            // ponytail: 默认底栏透底避让（DeepSeek四处diff之四）
-            modifier = Modifier.padding(
-                bottom = 16.dp + 80.dp +
-                    WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-            )
+            modifier = Modifier.padding(bottom = 16.dp)
         )
         } // Column
     } // 背景Box

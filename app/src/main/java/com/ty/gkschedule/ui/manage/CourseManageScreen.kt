@@ -160,7 +160,7 @@ fun CourseManageScreen(
                 LazyColumn(
                     state = listState,
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = collapsedTopPadding, bottom = 88.dp + bottomBarHeight),
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = collapsedTopPadding, bottom = 88.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     // ponytail: 首项Spacer跟heightOffset联动，顶栏扩张多少就推多少，同帧同步
