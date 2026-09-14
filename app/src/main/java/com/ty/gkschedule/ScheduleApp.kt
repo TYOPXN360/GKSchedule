@@ -358,13 +358,7 @@ fun ScheduleApp(
     val currentRoute = navBackStackEntry?.destination?.route
     val bottomBarScreens = listOf("today", "weekly", "courses", "about")
     val showBottomBar = currentRoute in bottomBarScreens
-    // ponytail: tab页返回直接popBackStack吞预测——转场零动画管的是播什么，管不住系统跟不跟手；
-    // 首页放行回桌面（系统Activity级动画保留）
-    val isAtHome = currentRoute == startPage
-    BackHandler(enabled = showBottomBar && !isAtHome) {
-        val popped = navController.popBackStack()
-        if (!popped) (context as? android.app.Activity)?.finish()
-    }
+    // ponytail: BackHandler必须在NavHost之后注册才优先（后加先调），放函数末尾；tab页吞预测秒回，首页放行回桌面
     val navView = androidx.compose.ui.platform.LocalView.current
     val mainScaffoldBg = if (com.ty.gkschedule.ui.theme.LocalAppIsDark.current) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainer
 
@@ -537,6 +531,12 @@ fun ScheduleApp(
             }
         } // pill兄弟层
     }
+    }
+    // ponytail: BackHandler挂函数末尾=后注册先回调，压过NavHost内部返回拦截；tab页吞预测秒回，首页放行
+    val isAtHome = currentRoute == startPage
+    BackHandler(enabled = showBottomBar && !isAtHome) {
+        val popped = navController.popBackStack()
+        if (!popped) (context as? android.app.Activity)?.finish()
     }
 }
 
