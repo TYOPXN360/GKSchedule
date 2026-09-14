@@ -79,13 +79,15 @@ class ReminderReceiver : BroadcastReceiver() {
         }.trimStart('·', ' ').trimEnd('·', ' ')
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setOnlyAlertOnce(eventType == EVENT_PROGRESS)
 
         if (eventType == EVENT_PROGRESS) {
             val percent = progressPercent(startEpoch, endEpoch)
             val titlePrefix = if (itemType == "exam") "正在考试" else "正在上课"
+
+            // ponytail: Live Update规范——状态栏chip取自smallIcon，闹钟换百分比位图
+            builder.setSmallIcon(percentSmallIcon(context, percent))
 
             // 尝试使用 ProgressStyle (Live Update API)
             try {
@@ -113,6 +115,7 @@ class ReminderReceiver : BroadcastReceiver() {
             val detail = body.ifEmpty { fallback }
             val contentText = if (reminderMinutes > 0) "${reminderMinutes}分钟后 · $detail" else detail
             builder
+                .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
                 .setContentTitle("$titlePrefix：$courseName")
                 .setContentText(contentText)
                 .setAutoCancel(true)
@@ -131,6 +134,25 @@ class ReminderReceiver : BroadcastReceiver() {
 
     private fun stableNotificationId(itemType: String, name: String, startEpoch: Long): Int =
         "$itemType|$name|$startEpoch".hashCode()
+
+    // ponytail: 百分比画进smallIcon位图——状态栏只认单色alpha，文字白画剩透明，系统自动套色
+    private fun percentSmallIcon(context: Context, percent: Int): androidx.core.graphics.drawable.IconCompat {
+        val p = percent.coerceIn(0, 100)
+        val text = "$p"
+        val density = context.resources.displayMetrics.density
+        val size = (24 * density).toInt().coerceAtLeast(48)
+        val bitmap = android.graphics.Bitmap.createBitmap(size, size, android.graphics.Bitmap.Config.ARGB_8888)
+        val canvas = android.graphics.Canvas(bitmap)
+        val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+            color = android.graphics.Color.WHITE
+            textSize = size * (if (text.length >= 3) 0.34f else 0.42f)
+            textAlign = android.graphics.Paint.Align.CENTER
+            typeface = android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD)
+        }
+        val y = size / 2f - (paint.descent() + paint.ascent()) / 2f
+        canvas.drawText(text, size / 2f, y, paint)
+        return androidx.core.graphics.drawable.IconCompat.createWithBitmap(bitmap)
+    }
 
     private fun createNotificationChannel(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
