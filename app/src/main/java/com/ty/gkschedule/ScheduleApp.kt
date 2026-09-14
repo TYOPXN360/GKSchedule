@@ -373,19 +373,24 @@ fun ScheduleApp(
         containerColor = mainScaffoldBg,
         snackbarHost = {
             SnackbarHost(snackbarHostState) { snackbarData ->
-                // ponytail: 同FAB糊——drawBackdrop吃主源，关模糊回退纯色
+                // ponytail: 糊贴bar走——Snackbar无content槽，直接糊外层；羽化收半（28dp糊大一圈），强度不变
                 val snackShape = MaterialTheme.shapes.small
                 Snackbar(
-                    snackbarData = snackbarData,
                     modifier = if (blurEffect) Modifier.drawBackdrop(
                         backdrop = backdrop,
                         shape = { snackShape },
-                        effects = { blur(28.dp.toPx()) }
+                        effects = { blur(12.dp.toPx()) }
                     ) else Modifier,
+                    action = snackbarData.visuals.actionLabel?.let { label ->
+                        { TextButton(onClick = { snackbarData.performAction() }) { Text(label) } }
+                    },
+                    shape = snackShape,
                     containerColor = if (blurEffect) MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f) else MaterialTheme.colorScheme.surfaceContainerHigh,
                     contentColor = MaterialTheme.colorScheme.onSurface,
-                    shape = snackShape
-                )
+                    actionContentColor = MaterialTheme.colorScheme.primary
+                ) {
+                    Text(snackbarData.visuals.message)
+                }
             }
         },
         bottomBar = {
