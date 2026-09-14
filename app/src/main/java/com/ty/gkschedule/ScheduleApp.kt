@@ -544,25 +544,13 @@ fun ScheduleApp(
             // ponytail: snackbar贴pill上——悬浮模式Scaffold无snackbarHost槽，pill兄弟层自挂一份
             if (showBottomBar) {
                 Box(Modifier.fillMaxSize().padding(bottom = 108.dp), contentAlignment = Alignment.BottomCenter) {
-                    SnackbarHost(snackbarHostState) { snackbarData ->
-                        com.ty.gkschedule.ui.theme.BlurSnackbar(
-                            snackbarData = snackbarData,
-                            backdrop = backdrop,
-                            blurEnabled = blurEffect
-                        )
-                    }
+                    SnackbarHost(hostState = snackbarHostState)
                 }
             }
         } else {
             // ponytail: 普通底栏模式——snackbar走Scaffold槽位（底栏占位，自动顶起）
             Box(Modifier.fillMaxSize()) {
-                SnackbarHost(snackbarHostState) { snackbarData ->
-                    com.ty.gkschedule.ui.theme.BlurSnackbar(
-                        snackbarData = snackbarData,
-                        backdrop = backdrop,
-                        blurEnabled = blurEffect
-                    )
-                }
+                SnackbarHost(hostState = snackbarHostState)
             }
         } // pill兄弟层
     }

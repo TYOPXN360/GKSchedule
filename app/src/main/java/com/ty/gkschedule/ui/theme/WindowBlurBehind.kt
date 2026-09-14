@@ -247,53 +247,6 @@ fun BlurDatePickerDialog(
     }
 }
 
-// ponytail: 规范SnackbarData槽+onDrawSurface单层底——容器透明后M3内部Surface tonal色罩是分层根因，
-// 底色只画糊后一层（85%质感），文本/action/dismiss走SnackbarData原生三槽
-@Composable
-fun BlurSnackbar(
-    snackbarData: androidx.compose.material3.SnackbarData,
-    backdrop: top.yukonga.miuix.kmp.blur.LayerBackdrop,
-    blurEnabled: Boolean,
-    modifier: Modifier = Modifier
-) {
-    val snackShape = MaterialTheme.shapes.small
-    val snackBg = MaterialTheme.colorScheme.surfaceContainerHigh
-    // ponytail: drawBackdrop挂Snackbar内部content——挂外层modifier会把SnackbarHost的padding也糊进去，大一圈
-    // ponytail: 用Snackbar(message/action)手写双槽，visuals只有message/actionLabel/withDismissAction三件套
-    val actionLabel = snackbarData.visuals.actionLabel
-    androidx.compose.material3.Snackbar(
-        modifier = modifier,
-        action = if (actionLabel != null) {
-            { androidx.compose.material3.TextButton(onClick = { snackbarData.performAction() }) { androidx.compose.material3.Text(actionLabel) } }
-        } else null,
-        dismissAction = if (snackbarData.visuals.withDismissAction) {
-            { androidx.compose.material3.TextButton(onClick = { snackbarData.dismiss() }) { androidx.compose.material3.Text("×") } }
-        } else null,
-        actionOnNewLine = false,
-        shape = snackShape,
-        containerColor = Color.Transparent,
-        contentColor = MaterialTheme.colorScheme.onSurface,
-        actionContentColor = MaterialTheme.colorScheme.primary,
-        dismissActionContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-        content = {
-            androidx.compose.foundation.layout.Row(
-                modifier = if (blurEnabled) Modifier.drawBackdrop(
-                    backdrop = backdrop,
-                    shape = { snackShape },
-                    effects = { blur(28.dp.toPx()) },
-                    onDrawSurface = { drawRect(snackBg.copy(alpha = 0.85f)) }
-                ) else Modifier.background(snackBg, snackShape),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                androidx.compose.material3.Text(
-                    snackbarData.visuals.message,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)
-                )
-            }
-        }
-    )
-}
-
 @Composable
 fun BlurDropdownMenu(    expanded: Boolean,
     onDismissRequest: () -> Unit,
