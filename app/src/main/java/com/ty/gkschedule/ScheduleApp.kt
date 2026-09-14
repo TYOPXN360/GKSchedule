@@ -9,6 +9,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -428,22 +429,42 @@ fun ScheduleApp(
             NavHost(
                 navController = navController,
                 startDestination = startPage,
-                // ponytail: M3官方FadeThrough（m3 motion：先淡出90ms再淡入210ms，LinearEasing）
+                // ponytail: M3 SharedAxisX仅推进（300ms+FastOutSlowIn；tab按左右镜像）
                 enterTransition = {
-                    fadeIn(animationSpec = tween(210, easing = LinearEasing), initialAlpha = 0f) + scaleIn(
-                        animationSpec = tween(210, easing = LinearEasing), initialScale = 0.92f
+                    val from = initialState.destination.route
+                    val to = targetState.destination.route
+                    val dir = if (isTabRoute(from) && isTabRoute(to) && tabIndexOf(to) < tabIndexOf(from)) -1 else 1
+                    slideInHorizontally(
+                        animationSpec = tween(300, easing = FastOutSlowInEasing),
+                        initialOffsetX = { dir * (it * 0.1f).toInt().coerceAtLeast(30) }
                     )
                 },
                 exitTransition = {
-                    fadeOut(animationSpec = tween(90, easing = LinearEasing))
+                    val from = initialState.destination.route
+                    val to = targetState.destination.route
+                    val dir = if (isTabRoute(from) && isTabRoute(to) && tabIndexOf(to) < tabIndexOf(from)) -1 else 1
+                    slideOutHorizontally(
+                        animationSpec = tween(300, easing = FastOutSlowInEasing),
+                        targetOffsetX = { -dir * (it * 0.1f).toInt().coerceAtLeast(30) }
+                    )
                 },
                 popEnterTransition = {
-                    fadeIn(animationSpec = tween(210, easing = LinearEasing), initialAlpha = 0f) + scaleIn(
-                        animationSpec = tween(210, easing = LinearEasing), initialScale = 0.92f
+                    val from = initialState.destination.route
+                    val to = targetState.destination.route
+                    val dir = if (isTabRoute(from) && isTabRoute(to) && tabIndexOf(to) < tabIndexOf(from)) -1 else 1
+                    slideInHorizontally(
+                        animationSpec = tween(300, easing = FastOutSlowInEasing),
+                        initialOffsetX = { dir * (it * 0.1f).toInt().coerceAtLeast(30) }
                     )
                 },
                 popExitTransition = {
-                    fadeOut(animationSpec = tween(90, easing = LinearEasing))
+                    val from = initialState.destination.route
+                    val to = targetState.destination.route
+                    val dir = if (isTabRoute(from) && isTabRoute(to) && tabIndexOf(to) < tabIndexOf(from)) -1 else 1
+                    slideOutHorizontally(
+                        animationSpec = tween(300, easing = FastOutSlowInEasing),
+                        targetOffsetX = { -dir * (it * 0.1f).toInt().coerceAtLeast(30) }
+                    )
                 },
                 modifier = Modifier.fillMaxSize()
             ) {
