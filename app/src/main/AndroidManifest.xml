@@ -106,6 +106,12 @@
             android:exported="true"
             android:windowSoftInputMode="adjustResize" />
 
+        <!-- ponytail: 登录独立Activity（账号+钉钉扫码内部切换），系统管返回+预测动画 -->
+        <activity
+            android:name=".ui.login.LoginActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
         <!-- FileProvider for APK installation -->
         <provider
             android:name="androidx.core.content.FileProvider"

@@ -74,8 +74,6 @@ sealed class Screen(val route: String) {
     data object Weekly : Screen("weekly")
     data object Courses : Screen("courses")
     data object About : Screen("about")
-    data object Login : Screen("login")
-    data object WebViewLogin : Screen("webview_login")
 }
 
 @Composable
@@ -509,24 +507,15 @@ fun ScheduleApp(
                                     val totalWeeksVal by viewModel.totalWeeks.collectAsState(initial = 20)
                                     val periodsPerDayVal by viewModel.periodsPerDay.collectAsState(initial = 10)
                                     val displayWeeks = if (hideEmptyWeeks && courses.isNotEmpty()) { val weeksWithCourses = courses.flatMap { course -> (1..totalWeeksVal).filter { course.isInWeek(it) } }.toSet(); weeksWithCourses.size.coerceAtLeast(1) } else totalWeeksVal
-                                    AboutScreen(loginState = loginState, savedStudentId = savedStudentId, savedRealName = savedRealName, savedDeptName = savedDeptName, semesterStart = semesterStart, totalWeeks = displayWeeks, periodsPerDay = periodsPerDayVal, captchaImageBase64 = captchaImage, onLogin = { navController.navigate(Screen.Login.route) }, onLogout = { viewModel.logout() }, onQuickRelogin = { cap -> viewModel.quickRelogin(cap) }, onRefreshCaptcha = { viewModel.refreshCaptcha() }, onOpenSettings = { context.startActivity(Intent(context, com.ty.gkschedule.ui.settings.SettingsActivity::class.java)) }, onOpenAbout = { context.startActivity(Intent(context, com.ty.gkschedule.ui.about.AboutActivity::class.java)) }, onOpenExam = { context.startActivity(Intent(context, com.ty.gkschedule.ui.exam.ExamActivity::class.java)) }, applyBottomBarInset = !compactNavBar, blurEnabled = blurEffect)
+                                    AboutScreen(loginState = loginState, savedStudentId = savedStudentId, savedRealName = savedRealName, savedDeptName = savedDeptName, semesterStart = semesterStart, totalWeeks = displayWeeks, periodsPerDay = periodsPerDayVal, captchaImageBase64 = captchaImage, onLogin = { context.startActivity(Intent(context, com.ty.gkschedule.ui.login.LoginActivity::class.java)) }, onLogout = { viewModel.logout() }, onQuickRelogin = { cap -> viewModel.quickRelogin(cap) }, onRefreshCaptcha = { viewModel.refreshCaptcha() }, onOpenSettings = { context.startActivity(Intent(context, com.ty.gkschedule.ui.settings.SettingsActivity::class.java)) }, onOpenAbout = { context.startActivity(Intent(context, com.ty.gkschedule.ui.about.AboutActivity::class.java)) }, onOpenExam = { context.startActivity(Intent(context, com.ty.gkschedule.ui.exam.ExamActivity::class.java)) }, applyBottomBarInset = !compactNavBar, blurEnabled = blurEffect)
                                 }
                             }
                         }
                     }
                 }
             }
-            composable(Screen.Login.route) {
-                val hasSavedCredentials by viewModel.hasSavedCredentials.collectAsState(initial = false)
-                LoginScreen(loginState = loginState, captchaImageBase64 = captchaImage, hasSavedCredentials = hasSavedCredentials, onRefreshCaptcha = { viewModel.refreshCaptcha() }, onLogin = { sid, pwd, cap -> viewModel.login(sid, pwd, cap) }, onQuickRelogin = { cap -> viewModel.quickRelogin(cap) }, onWebViewLogin = { navController.navigate(Screen.WebViewLogin.route) }, onBack = { viewModel.clearLoginError(); navController.popBackStack() }, blurEnabled = blurEffect)
-                LaunchedEffect(Unit) { viewModel.clearLoginError(); if (captchaImage == null) viewModel.refreshCaptcha() }
-                LaunchedEffect(loginState) { if (loginState is LoginState.Success || loginState is LoginState.ImportResult) { kotlinx.coroutines.delay(500); navController.popBackStack() } }
-            }
-            composable(Screen.WebViewLogin.route) { WebViewLoginScreen(loginState = loginState, api = viewModel.api, onLoginSuccess = { loginCode -> viewModel.webViewLogin(loginCode) }, onBack = { navController.popBackStack() }, blurEnabled = blurEffect)
-                // ponytail: 扫码成功直接回我的页，跳过中间账号密码页
-                LaunchedEffect(loginState) { if (loginState is LoginState.Success || loginState is LoginState.ImportResult) { kotlinx.coroutines.delay(1200); navController.popBackStack(Screen.Login.route, inclusive = true) } }
-            }
         }
+        // ponytail: 登录走独立Activity（账号+扫码内部切换），NavHost只留tabs
         } // 源层Box只含NavHost
         // 悬浮pill：跟随tab显隐做位移，内部收/展另有自己的左右对滑；
         // ponytail: 源层兄弟节点(断环)；滚动隐藏走位移不断组合，收起态常驻
