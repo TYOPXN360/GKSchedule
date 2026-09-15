@@ -367,7 +367,8 @@ fun ExamScreen(
             colorGroupMode = colorGroupMode,
             colorIndex = colorAssignment.colorIndex,
             classroomColorIndex = colorAssignment.classroomColorIndex,
-            currentWeek = detailWeek, diffColorPerWeek = diffColorPerWeek
+            currentWeek = detailWeek, diffColorPerWeek = diffColorPerWeek,
+            blurEnabled = blurEnabled
         )
     }
 

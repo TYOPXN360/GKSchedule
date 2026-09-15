@@ -142,7 +142,7 @@ class SubSettingsNotificationActivity : SubSettingsBaseActivity() {
         val reminderMode by vm.reminderMode.collectAsState(initial = "notify")
         val reminderLiveUpdate by vm.reminderLiveUpdate.collectAsState(initial = true)
         val reminderExamLiveUpdate by vm.reminderExamLiveUpdate.collectAsState(initial = false)
-        val blurEffect by vm.blurEffect.collectAsState(initial = true)
+        val blurEffect by vm.blurEffect.collectAsState(initial = false)
         NotificationPage(
             reminderMinutes = reminderMinutes, reminderMode = reminderMode, reminderLiveUpdate = reminderLiveUpdate,
             reminderExamLiveUpdate = reminderExamLiveUpdate,
@@ -165,7 +165,7 @@ class SubSettingsSyncActivity : SubSettingsBaseActivity() {
         val showExamSchedule by vm.showExamSchedule.collectAsState(initial = false)
         val examLookaheadWeeks by vm.examLookaheadWeeks.collectAsState(initial = 1)
         val diffColorPerWeek by vm.diffColorPerWeek.collectAsState(initial = false)
-        val blurEffect by vm.blurEffect.collectAsState(initial = true)
+        val blurEffect by vm.blurEffect.collectAsState(initial = false)
         SyncPage(
             autoSyncOnStart = autoSyncOnStart, autoSyncIntervalValue = autoSyncIntervalValue,
             autoSyncIntervalUnit = autoSyncIntervalUnit, tokenHeartbeat = tokenHeartbeat,
@@ -189,7 +189,7 @@ class SubSettingsDataActivity : SubSettingsBaseActivity() {
     override fun SubContent(vm: ScheduleViewModel, finish: () -> Unit) {
         val scope = rememberCoroutineScope()
         val context = androidx.compose.ui.platform.LocalContext.current
-        val blurEffect by vm.blurEffect.collectAsState(initial = true)
+        val blurEffect by vm.blurEffect.collectAsState(initial = false)
         DataPage(
             onExportJson = {
                 scope.launch {

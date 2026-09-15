@@ -20,7 +20,7 @@ class ExamEditActivity : AppCompatActivity() {
         setContent {
             val vm: ScheduleViewModel = viewModel()
             val darkMode by vm.darkMode.collectAsState(initial = "system")
-            val blurEffect by vm.blurEffect.collectAsState(initial = true)
+            val blurEffect by vm.blurEffect.collectAsState(initial = false)
 
             GKScheduleTheme(darkTheme = darkMode) {
                 val examList by vm.examList.collectAsState(initial = emptyList())

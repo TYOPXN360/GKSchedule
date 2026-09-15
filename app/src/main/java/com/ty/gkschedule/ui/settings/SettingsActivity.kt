@@ -52,7 +52,7 @@ class SettingsActivity : AppCompatActivity() {
             val darkMode by vm.darkMode.collectAsState(initial = "system")
             val language by vm.language.collectAsState(initial = "system")
             val startPage by vm.startPage.collectAsState(initial = "today")
-            val blurEffect by vm.blurEffect.collectAsState(initial = true)
+            val blurEffect by vm.blurEffect.collectAsState(initial = false)
 
             // Apply language change — recreate activity when language changes
             var lastLanguage by remember { mutableStateOf(language) }

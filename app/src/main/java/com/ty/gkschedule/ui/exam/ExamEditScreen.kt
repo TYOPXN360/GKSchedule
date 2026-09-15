@@ -141,7 +141,7 @@ fun ExamEditScreen(
             navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") } },
             actions = { if (exam != null) { IconButton(onClick = { onDelete(exam) }) { Icon(Icons.Default.Delete, "Delete", tint = MaterialTheme.colorScheme.error) } } },
                 backdrop = backdrop,
-            blurEnabled = blurEnabled
+                blurEnabled = blurEnabled
         )
     }) { padding ->
         Column(
