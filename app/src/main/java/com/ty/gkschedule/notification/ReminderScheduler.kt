@@ -115,6 +115,7 @@ object ReminderScheduler {
                             triggerAt = cdTime,
                             notificationId = notificationId,
                             reminderMinutes = reminderMinutes,
+                            triggerTick = true,
                             requestCodes = newRequestCodes
                         )
                     }
