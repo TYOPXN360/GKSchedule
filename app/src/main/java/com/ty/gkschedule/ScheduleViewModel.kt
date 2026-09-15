@@ -88,6 +88,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     val compactNavBar: Flow<Boolean> = settings.compactNavBar
     val pillContentMode: Flow<Int> = settings.pillContentMode
     val blurEffect: Flow<Boolean> = settings.blurEffect
+    val weeklyBlockMultiline: Flow<Boolean> = settings.weeklyBlockMultiline
     val courseNames: Flow<List<String>> = courseDao.getAllCourseNames()
 
     private val _selectedWeek = MutableStateFlow(0)
@@ -339,6 +340,10 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
 
     fun setBlurEffect(enabled: Boolean) {
         viewModelScope.launch { settings.setBlurEffect(enabled) }
+    }
+
+    fun setWeeklyBlockMultiline(enabled: Boolean) {
+        viewModelScope.launch { settings.setWeeklyBlockMultiline(enabled) }
     }
 
     private suspend fun rescheduleSync() {

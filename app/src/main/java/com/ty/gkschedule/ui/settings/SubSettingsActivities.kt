@@ -99,6 +99,7 @@ class SubSettingsScheduleStyleActivity : SubSettingsBaseActivity() {
         val showHiddenCourses by vm.showHiddenCourses.collectAsState(initial = false)
         val compactNavBar by vm.compactNavBar.collectAsState(initial = true)
         val pillContentMode by vm.pillContentMode.collectAsState(initial = 0)
+        val blockMultiline by vm.weeklyBlockMultiline.collectAsState(initial = false)
         val blurEffect by vm.blurEffect.collectAsState(initial = true)
         ScheduleStylePage(
             gridHeight = gridHeight, gridCorner = gridCorner, gridSpacing = gridSpacing,
@@ -125,6 +126,8 @@ class SubSettingsScheduleStyleActivity : SubSettingsBaseActivity() {
             onCompactNavBarChange = { vm.setCompactNavBar(it) },
             pillContentMode = pillContentMode,
             onPillContentModeChange = { vm.setPillContentMode(it) },
+            blockMultiline = blockMultiline,
+            onBlockMultilineChange = { vm.setWeeklyBlockMultiline(it) },
             onBack = finish, blurEnabled = blurEffect
         )
     }

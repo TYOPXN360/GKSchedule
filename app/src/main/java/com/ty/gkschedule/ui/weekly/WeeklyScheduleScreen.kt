@@ -91,6 +91,8 @@ fun WeeklyScheduleScreen(
     firstDayOfWeek: Int = 1,
     diffColorPerWeek: Boolean = false,
     blurEnabled: Boolean = true,
+    // ponytail: 课表块名多行——开=最多3行折行，关=单行截断
+    blockMultiline: Boolean = false,
     // ponytail: 默认底栏避让开关——悬浮pill不占位，传false不留白
     applyBottomBarInset: Boolean = true,
     getStartTime: (Int) -> String = { "" },
@@ -503,7 +505,7 @@ fun WeeklyScheduleScreen(
                                             Text("隐藏", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = textColor, maxLines = 1)
                                         }
                                     }
-                                    Text(block.item.name, style = MaterialTheme.typography.labelMedium, color = textColor, overflow = TextOverflow.Ellipsis)
+                                    Text(block.item.name, style = MaterialTheme.typography.labelMedium, color = textColor, maxLines = if (blockMultiline) 3 else 1, overflow = TextOverflow.Ellipsis)
                                     if (block.item.classroom.isNotEmpty()) {
                                         Text(block.item.classroom, style = MaterialTheme.typography.labelSmall, color = textColor.copy(alpha = 0.7f), overflow = TextOverflow.Ellipsis)
                                     }

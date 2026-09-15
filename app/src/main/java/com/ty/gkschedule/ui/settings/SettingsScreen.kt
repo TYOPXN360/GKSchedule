@@ -380,6 +380,8 @@ internal fun ScheduleStylePage(
     onDiffColorPerWeekChange: (Boolean) -> Unit,
     showHiddenCourses: Boolean = false,
     onShowHiddenCoursesChange: (Boolean) -> Unit = {},
+    blockMultiline: Boolean = false,
+    onBlockMultilineChange: (Boolean) -> Unit = {},
     compactNavBar: Boolean = true,
     onCompactNavBarChange: (Boolean) -> Unit = {},
     pillContentMode: Int = 0,
@@ -425,6 +427,18 @@ internal fun ScheduleStylePage(
         SectionHeader(stringResource(R.string.style_section_navbar))
         SettingsCard {
             SwitchItem(Icons.Default.Dashboard, stringResource(R.string.compact_nav_bar), compactNavBar, onCompactNavBarChange)
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        SectionHeader(stringResource(R.string.style_section_block))
+        SettingsCard {
+            // ponytail: 课表块名多行——关=单行截断，开=最多3行自然折行
+            SwitchItem(Icons.Default.WrapText, stringResource(R.string.block_multiline), blockMultiline, onBlockMultilineChange)
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        SectionHeader(stringResource(R.string.style_section_navbar))
+        SettingsCard {
+            SwitchItem(Icons.Default.Dashboard, stringResource(R.string.compact_nav_bar), compactNavBar, onCompactNavBarChange)
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
             // ponytail: 悬浮底栏开关仅抽屉——expand/shrinkVertical上下拉出，同文件其他展开同款
             androidx.compose.animation.AnimatedVisibility(
                 visible = compactNavBar,
