@@ -19,6 +19,8 @@ class CourseEditActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        // ponytail: 窗口底透明——Compose首帧前不露默认背景色，消编辑页过渡闪
+        window.setBackgroundDrawableResource(android.R.color.transparent)
         val courseId = intent.getLongExtra("courseId", -1L)
 
         setContent {
@@ -29,7 +31,7 @@ class CourseEditActivity : AppCompatActivity() {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     val courses by vm.courses.collectAsState(initial = emptyList())
                     val periodsPerDay by vm.periodsPerDay.collectAsState(initial = 10)
-                val blurEffect by vm.blurEffect.collectAsState(initial = true)
+                val blurEffect by vm.blurEffect.collectAsState(initial = false)
                     var currentCourse by remember { mutableStateOf<Course?>(null) }
                     var loaded by remember { mutableStateOf(false) }
 
