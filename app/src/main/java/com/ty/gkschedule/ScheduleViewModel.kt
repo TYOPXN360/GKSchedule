@@ -191,6 +191,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
             }.collect { config ->
                 // ponytail: 任一开就排，全关才删——进度通知独立于课前提醒
                 if (config.reminderMinutes > 0 || config.liveUpdate || config.examLiveUpdate) {
+                    // ponytail: 只排一次——重复调用会cancelAll覆盖，第二次没传reminderMode会把倒计时冲成notify
                     ReminderScheduler.scheduleUpcomingReminders(
                         context = getApplication(),
                         courses = config.courses,
@@ -199,18 +200,6 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                         totalWeeks = config.totalWeeks,
                         reminderMinutes = config.reminderMinutes,
                         reminderMode = config.reminderMode,
-                        liveUpdate = config.liveUpdate,
-                        examLiveUpdate = config.examLiveUpdate,
-                        getStartTime = ::getStartTime,
-                        getEndTime = ::getEndTime
-                    )
-                    ReminderScheduler.scheduleUpcomingReminders(
-                        context = getApplication(),
-                        courses = config.courses,
-                        exams = config.exams,
-                        semesterStart = config.semesterStart,
-                        totalWeeks = config.totalWeeks,
-                        reminderMinutes = config.reminderMinutes,
                         liveUpdate = config.liveUpdate,
                         examLiveUpdate = config.examLiveUpdate,
                         getStartTime = ::getStartTime,
