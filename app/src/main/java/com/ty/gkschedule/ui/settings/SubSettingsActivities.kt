@@ -76,13 +76,11 @@ class SubSettingsAppearanceActivity : SubSettingsBaseActivity() {
         val colorGroupMode by vm.colorGroupMode.collectAsState(initial = 2)
         val diffColorPerWeek by vm.diffColorPerWeek.collectAsState(initial = false)
         val showHiddenCourses by vm.showHiddenCourses.collectAsState(initial = false)
-        val autoCheckUpdateDaily by vm.autoCheckUpdateDaily.collectAsState(initial = true)
         AppearancePage(
             darkMode = darkMode, language = language, startPage = startPage, blurEffect = blurEffect,
             compactNavBar = compactNavBar, pillContentMode = pillContentMode,
             colorEngine = colorEngine, colorGroupMode = colorGroupMode,
             diffColorPerWeek = diffColorPerWeek, showHiddenCourses = showHiddenCourses,
-            autoCheckUpdateDaily = autoCheckUpdateDaily,
             onDarkModeChange = { vm.setDarkMode(it) },
             onLanguageChange = { vm.setLanguage(it) },
             onStartPageChange = { vm.setStartPage(it) },
@@ -93,7 +91,6 @@ class SubSettingsAppearanceActivity : SubSettingsBaseActivity() {
             onColorGroupModeChange = { vm.setColorGroupMode(it) },
             onDiffColorPerWeekChange = { vm.setDiffColorPerWeek(it) },
             onShowHiddenCoursesChange = { vm.setShowHiddenCourses(it) },
-            onAutoCheckUpdateDailyChange = { vm.setAutoCheckUpdateDaily(it) },
             onBack = finish, blurEnabled = blurEffect
         )
     }
@@ -165,12 +162,13 @@ class SubSettingsSyncActivity : SubSettingsBaseActivity() {
         val showExamSchedule by vm.showExamSchedule.collectAsState(initial = false)
         val examLookaheadWeeks by vm.examLookaheadWeeks.collectAsState(initial = 1)
         val diffColorPerWeek by vm.diffColorPerWeek.collectAsState(initial = false)
+        val autoCheckUpdateDaily by vm.autoCheckUpdateDaily.collectAsState(initial = true)
         val blurEffect by vm.blurEffect.collectAsState(initial = false)
         SyncPage(
             autoSyncOnStart = autoSyncOnStart, autoSyncIntervalValue = autoSyncIntervalValue,
             autoSyncIntervalUnit = autoSyncIntervalUnit, tokenHeartbeat = tokenHeartbeat,
             showExamSchedule = showExamSchedule, examLookaheadWeeks = examLookaheadWeeks,
-            diffColorPerWeek = diffColorPerWeek,
+            diffColorPerWeek = diffColorPerWeek, autoCheckUpdateDaily = autoCheckUpdateDaily,
             onAutoSyncOnStartChange = { vm.setAutoSyncOnStart(it) },
             onAutoSyncIntervalValueChange = { vm.setAutoSyncIntervalValue(it) },
             onAutoSyncIntervalUnitChange = { vm.setAutoSyncIntervalUnit(it) },
@@ -178,6 +176,7 @@ class SubSettingsSyncActivity : SubSettingsBaseActivity() {
             onShowExamScheduleChange = { vm.setShowExamSchedule(it) },
             onExamLookaheadWeeksChange = { vm.setExamLookaheadWeeks(it) },
             onDiffColorPerWeekChange = { vm.setDiffColorPerWeek(it) },
+            onAutoCheckUpdateDailyChange = { vm.setAutoCheckUpdateDaily(it) },
             onFetchExam = { vm.refreshExamSchedule() },
             onBack = finish, blurEnabled = blurEffect
         )

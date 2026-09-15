@@ -342,13 +342,11 @@ internal fun AppearancePage(
     darkMode: String, language: String, startPage: String, blurEffect: Boolean,
     compactNavBar: Boolean, pillContentMode: Int,
     colorEngine: Int, colorGroupMode: Int, diffColorPerWeek: Boolean, showHiddenCourses: Boolean,
-    autoCheckUpdateDaily: Boolean,
     onDarkModeChange: (String) -> Unit, onLanguageChange: (String) -> Unit,
     onStartPageChange: (String) -> Unit, onBlurEffectChange: (Boolean) -> Unit,
     onCompactNavBarChange: (Boolean) -> Unit, onPillContentModeChange: (Int) -> Unit,
     onColorEngineChange: (Int) -> Unit, onColorGroupModeChange: (Int) -> Unit,
     onDiffColorPerWeekChange: (Boolean) -> Unit, onShowHiddenCoursesChange: (Boolean) -> Unit,
-    onAutoCheckUpdateDailyChange: (Boolean) -> Unit,
     onBack: () -> Unit,
     blurEnabled: Boolean = true
 ) {
@@ -407,11 +405,6 @@ internal fun AppearancePage(
             SwitchItem(Icons.Default.Palette, stringResource(R.string.diff_color_per_week), diffColorPerWeek, onDiffColorPerWeekChange)
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
             SwitchItem(Icons.Default.VisibilityOff, "显示已隐藏的课程", showHiddenCourses, onShowHiddenCoursesChange)
-        }
-        Spacer(modifier = Modifier.height(16.dp))
-        SectionHeader(stringResource(R.string.settings_category_update))
-        SettingsCard {
-            SwitchItem(Icons.Default.SystemUpdate, stringResource(R.string.auto_check_update_daily), autoCheckUpdateDaily, onAutoCheckUpdateDailyChange)
         }
     }
 }
@@ -616,6 +609,7 @@ internal fun SyncPage(
     showExamSchedule: Boolean,
     examLookaheadWeeks: Int,
     diffColorPerWeek: Boolean,
+    autoCheckUpdateDaily: Boolean,
     onAutoSyncOnStartChange: (Boolean) -> Unit,
     onAutoSyncIntervalValueChange: (Int) -> Unit,
     onAutoSyncIntervalUnitChange: (String) -> Unit,
@@ -623,6 +617,7 @@ internal fun SyncPage(
     onShowExamScheduleChange: (Boolean) -> Unit,
     onExamLookaheadWeeksChange: (Int) -> Unit,
     onDiffColorPerWeekChange: (Boolean) -> Unit,
+    onAutoCheckUpdateDailyChange: (Boolean) -> Unit,
     onFetchExam: () -> Unit,
     onBack: () -> Unit,
     blurEnabled: Boolean = true
@@ -645,83 +640,83 @@ internal fun SyncPage(
             SwitchItem(Icons.Default.PowerSettingsNew, stringResource(R.string.auto_sync_on_start), autoSyncOnStart) {
                 onAutoSyncOnStartChange(it)
             }
-            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
+            // ponytail: 关启动同步才展定时项——开则收起，同课表样式抽屉同款
+            androidx.compose.animation.AnimatedVisibility(
+                visible = !autoSyncOnStart,
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
+                Column {
+                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
 
-            val syncAlpha = if (autoSyncOnStart) 0.38f else 1f
+                    ListItem(
+                        headlineContent = {
+                            Text(stringResource(R.string.auto_sync_schedule))
+                        },
+                        supportingContent = {
+                            Text(stringResource(R.string.auto_sync_schedule_desc))
+                        },
+                        leadingContent = {
+                            Icon(Icons.Default.Schedule, null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        },
+                        colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+                    )
+                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
 
-            ListItem(
-                headlineContent = {
-                    Text(stringResource(R.string.auto_sync_schedule),
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = syncAlpha))
-                },
-                supportingContent = {
-                    Text(stringResource(R.string.auto_sync_schedule_desc),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = syncAlpha))
-                },
-                leadingContent = {
-                    Icon(Icons.Default.Schedule, null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = syncAlpha))
-                },
-                colors = ListItemDefaults.colors(containerColor = Color.Transparent)
-            )
-            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
+                    // Unit selector
+                    DropdownItem(Icons.Default.Tune, stringResource(R.string.auto_sync_interval),
+                        listOf(
+                            "min" to stringResource(R.string.auto_sync_unit_min),
+                            "h" to stringResource(R.string.auto_sync_unit_h),
+                            "d" to stringResource(R.string.auto_sync_unit_d)
+                        ),
+                        autoSyncIntervalUnit, onSelect = onAutoSyncIntervalUnitChange, blurEnabled = blurEnabled)
+                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
 
-            // Unit selector
-            DropdownItem(Icons.Default.Tune, stringResource(R.string.auto_sync_interval),
-                listOf(
-                    "min" to stringResource(R.string.auto_sync_unit_min),
-                    "h" to stringResource(R.string.auto_sync_unit_h),
-                    "d" to stringResource(R.string.auto_sync_unit_d)
-                ),
-                autoSyncIntervalUnit, enabled = !autoSyncOnStart, onSelect = onAutoSyncIntervalUnitChange, blurEnabled = blurEnabled)
-            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
-
-            // Value slider with +/- buttons
-            ListItem(
-                headlineContent = {
-                    Text("$autoSyncIntervalValue $unitLabel",
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = syncAlpha))
-                },
-                supportingContent = {
-                    Column {
-                        Slider(
-                            value = autoSyncIntervalValue.toFloat(),
-                            onValueChange = { onAutoSyncIntervalValueChange(it.toInt()) },
-                            valueRange = minVal.toFloat()..maxVal.toFloat(),
-                            steps = maxVal - minVal - 1,
-                            enabled = !autoSyncOnStart
-                        )
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.Center,
-                            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
-                        ) {
-                            IconButton(
-                                onClick = { onAutoSyncIntervalValueChange((autoSyncIntervalValue - 1).coerceIn(minVal, maxVal)) },
-                                enabled = !autoSyncOnStart && autoSyncIntervalValue > minVal
-                            ) {
-                                Icon(Icons.Default.Remove, null,
-                                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = syncAlpha))
+                    // Value slider with +/- buttons
+                    ListItem(
+                        headlineContent = {
+                            Text("$autoSyncIntervalValue $unitLabel")
+                        },
+                        supportingContent = {
+                            Column {
+                                Slider(
+                                    value = autoSyncIntervalValue.toFloat(),
+                                    onValueChange = { onAutoSyncIntervalValueChange(it.toInt()) },
+                                    valueRange = minVal.toFloat()..maxVal.toFloat(),
+                                    steps = maxVal - minVal - 1
+                                )
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.Center,
+                                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                                ) {
+                                    IconButton(
+                                        onClick = { onAutoSyncIntervalValueChange((autoSyncIntervalValue - 1).coerceIn(minVal, maxVal)) },
+                                        enabled = autoSyncIntervalValue > minVal
+                                    ) {
+                                        Icon(Icons.Default.Remove, null)
+                                    }
+                                    Text(
+                                        "$autoSyncIntervalValue $unitLabel",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        modifier = Modifier.padding(horizontal = 16.dp)
+                                    )
+                                    IconButton(
+                                        onClick = { onAutoSyncIntervalValueChange((autoSyncIntervalValue + 1).coerceIn(minVal, maxVal)) },
+                                        enabled = autoSyncIntervalValue < maxVal
+                                    ) {
+                                        Icon(Icons.Default.Add, null)
+                                    }
+                                }
                             }
-                            Text(
-                                "$autoSyncIntervalValue $unitLabel",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = syncAlpha),
-                                modifier = Modifier.padding(horizontal = 16.dp)
-                            )
-                            IconButton(
-                                onClick = { onAutoSyncIntervalValueChange((autoSyncIntervalValue + 1).coerceIn(minVal, maxVal)) },
-                                enabled = !autoSyncOnStart && autoSyncIntervalValue < maxVal
-                            ) {
-                                Icon(Icons.Default.Add, null,
-                                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = syncAlpha))
-                            }
-                        }
-                    }
-                },
-                leadingContent = { Icon(Icons.Default.Tune, null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = syncAlpha)) },
-                colors = ListItemDefaults.colors(containerColor = Color.Transparent)
-            )
+                        },
+                        leadingContent = { Icon(Icons.Default.Tune, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+                        colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+                    )
+                }
+            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -775,6 +770,14 @@ internal fun SyncPage(
             }
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
             // showExamSchedule moved to ExamScreen
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // ponytail: 查更新归自动同步页——同应用级后台行为
+        SectionHeader(stringResource(R.string.settings_category_update))
+        SettingsCard {
+            SwitchItem(Icons.Default.SystemUpdate, stringResource(R.string.auto_check_update_daily), autoCheckUpdateDaily, onAutoCheckUpdateDailyChange)
         }
     }
 }
