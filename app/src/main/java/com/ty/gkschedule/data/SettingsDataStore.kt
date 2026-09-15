@@ -118,7 +118,7 @@ class SettingsDataStore(private val context: Context) {
     val pillContentMode: Flow<Int> = context.dataStore.data.map { prefs -> prefs[PILL_CONTENT_MODE] ?: 0 }
     val blurEffect: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[BLUR_EFFECT] ?: true }
     // ponytail: 课表块多行名——关=单行截断，开关默认关
-    val weeklyBlockMultiline: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[WEEKLY_BLOCK_MULTILINE] ?: false }
+    val weeklyBlockMultiline: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[WEEKLY_BLOCK_MULTILINE] ?: true }
 
     fun getCurrentWeek(): Flow<Int> = context.dataStore.data.map { prefs ->
         val start = prefs[SEMESTER_START]?.let { LocalDate.parse(it) } ?: LocalDate.now()

@@ -92,7 +92,7 @@ fun WeeklyScheduleScreen(
     diffColorPerWeek: Boolean = false,
     blurEnabled: Boolean = true,
     // ponytail: 课表块名多行——开=最多3行折行，关=单行截断
-    blockMultiline: Boolean = false,
+    blockMultiline: Boolean = true,
     // ponytail: 默认底栏避让开关——悬浮pill不占位，传false不留白
     applyBottomBarInset: Boolean = true,
     getStartTime: (Int) -> String = { "" },

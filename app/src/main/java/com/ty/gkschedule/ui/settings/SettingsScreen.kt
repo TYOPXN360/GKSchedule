@@ -421,7 +421,7 @@ internal fun ScheduleStylePage(
     onAutoGridHeightChange: (Boolean) -> Unit, onMergeConsecutiveChange: (Boolean) -> Unit,
     onShowTimeLabelChange: (Boolean) -> Unit, onDetailedSplitChange: (Boolean) -> Unit,
     onShowDateInHeaderChange: (Boolean) -> Unit,
-    blockMultiline: Boolean = false,
+    blockMultiline: Boolean = true,
     onBlockMultilineChange: (Boolean) -> Unit = {},
     onBack: () -> Unit,
     blurEnabled: Boolean = true

@@ -108,7 +108,7 @@ class SubSettingsScheduleStyleActivity : SubSettingsBaseActivity() {
         val showTimeLabel by vm.showTimeLabel.collectAsState(initial = true)
         val detailedSplit by vm.detailedSplit.collectAsState(initial = false)
         val showDateInHeader by vm.showDateInHeader.collectAsState(initial = false)
-        val blockMultiline by vm.weeklyBlockMultiline.collectAsState(initial = false)
+        val blockMultiline by vm.weeklyBlockMultiline.collectAsState(initial = true)
         val blurEffect by vm.blurEffect.collectAsState(initial = false)
         ScheduleStylePage(
             gridHeight = gridHeight, gridCorner = gridCorner, gridSpacing = gridSpacing,

@@ -338,7 +338,7 @@ fun ScheduleApp(
     val examLookaheadWeeks by viewModel.examLookaheadWeeks.collectAsState(initial = 1)
     val diffColorPerWeek by viewModel.diffColorPerWeek.collectAsState(initial = false)
     val showHiddenCourses by viewModel.showHiddenCourses.collectAsState(initial = false)
-    val blockMultiline by viewModel.weeklyBlockMultiline.collectAsState(initial = false)
+    val blockMultiline by viewModel.weeklyBlockMultiline.collectAsState(initial = true)
     val compactNavBar by viewModel.compactNavBar.collectAsState(initial = true)
     val pillContentMode by viewModel.pillContentMode.collectAsState(initial = 0)
     val blurEffect by viewModel.blurEffect.collectAsState(initial = true)
