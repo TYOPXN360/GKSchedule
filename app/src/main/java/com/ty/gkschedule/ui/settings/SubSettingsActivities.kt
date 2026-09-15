@@ -70,12 +70,27 @@ class SubSettingsAppearanceActivity : SubSettingsBaseActivity() {
         val language by vm.language.collectAsState(initial = "system")
         val startPage by vm.startPage.collectAsState(initial = "today")
         val blurEffect by vm.blurEffect.collectAsState(initial = false)
+        val compactNavBar by vm.compactNavBar.collectAsState(initial = true)
+        val pillContentMode by vm.pillContentMode.collectAsState(initial = 0)
+        val colorEngine by vm.colorEngine.collectAsState(initial = 0)
+        val colorGroupMode by vm.colorGroupMode.collectAsState(initial = 2)
+        val diffColorPerWeek by vm.diffColorPerWeek.collectAsState(initial = false)
+        val showHiddenCourses by vm.showHiddenCourses.collectAsState(initial = false)
         AppearancePage(
             darkMode = darkMode, language = language, startPage = startPage, blurEffect = blurEffect,
+            compactNavBar = compactNavBar, pillContentMode = pillContentMode,
+            colorEngine = colorEngine, colorGroupMode = colorGroupMode,
+            diffColorPerWeek = diffColorPerWeek, showHiddenCourses = showHiddenCourses,
             onDarkModeChange = { vm.setDarkMode(it) },
             onLanguageChange = { vm.setLanguage(it) },
             onStartPageChange = { vm.setStartPage(it) },
             onBlurEffectChange = { vm.setBlurEffect(it) },
+            onCompactNavBarChange = { vm.setCompactNavBar(it) },
+            onPillContentModeChange = { vm.setPillContentMode(it) },
+            onColorEngineChange = { vm.setColorEngine(it) },
+            onColorGroupModeChange = { vm.setColorGroupMode(it) },
+            onDiffColorPerWeekChange = { vm.setDiffColorPerWeek(it) },
+            onShowHiddenCoursesChange = { vm.setShowHiddenCourses(it) },
             onBack = finish, blurEnabled = blurEffect
         )
     }
@@ -92,20 +107,14 @@ class SubSettingsScheduleStyleActivity : SubSettingsBaseActivity() {
         val mergeConsecutive by vm.mergeConsecutive.collectAsState(initial = true)
         val showTimeLabel by vm.showTimeLabel.collectAsState(initial = true)
         val detailedSplit by vm.detailedSplit.collectAsState(initial = false)
-        val colorEngine by vm.colorEngine.collectAsState(initial = 0)
-        val colorGroupMode by vm.colorGroupMode.collectAsState(initial = 2)
         val showDateInHeader by vm.showDateInHeader.collectAsState(initial = false)
-        val diffColorPerWeek by vm.diffColorPerWeek.collectAsState(initial = false)
-        val showHiddenCourses by vm.showHiddenCourses.collectAsState(initial = false)
-        val compactNavBar by vm.compactNavBar.collectAsState(initial = true)
-        val pillContentMode by vm.pillContentMode.collectAsState(initial = 0)
         val blockMultiline by vm.weeklyBlockMultiline.collectAsState(initial = false)
         val blurEffect by vm.blurEffect.collectAsState(initial = false)
         ScheduleStylePage(
             gridHeight = gridHeight, gridCorner = gridCorner, gridSpacing = gridSpacing,
             showPeriodLabel = showPeriodLabel, autoGridHeight = autoGridHeight,
             mergeConsecutive = mergeConsecutive, showTimeLabel = showTimeLabel,
-            detailedSplit = detailedSplit, colorEngine = colorEngine, colorGroupMode = colorGroupMode,
+            detailedSplit = detailedSplit,
             showDateInHeader = showDateInHeader,
             onGridHeightChange = { vm.setGridHeight(it) },
             onGridCornerChange = { vm.setGridCorner(it) },
@@ -115,17 +124,7 @@ class SubSettingsScheduleStyleActivity : SubSettingsBaseActivity() {
             onMergeConsecutiveChange = { vm.setMergeConsecutive(it) },
             onShowTimeLabelChange = { vm.setShowTimeLabel(it) },
             onDetailedSplitChange = { vm.setDetailedSplit(it) },
-            onColorEngineChange = { vm.setColorEngine(it) },
-            onColorGroupModeChange = { vm.setColorGroupMode(it) },
             onShowDateInHeaderChange = { vm.setShowDateInHeader(it) },
-            diffColorPerWeek = diffColorPerWeek,
-            onDiffColorPerWeekChange = { vm.setDiffColorPerWeek(it) },
-            showHiddenCourses = showHiddenCourses,
-            onShowHiddenCoursesChange = { vm.setShowHiddenCourses(it) },
-            compactNavBar = compactNavBar,
-            onCompactNavBarChange = { vm.setCompactNavBar(it) },
-            pillContentMode = pillContentMode,
-            onPillContentModeChange = { vm.setPillContentMode(it) },
             blockMultiline = blockMultiline,
             onBlockMultilineChange = { vm.setWeeklyBlockMultiline(it) },
             onBack = finish, blurEnabled = blurEffect

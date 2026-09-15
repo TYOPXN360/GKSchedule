@@ -340,8 +340,14 @@ internal fun SemesterPage(
 @Composable
 internal fun AppearancePage(
     darkMode: String, language: String, startPage: String, blurEffect: Boolean,
+    compactNavBar: Boolean, pillContentMode: Int,
+    colorEngine: Int, colorGroupMode: Int, diffColorPerWeek: Boolean, showHiddenCourses: Boolean,
     onDarkModeChange: (String) -> Unit, onLanguageChange: (String) -> Unit,
-    onStartPageChange: (String) -> Unit, onBlurEffectChange: (Boolean) -> Unit, onBack: () -> Unit,
+    onStartPageChange: (String) -> Unit, onBlurEffectChange: (Boolean) -> Unit,
+    onCompactNavBarChange: (Boolean) -> Unit, onPillContentModeChange: (Int) -> Unit,
+    onColorEngineChange: (Int) -> Unit, onColorGroupModeChange: (Int) -> Unit,
+    onDiffColorPerWeekChange: (Boolean) -> Unit, onShowHiddenCoursesChange: (Boolean) -> Unit,
+    onBack: () -> Unit,
     blurEnabled: Boolean = true
 ) {
     SubPage(stringResource(R.string.settings_category_appearance), onBack, blurEnabled = blurEnabled) {
@@ -359,75 +365,6 @@ internal fun AppearancePage(
                 startPage, onSelect = onStartPageChange, blurEnabled = blurEnabled)
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
             SwitchItem(Icons.Default.BlurOn, stringResource(R.string.blur_effect), blurEffect, onBlurEffectChange)
-        }
-    }
-}
-
-// === Schedule Style ===
-
-@Composable
-internal fun ScheduleStylePage(
-    gridHeight: Int, gridCorner: Int, gridSpacing: Int, showPeriodLabel: Boolean,
-    autoGridHeight: Boolean, mergeConsecutive: Boolean, showTimeLabel: Boolean,
-    detailedSplit: Boolean, colorEngine: Int, colorGroupMode: Int, showDateInHeader: Boolean,
-    onGridHeightChange: (Int) -> Unit, onGridCornerChange: (Int) -> Unit,
-    onGridSpacingChange: (Int) -> Unit, onShowPeriodLabelChange: (Boolean) -> Unit,
-    onAutoGridHeightChange: (Boolean) -> Unit, onMergeConsecutiveChange: (Boolean) -> Unit,
-    onShowTimeLabelChange: (Boolean) -> Unit, onDetailedSplitChange: (Boolean) -> Unit,
-    onColorEngineChange: (Int) -> Unit, onColorGroupModeChange: (Int) -> Unit,
-    onShowDateInHeaderChange: (Boolean) -> Unit,
-    diffColorPerWeek: Boolean,
-    onDiffColorPerWeekChange: (Boolean) -> Unit,
-    showHiddenCourses: Boolean = false,
-    onShowHiddenCoursesChange: (Boolean) -> Unit = {},
-    blockMultiline: Boolean = false,
-    onBlockMultilineChange: (Boolean) -> Unit = {},
-    compactNavBar: Boolean = true,
-    onCompactNavBarChange: (Boolean) -> Unit = {},
-    pillContentMode: Int = 0,
-    onPillContentModeChange: (Int) -> Unit = {},
-    onBack: () -> Unit,
-    blurEnabled: Boolean = true
-) {
-    SubPage(stringResource(R.string.settings_category_schedule), onBack, blurEnabled = blurEnabled) {
-        // ponytail: 布局类一卡，内容类一卡，导航栏类一卡，颜色类一卡
-        SectionHeader(stringResource(R.string.style_section_layout))
-        SettingsCard {
-            SwitchItem(Icons.Default.AutoAwesome, stringResource(R.string.auto_grid_height), autoGridHeight, onAutoGridHeightChange)
-            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
-            AnimatedVisibility(visible = !autoGridHeight, enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) {
-                Column {
-                    StepperItem(Icons.Default.Height, stringResource(R.string.grid_height), gridHeight, 36, 80, onGridHeightChange)
-                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
-                }
-            }
-            StepperItem(Icons.Default.RoundedCorner, stringResource(R.string.grid_corner), gridCorner, 0, 20, onGridCornerChange)
-            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
-            StepperItem(Icons.Default.SpaceBar, stringResource(R.string.grid_spacing), gridSpacing, 0, 8, onGridSpacingChange)
-            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
-            SwitchItem(Icons.Default.ViewColumn, stringResource(R.string.merge_consecutive), mergeConsecutive, onMergeConsecutiveChange)
-            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
-            AnimatedVisibility(visible = !mergeConsecutive, enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) {
-                Column {
-                    SwitchItem(Icons.Default.ViewDay, stringResource(R.string.detailed_split), detailedSplit, onDetailedSplitChange)
-                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
-                }
-            }
-        }
-        Spacer(modifier = Modifier.height(16.dp))
-        SectionHeader(stringResource(R.string.style_section_content))
-        SettingsCard {
-            SwitchItem(Icons.Default.AccessTime, stringResource(R.string.show_time_label), showTimeLabel, onShowTimeLabelChange)
-            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
-            SwitchItem(Icons.Default.CalendarMonth, stringResource(R.string.show_date_in_header), showDateInHeader, onShowDateInHeaderChange)
-            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
-            SwitchItem(Icons.Default.Pin, stringResource(R.string.show_period_label), showPeriodLabel, onShowPeriodLabelChange)
-        }
-        Spacer(modifier = Modifier.height(16.dp))
-        SectionHeader(stringResource(R.string.style_section_block))
-        SettingsCard {
-            // ponytail: 课表块名多行——关=单行截断，开=最多3行自然折行
-            SwitchItem(Icons.Default.WrapText, stringResource(R.string.block_multiline), blockMultiline, onBlockMultilineChange)
         }
         Spacer(modifier = Modifier.height(16.dp))
         SectionHeader(stringResource(R.string.style_section_navbar))
@@ -468,6 +405,66 @@ internal fun ScheduleStylePage(
             SwitchItem(Icons.Default.Palette, stringResource(R.string.diff_color_per_week), diffColorPerWeek, onDiffColorPerWeekChange)
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
             SwitchItem(Icons.Default.VisibilityOff, "显示已隐藏的课程", showHiddenCourses, onShowHiddenCoursesChange)
+        }
+    }
+}
+
+// === Schedule Style ===
+
+@Composable
+internal fun ScheduleStylePage(
+    gridHeight: Int, gridCorner: Int, gridSpacing: Int, showPeriodLabel: Boolean,
+    autoGridHeight: Boolean, mergeConsecutive: Boolean, showTimeLabel: Boolean,
+    detailedSplit: Boolean, showDateInHeader: Boolean,
+    onGridHeightChange: (Int) -> Unit, onGridCornerChange: (Int) -> Unit,
+    onGridSpacingChange: (Int) -> Unit, onShowPeriodLabelChange: (Boolean) -> Unit,
+    onAutoGridHeightChange: (Boolean) -> Unit, onMergeConsecutiveChange: (Boolean) -> Unit,
+    onShowTimeLabelChange: (Boolean) -> Unit, onDetailedSplitChange: (Boolean) -> Unit,
+    onShowDateInHeaderChange: (Boolean) -> Unit,
+    blockMultiline: Boolean = false,
+    onBlockMultilineChange: (Boolean) -> Unit = {},
+    onBack: () -> Unit,
+    blurEnabled: Boolean = true
+) {
+    SubPage(stringResource(R.string.settings_category_schedule), onBack, blurEnabled = blurEnabled) {
+        // ponytail: 布局/内容/课表块三卡——导航栏+颜色已迁外观页
+        SectionHeader(stringResource(R.string.style_section_layout))
+        SettingsCard {
+            SwitchItem(Icons.Default.AutoAwesome, stringResource(R.string.auto_grid_height), autoGridHeight, onAutoGridHeightChange)
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
+            AnimatedVisibility(visible = !autoGridHeight, enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) {
+                Column {
+                    StepperItem(Icons.Default.Height, stringResource(R.string.grid_height), gridHeight, 36, 80, onGridHeightChange)
+                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
+                }
+            }
+            StepperItem(Icons.Default.RoundedCorner, stringResource(R.string.grid_corner), gridCorner, 0, 20, onGridCornerChange)
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
+            StepperItem(Icons.Default.SpaceBar, stringResource(R.string.grid_spacing), gridSpacing, 0, 8, onGridSpacingChange)
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
+            SwitchItem(Icons.Default.ViewColumn, stringResource(R.string.merge_consecutive), mergeConsecutive, onMergeConsecutiveChange)
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
+            AnimatedVisibility(visible = !mergeConsecutive, enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) {
+                Column {
+                    SwitchItem(Icons.Default.ViewDay, stringResource(R.string.detailed_split), detailedSplit, onDetailedSplitChange)
+                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
+                }
+            }
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        SectionHeader(stringResource(R.string.style_section_content))
+        SettingsCard {
+            SwitchItem(Icons.Default.AccessTime, stringResource(R.string.show_time_label), showTimeLabel, onShowTimeLabelChange)
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
+            SwitchItem(Icons.Default.CalendarMonth, stringResource(R.string.show_date_in_header), showDateInHeader, onShowDateInHeaderChange)
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
+            SwitchItem(Icons.Default.Pin, stringResource(R.string.show_period_label), showPeriodLabel, onShowPeriodLabelChange)
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        SectionHeader(stringResource(R.string.style_section_block))
+        SettingsCard {
+            // ponytail: 课表块名多行——关=单行截断，开=最多3行自然折行
+            SwitchItem(Icons.Default.WrapText, stringResource(R.string.block_multiline), blockMultiline, onBlockMultilineChange)
         }
     }
 }
