@@ -310,6 +310,14 @@ fun WebViewLoginScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
                 )
+                Spacer(modifier = Modifier.height(4.dp))
+                // ponytail: 小窗分屏提示单独一行居中，字大一档
+                Text(
+                    text = stringResource(R.string.scan_login_float_tip),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textAlign = TextAlign.Center
+                )
             }
         }
     }
