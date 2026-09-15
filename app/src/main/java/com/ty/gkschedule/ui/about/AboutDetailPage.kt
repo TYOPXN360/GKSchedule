@@ -252,7 +252,8 @@ fun AboutDetailPage(
                         Surface(
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(8.dp),
-                            color = MaterialTheme.colorScheme.surfaceContainerLowest
+                            // ponytail: Lowest暗色近纯黑——换High与Md3Card/Dialog同阶
+                            color = MaterialTheme.colorScheme.surfaceContainerHigh
                         ) {
                             Row(
                                 modifier = Modifier.padding(12.dp),
