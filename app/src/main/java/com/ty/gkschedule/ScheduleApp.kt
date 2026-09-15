@@ -453,7 +453,8 @@ fun ScheduleApp(
                             effects = { blur(28.dp.toPx()) },
                             onDrawSurface = { drawRect(barBg.copy(alpha = 0.75f)) }
                         ) else Modifier,
-                        containerColor = androidx.compose.ui.graphics.Color.Transparent
+                        // ponytail: 关开关纯色——糊开才透明+糊底
+                        containerColor = if (blurEffect) androidx.compose.ui.graphics.Color.Transparent else barBg
                     ) {
                         navItemList().forEach { (screen, triple) ->
                             NavigationBarItem(

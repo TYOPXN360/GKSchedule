@@ -533,14 +533,15 @@ fun WeeklyScheduleScreen(
                 onClick = { com.ty.gkschedule.util.HapticFeedback.light(hapticView); fabExpanded = !fabExpanded },
                 shape = fabShape,
                 elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp),
-                modifier = Modifier
+                // ponytail: 关开关纯色——糊开才75%透
+                modifier = if (blurEnabled) Modifier
                     .align(Alignment.BottomEnd)
                     .drawBackdrop(
                         backdrop = backdrop,
                         shape = { fabShape },
                         effects = { blur(28.dp.toPx()) }
-                    ),
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f),
+                    ) else Modifier.align(Alignment.BottomEnd),
+                containerColor = if (blurEnabled) MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f) else MaterialTheme.colorScheme.surfaceContainerHigh,
                 contentColor = MaterialTheme.colorScheme.onSurfaceVariant
             ) { Text(if (fabExpanded) "—" else "+", style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center, modifier = Modifier.width(20.dp)) }
 
