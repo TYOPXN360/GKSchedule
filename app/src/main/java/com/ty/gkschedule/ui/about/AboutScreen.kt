@@ -49,7 +49,9 @@ fun AboutScreen(
     onOpenAbout: () -> Unit,
     onOpenExam: () -> Unit = {},
     // ponytail: 默认底栏避让开关——悬浮pill不占位，传false不留白
-    applyBottomBarInset: Boolean = true
+    applyBottomBarInset: Boolean = true,
+    // ponytail: 重登录Dialog糊开关
+    blurEnabled: Boolean = true
 ) {
     var showReloginDialog by remember { mutableStateOf(false) }
 
@@ -292,7 +294,7 @@ fun AboutScreen(
         var captcha by remember { mutableStateOf("") }
         androidx.compose.ui.window.Dialog(onDismissRequest = { showReloginDialog = false }) {
             com.ty.gkschedule.ui.theme.BlurCard(
-                enabled = true,
+                enabled = blurEnabled,
                 modifier = Modifier.fillMaxWidth(),
                 radiusDp = 36f,
                 backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.48f),

@@ -47,7 +47,9 @@ fun TodayScreen(
     onExamEdit: (com.ty.gkschedule.data.ExamEntity) -> Unit = {},
     diffColorPerWeek: Boolean = false,
     // ponytail: 默认底栏避让开关——悬浮pill不占位，传false不留白
-    applyBottomBarInset: Boolean = true
+    applyBottomBarInset: Boolean = true,
+    // ponytail: 详情Sheet糊开关（ScheduleItemDetailSheet透传）
+    blurEnabled: Boolean = true
 ) {
     val today = LocalDate.now()
     val todayDow = today.dayOfWeek.value
@@ -383,7 +385,8 @@ fun TodayScreen(
             colorIndex = colorAssignment.colorIndex,
             classroomColorIndex = colorAssignment.classroomColorIndex,
             currentWeek = detailWeek,
-            diffColorPerWeek = diffColorPerWeek
+            diffColorPerWeek = diffColorPerWeek,
+            blurEnabled = blurEnabled
         )
     }
 
@@ -409,7 +412,8 @@ fun TodayScreen(
             colorIndex = colorAssignment.colorIndex,
             classroomColorIndex = colorAssignment.classroomColorIndex,
             currentWeek = detailWeek,
-            diffColorPerWeek = diffColorPerWeek
+            diffColorPerWeek = diffColorPerWeek,
+            blurEnabled = blurEnabled
         )
     }
 }

@@ -143,6 +143,7 @@ private fun applyBlur(
 }.getOrNull()
 
 // ponytail: 整卡包裹毛玻璃AlertDialog——BasicAlertDialog无自带实心底，整张BlurCard一体成型
+// ponytail: 关开关=纯色卡（enabled=false走Spacer底）；调用方Dialog/Dropdown/Sheet/详情卡全要透传开关
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BlurAlertDialog(
@@ -153,13 +154,14 @@ fun BlurAlertDialog(
     icon: (@Composable () -> Unit)? = null,
     title: (@Composable () -> Unit)? = null,
     text: (@Composable () -> Unit)? = null,
+    blurEnabled: Boolean = true,
 ) {
     BasicAlertDialog(
         onDismissRequest = onDismissRequest,
         modifier = modifier
     ) {
         BlurCard(
-            enabled = true,
+            enabled = blurEnabled,
             modifier = Modifier.fillMaxWidth(),
             radiusDp = 32f,
             backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.55f),
@@ -213,7 +215,8 @@ fun BlurDatePickerDialog(
     confirmButton: @Composable () -> Unit,
     modifier: Modifier = Modifier,
     dismissButton: (@Composable () -> Unit)? = null,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
+    blurEnabled: Boolean = true,
 ) {
     BasicAlertDialog(
         onDismissRequest = onDismissRequest,
@@ -221,7 +224,7 @@ fun BlurDatePickerDialog(
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
         BlurCard(
-            enabled = true,
+            enabled = blurEnabled,
             modifier = Modifier
                 .width(360.dp)
                 .wrapContentHeight(),
@@ -251,6 +254,7 @@ fun BlurDatePickerDialog(
 fun BlurDropdownMenu(    expanded: Boolean,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
+    blurEnabled: Boolean = true,
     content: @Composable ColumnScope.() -> Unit
 ) {
     // ponytail: 阴影只留一层——DropdownMenu自带tonal表面色+BlurCard糊底叠色=双层直角；
@@ -264,7 +268,7 @@ fun BlurDropdownMenu(    expanded: Boolean,
         tonalElevation = 0.dp
     ) {
         BlurCard(
-            enabled = true,
+            enabled = blurEnabled,
             modifier = Modifier,
             radiusDp = 28f,
             backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f),

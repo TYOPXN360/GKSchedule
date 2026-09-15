@@ -369,7 +369,8 @@ fun AboutDetailPage(
                 TextButton(onClick = { showDisclaimerDialog = false }) {
                     Text("OK")
                 }
-            }
+            },
+            blurEnabled = blurEnabled
         )
     }
 
@@ -445,7 +446,8 @@ fun AboutDetailPage(
                         Text(stringResource(R.string.cancel))
                     }
                 }
-            }
+            },
+            blurEnabled = blurEnabled
         )
     }
 }

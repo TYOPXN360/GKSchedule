@@ -328,7 +328,7 @@ internal fun SemesterPage(
         SettingsCard {
             DropdownItem(Icons.Default.FirstPage, stringResource(R.string.first_day_of_week),
                 listOf("1" to stringResource(R.string.first_day_monday), "7" to stringResource(R.string.first_day_sunday)),
-                firstDayOfWeek.toString(), onSelect = { onFirstDayOfWeekChange(it.toInt()) })
+                firstDayOfWeek.toString(), onSelect = { onFirstDayOfWeekChange(it.toInt()) }, blurEnabled = blurEnabled)
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
             SwitchItem(Icons.Default.Visibility, stringResource(R.string.hide_empty_weeks), hideEmptyWeeks, onHideEmptyWeeksChange)
         }
@@ -348,15 +348,15 @@ internal fun AppearancePage(
         SettingsCard {
             DropdownItem(Icons.Default.DarkMode, stringResource(R.string.dark_mode),
                 listOf("system" to stringResource(R.string.dark_mode_system), "light" to stringResource(R.string.dark_mode_light), "dark" to stringResource(R.string.dark_mode_dark)),
-                darkMode, onSelect = onDarkModeChange)
+                darkMode, onSelect = onDarkModeChange, blurEnabled = blurEnabled)
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
             DropdownItem(Icons.Default.Language, stringResource(R.string.language),
                 listOf("system" to stringResource(R.string.language_system), "en" to stringResource(R.string.language_en), "zh" to stringResource(R.string.language_zh)),
-                language, onSelect = onLanguageChange)
+                language, onSelect = onLanguageChange, blurEnabled = blurEnabled)
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
             DropdownItem(Icons.Default.Home, stringResource(R.string.start_page),
                 listOf("today" to stringResource(R.string.nav_today), "weekly" to stringResource(R.string.nav_schedule)),
-                startPage, onSelect = onStartPageChange)
+                startPage, onSelect = onStartPageChange, blurEnabled = blurEnabled)
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
             SwitchItem(Icons.Default.BlurOn, stringResource(R.string.blur_effect), blurEffect, onBlurEffectChange)
         }
@@ -440,7 +440,7 @@ internal fun ScheduleStylePage(
                             "1" to stringResource(R.string.pill_content_icon),
                             "2" to stringResource(R.string.pill_content_text)
                         ),
-                        pillContentMode.toString(), onSelect = { onPillContentModeChange(it.toInt()) }
+                        pillContentMode.toString(), onSelect = { onPillContentModeChange(it.toInt()) }, blurEnabled = blurEnabled
                     )
                 }
             }
@@ -450,11 +450,11 @@ internal fun ScheduleStylePage(
         SettingsCard {
             DropdownItem(Icons.Default.Palette, stringResource(R.string.color_engine),
                 listOf("0" to stringResource(R.string.color_engine_monet), "1" to stringResource(R.string.color_engine_vibrant), "2" to stringResource(R.string.color_engine_classic), "3" to stringResource(R.string.color_engine_hsl)),
-                colorEngine.toString(), onSelect = { onColorEngineChange(it.toInt()) })
+                colorEngine.toString(), onSelect = { onColorEngineChange(it.toInt()) }, blurEnabled = blurEnabled)
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
             DropdownItem(Icons.Default.FormatColorFill, stringResource(R.string.color_group_mode),
                 listOf("0" to stringResource(R.string.color_group_same), "1" to stringResource(R.string.color_group_same_sat), "2" to stringResource(R.string.color_group_diff)),
-                colorGroupMode.toString(), onSelect = { onColorGroupModeChange(it.toInt()) })
+                colorGroupMode.toString(), onSelect = { onColorGroupModeChange(it.toInt()) }, blurEnabled = blurEnabled)
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
             SwitchItem(Icons.Default.Palette, stringResource(R.string.diff_color_per_week), diffColorPerWeek, onDiffColorPerWeekChange)
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
@@ -491,7 +491,7 @@ internal fun NotificationPage(
                     val v = it.toInt()
                     if (v > 0 && reminderMinutes == 0) { pendingReminder = v; requestBg() }
                     else onReminderMinutesChange(v)
-                })
+                }, blurEnabled = blurEnabled)
             // ponytail: 开启后展开模式二选一，默认仅通知；简介放i弹窗（心跳同款）
             AnimatedVisibility(visible = reminderMinutes > 0, enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) {
                 Column {
@@ -511,7 +511,7 @@ internal fun NotificationPage(
                                         Text(if (reminderMode == "countdown") stringResource(R.string.reminder_mode_countdown) else stringResource(R.string.reminder_mode_notify))
                                         Icon(Icons.Default.ArrowDropDown, null, modifier = Modifier.size(18.dp))
                                     }
-                                    com.ty.gkschedule.ui.theme.BlurDropdownMenu(expanded = modeExpanded, onDismissRequest = { modeExpanded = false }) {
+                                    com.ty.gkschedule.ui.theme.BlurDropdownMenu(expanded = modeExpanded, onDismissRequest = { modeExpanded = false }, blurEnabled = blurEnabled) {
                                         DropdownMenuItem(text = { Text(stringResource(R.string.reminder_mode_notify)) }, onClick = { onReminderModeChange("notify"); modeExpanded = false })
                                         DropdownMenuItem(text = { Text(stringResource(R.string.reminder_mode_countdown)) }, onClick = { onReminderModeChange("countdown"); modeExpanded = false })
                                     }
@@ -523,7 +523,7 @@ internal fun NotificationPage(
                     if (showModeInfo) {
                         androidx.compose.ui.window.Dialog(onDismissRequest = { showModeInfo = false }) {
                             com.ty.gkschedule.ui.theme.BlurCard(
-                                enabled = true,
+                                enabled = blurEnabled,
                                 modifier = Modifier.fillMaxWidth(),
                                 radiusDp = 36f,
                                 backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.48f),
@@ -566,7 +566,7 @@ internal fun NotificationPage(
                     if (showLiveInfo) {
                         androidx.compose.ui.window.Dialog(onDismissRequest = { showLiveInfo = false }) {
                             com.ty.gkschedule.ui.theme.BlurCard(
-                                enabled = true,
+                                enabled = blurEnabled,
                                 modifier = Modifier.fillMaxWidth(),
                                 radiusDp = 36f,
                                 backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.48f),
@@ -660,7 +660,7 @@ internal fun SyncPage(
                     "h" to stringResource(R.string.auto_sync_unit_h),
                     "d" to stringResource(R.string.auto_sync_unit_d)
                 ),
-                autoSyncIntervalUnit, enabled = !autoSyncOnStart, onSelect = onAutoSyncIntervalUnitChange)
+                autoSyncIntervalUnit, enabled = !autoSyncOnStart, onSelect = onAutoSyncIntervalUnitChange, blurEnabled = blurEnabled)
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
 
             // Value slider with +/- buttons
@@ -742,7 +742,7 @@ internal fun SyncPage(
                 // ponytail: 重登录同款BlurCard毛玻璃Dialog（dim 12%+底48%+半径36）
                 androidx.compose.ui.window.Dialog(onDismissRequest = { showHeartbeatInfo = false }) {
                     com.ty.gkschedule.ui.theme.BlurCard(
-                        enabled = true,
+                        enabled = blurEnabled,
                         modifier = Modifier.fillMaxWidth(),
                         radiusDp = 36f,
                         backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.48f),
@@ -847,7 +847,7 @@ private fun SwitchItem(icon: androidx.compose.ui.graphics.vector.ImageVector, ti
 }
 
 @Composable
-private fun DropdownItem(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, options: List<Pair<String, String>>, currentKey: String, enabled: Boolean = true, onSelect: (String) -> Unit) {
+private fun DropdownItem(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, options: List<Pair<String, String>>, currentKey: String, enabled: Boolean = true, onSelect: (String) -> Unit, blurEnabled: Boolean = true) {
     var expanded by remember { mutableStateOf(false) }
     val label = options.find { it.first == currentKey }?.second ?: ""
     val alpha = if (enabled) 1f else 0.38f
@@ -862,7 +862,7 @@ private fun DropdownItem(icon: androidx.compose.ui.graphics.vector.ImageVector, 
                         Text(label)
                         Icon(Icons.Default.ArrowDropDown, null, modifier = Modifier.size(18.dp))
                     }
-                    com.ty.gkschedule.ui.theme.BlurDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                    com.ty.gkschedule.ui.theme.BlurDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }, blurEnabled = blurEnabled) {
                         options.forEach { (key, text) ->
                             DropdownMenuItem(text = { Text(text) }, onClick = { onSelect(key); expanded = false })
                         }

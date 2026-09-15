@@ -555,12 +555,13 @@ fun WeeklyScheduleScreen(
                         onClick = { com.ty.gkschedule.util.HapticFeedback.medium(hapticView); onRefresh() },
                 shape = fabShape,
                         elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp),
-                        modifier = Modifier.drawBackdrop(
+                        // ponytail: 关开关回纯色——drawBackdrop无视开关会漏糊
+                        modifier = if (blurEnabled) Modifier.drawBackdrop(
                             backdrop = backdrop,
                             shape = { fabShape },
                             effects = { blur(28.dp.toPx()) }
-                        ),
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.75f),
+                        ) else Modifier,
+                        containerColor = if (blurEnabled) MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.75f) else MaterialTheme.colorScheme.secondaryContainer,
                         contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                     ) {
                         // ponytail: 官方LoadingIndicator(M3 1.5.0-alpha27 pin版，BOM不管)
@@ -599,12 +600,13 @@ fun WeeklyScheduleScreen(
                             }
                         }
                     }, shape = fabShape, elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp),
-                        modifier = Modifier.drawBackdrop(
+                        // ponytail: 关开关回纯色——drawBackdrop无视开关会漏糊
+                        modifier = if (blurEnabled) Modifier.drawBackdrop(
                             backdrop = backdrop,
                             shape = { fabShape },
                             effects = { blur(28.dp.toPx()) }
-                        ),
-                        containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.75f), contentColor = MaterialTheme.colorScheme.onTertiaryContainer) { Icon(Icons.Default.CropFree, "Screenshot") }
+                        ) else Modifier,
+                        containerColor = if (blurEnabled) MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.75f) else MaterialTheme.colorScheme.tertiaryContainer, contentColor = MaterialTheme.colorScheme.onTertiaryContainer) { Icon(Icons.Default.CropFree, "Screenshot") }
                     }
             } // HorizontalPager
 
@@ -619,12 +621,13 @@ fun WeeklyScheduleScreen(
                     onClick = { com.ty.gkschedule.util.HapticFeedback.medium(hapticView); onWeekChange(realCurrentWeek) },
                 shape = fabShape,
                     elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp),
-                    modifier = Modifier.drawBackdrop(
+                    // ponytail: 关开关回纯色——drawBackdrop无视开关会漏糊
+                    modifier = if (blurEnabled) Modifier.drawBackdrop(
                         backdrop = backdrop,
                         shape = { fabShape },
                         effects = { blur(28.dp.toPx()) }
-                    ),
-                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.75f),
+                    ) else Modifier,
+                    containerColor = if (blurEnabled) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.75f) else MaterialTheme.colorScheme.primaryContainer,
                     contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 ) { Icon(if (currentWeek > realCurrentWeek) Icons.Default.ChevronLeft else Icons.Default.ChevronRight, stringResource(R.string.back_to_current_week)) }
             }
@@ -649,17 +652,17 @@ fun WeeklyScheduleScreen(
             colorIndex = detailColorIndex,
             classroomColorIndex = detailClassroomColorIndex,
             currentWeek = targetWeek,
-            diffColorPerWeek = diffColorPerWeek)
+            diffColorPerWeek = diffColorPerWeek, blurEnabled = blurEnabled)
     }
 
     if (showWeekPicker) {
-        WeekPickerSheet(totalWeeks, currentWeek, { onWeekChange(it); showWeekPicker = false }, { showWeekPicker = false })
+        WeekPickerSheet(totalWeeks, currentWeek, { onWeekChange(it); showWeekPicker = false }, { showWeekPicker = false }, blurEnabled = blurEnabled)
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ScheduleItemDetailSheet(item: ScheduleItem, getStartTime: (Int) -> String, getEndTime: (Int) -> String, onDismiss: () -> Unit, onEdit: () -> Unit, colorEngine: Int = 0, colorGroupMode: Int = 0, colorIndex: Int? = null, classroomColorIndex: Int = 0, dotColor: Color? = null, currentWeek: Int = 0, diffColorPerWeek: Boolean = false) {
+fun ScheduleItemDetailSheet(item: ScheduleItem, getStartTime: (Int) -> String, getEndTime: (Int) -> String, onDismiss: () -> Unit, onEdit: () -> Unit, colorEngine: Int = 0, colorGroupMode: Int = 0, colorIndex: Int? = null, classroomColorIndex: Int = 0, dotColor: Color? = null, currentWeek: Int = 0, diffColorPerWeek: Boolean = false, blurEnabled: Boolean = true) {
     val isDark = com.ty.gkschedule.ui.theme.LocalAppIsDark.current
     val themeHue = CourseColors.currentThemeHue()
     val hctColors = remember(item, colorEngine, colorGroupMode, colorIndex, classroomColorIndex, currentWeek, diffColorPerWeek, isDark, themeHue) {
@@ -698,7 +701,7 @@ fun ScheduleItemDetailSheet(item: ScheduleItem, getStartTime: (Int) -> String, g
         contentWindowInsets = { WindowInsets(0, 0, 0, 0) }
     ) {
         BlurCard(
-            enabled = true,
+            enabled = blurEnabled,
             modifier = Modifier.fillMaxWidth(),
             backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f),
         ) {
@@ -770,7 +773,7 @@ private fun DetailRow(label: String, value: String) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun WeekPickerSheet(totalWeeks: Int, currentWeek: Int, onWeekSelected: (Int) -> Unit, onDismiss: () -> Unit) {
+private fun WeekPickerSheet(totalWeeks: Int, currentWeek: Int, onWeekSelected: (Int) -> Unit, onDismiss: () -> Unit, blurEnabled: Boolean = true) {
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
@@ -780,7 +783,7 @@ private fun WeekPickerSheet(totalWeeks: Int, currentWeek: Int, onWeekSelected: (
         contentWindowInsets = { WindowInsets(0, 0, 0, 0) }
     ) {
         BlurCard(
-            enabled = true,
+            enabled = blurEnabled,
             modifier = Modifier.fillMaxWidth(),
             backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f),
         ) {

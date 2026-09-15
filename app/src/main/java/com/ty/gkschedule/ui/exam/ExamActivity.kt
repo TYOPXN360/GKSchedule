@@ -19,10 +19,11 @@ class ExamActivity : AppCompatActivity() {
         enableEdgeToEdge()
         val initialExamId = intent.getLongExtra("examId", -1L)
         // ponytail: 重登录Dialog独立窗口糊背后——窗口级blurBehind，圆角形状糊不到但比纯透强
+        // ponytail: 关开关=0半径；LaunchedEffect跟blurEffect重组刷新（runBlocking只读首帧，开关后改需重进）
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
             try {
                 val settings = com.ty.gkschedule.data.SettingsDataStore(this)
-                val blurOn = kotlinx.coroutines.runBlocking { settings.blurEffect.firstOrNull() ?: true }
+                val blurOn = kotlinx.coroutines.runBlocking { settings.blurEffect.firstOrNull() } ?: false
                 val radius = (28 * resources.displayMetrics.density).toInt().coerceIn(1, 150)
                 val attrs = window.attributes
                 attrs.blurBehindRadius = if (blurOn) radius else 0

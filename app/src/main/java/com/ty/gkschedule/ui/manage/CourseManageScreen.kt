@@ -124,13 +124,14 @@ fun CourseManageScreen(
                 onClick = onAddCourse,
                 shape = fabShape,
                 elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp),
-                modifier = Modifier.drawBackdrop(
+                // ponytail: 关开关回纯色——drawBackdrop无视开关会漏糊
+                modifier = if (blurEnabled) Modifier.drawBackdrop(
                     backdrop = backdrop,
                     shape = { fabShape },
                     effects = { blur(28.dp.toPx()) },
                     onDrawSurface = { drawRect(fabBrand.copy(alpha = 0.75f)) }
-                ),
-                containerColor = androidx.compose.ui.graphics.Color.Transparent,
+                ) else Modifier,
+                containerColor = if (blurEnabled) androidx.compose.ui.graphics.Color.Transparent else fabBrand,
                 contentColor = fabOnBrand
             ) {
                 Icon(Icons.Default.Add, stringResource(R.string.add_course))
@@ -194,7 +195,8 @@ fun CourseManageScreen(
             title = { Text(stringResource(R.string.confirm_delete)) },
             text = { Text(stringResource(R.string.confirm_delete_msg)) },
             confirmButton = { TextButton(onClick = { onDeleteCourse(course); courseToDelete = null }) { Text(stringResource(R.string.delete)) } },
-            dismissButton = { TextButton(onClick = { courseToDelete = null }) { Text(stringResource(R.string.cancel)) } }
+            dismissButton = { TextButton(onClick = { courseToDelete = null }) { Text(stringResource(R.string.cancel)) } },
+            blurEnabled = blurEnabled
         )
     }
     if (showDeleteAllDialog) {
@@ -203,7 +205,8 @@ fun CourseManageScreen(
             title = { Text(stringResource(R.string.confirm_delete_all)) },
             text = { Text(stringResource(R.string.confirm_delete_all_msg)) },
             confirmButton = { TextButton(onClick = { onDeleteAll(); showDeleteAllDialog = false }) { Text(stringResource(R.string.delete)) } },
-            dismissButton = { TextButton(onClick = { showDeleteAllDialog = false }) { Text(stringResource(R.string.cancel)) } }
+            dismissButton = { TextButton(onClick = { showDeleteAllDialog = false }) { Text(stringResource(R.string.cancel)) } },
+            blurEnabled = blurEnabled
         )
     }
 }

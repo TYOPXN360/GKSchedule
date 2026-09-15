@@ -176,7 +176,7 @@ fun ExamScreen(
                             }
                         }
                         Box {
-                            com.ty.gkschedule.ui.theme.BlurDropdownMenu(expanded = yearExpanded, onDismissRequest = { yearExpanded = false }) {
+                            com.ty.gkschedule.ui.theme.BlurDropdownMenu(expanded = yearExpanded, onDismissRequest = { yearExpanded = false }, blurEnabled = blurEnabled) {
                                 years.forEach { y -> DropdownMenuItem(text = { Text(y) }, onClick = { onYearChange(y); yearExpanded = false }) }
                             }
                         }
@@ -189,7 +189,7 @@ fun ExamScreen(
                             }
                         }
                         Box {
-                            com.ty.gkschedule.ui.theme.BlurDropdownMenu(expanded = semExpanded, onDismissRequest = { semExpanded = false }) {
+                            com.ty.gkschedule.ui.theme.BlurDropdownMenu(expanded = semExpanded, onDismissRequest = { semExpanded = false }, blurEnabled = blurEnabled) {
                                 DropdownMenuItem(text = { Text("第一学期") }, onClick = { onSemesterChange("1"); semExpanded = false })
                                 DropdownMenuItem(text = { Text("第二学期") }, onClick = { onSemesterChange("2"); semExpanded = false })
                             }
@@ -376,7 +376,7 @@ fun ExamScreen(
         var captcha by remember { mutableStateOf("") }
         androidx.compose.ui.window.Dialog(onDismissRequest = onDismissRelogin) {
             BlurCard(
-                enabled = true,
+                enabled = blurEnabled,
                 modifier = Modifier.fillMaxWidth(),
                 radiusDp = 36f,
                 backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.48f),
