@@ -33,7 +33,9 @@ fun BlurLargeTopBar(
     scrollBehavior: TopAppBarScrollBehavior? = null
 ) {
     val useBlur = blurEnabled && backdrop != null
-    val barBg = MaterialTheme.colorScheme.surface.copy(
+    // ponytail: 顶栏底与主App底色同系——暗surface/亮surfaceContainer（全surface亮色断层）
+    val isDark = LocalAppIsDark.current
+    val barBg = (if (isDark) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainer).copy(
         alpha = if (useBlur) 0.40f else 1f
     )
     // ponytail: Large顶栏真折叠——miuix糊跟栏高收缩走，折叠黑条是糊层没跟上
@@ -74,7 +76,9 @@ fun BlurTopBar(
     scrollBehavior: TopAppBarScrollBehavior? = null
 ) {
     val useBlur = blurEnabled && backdrop != null
-    val barBg = MaterialTheme.colorScheme.surface.copy(
+    // ponytail: 顶栏底与主App底色同系——暗surface/亮surfaceContainer（全surface亮色断层）
+    val isDark = LocalAppIsDark.current
+    val barBg = (if (isDark) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainer).copy(
         alpha = if (useBlur) 0.40f else 1f
     )
     Box(

@@ -56,9 +56,12 @@ fun AboutDetailPage(
 
     // ponytail: miuix源层
     val backdrop = top.yukonga.miuix.kmp.blur.rememberLayerBackdrop()
+    // ponytail: 底色与主App同值——暗surface/亮surfaceContainer（硬编码surfaceContainer暗色偏亮一档）
+    val isDark = com.ty.gkschedule.ui.theme.LocalAppIsDark.current
+    val pageBg = if (isDark) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainer
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+        containerColor = pageBg,
         topBar = {
             com.ty.gkschedule.ui.theme.BlurTopBar(
                 title = { Text(stringResource(R.string.about_title)) },
@@ -76,7 +79,7 @@ fun AboutDetailPage(
             modifier = Modifier
                 .fillMaxSize()
                 .layerBackdrop(backdrop)
-                .background(MaterialTheme.colorScheme.surfaceContainer)
+                .background(pageBg)
                                 // ponytail: 避让走滚动内padding，源纹理全屏录(含顶栏身后)
                 .verticalScroll(rememberScrollState())
                 .padding(top = padding.calculateTopPadding()),
