@@ -95,7 +95,8 @@ fun BlurCard(
                 }
             )
         } else if (backgroundColor != Color.Unspecified) {
-            Spacer(Modifier.matchParentSize().background(backgroundColor))
+            // ponytail: 关开关纯色——糊开才半透明透糊
+            Spacer(Modifier.matchParentSize().background(backgroundColor.copy(alpha = 1f)))
         }
         content()
     }
