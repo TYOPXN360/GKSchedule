@@ -171,6 +171,20 @@ class MainActivity : AppCompatActivity() {
                         )
                     } else {
                         ScheduleApp(viewModel = vm)
+                        // ponytail: 每日首次启动查更新——开关+日期双门，成功有包才发通知
+                        LaunchedEffect(Unit) {
+                            val settings = com.ty.gkschedule.data.SettingsDataStore(this@MainActivity)
+                            if (!settings.autoCheckUpdateDaily.first()) return@LaunchedEffect
+                            val today = java.time.LocalDate.now().toString()
+                            if (settings.lastUpdateCheckDate.first() == today) return@LaunchedEffect
+                            settings.setLastUpdateCheckDate(today)
+                            com.ty.gkschedule.util.UpdateChecker.checkForUpdateWithRetry(this@MainActivity)
+                                .onSuccess { info ->
+                                    if (info.isUpdateAvailable) {
+                                        com.ty.gkschedule.util.UpdateNotificationHelper.showUpdateNotification(this@MainActivity, info)
+                                    }
+                                }
+                        }
                     }
                 }
             }

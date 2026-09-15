@@ -342,11 +342,13 @@ internal fun AppearancePage(
     darkMode: String, language: String, startPage: String, blurEffect: Boolean,
     compactNavBar: Boolean, pillContentMode: Int,
     colorEngine: Int, colorGroupMode: Int, diffColorPerWeek: Boolean, showHiddenCourses: Boolean,
+    autoCheckUpdateDaily: Boolean,
     onDarkModeChange: (String) -> Unit, onLanguageChange: (String) -> Unit,
     onStartPageChange: (String) -> Unit, onBlurEffectChange: (Boolean) -> Unit,
     onCompactNavBarChange: (Boolean) -> Unit, onPillContentModeChange: (Int) -> Unit,
     onColorEngineChange: (Int) -> Unit, onColorGroupModeChange: (Int) -> Unit,
     onDiffColorPerWeekChange: (Boolean) -> Unit, onShowHiddenCoursesChange: (Boolean) -> Unit,
+    onAutoCheckUpdateDailyChange: (Boolean) -> Unit,
     onBack: () -> Unit,
     blurEnabled: Boolean = true
 ) {
@@ -405,6 +407,11 @@ internal fun AppearancePage(
             SwitchItem(Icons.Default.Palette, stringResource(R.string.diff_color_per_week), diffColorPerWeek, onDiffColorPerWeekChange)
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
             SwitchItem(Icons.Default.VisibilityOff, "显示已隐藏的课程", showHiddenCourses, onShowHiddenCoursesChange)
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        SectionHeader(stringResource(R.string.settings_category_update))
+        SettingsCard {
+            SwitchItem(Icons.Default.SystemUpdate, stringResource(R.string.auto_check_update_daily), autoCheckUpdateDaily, onAutoCheckUpdateDailyChange)
         }
     }
 }

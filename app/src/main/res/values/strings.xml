@@ -224,6 +224,7 @@
     <string name="credits_projects">Referenced Projects</string>
     <!-- Update -->
     <string name="settings_category_update">Check for Updates</string>
+    <string name="auto_check_update_daily">Auto check updates on first launch daily</string>
     <string name="settings_category_update_desc">Check for new versions and download</string>
     <string name="update_checking">Checking for updates…</string>
     <string name="update_available">New version available</string>

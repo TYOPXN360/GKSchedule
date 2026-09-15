@@ -61,8 +61,7 @@ object UpdateChecker {
         }
     }
 
-    suspend fun checkForUpdate(context: Context): Result<UpdateInfo> = withContext(Dispatchers.IO) {
-        try {
+    suspend fun checkForUpdate(context: Context): Result<UpdateInfo> = withContext(Dispatchers.IO) {        try {
             val request = Request.Builder()
                 .url(GITHUB_API)
                 .header("Accept", "application/vnd.github.v3+json")
@@ -103,6 +102,24 @@ object UpdateChecker {
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    // ponytail: 每日检查失败重试——最多3次递增延迟，离线直接中断
+    suspend fun checkForUpdateWithRetry(
+        context: Context,
+        maxAttempts: Int = 3,
+        initialDelayMs: Long = 2000L
+    ): Result<UpdateInfo> {
+        var lastResult: Result<UpdateInfo> = Result.failure(IllegalStateException("未执行"))
+        repeat(maxAttempts) { attempt ->
+            val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
+            if (cm.activeNetwork == null) return Result.failure(java.io.IOException("网络不可用"))
+            lastResult = checkForUpdate(context)
+            if (lastResult.isSuccess) return lastResult
+            android.util.Log.w("UpdateChecker", "第${attempt + 1}次检查失败", lastResult.exceptionOrNull())
+            if (attempt < maxAttempts - 1) kotlinx.coroutines.delay(initialDelayMs * (attempt + 1))
+        }
+        return lastResult
     }
 
     private fun isNewerVersion(current: String, latest: String): Boolean {

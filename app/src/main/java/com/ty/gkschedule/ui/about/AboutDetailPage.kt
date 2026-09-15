@@ -38,7 +38,9 @@ import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
 @Composable
 fun AboutDetailPage(
     onBack: () -> Unit,
-    blurEnabled: Boolean = false
+    blurEnabled: Boolean = false,
+    autoShowUpdateDialog: Boolean = false,
+    preloadedUpdateInfo: UpdateInfo? = null
 ) {
     val context = LocalContext.current
     var showDisclaimerDialog by remember { mutableStateOf(false) }
@@ -53,6 +55,14 @@ fun AboutDetailPage(
     var forceShowDialog by remember { mutableStateOf(false) }
 
     val currentVersion = remember { UpdateChecker.getCurrentVersion(context) }
+
+    // ponytail: 通知进页自动弹更新框——复用现有showUpdateDialog
+    LaunchedEffect(autoShowUpdateDialog, preloadedUpdateInfo) {
+        if (autoShowUpdateDialog && preloadedUpdateInfo != null) {
+            updateInfo = preloadedUpdateInfo
+            showUpdateDialog = true
+        }
+    }
 
     // ponytail: miuix源层
     val backdrop = top.yukonga.miuix.kmp.blur.rememberLayerBackdrop()

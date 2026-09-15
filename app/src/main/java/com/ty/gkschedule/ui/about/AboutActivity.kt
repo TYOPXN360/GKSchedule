@@ -46,7 +46,28 @@ class AboutActivity : AppCompatActivity() {
                 }
                 Surface(modifier = Modifier.fillMaxSize(), color = pageBg) {
                     val blurEffect by vm.blurEffect.collectAsState(initial = false)
-                    AboutDetailPage(onBack = { finish() }, blurEnabled = blurEffect)
+                    // ponytail: 通知带更新信息进页——自动弹更新框，复用现有Dialog
+                    val showUpdateDialog = intent.getBooleanExtra(
+                        com.ty.gkschedule.util.UpdateNotificationHelper.EXTRA_SHOW_UPDATE_DIALOG, false)
+                    val latestVersion = intent.getStringExtra(
+                        com.ty.gkschedule.util.UpdateNotificationHelper.EXTRA_UPDATE_LATEST_VERSION) ?: ""
+                    val downloadUrl = intent.getStringExtra(
+                        com.ty.gkschedule.util.UpdateNotificationHelper.EXTRA_UPDATE_DOWNLOAD_URL) ?: ""
+                    val updateNotes = intent.getStringExtra(
+                        com.ty.gkschedule.util.UpdateNotificationHelper.EXTRA_UPDATE_NOTES) ?: ""
+                    val fileSize = intent.getLongExtra(
+                        com.ty.gkschedule.util.UpdateNotificationHelper.EXTRA_UPDATE_FILE_SIZE, 0L)
+                    AboutDetailPage(
+                        onBack = { finish() }, blurEnabled = blurEffect,
+                        autoShowUpdateDialog = showUpdateDialog,
+                        preloadedUpdateInfo = if (showUpdateDialog && latestVersion.isNotEmpty()) {
+                            com.ty.gkschedule.util.UpdateInfo(
+                                currentVersion = com.ty.gkschedule.util.UpdateChecker.getCurrentVersion(this@AboutActivity),
+                                latestVersion = latestVersion, releaseName = "",
+                                releaseNotes = updateNotes, downloadUrl = downloadUrl,
+                                fileSize = fileSize, isUpdateAvailable = true)
+                        } else null
+                    )
                 }
             }
         }

@@ -76,11 +76,13 @@ class SubSettingsAppearanceActivity : SubSettingsBaseActivity() {
         val colorGroupMode by vm.colorGroupMode.collectAsState(initial = 2)
         val diffColorPerWeek by vm.diffColorPerWeek.collectAsState(initial = false)
         val showHiddenCourses by vm.showHiddenCourses.collectAsState(initial = false)
+        val autoCheckUpdateDaily by vm.autoCheckUpdateDaily.collectAsState(initial = true)
         AppearancePage(
             darkMode = darkMode, language = language, startPage = startPage, blurEffect = blurEffect,
             compactNavBar = compactNavBar, pillContentMode = pillContentMode,
             colorEngine = colorEngine, colorGroupMode = colorGroupMode,
             diffColorPerWeek = diffColorPerWeek, showHiddenCourses = showHiddenCourses,
+            autoCheckUpdateDaily = autoCheckUpdateDaily,
             onDarkModeChange = { vm.setDarkMode(it) },
             onLanguageChange = { vm.setLanguage(it) },
             onStartPageChange = { vm.setStartPage(it) },
@@ -91,6 +93,7 @@ class SubSettingsAppearanceActivity : SubSettingsBaseActivity() {
             onColorGroupModeChange = { vm.setColorGroupMode(it) },
             onDiffColorPerWeekChange = { vm.setDiffColorPerWeek(it) },
             onShowHiddenCoursesChange = { vm.setShowHiddenCourses(it) },
+            onAutoCheckUpdateDailyChange = { vm.setAutoCheckUpdateDaily(it) },
             onBack = finish, blurEnabled = blurEffect
         )
     }

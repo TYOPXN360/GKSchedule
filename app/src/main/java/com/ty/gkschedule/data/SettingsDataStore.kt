@@ -58,6 +58,8 @@ class SettingsDataStore(private val context: Context) {
         private val PILL_CONTENT_MODE = intPreferencesKey("pill_content_mode") // 0=都显示，1=仅图标，2=仅名字
         private val BLUR_EFFECT = booleanPreferencesKey("blur_effect")
         private val WEEKLY_BLOCK_MULTILINE = booleanPreferencesKey("weekly_block_multiline")
+        private val AUTO_CHECK_UPDATE_DAILY = booleanPreferencesKey("auto_check_update_daily")
+        private val LAST_UPDATE_CHECK_DATE = stringPreferencesKey("last_update_check_date")
 
         private val DEFAULT_START_TIMES = listOf(
             "08:30", "09:20", "10:25", "11:15",  // Morning 1-4
@@ -119,6 +121,9 @@ class SettingsDataStore(private val context: Context) {
     val blurEffect: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[BLUR_EFFECT] ?: true }
     // ponytail: 课表块多行名——关=单行截断，开关默认关
     val weeklyBlockMultiline: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[WEEKLY_BLOCK_MULTILINE] ?: true }
+    // ponytail: 每日首次启动自动查更新——默认开，关则MainActivity跳过
+    val autoCheckUpdateDaily: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[AUTO_CHECK_UPDATE_DAILY] ?: true }
+    val lastUpdateCheckDate: Flow<String> = context.dataStore.data.map { prefs -> prefs[LAST_UPDATE_CHECK_DATE] ?: "" }
 
     fun getCurrentWeek(): Flow<Int> = context.dataStore.data.map { prefs ->
         val start = prefs[SEMESTER_START]?.let { LocalDate.parse(it) } ?: LocalDate.now()
@@ -198,6 +203,8 @@ class SettingsDataStore(private val context: Context) {
     suspend fun setPillContentMode(mode: Int) { context.dataStore.edit { it[PILL_CONTENT_MODE] = mode.coerceIn(0, 2) } }
     suspend fun setBlurEffect(enabled: Boolean) { context.dataStore.edit { it[BLUR_EFFECT] = enabled } }
     suspend fun setWeeklyBlockMultiline(enabled: Boolean) { context.dataStore.edit { it[WEEKLY_BLOCK_MULTILINE] = enabled } }
+    suspend fun setAutoCheckUpdateDaily(enabled: Boolean) { context.dataStore.edit { it[AUTO_CHECK_UPDATE_DAILY] = enabled } }
+    suspend fun setLastUpdateCheckDate(date: String) { context.dataStore.edit { it[LAST_UPDATE_CHECK_DATE] = date } }
     suspend fun saveCasTicket(ticket: String) { context.dataStore.edit { it[CAS_TICKET] = ticket } }
     suspend fun saveCachedExams(json: String, year: String, semester: String) {
         context.dataStore.edit {
