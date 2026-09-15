@@ -377,21 +377,15 @@ fun ScheduleApp(
     val tabRoutes = listOf("today", "weekly", "courses", "about")
     val tabIndexMap = mapOf("today" to 0, "weekly" to 1, "courses" to 2, "about" to 3)
     val scope = rememberCoroutineScope()
+    // ponytail: startPage是DataStore异步流——首帧"today"假值，rememberPagerState锁死initialPage后改不动；
+    // 用key(startPage)重建pagerState，真启动页到才建对（重建只发生在设置变更/冷启动，日常不触发）
     val startTabIndex = (tabIndexMap[startPage] ?: 0).coerceIn(0, 3)
     val pagerState = androidx.compose.foundation.pager.rememberPagerState(
         initialPage = startTabIndex,
         pageCount = { tabRoutes.size }
     )
-    var uiSelectedPage by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableIntStateOf(startTabIndex) }
+    var uiSelectedPage by androidx.compose.runtime.saveable.rememberSaveable(startTabIndex) { androidx.compose.runtime.mutableIntStateOf(startTabIndex) }
     var pagerAnimating by remember { mutableStateOf(false) }
-    // ponytail: 启动页可切——startPage变化且pager还没动过时对齐
-    LaunchedEffect(startPage) {
-        val target = (tabIndexMap[startPage] ?: 0).coerceIn(0, 3)
-        if (pagerState.currentPage == startTabIndex && target != startTabIndex) {
-            pagerState.scrollToPage(target)
-            uiSelectedPage = target
-        }
-    }
     val handlePageChange: (Int) -> Unit = remember(pagerState, scope) {
         { page ->
             uiSelectedPage = page
