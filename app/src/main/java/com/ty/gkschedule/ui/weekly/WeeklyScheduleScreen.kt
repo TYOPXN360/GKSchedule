@@ -506,8 +506,9 @@ fun WeeklyScheduleScreen(
                                             Text("隐藏", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = textColor, maxLines = 1)
                                         }
                                     }
-                                    // ponytail: 地点只在有名剩高时占位——名溢出时BoxWithConstraints量剩高，无剩不占
+                                    // ponytail: 名上地点下——名先吃(多行开不限行)，地点吃剩高，溢出才省略
                                     if (blockMultiline) {
+                                        Text(block.item.name, style = MaterialTheme.typography.labelMedium, color = textColor, maxLines = Int.MAX_VALUE, overflow = TextOverflow.Ellipsis)
                                         if (block.item.classroom.isNotEmpty()) {
                                             androidx.compose.foundation.layout.BoxWithConstraints(modifier = Modifier.fillMaxWidth().weight(1f, fill = false)) {
                                                 if (maxHeight > 18.dp) {
@@ -515,7 +516,6 @@ fun WeeklyScheduleScreen(
                                                 }
                                             }
                                         }
-                                        Text(block.item.name, style = MaterialTheme.typography.labelMedium, color = textColor, maxLines = Int.MAX_VALUE, overflow = TextOverflow.Ellipsis)
                                     } else {
                                         Text(block.item.name, style = MaterialTheme.typography.labelMedium, color = textColor, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                         if (block.item.classroom.isNotEmpty()) {
