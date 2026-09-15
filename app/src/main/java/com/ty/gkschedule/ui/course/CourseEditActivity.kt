@@ -53,7 +53,9 @@ class CourseEditActivity : AppCompatActivity() {
                     }
 
                     // ponytail: id<=0且DB空时直接给空表单，不白屏等collect
+                    // ponytail: key(id)重建——remember只读一次course，空表单先闪后填；id就绪才建对
                     if (loaded || courseId <= 0) {
+                        key(currentCourse?.id) {
                         CourseEditScreen(
                             course = currentCourse,
                             allCourses = courses,
@@ -69,6 +71,7 @@ class CourseEditActivity : AppCompatActivity() {
                             onBack = { finish() },
                             blurEnabled = blurEffect
                         )
+                        }
                     }
                 }
             }
