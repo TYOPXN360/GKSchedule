@@ -377,33 +377,20 @@ fun ScheduleApp(
     val tabRoutes = listOf("today", "weekly", "courses", "about")
     val tabIndexMap = mapOf("today" to 0, "weekly" to 1, "courses" to 2, "about" to 3)
     val scope = rememberCoroutineScope()
-    // ponytail: startPage是DataStore异步流——首帧"today"假值，rememberPagerState锁死initialPage后改不动；
-    // 用key(startPage)重建pagerState，真启动页到才建对（重建只发生在设置变更/冷启动，日常不触发）
+    // ponytail: startPage首帧"today"假值——key锁真值重建pager，一次对齐启动页（冷启动/改设置才重建）
     val startTabIndex = (tabIndexMap[startPage] ?: 0).coerceIn(0, 3)
-    val pagerState = androidx.compose.foundation.pager.rememberPagerState(
-        initialPage = startTabIndex,
-        pageCount = { tabRoutes.size }
-    )
-    var uiSelectedPage by androidx.compose.runtime.saveable.rememberSaveable(startTabIndex) { androidx.compose.runtime.mutableIntStateOf(startTabIndex) }
-    var pagerAnimating by remember { mutableStateOf(false) }
+    val pagerState = key(startTabIndex) {
+        androidx.compose.foundation.pager.rememberPagerState(
+            initialPage = startTabIndex,
+            pageCount = { tabRoutes.size }
+        )
+    }
+    // ponytail: 高亮直读pagerState.currentPage——删uiSelectedPage中间态（与pager脱节锁死0/1的根因）
     val handlePageChange: (Int) -> Unit = remember(pagerState, scope) {
         { page ->
-            uiSelectedPage = page
             if (page != pagerState.currentPage) {
-                scope.launch {
-                    pagerAnimating = true
-                    try {
-                        pagerState.animateScrollToPage(page)
-                    } finally {
-                        pagerAnimating = false
-                    }
-                }
+                scope.launch { pagerState.animateScrollToPage(page) }
             }
-        }
-    }
-    LaunchedEffect(pagerState) {
-        androidx.compose.runtime.snapshotFlow { pagerState.currentPage }.collect { page ->
-            if (!pagerAnimating) uiSelectedPage = page
         }
     }
     // ponytail: NavHost只剩tabs+子页——tabs常驻时route=tabs，子页时route=子页名
@@ -454,7 +441,7 @@ fun ScheduleApp(
                             NavigationBarItem(
                                 icon = { Icon(triple.first, contentDescription = triple.second) },
                                 label = { Text(triple.second) },
-                                selected = uiSelectedPage == (tabIndexMap[screen.route] ?: 0),
+                                selected = pagerState.currentPage == (tabIndexMap[screen.route] ?: 0),
                                 onClick = {
                                     com.ty.gkschedule.util.HapticFeedback.light(navView)
                                     navigateTab(screen.route)
@@ -496,7 +483,7 @@ fun ScheduleApp(
             composable("tabs") {
                 androidx.compose.runtime.CompositionLocalProvider(
                     com.ty.gkschedule.ui.util.LocalPagerState provides pagerState,
-                    com.ty.gkschedule.ui.util.LocalSelectedPage provides uiSelectedPage,
+                    com.ty.gkschedule.ui.util.LocalSelectedPage provides pagerState.currentPage,
                     com.ty.gkschedule.ui.util.LocalHandlePageChange provides handlePageChange
                 ) {
                     androidx.compose.foundation.pager.HorizontalPager(
@@ -547,7 +534,7 @@ fun ScheduleApp(
             val pillCollapsed by viewModel.pillCollapsed.collectAsState(initial = false)
             Box(Modifier.fillMaxSize().padding(bottom = 24.dp), contentAlignment = Alignment.BottomCenter) {
                 FloatingPillNavBar(
-                    currentRoute = tabRoutes.getOrElse(uiSelectedPage) { "today" }, pillContentMode = pillContentMode, screenshotHidden = screenshotHidden,
+                    currentRoute = tabRoutes.getOrElse(pagerState.currentPage) { "today" }, pillContentMode = pillContentMode, screenshotHidden = screenshotHidden,
                     blurEnabled = blurEffect, backdrop = backdrop,
                     collapsed = pillCollapsed, onCollapsedChange = { viewModel.setPillCollapsed(it) },
                     visible = showBottomBar && !(pillHidden && !pillCollapsed)
@@ -576,7 +563,7 @@ fun ScheduleApp(
         } // pill兄弟层
     }
     // ponytail: Pager即栈——返回=回第0页（ReSukiSU同款普通BackHandler）；首页放行回桌面
-    androidx.activity.compose.BackHandler(enabled = showBottomBar && uiSelectedPage != 0) {
+    androidx.activity.compose.BackHandler(enabled = showBottomBar && pagerState.currentPage != 0) {
         handlePageChange(0)
     }
 }

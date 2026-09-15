@@ -49,7 +49,7 @@ class SubSettingsSemesterActivity : SubSettingsBaseActivity() {
         val periodsPerDay by vm.periodsPerDay.collectAsState(initial = 10)
         val firstDayOfWeek by vm.firstDayOfWeek.collectAsState(initial = 1)
         val hideEmptyWeeks by vm.hideEmptyWeeks.collectAsState(initial = false)
-        val blurEffect by vm.blurEffect.collectAsState(initial = true)
+        val blurEffect by vm.blurEffect.collectAsState(initial = false)
         SemesterPage(
             semesterStart = semesterStart, totalWeeks = totalWeeks, periodsPerDay = periodsPerDay,
             firstDayOfWeek = firstDayOfWeek, hideEmptyWeeks = hideEmptyWeeks,
@@ -69,7 +69,7 @@ class SubSettingsAppearanceActivity : SubSettingsBaseActivity() {
         val darkMode by vm.darkMode.collectAsState(initial = "system")
         val language by vm.language.collectAsState(initial = "system")
         val startPage by vm.startPage.collectAsState(initial = "today")
-        val blurEffect by vm.blurEffect.collectAsState(initial = true)
+        val blurEffect by vm.blurEffect.collectAsState(initial = false)
         AppearancePage(
             darkMode = darkMode, language = language, startPage = startPage, blurEffect = blurEffect,
             onDarkModeChange = { vm.setDarkMode(it) },
