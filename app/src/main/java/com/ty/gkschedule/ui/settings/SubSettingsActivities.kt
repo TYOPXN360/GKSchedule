@@ -100,7 +100,7 @@ class SubSettingsScheduleStyleActivity : SubSettingsBaseActivity() {
         val compactNavBar by vm.compactNavBar.collectAsState(initial = true)
         val pillContentMode by vm.pillContentMode.collectAsState(initial = 0)
         val blockMultiline by vm.weeklyBlockMultiline.collectAsState(initial = false)
-        val blurEffect by vm.blurEffect.collectAsState(initial = true)
+        val blurEffect by vm.blurEffect.collectAsState(initial = false)
         ScheduleStylePage(
             gridHeight = gridHeight, gridCorner = gridCorner, gridSpacing = gridSpacing,
             showPeriodLabel = showPeriodLabel, autoGridHeight = autoGridHeight,

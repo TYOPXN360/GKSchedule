@@ -424,11 +424,6 @@ internal fun ScheduleStylePage(
             SwitchItem(Icons.Default.Pin, stringResource(R.string.show_period_label), showPeriodLabel, onShowPeriodLabelChange)
         }
         Spacer(modifier = Modifier.height(16.dp))
-        SectionHeader(stringResource(R.string.style_section_navbar))
-        SettingsCard {
-            SwitchItem(Icons.Default.Dashboard, stringResource(R.string.compact_nav_bar), compactNavBar, onCompactNavBarChange)
-        }
-        Spacer(modifier = Modifier.height(16.dp))
         SectionHeader(stringResource(R.string.style_section_block))
         SettingsCard {
             // ponytail: 课表块名多行——关=单行截断，开=最多3行自然折行
