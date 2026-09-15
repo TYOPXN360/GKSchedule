@@ -45,7 +45,7 @@ class AboutActivity : AppCompatActivity() {
                     MaterialTheme.colorScheme.surfaceContainer
                 }
                 Surface(modifier = Modifier.fillMaxSize(), color = pageBg) {
-                    val blurEffect by vm.blurEffect.collectAsState(initial = true)
+                    val blurEffect by vm.blurEffect.collectAsState(initial = false)
                     AboutDetailPage(onBack = { finish() }, blurEnabled = blurEffect)
                 }
             }

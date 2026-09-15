@@ -23,6 +23,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.ty.gkschedule.R
+import com.ty.gkschedule.ui.theme.Md3Card
+import com.ty.gkschedule.ui.theme.Md3CardVariant
 import com.ty.gkschedule.util.UpdateChecker
 import com.ty.gkschedule.util.UpdateInfo
 import kotlinx.coroutines.Dispatchers
@@ -36,7 +38,7 @@ import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
 @Composable
 fun AboutDetailPage(
     onBack: () -> Unit,
-    blurEnabled: Boolean = true
+    blurEnabled: Boolean = false
 ) {
     val context = LocalContext.current
     var showDisclaimerDialog by remember { mutableStateOf(false) }
@@ -124,11 +126,11 @@ fun AboutDetailPage(
             Spacer(modifier = Modifier.height(32.dp))
 
             // Update check section
-            Card(
+            Md3Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                variant = Md3CardVariant.Elevated
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     // Current version
@@ -258,11 +260,11 @@ fun AboutDetailPage(
             Spacer(modifier = Modifier.height(16.dp))
 
             // Credits section
-            Card(
+            Md3Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                variant = Md3CardVariant.Elevated
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
@@ -279,11 +281,11 @@ fun AboutDetailPage(
             Spacer(modifier = Modifier.height(16.dp))
 
             // AI Assistants section
-            Card(
+            Md3Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                variant = Md3CardVariant.Elevated
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
@@ -303,11 +305,11 @@ fun AboutDetailPage(
             Spacer(modifier = Modifier.height(16.dp))
 
             // Reference projects section
-            Card(
+            Md3Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                variant = Md3CardVariant.Elevated
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(

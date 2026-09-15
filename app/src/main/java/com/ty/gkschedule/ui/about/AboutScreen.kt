@@ -51,7 +51,7 @@ fun AboutScreen(
     // ponytail: 默认底栏避让开关——悬浮pill不占位，传false不留白
     applyBottomBarInset: Boolean = true,
     // ponytail: 重登录Dialog糊开关
-    blurEnabled: Boolean = true
+    blurEnabled: Boolean = false
 ) {
     var showReloginDialog by remember { mutableStateOf(false) }
 
@@ -82,18 +82,10 @@ fun AboutScreen(
         val isLoggedIn = loginState is LoginState.Success || loginState is LoginState.ImportResult || loginState is LoginState.TokenExpired
         val isTokenExpired = loginState is LoginState.TokenExpired
 
-        Card(
+        Md3Card(
             onClick = { if (!isLoggedIn) onLogin() },
-            enabled = !isLoggedIn,
             modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.medium,
-            colors = CardDefaults.cardColors(
-                // ponytail: 未登录surfaceVariant太跳——换surfaceContainerLow与卡片组同阶
-                containerColor = if (isLoggedIn) {
-                    if (isTokenExpired) MaterialTheme.colorScheme.surfaceContainerHigh
-                    else MaterialTheme.colorScheme.primaryContainer
-                } else MaterialTheme.colorScheme.surfaceContainerLow
-            )
+            variant = Md3CardVariant.Elevated
         ) {
             if (isLoggedIn) {
                 Box(modifier = Modifier.fillMaxWidth()) {
