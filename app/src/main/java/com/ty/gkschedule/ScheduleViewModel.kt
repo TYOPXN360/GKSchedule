@@ -159,6 +159,21 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                 android.util.Log.d("GdustApi", "restore: no saved login found")
             }
         }
+        // ponytail: 独立Activity另建VM实例——DataStore写入即登录信号，主界面VM跟写入恢复状态
+        viewModelScope.launch {
+            settings.savedToken.collect { token ->
+                if (token.isNotEmpty() && _loginState.value is LoginState.LoggedOut) {
+                    val sid = settings.savedStudentId.first()
+                    if (sid.isNotEmpty()) {
+                        val name = settings.savedRealName.first()
+                        api.setToken(token)
+                        savedStudentId = sid
+                        _savedStudentIdFlow.value = sid
+                        _loginState.value = LoginState.Success(name.ifEmpty { sid }, sid)
+                    }
+                }
+            }
+        }
         // Mirror token-expired changes written by background workers into UI state.
         viewModelScope.launch {
             settings.tokenExpired.collect { expired ->

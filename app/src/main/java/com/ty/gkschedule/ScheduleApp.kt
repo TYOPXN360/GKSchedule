@@ -341,7 +341,7 @@ fun ScheduleApp(
     val blockMultiline by viewModel.weeklyBlockMultiline.collectAsState(initial = true)
     val compactNavBar by viewModel.compactNavBar.collectAsState(initial = true)
     val pillContentMode by viewModel.pillContentMode.collectAsState(initial = 0)
-    val blurEffect by viewModel.blurEffect.collectAsState(initial = true)
+    val blurEffect by viewModel.blurEffect.collectAsState(initial = false)
     val startPage by viewModel.startPage.collectAsState(initial = "today")
     val displayCourses = if (showHiddenCourses) courses else courses.filter { !it.isHidden }
     val examList by viewModel.examList.collectAsState(initial = emptyList())
