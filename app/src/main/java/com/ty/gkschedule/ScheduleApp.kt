@@ -57,8 +57,6 @@ import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import com.ty.gkschedule.data.Course
 import com.ty.gkschedule.ui.about.AboutScreen
-import com.ty.gkschedule.ui.login.LoginScreen
-import com.ty.gkschedule.ui.login.WebViewLoginScreen
 import com.ty.gkschedule.ui.manage.CourseManageScreen
 import com.ty.gkschedule.ui.settings.SettingsScreen
 import com.ty.gkschedule.ui.today.TodayScreen
