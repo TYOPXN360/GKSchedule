@@ -487,7 +487,8 @@ fun WeeklyScheduleScreen(
                                         themeHue = themeHue
                                     ).content
                                 }
-                                Column {
+                                // ponytail: 块内名+地点共享剩余高——名先吃(多行开不限行)，吃完还剩才给地点，溢出才省略
+                                Column(modifier = Modifier.fillMaxSize()) {
                                     if (block.item.isExam) {
                                         Box(
                                             modifier = Modifier.padding(bottom = 2.dp).clip(RoundedCornerShape(4.dp)).background(textColor.copy(alpha = 0.2f)).padding(horizontal = 4.dp, vertical = 1.dp),
@@ -505,9 +506,21 @@ fun WeeklyScheduleScreen(
                                             Text("隐藏", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = textColor, maxLines = 1)
                                         }
                                     }
-                                    Text(block.item.name, style = MaterialTheme.typography.labelMedium, color = textColor, maxLines = if (blockMultiline) 3 else 1, overflow = TextOverflow.Ellipsis)
-                                    if (block.item.classroom.isNotEmpty()) {
-                                        Text(block.item.classroom, style = MaterialTheme.typography.labelSmall, color = textColor.copy(alpha = 0.7f), overflow = TextOverflow.Ellipsis)
+                                    // ponytail: 地点只在有名剩高时占位——名溢出时BoxWithConstraints量剩高，无剩不占
+                                    if (blockMultiline) {
+                                        if (block.item.classroom.isNotEmpty()) {
+                                            androidx.compose.foundation.layout.BoxWithConstraints(modifier = Modifier.fillMaxWidth().weight(1f, fill = false)) {
+                                                if (maxHeight > 18.dp) {
+                                                    Text(block.item.classroom, style = MaterialTheme.typography.labelSmall, color = textColor.copy(alpha = 0.7f), maxLines = Int.MAX_VALUE, overflow = TextOverflow.Ellipsis)
+                                                }
+                                            }
+                                        }
+                                        Text(block.item.name, style = MaterialTheme.typography.labelMedium, color = textColor, maxLines = Int.MAX_VALUE, overflow = TextOverflow.Ellipsis)
+                                    } else {
+                                        Text(block.item.name, style = MaterialTheme.typography.labelMedium, color = textColor, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                        if (block.item.classroom.isNotEmpty()) {
+                                            Text(block.item.classroom, style = MaterialTheme.typography.labelSmall, color = textColor.copy(alpha = 0.7f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                        }
                                     }
                                 }
                             }
