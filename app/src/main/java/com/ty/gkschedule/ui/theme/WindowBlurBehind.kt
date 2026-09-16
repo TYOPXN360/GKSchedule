@@ -102,10 +102,13 @@ fun BlurCard(
     }
 }
 
-// ponytail: 只降黑幕+清窗口级糊——区域糊全靠卡内BackgroundBlurDrawable，窗糊会连宿主一起糊
+// ponytail: 只降黑幕+清窗糊+窗口背景透明——文档硬性条件：模糊画在Surface下，窗口必须半透明才显示
+// ponytail: 反射BackgroundBlurDrawable失效时降级官方setBackgroundBlurRadius（窗口级API，反射不走）
 private fun View.applyDialogWindowBlur() {
     findDialogWindow()?.let { w ->
         w.setDimAmount(0.12f)
+        // 关键：窗口背景必须半透明，模糊效果才能透出来（新系统严格按文档执行，旧OEM宽松看不出）
+        runCatching { w.setBackgroundDrawableResource(android.R.color.transparent) }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             runCatching {
                 w.attributes = w.attributes.also { it.blurBehindRadius = 0 }
@@ -119,11 +122,26 @@ private fun View.applyDialogWindowBlur() {
 private fun applyBlur(
     host: View, composeView: View, radiusDp: Float, cornerRadiusDp: Float, backgroundColor: Color,
 ): Drawable? = runCatching {
+    val density = host.resources.displayMetrics.density
     val root = View::class.java.getDeclaredMethod("getViewRootImpl").apply { isAccessible = true }
         .invoke(composeView) ?: return null
-    val blur = root.javaClass.getDeclaredMethod("createBackgroundBlurDrawable").apply { isAccessible = true }
-        .invoke(root) as? Drawable ?: return null
-    val density = host.resources.displayMetrics.density
+    // ponytail: Android 16/17可能移除createBackgroundBlurDrawable反射——失败降级官方window级setBackgroundBlurRadius
+    val blur = runCatching {
+        root.javaClass.getDeclaredMethod("createBackgroundBlurDrawable").apply { isAccessible = true }
+            .invoke(root) as? Drawable
+    }.getOrNull()
+    if (blur == null) {
+        // ponytail: 官方兜底——窗口级背景模糊（糊整个窗口背后）；卡片区域糊退化为窗口糊+透明底
+        host.findDialogWindow()?.let { w ->
+            val px = (radiusDp * density).toInt().coerceIn(1, 150)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                w.setBackgroundBlurRadius(px)
+                w.attributes = w.attributes.also { it.blurBehindRadius = px }
+                w.addFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND)
+            }
+        }
+        return GradientDrawable().apply { setColor(backgroundColor.toArgb()); cornerRadius = cornerRadiusDp * density }
+    }
     val px = (radiusDp * density).toInt().coerceIn(1, 150)
     val cornerPx = cornerRadiusDp * density
     blur.javaClass.getDeclaredMethod("setBlurRadius", Int::class.javaPrimitiveType)
