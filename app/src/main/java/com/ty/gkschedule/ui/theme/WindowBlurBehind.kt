@@ -1,12 +1,8 @@
 package com.ty.gkschedule.ui.theme
 
-import android.graphics.drawable.Drawable
-import android.graphics.drawable.GradientDrawable
-import android.graphics.drawable.LayerDrawable
 import android.os.Build
 import android.view.View
 import android.view.Window
-import android.view.WindowManager
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -16,12 +12,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
+import top.yukonga.miuix.kmp.blur.LayerBackdrop
 import top.yukonga.miuix.kmp.blur.blur
 import top.yukonga.miuix.kmp.blur.drawBackdrop
-import androidx.compose.ui.viewinterop.AndroidView
+import top.yukonga.miuix.kmp.blur.layerBackdrop
+import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
 
@@ -37,8 +36,8 @@ fun View.findDialogWindow(): Window? {
     return null
 }
 
-// ponytail: 卡片区域毛玻璃——BackgroundBlurDrawable矩形=载体bounds，只糊卡片不糊全屏
-// ponytail: 跨窗口糊背后Activity靠window级blurBehindRadius+FLAG_BLUR_BEHIND（S31+）
+// ponytail: 卡片区域毛玻璃——miuix同窗口源层+drawBackdrop（QPR2反射野路已死，系统级删光）
+// ponytail: Dialog窗口无源层可吃——源层挂卡内Column（内容自身），drawBackdrop吃它即卡片内糊
 @Composable
 fun BlurCard(
     enabled: Boolean,
@@ -46,59 +45,40 @@ fun BlurCard(
     radiusDp: Float = 32f,
     backgroundColor: Color = Color.Unspecified,
     cornerRadiusDp: Float = 28f,
-    content: @Composable BoxScope.() -> Unit,
+    content: @Composable ColumnScope.() -> Unit,
 ) {
-    val view = LocalView.current
+    val backdrop = top.yukonga.miuix.kmp.blur.rememberLayerBackdrop()
     val shape = RoundedCornerShape(cornerRadiusDp.dp)
+    val bg = if (backgroundColor != Color.Unspecified) {
+        if (enabled) backgroundColor else backgroundColor.copy(alpha = 1f)
+    } else Color.Transparent
 
-    // ponytail: Dialog默认60%黑幕压死底子，降到12%才透光；只留卡内区域糊，
-    // 窗口级blurBehind会全屏糊宿主การ
-    DisposableEffect(view, radiusDp) {
+    // ponytail: Dialog默认60%黑幕压死底子，降到12%才透光
+    val view = LocalView.current
+    DisposableEffect(view) {
         view.applyDialogWindowBlur()
         view.post { view.applyDialogWindowBlur() }
-        val winListener = object : View.OnAttachStateChangeListener {
-            override fun onViewAttachedToWindow(v: View) = v.applyDialogWindowBlur()
-            override fun onViewDetachedFromWindow(v: View) {}
-        }
-        view.addOnAttachStateChangeListener(winListener)
-        onDispose { view.removeOnAttachStateChangeListener(winListener) }
+        onDispose { }
     }
 
-    Box(modifier = modifier.clip(shape)) {
-        if (enabled && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            AndroidView(
-                factory = { ctx ->
-                    View(ctx).apply {
-                        val attachListener = object : View.OnAttachStateChangeListener {
-                            override fun onViewAttachedToWindow(v: View) {
-                                applyBlur(v, view, radiusDp, cornerRadiusDp, backgroundColor)
-                            }
-                            override fun onViewDetachedFromWindow(v: View) {}
-                        }
-                        addOnAttachStateChangeListener(attachListener)
-                        if (isAttachedToWindow) {
-                            applyBlur(this, view, radiusDp, cornerRadiusDp, backgroundColor)
-                        } else {
-                            post {
-                                if (isAttachedToWindow) {
-                                    applyBlur(this, view, radiusDp, cornerRadiusDp, backgroundColor)
-                                }
-                            }
-                        }
-                    }
-                },
-                modifier = Modifier.matchParentSize(),
-                update = { v ->
-                    if (v.isAttachedToWindow) {
-                        applyBlur(v, view, radiusDp, cornerRadiusDp, backgroundColor)
-                    }
-                }
-            )
-        } else if (backgroundColor != Color.Unspecified) {
-            // ponytail: 关开关纯色——糊开才半透明透糊
-            Spacer(Modifier.matchParentSize().background(backgroundColor.copy(alpha = 1f)))
+    if (enabled) {
+        // ponytail: 源层与采样层必须是兄弟——同节点自采样=RenderThread prepareTreeImpl SIGSEGV
+        Box(
+            modifier = modifier
+                .clip(shape)
+                .drawBackdropCompat(
+                    backdrop = backdrop,
+                    shape = { shape },
+                    radiusDp = radiusDp,
+                    onDrawSurface = { drawRect(bg) }
+                )
+        ) {
+            Column(Modifier.layerBackdropCompat(backdrop)) {
+                content()
+            }
         }
-        content()
+    } else {
+        Column(modifier = modifier.clip(shape).background(bg)) { content() }
     }
 }
 
@@ -110,49 +90,25 @@ private fun View.applyDialogWindowBlur() {
     }
 }
 
-private fun applyBlur(
-    host: View, composeView: View, radiusDp: Float, cornerRadiusDp: Float, backgroundColor: Color,
-): Drawable? = runCatching {
-    val density = host.resources.displayMetrics.density
-    // ponytail: QPR1生效QPR2失效——先反射探测断裂点，QPR2变化可能在这几步任一
-    val root = runCatching {
-        View::class.java.getDeclaredMethod("getViewRootImpl").apply { isAccessible = true }
-            .invoke(composeView)
-    }.onFailure { e -> android.util.Log.e("BlurProbe", "getViewRootImpl FAIL: $e") }.getOrNull()
-    if (root == null) {
-        val tintOnly = GradientDrawable().apply { setColor(backgroundColor.toArgb()); cornerRadius = cornerRadiusDp * density }
-        host.background = tintOnly
-        return tintOnly
-    }
-    val blur = runCatching {
-        root.javaClass.getDeclaredMethod("createBackgroundBlurDrawable").apply { isAccessible = true }
-            .invoke(root) as? Drawable
-    }.onFailure { e -> android.util.Log.e("BlurProbe", "createBackgroundBlurDrawable FAIL: $e") }.getOrNull()
-    if (blur == null) {
-        val tintOnly = GradientDrawable().apply { setColor(backgroundColor.toArgb()); cornerRadius = cornerRadiusDp * density }
-        host.background = tintOnly
-        return tintOnly
-    }
-    val px = (radiusDp * density).toInt().coerceIn(1, 150)
-    val cornerPx = cornerRadiusDp * density
-    runCatching {
-        blur.javaClass.getDeclaredMethod("setBlurRadius", Int::class.javaPrimitiveType)
-            .apply { isAccessible = true }.invoke(blur, px)
-    }.onFailure { e -> android.util.Log.e("BlurProbe", "setBlurRadius FAIL: $e") }
-    runCatching {
-        blur.javaClass.getDeclaredMethod("setCornerRadius", Float::class.javaPrimitiveType)
-            .apply { isAccessible = true }.invoke(blur, cornerPx)
-    }.onFailure { e -> android.util.Log.e("BlurProbe", "setCornerRadius FAIL: $e") }
-    val tintDrawable = if (backgroundColor != Color.Unspecified) {
-        GradientDrawable().apply {
-            setColor(backgroundColor.toArgb())
-            cornerRadius = cornerPx
-        }
-    } else null
-    val layers = if (tintDrawable != null) arrayOf(blur, tintDrawable) else arrayOf(blur)
-    host.background = LayerDrawable(layers)
-    blur
-}.getOrNull()
+// ponytail: miuix drawBackdrop/layerBackdrop薄封装——传backdrop+shape+半径，与顶栏/底栏同款签名
+@Composable
+private fun Modifier.layerBackdropCompat(backdrop: LayerBackdrop): Modifier =
+    this.then(Modifier.layerBackdrop(backdrop))
+
+@Composable
+private fun Modifier.drawBackdropCompat(
+    backdrop: LayerBackdrop,
+    shape: () -> Shape,
+    radiusDp: Float,
+    onDrawSurface: DrawScope.() -> Unit
+): Modifier = this.then(
+    Modifier.drawBackdrop(
+        backdrop = backdrop,
+        shape = shape,
+        effects = { blur((radiusDp.dp).toPx()) },
+        onDrawSurface = onDrawSurface
+    )
+)
 
 // ponytail: 整卡包裹毛玻璃AlertDialog——BasicAlertDialog无自带实心底，整张BlurCard一体成型
 // ponytail: 关开关=纯色卡（enabled=false走Spacer底）；调用方Dialog/Dropdown/Sheet/详情卡全要透传开关

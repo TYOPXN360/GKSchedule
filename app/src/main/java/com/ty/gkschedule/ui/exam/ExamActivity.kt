@@ -19,30 +19,8 @@ class ExamActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         val initialExamId = intent.getLongExtra("examId", -1L)
-        // ponytail: 重登录Dialog独立窗口糊背后——窗口级blurBehind，圆角形状糊不到但比纯透强
-        // ponytail: 关开关=0半径；LaunchedEffect跟blurEffect重组刷新（runBlocking只读首帧，开关后改需重进）
-        // ponytail: 系统更新后跨窗口模糊默认关——必须显式FLAG_BLUR_BEHIND+查系统开关，否则blurBehindRadius被无视
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-            try {
-                val settings = com.ty.gkschedule.data.SettingsDataStore(this)
-                val blurOn = kotlinx.coroutines.runBlocking { settings.blurEffect.firstOrNull() } ?: false
-                val wm = getSystemService(Context.WINDOW_SERVICE) as android.view.WindowManager
-                val systemBlurOn = wm.isCrossWindowBlurEnabled
-                val radius = (28 * resources.displayMetrics.density).toInt().coerceIn(1, 150)
-                val attrs = window.attributes
-                if (blurOn && systemBlurOn) {
-                    window.addFlags(android.view.WindowManager.LayoutParams.FLAG_BLUR_BEHIND)
-                    attrs.blurBehindRadius = radius
-                    window.attributes = attrs
-                    window.setBackgroundBlurRadius(radius)
-                } else {
-                    attrs.blurBehindRadius = 0
-                    window.attributes = attrs
-                    window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_BLUR_BEHIND)
-                    window.setBackgroundBlurRadius(0)
-                }
-            } catch (_: Exception) {}
-        }
+        // ponytail: Android 17(LOS24)窗口级模糊对第三方App不可用——重登录Dialog只靠卡片tint，
+        // 不再设FLAG_BLUR_BEHIND/窗口透明（源码确认 isTranslucent 不满足时 DecorView 直接置0）
 
         setContent {
             val vm: ScheduleViewModel = viewModel()
