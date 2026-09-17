@@ -5,18 +5,4 @@
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:windowBackground">?attr/colorSurface</item>
     </style>
-
-    <!-- ponytail: LOS24 DecorView源码实锤——窗口setBackgroundBlurRadius需isTranslucent才创建模糊，否则置0；
-         Dialog窗口走此主题，半透明+圆角透明底，系统DecorView即走通createBackgroundBlurDrawable -->
-    <style name="Theme.GDUSTSchedule.BlurDialog" parent="Theme.Material3.DayNight.NoActionBar">
-        <item name="android:windowIsTranslucent">true</item>
-        <item name="android:windowIsFloating">true</item>
-        <item name="android:windowBackground">@android:color/transparent</item>
-        <item name="android:windowContentOverlay">@null</item>
-        <item name="android:backgroundDimEnabled">true</item>
-        <item name="android:backgroundDimAmount">0.12</item>
-        <item name="android:windowBackgroundBlurRadius">80dp</item>
-        <item name="android:windowBlurBehindEnabled">true</item>
-        <item name="android:windowBlurBehindRadius">20dp</item>
-    </style>
 </resources>

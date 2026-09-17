@@ -102,20 +102,11 @@ fun BlurCard(
     }
 }
 
-// ponytail: 窗口半透明+主题BlurDialog——LOS24 DecorView源码：isTranslucent才创建模糊，否则半径置0
-// ponytail: 系统DecorView接管createBackgroundBlurDrawable（免反射），App层只调官方setBackgroundBlurRadius
+// ponytail: A方案验证失败——Compose Dialog窗口全屏，窗口级模糊必糊整屏（含卡片外）
+// ponytail: QPR2上只糊卡片内对第三方App不可做，回退tint半透明卡（不穿帮）；反射探测日志保留
 private fun View.applyDialogWindowBlur() {
     findDialogWindow()?.let { w ->
         w.setDimAmount(0.12f)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            runCatching {
-                w.setBackgroundDrawableResource(android.R.color.transparent)
-                val px = (28 * resources.displayMetrics.density).toInt().coerceIn(1, 150)
-                w.setBackgroundBlurRadius(px)
-                w.attributes = w.attributes.also { it.blurBehindRadius = px }
-                w.addFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND)
-            }
-        }
     }
 }
 
