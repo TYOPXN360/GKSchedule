@@ -14,13 +14,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
-import top.yukonga.miuix.kmp.blur.LayerBackdrop
-import top.yukonga.miuix.kmp.blur.blur
-import top.yukonga.miuix.kmp.blur.drawBackdrop
-import top.yukonga.miuix.kmp.blur.layerBackdrop
-import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
-import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
 
@@ -36,8 +29,10 @@ fun View.findDialogWindow(): Window? {
     return null
 }
 
-// ponytail: 卡片区域毛玻璃——miuix同窗口源层+drawBackdrop（QPR2反射野路已死，系统级删光）
-// ponytail: Dialog窗口无源层可吃——源层挂卡内Column（内容自身），drawBackdrop吃它即卡片内糊
+// ponytail: QPR2结论——Dialog卡片真磨砂对第三方App不可做：
+// ponytail: 反射BackgroundBlurDrawable被blocklist；窗口级需translucent但Compose Dialog全屏糊整屏；
+// ponytail: miuix只能采同窗口源，卡片内容自身透明录下来就是灰白块，糊完还是灰白。
+// ponytail: BlurCard=半透明tint卡（开糊半透明/关糊纯色）；真糊只留顶栏/底栏/FAB（同窗口有源可采）
 @Composable
 fun BlurCard(
     enabled: Boolean,
@@ -47,7 +42,6 @@ fun BlurCard(
     cornerRadiusDp: Float = 28f,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    val backdrop = top.yukonga.miuix.kmp.blur.rememberLayerBackdrop()
     val shape = RoundedCornerShape(cornerRadiusDp.dp)
     val bg = if (backgroundColor != Color.Unspecified) {
         if (enabled) backgroundColor else backgroundColor.copy(alpha = 1f)
@@ -61,25 +55,7 @@ fun BlurCard(
         onDispose { }
     }
 
-    if (enabled) {
-        // ponytail: 源层与采样层必须是兄弟——同节点自采样=RenderThread prepareTreeImpl SIGSEGV
-        Box(
-            modifier = modifier
-                .clip(shape)
-                .drawBackdropCompat(
-                    backdrop = backdrop,
-                    shape = { shape },
-                    radiusDp = radiusDp,
-                    onDrawSurface = { drawRect(bg) }
-                )
-        ) {
-            Column(Modifier.layerBackdropCompat(backdrop)) {
-                content()
-            }
-        }
-    } else {
-        Column(modifier = modifier.clip(shape).background(bg)) { content() }
-    }
+    Column(modifier = modifier.clip(shape).background(bg)) { content() }
 }
 
 // ponytail: A方案验证失败——Compose Dialog窗口全屏，窗口级模糊必糊整屏（含卡片外）
@@ -89,26 +65,6 @@ private fun View.applyDialogWindowBlur() {
         w.setDimAmount(0.12f)
     }
 }
-
-// ponytail: miuix drawBackdrop/layerBackdrop薄封装——传backdrop+shape+半径，与顶栏/底栏同款签名
-@Composable
-private fun Modifier.layerBackdropCompat(backdrop: LayerBackdrop): Modifier =
-    this.then(Modifier.layerBackdrop(backdrop))
-
-@Composable
-private fun Modifier.drawBackdropCompat(
-    backdrop: LayerBackdrop,
-    shape: () -> Shape,
-    radiusDp: Float,
-    onDrawSurface: DrawScope.() -> Unit
-): Modifier = this.then(
-    Modifier.drawBackdrop(
-        backdrop = backdrop,
-        shape = shape,
-        effects = { blur((radiusDp.dp).toPx()) },
-        onDrawSurface = onDrawSurface
-    )
-)
 
 // ponytail: 整卡包裹毛玻璃AlertDialog——BasicAlertDialog无自带实心底，整张BlurCard一体成型
 // ponytail: 关开关=纯色卡（enabled=false走Spacer底）；调用方Dialog/Dropdown/Sheet/详情卡全要透传开关
