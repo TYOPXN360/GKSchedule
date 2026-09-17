@@ -1,6 +1,5 @@
 package com.ty.gkschedule.ui.weekly
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
@@ -152,9 +151,17 @@ fun WeeklyScheduleScreen(
         }
     }
 
-    // Predictive back
-    BackHandler(enabled = currentWeek != realWeek.intValue) {
-        onWeekChange(realWeek.intValue)
+    // Predictive back: consume progress so gesture isn't "no change" on first launch
+    if (currentWeek != realWeek.intValue) {
+        androidx.activity.compose.PredictiveBackHandler { progress: kotlinx.coroutines.flow.Flow<androidx.activity.BackEventCompat> ->
+            try {
+                progress.collect { }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } finally {
+                onWeekChange(realWeek.intValue)
+            }
+        }
     }
 
     val ptrState = androidx.compose.material3.pulltorefresh.rememberPullToRefreshState()

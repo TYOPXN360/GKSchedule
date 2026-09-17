@@ -550,9 +550,18 @@ fun ScheduleApp(
             // ponytail: 默认底栏snackbar已回Scaffold默认槽，这里不再自挂
         } // pill兄弟层
     }
-    // ponytail: Pager即栈——返回=回第0页（ReSukiSU同款普通BackHandler）；首页放行回桌面
-    androidx.activity.compose.BackHandler(enabled = showBottomBar && pagerState.currentPage != 0) {
-        handlePageChange(0)
+    // ponytail: 预测返回必须消费progress流——普通BackHandler吞手势，松手才跳导致“无变化”；
+    // ponytail: 首页page!=0消费回第0页跟手滑回；首页page==0放行（不注册=回桌面跟手）
+    if (showBottomBar && pagerState.currentPage != 0) {
+        androidx.activity.compose.PredictiveBackHandler { progress: kotlinx.coroutines.flow.Flow<androidx.activity.BackEventCompat> ->
+            try {
+                progress.collect { }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } finally {
+                handlePageChange(0)
+            }
+        }
     }
 }
 
