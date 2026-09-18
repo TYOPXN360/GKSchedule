@@ -151,20 +151,6 @@ fun WeeklyScheduleScreen(
         }
     }
 
-    // ponytail: PredictiveBackHandler无条件注册——条件注册在首帧currentWeek=0假值时
-    // ponytail: 一旦注册过enabled=false的dispatcher节点，后续enabled=true不再唤醒；
-    // ponytail: 回调内判真值：非本周才回本周，否则finish回桌面（与ScheduleApp首页放行同权）
-    androidx.activity.compose.PredictiveBackHandler { progress: kotlinx.coroutines.flow.Flow<androidx.activity.BackEventCompat> ->
-        try {
-            progress.collect { }
-        } catch (e: kotlinx.coroutines.CancellationException) {
-            throw e
-        } finally {
-            if (currentWeek != realWeek.intValue) onWeekChange(realWeek.intValue)
-            else (hapticView.context as? android.app.Activity)?.finish()
-        }
-    }
-
     val ptrState = androidx.compose.material3.pulltorefresh.rememberPullToRefreshState()
     PullToRefreshBox(
         isRefreshing = isRefreshing,

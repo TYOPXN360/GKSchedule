@@ -150,19 +150,21 @@ object ReminderScheduler {
                 // ponytail: 课程/考试进度各看各开关，互不为附属；PROGRESS只发首帧并埋下分钟链
                 val liveOn = (session.kind == KIND_COURSE && liveUpdate) || (session.kind == KIND_EXAM && examLiveUpdate)
                 if (liveOn) {
-                    val progressTime = if (now.isAfter(session.start) && now.isBefore(session.end)) now.plusSeconds(2) else session.start
-                    if (progressTime.isAfter(now) && progressTime.isBefore(session.end)) {
-                        scheduleEvent(
-                            context = context,
-                            alarmManager = alarmManager,
-                            session = session,
-                            eventType = ReminderReceiver.EVENT_PROGRESS,
-                            triggerAt = progressTime,
-                            notificationId = notificationId,
-                            reminderMinutes = reminderMinutes,
-                            triggerTick = true,
-                            requestCodes = newRequestCodes
-                        )
+                    if (!(countdown && session.start.isAfter(now))) {
+                        val progressTime = if (now.isAfter(session.start) && now.isBefore(session.end)) now.plusSeconds(2) else session.start
+                        if (progressTime.isAfter(now) && progressTime.isBefore(session.end)) {
+                            scheduleEvent(
+                                context = context,
+                                alarmManager = alarmManager,
+                                session = session,
+                                eventType = ReminderReceiver.EVENT_PROGRESS,
+                                triggerAt = progressTime,
+                                notificationId = notificationId,
+                                reminderMinutes = reminderMinutes,
+                                triggerTick = true,
+                                requestCodes = newRequestCodes
+                            )
+                        }
                     }
                     if (session.end.isAfter(now)) {
                         scheduleEvent(
@@ -319,7 +321,11 @@ object ReminderScheduler {
         requestCodes: MutableSet<Int>
     ) {
         val triggerTime = triggerAt.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
-        val requestCode = requestCode(session, eventType, triggerTime)
+        val requestCode = if (triggerTick) {
+            "${session.kind}|${session.name}|${epochMillis(session.start)}|$eventType|tick".hashCode()
+        } else {
+            requestCode(session, eventType, triggerTime)
+        }
         val intent = Intent(context, ReminderReceiver::class.java).apply {
             putExtra(ReminderReceiver.EXTRA_EVENT_TYPE, eventType)
             putExtra(ReminderReceiver.EXTRA_ITEM_TYPE, session.kind)

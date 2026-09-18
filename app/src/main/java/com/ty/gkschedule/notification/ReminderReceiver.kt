@@ -10,6 +10,9 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
+import com.ty.gkschedule.data.SettingsDataStore
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 
 class ReminderReceiver : BroadcastReceiver() {
     companion object {
@@ -69,21 +72,15 @@ class ReminderReceiver : BroadcastReceiver() {
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
         if (eventType == EVENT_END) {
-            // ponytail: 倒计时→进度接力靠startEpoch>0区分；真正下课才解散
             val isHandoff = startEpoch > 0L && System.currentTimeMillis() < endEpoch
-            if (isHandoff) {
-                val pending = goAsync()
-                kotlin.concurrent.thread {
-                    try {
-                        ReminderScheduler.scheduleTodayFromStore(context)
-                    } catch (_: Exception) {
-                    } finally {
-                        pending.finish()
-                    }
-                }
-            } else {
-                nm.cancel(notificationId)
-            }
+            if (isHandoff) handoffOrCancel(context, itemType, notificationId)
+            else nm.cancel(notificationId)
+            return
+        }
+
+        // 兼容旧版本留下的倒计时闹钟：过了上课时间后只允许进度链接管。
+        if (eventType == EVENT_COUNTDOWN && System.currentTimeMillis() >= startEpoch) {
+            handoffOrCancel(context, itemType, notificationId)
             return
         }
 
@@ -96,12 +93,15 @@ class ReminderReceiver : BroadcastReceiver() {
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setOnlyAlertOnce(eventType == EVENT_PROGRESS)
+            .setOnlyAlertOnce(eventType == EVENT_PROGRESS || eventType == EVENT_COUNTDOWN)
 
         if (eventType == EVENT_PROGRESS || eventType == EVENT_COUNTDOWN) {
-            val percent = progressPercent(startEpoch, endEpoch)
             val isCountdown = eventType == EVENT_COUNTDOWN
-            // ponytail: 倒计时chip走剩余分钟，进度走百分比；同Live Update一套
+            val percent = if (isCountdown) {
+                countdownProgressPercent(startEpoch, reminderMinutes)
+            } else {
+                progressPercent(startEpoch, endEpoch)
+            }
             val chipText = if (isCountdown) countdownChipText(startEpoch) else "$percent%"
             val titlePrefix = when {
                 isCountdown && itemType == "exam" -> "考试倒计时"
@@ -115,31 +115,15 @@ class ReminderReceiver : BroadcastReceiver() {
                 .setLargeIcon(android.graphics.BitmapFactory.decodeResource(context.resources, com.ty.gkschedule.R.drawable.ic_notif_live_large))
                 .setShortCriticalText(chipText)
 
-            // 尝试使用 ProgressStyle (Live Update API)
-            try {
-                val progressStyle = NotificationCompat.ProgressStyle()
-                    .setProgress(percent)
-                // ponytail: 倒计时正文走剩余时间，进度正文走百分比
-                val contentText = if (isCountdown) "${countdownBodyText(startEpoch)} · ${body.ifEmpty { "即将开始" }}"
-                else "${percent}% · ${body.ifEmpty { "进行中" }}"
-                builder
-                    .setContentTitle("$titlePrefix：$courseName")
-                    .setContentText(contentText)
-                    .setStyle(progressStyle)
-                    .setOngoing(true)
-                    .setAutoCancel(false)
-                    .setRequestPromotedOngoing(true)
-            } catch (_: Throwable) {
-                // Fallback: 标准进度条（ponytail: Error如NoClassDefFoundError也得接住，否则一响就崩）
-                val contentText = if (isCountdown) "${countdownBodyText(startEpoch)} · ${body.ifEmpty { "即将开始" }}"
-                else "${percent}% · ${body.ifEmpty { "进行中" }}"
-                builder
-                    .setContentTitle("$titlePrefix：$courseName")
-                    .setContentText(contentText)
-                    .setProgress(100, percent, false)
-                    .setOngoing(true)
-                    .setAutoCancel(false)
-            }
+            val contentText = if (isCountdown) "${countdownBodyText(startEpoch)} · ${body.ifEmpty { "即将开始" }}"
+            else "${percent}% · ${body.ifEmpty { "进行中" }}"
+            builder
+                .setContentTitle("$titlePrefix：$courseName")
+                .setContentText(contentText)
+                .setProgress(100, percent, false)
+                .setOngoing(true)
+                .setAutoCancel(false)
+                .setRequestPromotedOngoing(true)
         } else {
             val titlePrefix = if (itemType == "exam") "考前提醒" else "课前提醒"
             val fallback = if (itemType == "exam") "即将考试" else "即将上课"
@@ -154,10 +138,10 @@ class ReminderReceiver : BroadcastReceiver() {
 
         nm.notify(notificationId, builder.build())
 
-        // ponytail: Live分钟链——PROGRESS首帧带tick标记，每分钟自排下一跳；重启才更新就是链断在这里
         if ((eventType == EVENT_PROGRESS || eventType == EVENT_COUNTDOWN) && intent.getBooleanExtra(EXTRA_TRIGGER_TICK, false)) {
             val nextMinute = ((System.currentTimeMillis() / 60000L) + 1) * 60000L
-            if (nextMinute < endEpoch) {
+            val tickEnd = if (eventType == EVENT_COUNTDOWN) startEpoch else endEpoch
+            if (nextMinute < tickEnd) {
                 val next = Intent(context, ReminderReceiver::class.java).apply {
                     putExtra(EXTRA_EVENT_TYPE, eventType)
                     putExtra(EXTRA_ITEM_TYPE, itemType)
@@ -175,7 +159,7 @@ class ReminderReceiver : BroadcastReceiver() {
                 val am = context.getSystemService(Context.ALARM_SERVICE) as android.app.AlarmManager
                 val pi = android.app.PendingIntent.getBroadcast(
                     context,
-                    "$itemType|$courseName|$startEpoch|$eventType|tick|$nextMinute".hashCode(),
+                    "$itemType|$courseName|$startEpoch|$eventType|tick".hashCode(),
                     next,
                     android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE
                 )
@@ -188,6 +172,31 @@ class ReminderReceiver : BroadcastReceiver() {
                 }
             }
         }
+    }
+
+    private fun handoffOrCancel(context: Context, itemType: String, notificationId: Int) {
+        val pending = goAsync()
+        kotlin.concurrent.thread {
+            try {
+                val settings = SettingsDataStore(context)
+                val liveOn = runBlocking {
+                    if (itemType == "exam") settings.reminderExamLiveUpdate.first()
+                    else settings.reminderLiveUpdate.first()
+                }
+                val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                if (liveOn) ReminderScheduler.scheduleTodayFromStore(context)
+                else nm.cancel(notificationId)
+            } catch (_: Exception) {
+            } finally {
+                pending.finish()
+            }
+        }
+    }
+
+    private fun countdownProgressPercent(startEpoch: Long, reminderMinutes: Int): Int {
+        val totalMs = reminderMinutes.coerceAtLeast(1) * 60_000L
+        val remainingMs = (startEpoch - System.currentTimeMillis()).coerceIn(0L, totalMs)
+        return ((remainingMs * 100L) / totalMs).toInt().coerceIn(0, 100)
     }
 
     private fun progressPercent(startEpoch: Long, endEpoch: Long): Int {
