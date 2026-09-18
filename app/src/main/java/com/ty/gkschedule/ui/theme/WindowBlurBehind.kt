@@ -6,12 +6,20 @@ import android.view.Window
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.MutableTransitionState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.unit.IntOffset
+import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -83,6 +91,9 @@ fun BackdropBottomSheet(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     androidx.activity.compose.BackHandler(onBack = onDismiss)
+    val sheetOffset = remember { Animatable(0f) }
+    val scope = rememberCoroutineScope()
+    var sheetHeight by remember { mutableIntStateOf(0) }
     val transitionState = remember { MutableTransitionState(false).apply { targetState = true } }
     Box(Modifier.fillMaxSize()) {
         Box(
@@ -99,7 +110,27 @@ fun BackdropBottomSheet(
             BlurCardSurface(
                 backdrop = backdrop,
                 enabled = enabled,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .offset { IntOffset(0, sheetOffset.value.roundToInt()) }
+                    .onSizeChanged { sheetHeight = it.height }
+                    .pointerInput(Unit) {
+                        detectVerticalDragGestures(
+                            onVerticalDrag = { change, dragAmount ->
+                                scope.launch { sheetOffset.snapTo((sheetOffset.value + dragAmount).coerceAtLeast(0f)) }
+                            },
+                            onDragEnd = {
+                                scope.launch {
+                                    if (sheetOffset.value > sheetHeight * 0.25f) {
+                                        sheetOffset.animateTo(sheetHeight.toFloat().coerceAtLeast(1f), tween(180))
+                                        onDismiss()
+                                    } else {
+                                        sheetOffset.animateTo(0f, spring())
+                                    }
+                                }
+                            }
+                        )
+                    },
                 cornerRadiusDp = 28f,
                 backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.78f),
                 content = content
@@ -125,14 +156,14 @@ fun BackdropDialog(
                 .clickable(onClick = onDismiss)
         )
         AnimatedVisibility(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxWidth().wrapContentHeight().align(Alignment.Center),
             visibleState = transitionState,
             enter = slideInVertically(initialOffsetY = { it / 4 }, animationSpec = tween(220)) + fadeIn(tween(160))
         ) {
             BlurCardSurface(
                 backdrop = backdrop,
                 enabled = enabled,
-                modifier = Modifier.fillMaxWidth().padding(24.dp).align(Alignment.Center),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
                 cornerRadiusDp = 28f,
                 backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.78f),
                 content = content
