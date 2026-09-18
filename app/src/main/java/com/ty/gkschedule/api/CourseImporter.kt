@@ -15,13 +15,18 @@ object CourseImporter {
             "${r.courseName}|${r.dayWeek}|${r.teacher}|${r.classroomName}|${r.whichSection}"
         }
 
+        val semesterMaxWeek = remoteCourses.maxOfOrNull { it.week } ?: 0
         return groups.mapNotNull { (_, entries) ->
             if (entries.isEmpty()) return@mapNotNull null
 
             val first = entries.first()
             // Each group has the same section, collect all weeks
             val allWeeks = entries.map { it.week }.distinct().sorted()
-            val weekRange = buildWeekRange(allWeeks)
+            val weekRange = when (entries.firstNotNullOfOrNull { it.singleOrDoubleWeek?.trim() }) {
+                "单" -> "odd"
+                "双" -> "even"
+                else -> buildWeekRange(allWeeks, semesterMaxWeek)
+            }
 
             Course(
                 name = first.courseName,
@@ -77,15 +82,13 @@ object CourseImporter {
         return result
     }
 
-    private fun buildWeekRange(weeks: List<Int>): String {
+    private fun buildWeekRange(weeks: List<Int>, semesterMaxWeek: Int): String {
         if (weeks.isEmpty()) return "all"
-        // Check if ALL weeks are consecutive odd or consecutive even
+        if (semesterMaxWeek > 0 && weeks == (1..semesterMaxWeek).toList()) return "all"
         val allOdd = weeks.all { it % 2 == 1 }
         val allEven = weeks.all { it % 2 == 0 }
-        // Only use odd/even if the range covers a significant portion
-        // Otherwise just build the range
-        if (allOdd && weeks.size > 8) return "odd"
-        if (allEven && weeks.size > 8) return "even"
+        if (allOdd) return "odd"
+        if (allEven) return "even"
         return buildCompactRange(weeks)
     }
 

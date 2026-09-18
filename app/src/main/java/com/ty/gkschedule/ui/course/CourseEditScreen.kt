@@ -31,6 +31,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.ty.gkschedule.R
 import com.ty.gkschedule.data.Course
+import com.ty.gkschedule.data.weekRangePreset
 import com.ty.gkschedule.util.CourseColors
 import com.ty.gkschedule.util.JsonImportExport
 import top.yukonga.miuix.kmp.blur.layerBackdrop
@@ -62,8 +63,9 @@ fun CourseEditScreen(
     var periods by remember { mutableIntStateOf(course?.periods ?: 1) }
     var colorIndex by remember { mutableIntStateOf(course?.colorIndex ?: 0) }
     var isHidden by remember { mutableStateOf(course?.isHidden ?: false) }
-    var weekRange by remember { mutableStateOf(course?.weekRange ?: "all") }
-    var customWeekRange by remember { mutableStateOf(if (course?.weekRange == "all" || course?.weekRange == "odd" || course?.weekRange == "even") "" else (course?.weekRange ?: "")) }
+    val initialWeekRange = course?.weekRange?.let { weekRangePreset(it) ?: it } ?: "all"
+    var weekRange by remember { mutableStateOf(initialWeekRange) }
+    var customWeekRange by remember { mutableStateOf(if (initialWeekRange == "all" || initialWeekRange == "odd" || initialWeekRange == "even") "" else initialWeekRange) }
     var remark by remember { mutableStateOf(course?.remark ?: "") }
     var isCustomTime by remember { mutableStateOf(course?.isCustomTime ?: false) }
     var customStartTime by remember { mutableStateOf(course?.customStartTime ?: "08:00") }
@@ -88,7 +90,8 @@ fun CourseEditScreen(
                 val target = sameNameCourses[selectedTabIndex]
                 teacher = target.teacher; classroom = target.classroom
                 dayOfWeek = target.dayOfWeek; startPeriod = target.startPeriod; periods = target.periods; remark = target.remark
-                if (target.weekRange != "all" && target.weekRange != "odd" && target.weekRange != "even") { weekRange = "custom"; customWeekRange = target.weekRange } else { weekRange = target.weekRange; customWeekRange = "" }
+                val targetWeekRange = weekRangePreset(target.weekRange) ?: target.weekRange
+                if (targetWeekRange == "all" || targetWeekRange == "odd" || targetWeekRange == "even") { weekRange = targetWeekRange; customWeekRange = "" } else { weekRange = "custom"; customWeekRange = targetWeekRange }
                 isCustomTime = target.isCustomTime; customStartTime = target.customStartTime; customEndTime = target.customEndTime
                 isHidden = sameNameCourses.any { it.isHidden }
             }
@@ -196,7 +199,7 @@ fun CourseEditScreen(
                                         val first = mappedCourses[0]
                                         name = first.name; teacher = first.teacher; classroom = first.classroom
                                         dayOfWeek = first.dayOfWeek; startPeriod = first.startPeriod; periods = first.periods; remark = first.remark
-                                        if (first.weekRange != "all" && first.weekRange != "odd" && first.weekRange != "even") { weekRange = "custom"; customWeekRange = first.weekRange } else { weekRange = first.weekRange; customWeekRange = "" }
+                                        val firstWeekRange = weekRangePreset(first.weekRange) ?: first.weekRange; if (firstWeekRange == "all" || firstWeekRange == "odd" || firstWeekRange == "even") { weekRange = firstWeekRange; customWeekRange = "" } else { weekRange = "custom"; customWeekRange = firstWeekRange }
                                         isCustomTime = first.isCustomTime; customStartTime = first.customStartTime; customEndTime = first.customEndTime; isHidden = false
                                         aiErrorHint = ""; showAiPanel = false
                                         android.widget.Toast.makeText(context, "成功识别到 ${mappedCourses.size} 门课程，请通过多标签页进行切换核对！", android.widget.Toast.LENGTH_SHORT).show()
@@ -222,7 +225,8 @@ fun CourseEditScreen(
                             selectedTabIndex = index
                             val target = batchCourses[index]
                             name = target.name; teacher = target.teacher; classroom = target.classroom; dayOfWeek = target.dayOfWeek; startPeriod = target.startPeriod; periods = target.periods; remark = target.remark
-                            if (target.weekRange != "all" && target.weekRange != "odd" && target.weekRange != "even") { weekRange = "custom"; customWeekRange = target.weekRange } else { weekRange = target.weekRange; customWeekRange = "" }
+                            val targetWeekRange = weekRangePreset(target.weekRange) ?: target.weekRange
+                if (targetWeekRange == "all" || targetWeekRange == "odd" || targetWeekRange == "even") { weekRange = targetWeekRange; customWeekRange = "" } else { weekRange = "custom"; customWeekRange = targetWeekRange }
                             isCustomTime = target.isCustomTime; customStartTime = target.customStartTime; customEndTime = target.customEndTime
                         }, text = {
                             val target = batchCourses[index]

@@ -3,6 +3,26 @@ package com.ty.gkschedule.data
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
+/** Returns the preset represented by a complete explicit week list, if any. */
+fun weekRangePreset(weekRange: String): String? {
+    if (weekRange == "all" || weekRange == "odd" || weekRange == "even") return weekRange
+    val weeks = weekRange.split(",").flatMap { part ->
+        val bounds = part.trim().split("-").map { it.toIntOrNull() }
+        when {
+            bounds.size == 2 && bounds[0] != null && bounds[1] != null -> (bounds[0]!!..bounds[1]!!).toList()
+            bounds.size == 1 && bounds[0] != null -> listOf(bounds[0]!!)
+            else -> emptyList()
+        }
+    }.distinct().sorted()
+    val maxWeek = weeks.maxOrNull() ?: return null
+    return when {
+        weeks == (1..maxWeek).toList() -> "all"
+        weeks == (1..maxWeek step 2).toList() -> "odd"
+        weeks == (2..maxWeek step 2).toList() -> "even"
+        else -> null
+    }
+}
+
 @Entity(tableName = "courses")
 data class Course(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -22,6 +42,8 @@ data class Course(
     val isHidden: Boolean = false // 在课表中隐藏
 ) {
     fun endPeriod(): Int = startPeriod + periods - 1
+
+    fun weekRangePreset(): String? = weekRangePreset(weekRange)
 
     fun isInWeek(week: Int): Boolean = when (weekRange) {
         "all" -> true
