@@ -12,6 +12,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -90,17 +91,28 @@ fun BackdropBottomSheet(
     onDismiss: () -> Unit,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    androidx.activity.compose.BackHandler(onBack = onDismiss)
     val sheetOffset = remember { Animatable(0f) }
     val scope = rememberCoroutineScope()
     var sheetHeight by remember { mutableIntStateOf(0) }
+    var dismissing by remember { mutableStateOf(false) }
+    fun dismissWithAnimation() {
+        if (dismissing) return
+        dismissing = true
+        scope.launch {
+            sheetOffset.animateTo(sheetHeight.toFloat().coerceAtLeast(1f), tween(220))
+            onDismiss()
+        }
+    }
+    androidx.activity.compose.BackHandler(onBack = ::dismissWithAnimation)
     val transitionState = remember { MutableTransitionState(false).apply { targetState = true } }
     Box(Modifier.fillMaxSize()) {
         Box(
             Modifier
                 .fillMaxSize()
                 .background(Color.Black.copy(alpha = 0.12f))
-                .clickable(onClick = onDismiss)
+                .pointerInput(dismissing) {
+                    detectTapGestures(onTap = { dismissWithAnimation() })
+                }
         )
         AnimatedVisibility(
             modifier = Modifier.fillMaxWidth().align(Alignment.BottomCenter),
@@ -116,14 +128,15 @@ fun BackdropBottomSheet(
                     .onSizeChanged { sheetHeight = it.height }
                     .pointerInput(Unit) {
                         detectVerticalDragGestures(
-                            onVerticalDrag = { change, dragAmount ->
-                                scope.launch { sheetOffset.snapTo((sheetOffset.value + dragAmount).coerceAtLeast(0f)) }
+                            onVerticalDrag = { _, dragAmount ->
+                                if (!dismissing) {
+                                    scope.launch { sheetOffset.snapTo((sheetOffset.value + dragAmount).coerceAtLeast(0f)) }
+                                }
                             },
                             onDragEnd = {
                                 scope.launch {
                                     if (sheetOffset.value > sheetHeight * 0.25f) {
-                                        sheetOffset.animateTo(sheetHeight.toFloat().coerceAtLeast(1f), tween(180))
-                                        onDismiss()
+                                        dismissWithAnimation()
                                     } else {
                                         sheetOffset.animateTo(0f, spring())
                                     }
