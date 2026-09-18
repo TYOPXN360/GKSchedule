@@ -555,7 +555,7 @@ private fun CourseCard(
                         }
                         Spacer(modifier = Modifier.width(6.dp))
                     }
-                    Text(course.name, style = MaterialTheme.typography.titleMedium)
+                    Text(course.name, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f), maxLines = 2, overflow = TextOverflow.Ellipsis)
                     if (realIsPast) {
                         androidx.compose.animation.AnimatedVisibility(visible = animDone, enter = androidx.compose.animation.scaleIn() + androidx.compose.animation.fadeIn()) {
                             Icon(Icons.Default.Check, null, modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
@@ -566,8 +566,8 @@ private fun CourseCard(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     val periodText = if (course.periods > 1) "${course.startPeriod}-${course.endPeriod()}" else "${course.startPeriod}"
                     Text(stringResource(R.string.period_format_short, periodText), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Medium)
-                    if (course.teacher.isNotEmpty()) { Spacer(modifier = Modifier.width(8.dp)); Text(course.teacher, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-                    if (course.classroom.isNotEmpty()) { Spacer(modifier = Modifier.width(8.dp)); Text(course.classroom, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                    if (course.teacher.isNotEmpty()) { Spacer(modifier = Modifier.width(8.dp)); Text(course.teacher, modifier = Modifier.weight(1f, fill = false), maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                    if (course.classroom.isNotEmpty()) { Spacer(modifier = Modifier.width(8.dp)); Text(course.classroom, modifier = Modifier.weight(1f, fill = false), maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
                 }
             }
             Text("$startTime\n$endTime", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)

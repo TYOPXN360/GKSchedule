@@ -464,6 +464,7 @@ fun WeeklyScheduleScreen(
                             Box(
                                 modifier = Modifier.offset(x = x, y = y)
                                     .size(width = w.coerceAtLeast(24.dp), height = h.coerceAtLeast(24.dp))
+                                    .clip(RoundedCornerShape(gridCorner.dp))
                                     .clickable {
                                         com.ty.gkschedule.util.HapticFeedback.medium(hapticView)
                                         detailItem = block.item
@@ -506,13 +507,13 @@ fun WeeklyScheduleScreen(
                                             Text("隐藏", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = textColor, maxLines = 1)
                                         }
                                     }
-                                    // ponytail: 名上地点下——名先吃(多行开不限行)，地点吃剩高，溢出才省略
+                                    // ponytail: 课程名最多两行，地点保留一行，避免长文本互相覆盖
                                     if (blockMultiline) {
-                                        Text(block.item.name, style = MaterialTheme.typography.labelMedium, color = textColor, maxLines = Int.MAX_VALUE, overflow = TextOverflow.Ellipsis)
+                                        Text(block.item.name, style = MaterialTheme.typography.labelMedium, color = textColor, maxLines = 2, overflow = TextOverflow.Ellipsis)
                                         if (block.item.classroom.isNotEmpty()) {
                                             androidx.compose.foundation.layout.BoxWithConstraints(modifier = Modifier.fillMaxWidth().weight(1f, fill = false)) {
                                                 if (maxHeight > 18.dp) {
-                                                    Text(block.item.classroom, style = MaterialTheme.typography.labelSmall, color = textColor.copy(alpha = 0.7f), maxLines = Int.MAX_VALUE, overflow = TextOverflow.Ellipsis)
+                                                    Text(block.item.classroom, style = MaterialTheme.typography.labelSmall, color = textColor.copy(alpha = 0.7f), maxLines = 1, overflow = TextOverflow.Ellipsis)
                                                 }
                                             }
                                         }
@@ -755,7 +756,12 @@ fun ScheduleItemDetailSheet(item: ScheduleItem, getStartTime: (Int) -> String, g
             }
             if (item.teacher.isNotEmpty()) DetailRow("教师", item.teacher)
             if (item.classroom.isNotEmpty()) DetailRow("教室", item.classroom)
-            DetailRow("周次", item.weekRange)
+            DetailRow("周次", when (item.weekRange) {
+                 "all" -> "全部周"
+                 "odd" -> "单周"
+                 "even" -> "双周"
+                 else -> item.weekRange
+             })
             if (cleanedRemark.isNotEmpty()) DetailRow("备注", cleanedRemark)
             Spacer(modifier = Modifier.height(16.dp))
             FilledTonalButton(

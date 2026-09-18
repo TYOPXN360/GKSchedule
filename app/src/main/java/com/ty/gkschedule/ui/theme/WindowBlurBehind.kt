@@ -3,6 +3,7 @@ package com.ty.gkschedule.ui.theme
 import android.os.Build
 import android.view.View
 import android.view.Window
+import androidx.activity.compose.PredictiveBackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
@@ -103,7 +104,20 @@ fun BackdropBottomSheet(
             onDismiss()
         }
     }
-    androidx.activity.compose.BackHandler(onBack = ::dismissWithAnimation)
+    PredictiveBackHandler { progress: kotlinx.coroutines.flow.Flow<androidx.activity.BackEventCompat> ->
+        var committed = false
+        try {
+            progress.collect { event ->
+                sheetOffset.snapTo(sheetHeight * event.progress)
+            }
+            committed = true
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            sheetOffset.animateTo(0f, spring())
+            throw e
+        } finally {
+            if (committed) dismissWithAnimation()
+        }
+    }
     val transitionState = remember { MutableTransitionState(false).apply { targetState = true } }
     Box(Modifier.fillMaxSize()) {
         Box(
