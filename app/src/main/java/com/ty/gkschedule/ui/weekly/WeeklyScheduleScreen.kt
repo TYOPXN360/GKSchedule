@@ -507,9 +507,9 @@ fun WeeklyScheduleScreen(
                                             Text("隐藏", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = textColor, maxLines = 1)
                                         }
                                     }
-                                    // ponytail: 课程名最多两行，地点保留一行，避免长文本互相覆盖
-                                    if (blockMultiline) {
-                                        Text(block.item.name, style = MaterialTheme.typography.labelMedium, color = textColor, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                                    // ponytail: 课程名先占用地点之外的剩余高度，只有空间不足时才省略
+                                    if (block.item.classroom.isNotEmpty()) {
+                                        Text(block.item.name, modifier = Modifier.weight(1f), style = MaterialTheme.typography.labelMedium, color = textColor, maxLines = if (blockMultiline) Int.MAX_VALUE else 1, overflow = TextOverflow.Ellipsis)
                                         if (block.item.classroom.isNotEmpty()) {
                                             androidx.compose.foundation.layout.BoxWithConstraints(modifier = Modifier.fillMaxWidth().weight(1f, fill = false)) {
                                                 if (maxHeight > 18.dp) {
@@ -518,7 +518,7 @@ fun WeeklyScheduleScreen(
                                             }
                                         }
                                     } else {
-                                        Text(block.item.name, style = MaterialTheme.typography.labelMedium, color = textColor, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                        Text(block.item.name, modifier = Modifier.weight(1f), style = MaterialTheme.typography.labelMedium, color = textColor, maxLines = if (blockMultiline) Int.MAX_VALUE else 1, overflow = TextOverflow.Ellipsis)
                                         if (block.item.classroom.isNotEmpty()) {
                                             Text(block.item.classroom, style = MaterialTheme.typography.labelSmall, color = textColor.copy(alpha = 0.7f), maxLines = 1, overflow = TextOverflow.Ellipsis)
                                         }

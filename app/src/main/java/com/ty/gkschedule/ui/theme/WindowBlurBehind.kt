@@ -36,7 +36,8 @@ import top.yukonga.miuix.kmp.blur.Backdrop
 import top.yukonga.miuix.kmp.blur.blur
 import top.yukonga.miuix.kmp.blur.drawBackdrop
 
-// ponytail: 递归找Dialog真实Window——DialogLayout本身就是DialogWindowProvider，只查parent/context永远null
+val LocalBlurDropdownBackdrop = staticCompositionLocalOf<Backdrop?> { null }
+
 fun View.findDialogWindow(): Window? {
     var current: View? = this
     while (current != null) {
@@ -362,14 +363,17 @@ fun BlurDatePickerDialog(
 }
 
 @Composable
-fun BlurDropdownMenu(    expanded: Boolean,
+fun BlurDropdownMenu(
+    expanded: Boolean,
     onDismissRequest: () -> Unit,
+    backdrop: Backdrop? = null,
     modifier: Modifier = Modifier,
     blurEnabled: Boolean = true,
     content: @Composable ColumnScope.() -> Unit
 ) {
     // ponytail: 阴影只留一层——DropdownMenu自带tonal表面色+BlurCard糊底叠色=双层直角；
     // 容器透明+阴影0，形状全交BlurCard圆角
+    val activeBackdrop = backdrop ?: LocalBlurDropdownBackdrop.current ?: top.yukonga.miuix.kmp.blur.rememberLayerBackdrop()
     androidx.compose.material3.DropdownMenu(
         expanded = expanded,
         onDismissRequest = onDismissRequest,
@@ -378,14 +382,17 @@ fun BlurDropdownMenu(    expanded: Boolean,
         shadowElevation = 0.dp,
         tonalElevation = 0.dp
     ) {
-        BlurCard(
-            enabled = blurEnabled,
-            modifier = Modifier,
-            radiusDp = 28f,
-            backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f),
-            cornerRadiusDp = 12f
-        ) {
-            Column { content() }
-        }
+        Column(
+            modifier = Modifier
+                .clip(RoundedCornerShape(12.dp))
+                .then(
+                    if (blurEnabled) Modifier.drawBackdrop(
+                        backdrop = activeBackdrop,
+                        shape = { RoundedCornerShape(12.dp) },
+                        effects = { blur(28.dp.toPx()) }
+                    ) else Modifier
+                )
+                .background(MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f))
+        ) { content() }
     }
 }
