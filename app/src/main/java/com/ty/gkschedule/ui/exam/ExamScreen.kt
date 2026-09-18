@@ -1,6 +1,7 @@
 package com.ty.gkschedule.ui.exam
 import com.ty.gkschedule.ui.theme.GKSwitch
 import com.ty.gkschedule.ui.theme.BlurCard
+import com.ty.gkschedule.ui.theme.BackdropDialog
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -107,7 +108,8 @@ fun ExamScreen(
     // ponytail: miuix源层
     val backdrop = top.yukonga.miuix.kmp.blur.rememberLayerBackdrop()
 
-    Scaffold(
+    Box(Modifier.fillMaxSize()) {
+        Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         containerColor = scaffoldBg,
         topBar = {
@@ -368,21 +370,19 @@ fun ExamScreen(
             colorIndex = colorAssignment.colorIndex,
             classroomColorIndex = colorAssignment.classroomColorIndex,
             currentWeek = detailWeek, diffColorPerWeek = diffColorPerWeek,
-            blurEnabled = blurEnabled
+            blurEnabled = blurEnabled, backdrop = backdrop
         )
     }
 
     // Re-login dialog — 只糊卡片不糊全屏，Dialog+BlurCard载体等大
     if (showReloginDialog) {
         var captcha by remember { mutableStateOf("") }
-        androidx.compose.ui.window.Dialog(onDismissRequest = onDismissRelogin) {
-            BlurCard(
-                enabled = blurEnabled,
-                modifier = Modifier.fillMaxWidth(),
-                radiusDp = 36f,
-                backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.48f),
-            ) {
-            Column(modifier = Modifier.padding(24.dp)) {
+        BackdropDialog(
+            backdrop = backdrop,
+            enabled = blurEnabled,
+            onDismiss = onDismissRelogin,
+        ) {
+            Column(modifier = Modifier.padding(vertical = 16.dp)) {
                 Text("教务系统登录过期", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.onSurface)
                 Spacer(modifier = Modifier.height(16.dp))
                 Text("请输入验证码重新登录", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -408,8 +408,8 @@ fun ExamScreen(
                     TextButton(onClick = { if (captcha.isNotBlank()) { onQuickRelogin(captcha); onDismissRelogin() } }, enabled = captcha.isNotBlank()) { Text("登录") }
                 }
             }
-            }
         }
+    }
     }
 }
 

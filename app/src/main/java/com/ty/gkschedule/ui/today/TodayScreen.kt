@@ -24,6 +24,8 @@ import com.ty.gkschedule.data.Course
 import com.ty.gkschedule.data.ScheduleResolver
 import com.ty.gkschedule.ui.theme.Md3Card
 import com.ty.gkschedule.ui.theme.Md3CardVariant
+import top.yukonga.miuix.kmp.blur.layerBackdrop
+import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
 import com.ty.gkschedule.util.CourseColors
 import kotlinx.coroutines.flow.first
 import java.time.LocalDate
@@ -49,7 +51,8 @@ fun TodayScreen(
     // ponytail: 默认底栏避让开关——悬浮pill不占位，传false不留白
     applyBottomBarInset: Boolean = true,
     // ponytail: 详情Sheet糊开关（ScheduleItemDetailSheet透传）
-    blurEnabled: Boolean = true
+    blurEnabled: Boolean = true,
+    onOverlayVisibilityChange: (Boolean) -> Unit = {}
 ) {
     val today = LocalDate.now()
     val todayDow = today.dayOfWeek.value
@@ -81,6 +84,9 @@ fun TodayScreen(
     val currentPeriod = findCurrentPeriod(allTodayCourses, getStartTime, getEndTime, currentTimeMinutes)
     var detailCourse by remember { mutableStateOf<Pair<Course, Int>?>(null) }
     var detailExam by remember { mutableStateOf<com.ty.gkschedule.data.ScheduleItem.ExamItem?>(null) }
+    LaunchedEffect(detailCourse, detailExam) {
+        onOverlayVisibilityChange(detailCourse != null || detailExam != null)
+    }
     // Only trigger animation once per app session, not on course refresh
     var animationPlayed by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     val maxStagger = (allTodayCourses.size - 1) * 200L
@@ -104,9 +110,12 @@ fun TodayScreen(
         ScheduleResolver.upcomingExams(exams, showExamSchedule, today, examLookaheadWeeks)
     }
 
-    LazyColumn(
+    val backdrop = rememberLayerBackdrop()
+    Box(Modifier.fillMaxSize()) {
+        LazyColumn(
         modifier = Modifier
             .fillMaxSize()
+            .layerBackdrop(backdrop)
             .statusBarsPadding()
             .padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -386,7 +395,8 @@ fun TodayScreen(
             classroomColorIndex = colorAssignment.classroomColorIndex,
             currentWeek = detailWeek,
             diffColorPerWeek = diffColorPerWeek,
-            blurEnabled = blurEnabled
+            blurEnabled = blurEnabled,
+             backdrop = backdrop
         )
     }
 
@@ -413,8 +423,10 @@ fun TodayScreen(
             classroomColorIndex = colorAssignment.classroomColorIndex,
             currentWeek = detailWeek,
             diffColorPerWeek = diffColorPerWeek,
-            blurEnabled = blurEnabled
+            blurEnabled = blurEnabled,
+             backdrop = backdrop
         )
+    }
     }
 }
 

@@ -3,7 +3,13 @@ package com.ty.gkschedule.ui.theme
 import android.os.Build
 import android.view.View
 import android.view.Window
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.core.MutableTransitionState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -16,6 +22,9 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
+import top.yukonga.miuix.kmp.blur.Backdrop
+import top.yukonga.miuix.kmp.blur.blur
+import top.yukonga.miuix.kmp.blur.drawBackdrop
 
 // ponytail: 递归找Dialog真实Window——DialogLayout本身就是DialogWindowProvider，只查parent/context永远null
 fun View.findDialogWindow(): Window? {
@@ -66,7 +75,127 @@ private fun View.applyDialogWindowBlur() {
     }
 }
 
-// ponytail: 整卡包裹毛玻璃AlertDialog——BasicAlertDialog无自带实心底，整张BlurCard一体成型
+@Composable
+fun BackdropBottomSheet(
+    backdrop: Backdrop,
+    enabled: Boolean,
+    onDismiss: () -> Unit,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    androidx.activity.compose.BackHandler(onBack = onDismiss)
+    val transitionState = remember { MutableTransitionState(false).apply { targetState = true } }
+    Box(Modifier.fillMaxSize()) {
+        Box(
+            Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.12f))
+                .clickable(onClick = onDismiss)
+        )
+        AnimatedVisibility(
+            modifier = Modifier.fillMaxWidth().align(Alignment.BottomCenter),
+            visibleState = transitionState,
+            enter = slideInVertically(initialOffsetY = { it }, animationSpec = tween(260)) + fadeIn(tween(180))
+        ) {
+            BlurCardSurface(
+                backdrop = backdrop,
+                enabled = enabled,
+                modifier = Modifier.fillMaxWidth(),
+                cornerRadiusDp = 28f,
+                backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.78f),
+                content = content
+            )
+        }
+    }
+}
+
+@Composable
+fun BackdropDialog(
+    backdrop: Backdrop,
+    enabled: Boolean,
+    onDismiss: () -> Unit,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    androidx.activity.compose.BackHandler(onBack = onDismiss)
+    val transitionState = remember { MutableTransitionState(false).apply { targetState = true } }
+    Box(Modifier.fillMaxSize()) {
+        Box(
+            Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.12f))
+                .clickable(onClick = onDismiss)
+        )
+        AnimatedVisibility(
+            modifier = Modifier.fillMaxSize(),
+            visibleState = transitionState,
+            enter = slideInVertically(initialOffsetY = { it / 4 }, animationSpec = tween(220)) + fadeIn(tween(160))
+        ) {
+            BlurCardSurface(
+                backdrop = backdrop,
+                enabled = enabled,
+                modifier = Modifier.fillMaxWidth().padding(24.dp).align(Alignment.Center),
+                cornerRadiusDp = 28f,
+                backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.78f),
+                content = content
+            )
+        }
+    }
+}
+
+@Composable
+private fun BlurCardSurface(
+    backdrop: Backdrop,
+    enabled: Boolean,
+    modifier: Modifier,
+    backgroundColor: Color,
+    cornerRadiusDp: Float,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    val shape = RoundedCornerShape(cornerRadiusDp.dp)
+    Column(
+        modifier = modifier
+            .clip(shape)
+            .then(
+                if (enabled) Modifier.drawBackdrop(
+                    backdrop = backdrop,
+                    shape = { shape },
+                    effects = { blur(28.dp.toPx()) },
+                ) else Modifier
+            )
+            .background(if (enabled) backgroundColor else backgroundColor.copy(alpha = 1f))
+            .padding(horizontal = 24.dp, vertical = 8.dp),
+        content = content
+    )
+}
+
+@Composable
+fun BackdropAlertDialog(
+    backdrop: Backdrop,
+    onDismissRequest: () -> Unit,
+    confirmButton: @Composable () -> Unit,
+    dismissButton: (@Composable () -> Unit)? = null,
+    title: (@Composable () -> Unit)? = null,
+    text: (@Composable () -> Unit)? = null,
+    blurEnabled: Boolean = true,
+) {
+    BackdropDialog(backdrop = backdrop, enabled = blurEnabled, onDismiss = onDismissRequest) {
+        Column(modifier = Modifier.padding(vertical = 16.dp)) {
+            if (title != null) {
+                CompositionLocalProvider(LocalTextStyle provides MaterialTheme.typography.headlineSmall) { title() }
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+            if (text != null) {
+                CompositionLocalProvider(LocalTextStyle provides MaterialTheme.typography.bodyMedium) { text() }
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                dismissButton?.invoke()
+                Spacer(modifier = Modifier.width(8.dp))
+                confirmButton()
+            }
+        }
+    }
+}
+
 // ponytail: 关开关=纯色卡（enabled=false走Spacer底）；调用方Dialog/Dropdown/Sheet/详情卡全要透传开关
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

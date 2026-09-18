@@ -30,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import com.ty.gkschedule.ui.theme.BlurCard
+import com.ty.gkschedule.ui.theme.BackdropBottomSheet
 import top.yukonga.miuix.kmp.blur.blur
 import top.yukonga.miuix.kmp.blur.drawBackdrop
 import top.yukonga.miuix.kmp.blur.layerBackdrop
@@ -95,7 +96,8 @@ fun WeeklyScheduleScreen(
     // ponytail: 默认底栏避让开关——悬浮pill不占位，传false不留白
     applyBottomBarInset: Boolean = true,
     getStartTime: (Int) -> String = { "" },
-    getEndTime: (Int) -> String = { "" }
+    getEndTime: (Int) -> String = { "" },
+    onOverlayVisibilityChange: (Boolean) -> Unit = {}
 ) {
     // Reorder days based on firstDayOfWeek setting (1=Monday, 7=Sunday)
     val startDay = firstDayOfWeek.coerceIn(1, 7)
@@ -109,6 +111,9 @@ fun WeeklyScheduleScreen(
     var detailItem by remember { mutableStateOf<ScheduleItem?>(null) }
     var detailColorIndex by remember { mutableStateOf<Int?>(null) }
     var detailClassroomColorIndex by remember { mutableIntStateOf(0) }
+    LaunchedEffect(detailItem, showWeekPicker) {
+        onOverlayVisibilityChange(detailItem != null || showWeekPicker)
+    }
     // ponytail: miuix源层，FAB组drawBackdrop吃糊
     val backdrop = top.yukonga.miuix.kmp.blur.rememberLayerBackdrop()
     val hapticContext = androidx.compose.ui.platform.LocalContext.current
@@ -151,7 +156,8 @@ fun WeeklyScheduleScreen(
         }
     }
 
-    val ptrState = androidx.compose.material3.pulltorefresh.rememberPullToRefreshState()
+    Box(Modifier.fillMaxSize()) {
+        val ptrState = androidx.compose.material3.pulltorefresh.rememberPullToRefreshState()
     PullToRefreshBox(
         isRefreshing = isRefreshing,
         onRefresh = {
@@ -662,17 +668,18 @@ fun WeeklyScheduleScreen(
             colorIndex = detailColorIndex,
             classroomColorIndex = detailClassroomColorIndex,
             currentWeek = targetWeek,
-            diffColorPerWeek = diffColorPerWeek, blurEnabled = blurEnabled)
+            diffColorPerWeek = diffColorPerWeek, blurEnabled = blurEnabled, backdrop = backdrop)
     }
 
     if (showWeekPicker) {
-        WeekPickerSheet(totalWeeks, currentWeek, { onWeekChange(it); showWeekPicker = false }, { showWeekPicker = false }, blurEnabled = blurEnabled)
+        WeekPickerSheet(totalWeeks, currentWeek, { onWeekChange(it); showWeekPicker = false }, { showWeekPicker = false }, blurEnabled = blurEnabled, backdrop = backdrop)
+    }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ScheduleItemDetailSheet(item: ScheduleItem, getStartTime: (Int) -> String, getEndTime: (Int) -> String, onDismiss: () -> Unit, onEdit: () -> Unit, colorEngine: Int = 0, colorGroupMode: Int = 0, colorIndex: Int? = null, classroomColorIndex: Int = 0, dotColor: Color? = null, currentWeek: Int = 0, diffColorPerWeek: Boolean = false, blurEnabled: Boolean = true) {
+fun ScheduleItemDetailSheet(item: ScheduleItem, getStartTime: (Int) -> String, getEndTime: (Int) -> String, onDismiss: () -> Unit, onEdit: () -> Unit, colorEngine: Int = 0, colorGroupMode: Int = 0, colorIndex: Int? = null, classroomColorIndex: Int = 0, dotColor: Color? = null, currentWeek: Int = 0, diffColorPerWeek: Boolean = false, blurEnabled: Boolean = true, backdrop: top.yukonga.miuix.kmp.blur.Backdrop) {
     val isDark = com.ty.gkschedule.ui.theme.LocalAppIsDark.current
     val themeHue = CourseColors.currentThemeHue()
     val hctColors = remember(item, colorEngine, colorGroupMode, colorIndex, classroomColorIndex, currentWeek, diffColorPerWeek, isDark, themeHue) {
@@ -701,25 +708,15 @@ fun ScheduleItemDetailSheet(item: ScheduleItem, getStartTime: (Int) -> String, g
             .joinToString("\n")
     }
 
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        // ponytail: 只糊卡片不糊全屏——BlurCard载体等大+LayerDrawable合成；handle自画进覆盖区
-        containerColor = Color.Transparent,
-        scrimColor = Color.Transparent,
-        dragHandle = { },
-        contentWindowInsets = { WindowInsets(0, 0, 0, 0) }
+    BackdropBottomSheet(
+        backdrop = backdrop,
+        enabled = blurEnabled,
+        onDismiss = onDismiss,
     ) {
-        BlurCard(
-            enabled = blurEnabled,
-            modifier = Modifier.fillMaxWidth(),
-            backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f),
-        ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(max = 520.dp)
-                .padding(horizontal = 24.dp, vertical = 8.dp)
                 .padding(bottom = 32.dp)
         ) {
             // ponytail: 自画把手进BlurCard覆盖区，与卡片同底色
@@ -771,7 +768,6 @@ fun ScheduleItemDetailSheet(item: ScheduleItem, getStartTime: (Int) -> String, g
         }
         }
     }
-}
 
 @Composable
 private fun DetailRow(label: String, value: String) {
@@ -783,25 +779,16 @@ private fun DetailRow(label: String, value: String) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun WeekPickerSheet(totalWeeks: Int, currentWeek: Int, onWeekSelected: (Int) -> Unit, onDismiss: () -> Unit, blurEnabled: Boolean = true) {
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        containerColor = Color.Transparent,
-        scrimColor = Color.Transparent,
-        dragHandle = { },
-        contentWindowInsets = { WindowInsets(0, 0, 0, 0) }
+private fun WeekPickerSheet(totalWeeks: Int, currentWeek: Int, onWeekSelected: (Int) -> Unit, onDismiss: () -> Unit, blurEnabled: Boolean = true, backdrop: top.yukonga.miuix.kmp.blur.Backdrop) {
+    BackdropBottomSheet(
+        backdrop = backdrop,
+        enabled = blurEnabled,
+        onDismiss = onDismiss,
     ) {
-        BlurCard(
-            enabled = blurEnabled,
-            modifier = Modifier.fillMaxWidth(),
-            backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f),
-        ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(max = 520.dp)
-                .padding(horizontal = 24.dp, vertical = 8.dp)
                 .padding(bottom = 32.dp)
         ) {
             Box(
@@ -834,5 +821,4 @@ private fun WeekPickerSheet(totalWeeks: Int, currentWeek: Int, onWeekSelected: (
         }
         }
     }
-}
 }

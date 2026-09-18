@@ -392,6 +392,7 @@ fun ScheduleApp(
     }
     // ponytail: NavHost只剩tabs+子页——tabs常驻时route=tabs，子页时route=子页名
     val showBottomBar = currentRoute == null || currentRoute == "tabs"
+    var overlayVisible by remember { mutableStateOf(false) }
     fun navigateTab(route: String) {
         (tabIndexMap[route])?.let { handlePageChange(it) }
     }
@@ -420,7 +421,7 @@ fun ScheduleApp(
                 // ponytail: B走穿底——底栏糊有素材（管理页穿底出玻璃感），其他三页补避让停底栏上；底75%
                 val barBg = MaterialTheme.colorScheme.surfaceContainer
                 androidx.compose.animation.AnimatedVisibility(
-                    visible = showBottomBar,
+                    visible = showBottomBar && !overlayVisible,
                     enter = slideInVertically(initialOffsetY = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideInSpec()),
                     exit = slideOutVertically(targetOffsetY = { it }, animationSpec = com.ty.gkschedule.ui.theme.M3Motion.tabSlideOutSpec())
                 ) {
@@ -495,8 +496,8 @@ fun ScheduleApp(
                         ) {
                             when (tabRoutes[pageIndex]) {
                                 // ponytail: 避让只给默认底栏——悬浮pill不占位，传false不留白
-                                "today" -> TodayScreen(courses = displayCourses, colorCourses = courses, currentWeek = realCurrentWeek, colorEngine = colorEngine, colorGroupMode = colorGroupMode, exams = examList, showExamSchedule = showExamSchedule, examLookaheadWeeks = examLookaheadWeeks, semesterStart = semesterStart, getStartTime = { viewModel.getStartTime(it) }, getEndTime = { viewModel.getEndTime(it) }, onCourseLongPress = { context.startActivity(Intent(context, com.ty.gkschedule.ui.course.CourseEditActivity::class.java).apply { putExtra("courseId", it.id) }) }, onExamEdit = { context.startActivity(Intent(context, com.ty.gkschedule.ui.exam.ExamActivity::class.java).apply { putExtra("examId", it.id) }) }, diffColorPerWeek = diffColorPerWeek, applyBottomBarInset = !compactNavBar, blurEnabled = blurEffect)
-                                "weekly" -> WeeklyScheduleScreen(courses = displayCourses, colorCourses = courses, currentWeek = selectedWeek, totalWeeks = totalWeeks, periodsPerDay = periodsPerDay, gridHeight = gridHeight, gridCorner = gridCorner, gridSpacing = gridSpacing, showPeriodLabel = showPeriodLabel, autoGridHeight = autoGridHeight, firstDayOfWeek = firstDayOfWeek, mergeConsecutive = mergeConsecutive, showTimeLabel = showTimeLabel, detailedSplit = detailedSplit, colorEngine = colorEngine, colorGroupMode = colorGroupMode, showDateInHeader = showDateInHeader, hideEmptyWeeks = hideEmptyWeeks, semesterStart = semesterStart, exams = examList, showExamSchedule = showExamSchedule, realCurrentWeek = realCurrentWeek, isRefreshing = isRefreshing, onWeekChange = { viewModel.setWeek(it.coerceIn(1, totalWeeks)) }, onCourseClick = { }, onCourseLongPress = { context.startActivity(Intent(context, com.ty.gkschedule.ui.course.CourseEditActivity::class.java).apply { putExtra("courseId", it.id) }) }, onExamEdit = { context.startActivity(Intent(context, com.ty.gkschedule.ui.exam.ExamActivity::class.java).apply { putExtra("examId", it.id) }) }, onAddCourse = { context.startActivity(Intent(context, com.ty.gkschedule.ui.course.CourseEditActivity::class.java)) }, onRefresh = { viewModel.refreshFromSchool() }, onScreenshotHidePill = { screenshotHidden = true }, onScreenshotRestorePill = { screenshotHidden = false }, blurEnabled = blurEffect, applyBottomBarInset = !compactNavBar, getStartTime = { viewModel.getStartTime(it) }, getEndTime = { viewModel.getEndTime(it) }, diffColorPerWeek = diffColorPerWeek, blockMultiline = blockMultiline)
+                                "today" -> TodayScreen(courses = displayCourses, colorCourses = courses, currentWeek = realCurrentWeek, colorEngine = colorEngine, colorGroupMode = colorGroupMode, exams = examList, showExamSchedule = showExamSchedule, examLookaheadWeeks = examLookaheadWeeks, semesterStart = semesterStart, getStartTime = { viewModel.getStartTime(it) }, getEndTime = { viewModel.getEndTime(it) }, onCourseLongPress = { context.startActivity(Intent(context, com.ty.gkschedule.ui.course.CourseEditActivity::class.java).apply { putExtra("courseId", it.id) }) }, onExamEdit = { context.startActivity(Intent(context, com.ty.gkschedule.ui.exam.ExamActivity::class.java).apply { putExtra("examId", it.id) }) }, diffColorPerWeek = diffColorPerWeek, applyBottomBarInset = !compactNavBar, blurEnabled = blurEffect, onOverlayVisibilityChange = { if (pageIndex == pagerState.currentPage) overlayVisible = it })
+                                "weekly" -> WeeklyScheduleScreen(courses = displayCourses, colorCourses = courses, currentWeek = selectedWeek, totalWeeks = totalWeeks, periodsPerDay = periodsPerDay, gridHeight = gridHeight, gridCorner = gridCorner, gridSpacing = gridSpacing, showPeriodLabel = showPeriodLabel, autoGridHeight = autoGridHeight, firstDayOfWeek = firstDayOfWeek, mergeConsecutive = mergeConsecutive, showTimeLabel = showTimeLabel, detailedSplit = detailedSplit, colorEngine = colorEngine, colorGroupMode = colorGroupMode, showDateInHeader = showDateInHeader, hideEmptyWeeks = hideEmptyWeeks, semesterStart = semesterStart, exams = examList, showExamSchedule = showExamSchedule, realCurrentWeek = realCurrentWeek, isRefreshing = isRefreshing, onWeekChange = { viewModel.setWeek(it.coerceIn(1, totalWeeks)) }, onCourseClick = { }, onCourseLongPress = { context.startActivity(Intent(context, com.ty.gkschedule.ui.course.CourseEditActivity::class.java).apply { putExtra("courseId", it.id) }) }, onExamEdit = { context.startActivity(Intent(context, com.ty.gkschedule.ui.exam.ExamActivity::class.java).apply { putExtra("examId", it.id) }) }, onAddCourse = { context.startActivity(Intent(context, com.ty.gkschedule.ui.course.CourseEditActivity::class.java)) }, onRefresh = { viewModel.refreshFromSchool() }, onScreenshotHidePill = { screenshotHidden = true }, onScreenshotRestorePill = { screenshotHidden = false }, blurEnabled = blurEffect, applyBottomBarInset = !compactNavBar, getStartTime = { viewModel.getStartTime(it) }, getEndTime = { viewModel.getEndTime(it) }, diffColorPerWeek = diffColorPerWeek, blockMultiline = blockMultiline, onOverlayVisibilityChange = { if (pageIndex == pagerState.currentPage) overlayVisible = it })
                                 "courses" -> CourseManageScreen(courses = courses, blurEnabled = blurEffect, colorEngine = colorEngine, colorGroupMode = colorGroupMode, bottomBarHeight = if (compactNavBar) 0.dp else 80.dp, onCourseClick = { context.startActivity(Intent(context, com.ty.gkschedule.ui.course.CourseEditActivity::class.java).apply { putExtra("courseId", it.id) }) }, onAddCourse = { context.startActivity(Intent(context, com.ty.gkschedule.ui.course.CourseEditActivity::class.java)) }, onDeleteCourse = { viewModel.deleteCourse(it) }, onDeleteAll = { viewModel.deleteAllCourses() }, onScrollHidePill = { viewModel.setPillHidden(it) })
                                 else -> {
                                     val savedStudentId by viewModel.savedStudentIdFlow.collectAsState()
@@ -525,14 +526,14 @@ fun ScheduleApp(
                     currentRoute = tabRoutes.getOrElse(pagerState.currentPage) { "today" }, pillContentMode = pillContentMode, screenshotHidden = screenshotHidden,
                     blurEnabled = blurEffect, backdrop = backdrop,
                     collapsed = pillCollapsed, onCollapsedChange = { viewModel.setPillCollapsed(it) },
-                    visible = showBottomBar && !(pillHidden && !pillCollapsed)
+                    visible = showBottomBar && !overlayVisible && !(pillHidden && !pillCollapsed)
                 ) { screen ->
                     com.ty.gkschedule.util.HapticFeedback.light(navView)
                     navigateTab(screen.route)
                 }
             }
             // ponytail: snackbar贴pill上——pill高barH+底边24，snack底=24+barH+8贴上沿
-            if (showBottomBar) {
+            if (showBottomBar && !overlayVisible) {
                 androidx.compose.foundation.layout.BoxWithConstraints(
                     Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter
                 ) {
