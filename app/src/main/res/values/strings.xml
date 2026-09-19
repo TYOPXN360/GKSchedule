@@ -67,6 +67,15 @@
     <string name="settings_title">Settings</string>
     <string name="settings_category_semester">Semester</string>
     <string name="settings_category_semester_desc">First day of week, hide empty weeks</string>
+    <string name="settings_category_adjustment">Schedule Adjustments</string>
+    <string name="settings_category_adjustment_desc">Swap courses between two dates in display</string>
+    <string name="adjustment_source_date">Date A</string>
+    <string name="adjustment_target_date">Date B</string>
+    <string name="adjustment_add">Add mapping</string>
+    <string name="adjustment_hint">Courses from the two dates are swapped in display; original data is unchanged</string>
+    <string name="adjustment_empty">No schedule mappings</string>
+    <string name="adjustment_enabled">Enabled; dates are swapped in the schedule</string>
+    <string name="adjustment_disabled">Disabled; original course display restored</string>
     <string name="settings_category_appearance">Appearance</string>
     <string name="settings_category_appearance_desc">Dark mode, language</string>
     <string name="settings_category_schedule">Schedule Style</string>

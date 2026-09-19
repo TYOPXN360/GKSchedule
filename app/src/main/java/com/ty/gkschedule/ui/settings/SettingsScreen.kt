@@ -2,7 +2,10 @@ package com.ty.gkschedule.ui.settings
 import com.ty.gkschedule.ui.theme.GKSwitch
 import com.ty.gkschedule.ui.theme.LocalBlurDropdownBackdrop
 
-import android.app.DatePickerDialog
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.animation.*
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -21,15 +24,19 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.ty.gkschedule.R
+import com.ty.gkschedule.data.ScheduleAdjustment
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneOffset
 import top.yukonga.miuix.kmp.blur.layerBackdrop
 import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
 
@@ -126,7 +133,8 @@ fun SettingsScreen(
                     onOpenPage = {
                         val cls = when (it) {
                             "semester" -> SubSettingsSemesterActivity::class.java
-                            "appearance" -> SubSettingsAppearanceActivity::class.java
+                            "adjustment" -> SubSettingsAdjustmentActivity::class.java
+                             "appearance" -> SubSettingsAppearanceActivity::class.java
                             "schedule_style" -> SubSettingsScheduleStyleActivity::class.java
                             "notification" -> SubSettingsNotificationActivity::class.java
                             "sync" -> SubSettingsSyncActivity::class.java
@@ -184,9 +192,10 @@ private fun SettingsMainPage(
                 .verticalScroll(rememberScrollState())
                 .padding(top = padding.calculateTopPadding())
         ) {
-            val catIcons = listOf(Icons.Default.CalendarMonth, Icons.Default.Palette, Icons.Default.GridOn, Icons.Default.Notifications, Icons.Default.Sync, Icons.Default.Storage)
+            val catIcons = listOf(Icons.Default.CalendarMonth, Icons.Default.Palette, Icons.Default.GridOn, Icons.Default.Notifications, Icons.Default.Sync, Icons.Default.Storage, Icons.Default.SwapHoriz)
             val catTitles = listOf(
                 stringResource(R.string.settings_category_semester),
+                stringResource(R.string.settings_category_adjustment),
                 stringResource(R.string.settings_category_appearance),
                 stringResource(R.string.settings_category_schedule),
                 stringResource(R.string.settings_category_notification),
@@ -195,6 +204,7 @@ private fun SettingsMainPage(
             )
             val catDescs = listOf(
                 stringResource(R.string.settings_category_semester_desc),
+                stringResource(R.string.settings_category_adjustment_desc),
                 stringResource(R.string.settings_category_appearance_desc),
                 stringResource(R.string.settings_category_schedule_desc),
                 stringResource(R.string.settings_category_notification_desc),
@@ -203,6 +213,7 @@ private fun SettingsMainPage(
             )
             val catCallbacks = listOf<() -> Unit>(
                 { onOpenPage("semester") },
+                { onOpenPage("adjustment") },
                 { onOpenPage("appearance") },
                 { onOpenPage("schedule_style") },
                 { onOpenPage("notification") },
@@ -216,7 +227,7 @@ private fun SettingsMainPage(
                 variant = com.ty.gkschedule.ui.theme.Md3CardVariant.Elevated
             ) {
                 Column {
-                    listOf(0, 1, 2).forEach { index ->
+                    listOf(0, 1, 2, 3).forEach { index ->
                         val badgeColor = com.ty.gkschedule.util.CourseColors.getSettingsBadgeColor(index)
                         ListItem(
                             headlineContent = { Text(catTitles[index], style = MaterialTheme.typography.titleMedium) },
@@ -230,7 +241,7 @@ private fun SettingsMainPage(
                             colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                             modifier = Modifier.clickable(onClick = catCallbacks[index])
                         )
-                        if (index < 2) {
+                        if (index < 3) {
                             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
                         }
                     }
@@ -243,7 +254,7 @@ private fun SettingsMainPage(
                 variant = com.ty.gkschedule.ui.theme.Md3CardVariant.Elevated
             ) {
                 Column {
-                    listOf(3, 4, 5).forEach { index ->
+                    listOf(4, 5, 6).forEach { index ->
                         val badgeColor = com.ty.gkschedule.util.CourseColors.getSettingsBadgeColor(index)
                         ListItem(
                             headlineContent = { Text(catTitles[index], style = MaterialTheme.typography.titleMedium) },
@@ -257,7 +268,7 @@ private fun SettingsMainPage(
                             colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                             modifier = Modifier.clickable(onClick = catCallbacks[index])
                         )
-                        if (index < 5) {
+                        if (index < 6) {
                             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
                         }
                     }
@@ -783,7 +794,132 @@ internal fun SyncPage(
     }
 }
 
-// === Data ===
+// === Schedule adjustments ===
+
+@Composable
+internal fun ScheduleAdjustmentPage(
+    adjustments: List<ScheduleAdjustment>,
+    onAdjustmentsChange: (List<ScheduleAdjustment>) -> Unit,
+    onBack: () -> Unit,
+    blurEnabled: Boolean = true
+) {
+    var sourceDate by remember { mutableStateOf(LocalDate.now()) }
+    var targetDate by remember { mutableStateOf(LocalDate.now().plusDays(1)) }
+    var datePickerTarget by remember { mutableIntStateOf(0) }
+    var showDatePicker by remember { mutableStateOf(false) }
+
+    fun pickDate(target: Int) {
+        datePickerTarget = target
+        showDatePicker = true
+    }
+
+    if (showDatePicker) {
+        androidx.compose.runtime.key(datePickerTarget) {
+            val initialDate = if (datePickerTarget == 0) sourceDate else targetDate
+            val state = rememberDatePickerState(
+                initialSelectedDateMillis = initialDate.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
+            )
+            DatePickerDialog(
+                onDismissRequest = { showDatePicker = false },
+                confirmButton = {
+                    TextButton(
+                        enabled = state.selectedDateMillis != null,
+                        onClick = {
+                            val selected = state.selectedDateMillis?.let {
+                                Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate()
+                            } ?: return@TextButton
+                            if (datePickerTarget == 0) sourceDate = selected else targetDate = selected
+                            showDatePicker = false
+                        }
+                    ) { Text(stringResource(R.string.save)) }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDatePicker = false }) { Text(stringResource(R.string.cancel)) }
+                }
+            ) {
+                DatePicker(state = state)
+            }
+        }
+    }
+
+    SubPage(stringResource(R.string.settings_category_adjustment), onBack, blurEnabled = blurEnabled) {
+        Text(
+            text = stringResource(R.string.adjustment_hint),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(bottom = 12.dp)
+        )
+        Column {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(
+                    onClick = { pickDate(0) },
+                    modifier = Modifier.weight(1f),
+                    shape = MaterialTheme.shapes.medium
+                ) {
+                    Text("${stringResource(R.string.adjustment_source_date)}\n$sourceDate", textAlign = TextAlign.Center)
+                }
+                OutlinedButton(
+                    onClick = { pickDate(1) },
+                    modifier = Modifier.weight(1f),
+                    shape = MaterialTheme.shapes.medium
+                ) {
+                    Text("${stringResource(R.string.adjustment_target_date)}\n$targetDate", textAlign = TextAlign.Center)
+                }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Button(
+                onClick = {
+                    if (sourceDate != targetDate && adjustments.none {
+                            (it.sourceDate == sourceDate.toString() && it.targetDate == targetDate.toString()) ||
+                                (it.sourceDate == targetDate.toString() && it.targetDate == sourceDate.toString())
+                        }) {
+                        onAdjustmentsChange(adjustments + ScheduleAdjustment(sourceDate.toString(), targetDate.toString()))
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.medium,
+                enabled = sourceDate != targetDate
+            ) { Text(stringResource(R.string.adjustment_add)) }
+        }
+        Spacer(modifier = Modifier.height(12.dp))
+        if (adjustments.isEmpty()) {
+            Text(stringResource(R.string.adjustment_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
+        } else {
+            SettingsCard {
+                adjustments.forEachIndexed { index, adjustment ->
+                    val source = runCatching { LocalDate.parse(adjustment.sourceDate) }.getOrNull() ?: adjustment.sourceDate
+                    val target = runCatching { LocalDate.parse(adjustment.targetDate) }.getOrNull() ?: adjustment.targetDate
+                    ListItem(
+                        headlineContent = { Text("$source ↔ $target") },
+                        supportingContent = {
+                            Text(
+                                stringResource(
+                                    if (adjustment.enabled) R.string.adjustment_enabled else R.string.adjustment_disabled
+                                )
+                            )
+                        },
+                        trailingContent = {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                GKSwitch(
+                                    checked = adjustment.enabled,
+                                    onCheckedChange = { enabled ->
+                                        onAdjustmentsChange(adjustments.mapIndexed { i, item -> if (i == index) item.copy(enabled = enabled) else item })
+                                    }
+                                )
+                                IconButton(onClick = { onAdjustmentsChange(adjustments.filterIndexed { i, _ -> i != index }) }) {
+                                    Icon(Icons.Default.Delete, stringResource(R.string.delete))
+                                }
+                            }
+                        },
+                        colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+                    )
+                    if (index < adjustments.lastIndex) HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+                }
+            }
+        }
+    }
+}
+
 
 @Composable
 internal fun DataPage(onExportJson: () -> Unit, onImportJson: () -> Unit, onExportIcs: () -> Unit, onBack: () -> Unit, blurEnabled: Boolean = true) {

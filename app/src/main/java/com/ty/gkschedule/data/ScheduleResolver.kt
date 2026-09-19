@@ -210,16 +210,68 @@ object ScheduleResolver {
         return blocks
     }
 
-    fun todayCourses(courses: List<Course>, currentWeek: Int, today: LocalDate): List<Course> =
-        courses.filter { it.dayOfWeek == today.dayOfWeek.value && it.isInWeek(currentWeek) }
-            .sortedBy { it.startPeriod }
+    fun applyAdjustments(
+        courses: List<Course>,
+        semesterStart: LocalDate,
+        week: Int,
+        adjustments: List<ScheduleAdjustment>
+    ): List<Course> {
+        if (adjustments.none { it.enabled }) return courses
+        val result = courses.toMutableList()
+        adjustments.filter { it.enabled }.distinctBy {
+            listOf(it.sourceDate, it.targetDate).sorted().joinToString("|")
+        }.forEach adjustmentLoop@{ adjustment ->
+            val sourceDate = parseDateOrNull(adjustment.sourceDate) ?: return@adjustmentLoop
+            val targetDate = parseDateOrNull(adjustment.targetDate) ?: return@adjustmentLoop
+            listOf(sourceDate to targetDate, targetDate to sourceDate).forEach displayLoop@{ (displayDate, mountedDate) ->
+                if (weekForDate(semesterStart, displayDate) != week) return@displayLoop
+                result.removeAll {
+                    it.dayOfWeek == displayDate.dayOfWeek.value && it.isInWeek(week)
+                }
+                val mountedWeek = weekForDate(semesterStart, mountedDate)
+                courses.filter { it.dayOfWeek == mountedDate.dayOfWeek.value && it.isInWeek(mountedWeek) }
+                    .mapTo(result) { it.copy(dayOfWeek = displayDate.dayOfWeek.value, weekRange = "all") }
+            }
+        }
+        return result
+    }
 
-    fun tomorrowCourses(courses: List<Course>, currentWeek: Int, today: LocalDate): List<Course> {
+    fun todayCourses(
+        courses: List<Course>,
+        currentWeek: Int,
+        today: LocalDate,
+        semesterStart: LocalDate = today,
+        adjustments: List<ScheduleAdjustment> = emptyList()
+    ): List<Course> {
+        val result = courses.filter { it.dayOfWeek == today.dayOfWeek.value && it.isInWeek(currentWeek) }.toMutableList()
+        adjustments.filter { it.enabled }.distinctBy {
+            listOf(it.sourceDate, it.targetDate).sorted().joinToString("|")
+        }.forEach adjustmentLoop@{ adjustment ->
+            val firstDate = parseDateOrNull(adjustment.sourceDate) ?: return@adjustmentLoop
+            val secondDate = parseDateOrNull(adjustment.targetDate) ?: return@adjustmentLoop
+            val mountedDate = when (today) {
+                firstDate -> secondDate
+                secondDate -> firstDate
+                else -> return@adjustmentLoop
+            }
+            val mountedWeek = weekForDate(semesterStart, mountedDate)
+            result.removeAll { it.dayOfWeek == today.dayOfWeek.value && it.isInWeek(currentWeek) }
+            courses.filter { it.dayOfWeek == mountedDate.dayOfWeek.value && it.isInWeek(mountedWeek) }
+                .mapTo(result) { it.copy(dayOfWeek = today.dayOfWeek.value, weekRange = "all") }
+        }
+        return result.sortedBy { it.startPeriod }
+    }
+
+    fun tomorrowCourses(
+        courses: List<Course>,
+        currentWeek: Int,
+        today: LocalDate,
+        semesterStart: LocalDate = today,
+        adjustments: List<ScheduleAdjustment> = emptyList()
+    ): List<Course> {
         val tomorrow = today.plusDays(1)
         val tomorrowWeek = if (today.dayOfWeek.value == 7) currentWeek + 1 else currentWeek
-        return courses
-            .filter { it.dayOfWeek == tomorrow.dayOfWeek.value && tomorrowWeek in 1..52 && it.isInWeek(tomorrowWeek) }
-            .sortedBy { it.startPeriod }
+        return todayCourses(courses, tomorrowWeek, tomorrow, semesterStart, adjustments)
     }
 
     fun todayExams(exams: List<ExamEntity>, showExamSchedule: Boolean, today: LocalDate): List<ExamEntity> {
@@ -301,6 +353,9 @@ object ScheduleResolver {
         val minute = parts.getOrNull(1)?.toIntOrNull() ?: return null
         return hour * 60 + minute
     }
+
+    private fun weekForDate(semesterStart: LocalDate, date: LocalDate): Int =
+        Math.floorDiv(ChronoUnit.DAYS.between(semesterStart, date).toInt(), 7) + 1
 
     private fun parseDateOrNull(value: String): LocalDate? = try {
         LocalDate.parse(value)

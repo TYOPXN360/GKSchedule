@@ -183,6 +183,19 @@ class SubSettingsSyncActivity : SubSettingsBaseActivity() {
     }
 }
 
+class SubSettingsAdjustmentActivity : SubSettingsBaseActivity() {
+    @Composable
+    override fun SubContent(vm: ScheduleViewModel, finish: () -> Unit) {
+        val adjustments by vm.scheduleAdjustments.collectAsState(initial = emptyList())
+        val blurEffect by vm.blurEffect.collectAsState(initial = false)
+        ScheduleAdjustmentPage(
+            adjustments = adjustments,
+            onAdjustmentsChange = vm::setScheduleAdjustments,
+            onBack = finish,
+            blurEnabled = blurEffect
+        )
+    }
+}
 class SubSettingsDataActivity : SubSettingsBaseActivity() {
     @Composable
     override fun SubContent(vm: ScheduleViewModel, finish: () -> Unit) {

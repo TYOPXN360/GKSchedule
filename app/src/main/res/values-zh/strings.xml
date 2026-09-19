@@ -67,6 +67,15 @@
     <string name="settings_title">设置</string>
     <string name="settings_category_semester">学期</string>
     <string name="settings_category_semester_desc">每周第一天、隐藏空周</string>
+    <string name="settings_category_adjustment">调休模式</string>
+    <string name="settings_category_adjustment_desc">让两日课程互换显示</string>
+    <string name="adjustment_source_date">日期 A</string>
+    <string name="adjustment_target_date">日期 B</string>
+    <string name="adjustment_add">添加映射</string>
+    <string name="adjustment_hint">两日课程会互换显示，原课程数据不变</string>
+    <string name="adjustment_empty">暂无调休映射</string>
+    <string name="adjustment_enabled">已启用，课表中互换显示</string>
+    <string name="adjustment_disabled">已停用，恢复原课程显示</string>
     <string name="settings_category_appearance">外观</string>
     <string name="settings_category_appearance_desc">深色模式、语言</string>
     <string name="settings_category_schedule">课表样式</string>

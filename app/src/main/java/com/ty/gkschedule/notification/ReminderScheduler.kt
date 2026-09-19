@@ -7,6 +7,8 @@ import android.content.Intent
 import android.os.Build
 import com.ty.gkschedule.data.Course
 import com.ty.gkschedule.data.ExamEntity
+import com.ty.gkschedule.data.ScheduleAdjustment
+import com.ty.gkschedule.data.ScheduleResolver
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import java.time.LocalDate
@@ -38,13 +40,27 @@ object ReminderScheduler {
         exams: List<ExamEntity>,
         semesterStart: LocalDate,
         totalWeeks: Int,
+        adjustments: List<ScheduleAdjustment> = emptyList(),
         reminderMinutes: Int,
         reminderMode: String = "notify",
         liveUpdate: Boolean,
         examLiveUpdate: Boolean,
         getStartTime: (Int) -> String,
         getEndTime: (Int) -> String
-    ) = scheduleToday(context, courses, exams, semesterStart, totalWeeks, reminderMinutes, reminderMode, liveUpdate, examLiveUpdate, getStartTime, getEndTime)
+    ) = scheduleToday(
+        context = context,
+        courses = courses,
+        exams = exams,
+        semesterStart = semesterStart,
+        totalWeeks = totalWeeks,
+        adjustments = adjustments,
+        reminderMinutes = reminderMinutes,
+        reminderMode = reminderMode,
+        liveUpdate = liveUpdate,
+        examLiveUpdate = examLiveUpdate,
+        getStartTime = getStartTime,
+        getEndTime = getEndTime
+    )
 
     // 午夜重排入口：读DB排当天，不依赖调用方传参
     fun scheduleTodayFromStore(context: Context) {
@@ -63,8 +79,22 @@ object ReminderScheduler {
         val semesterStart = runBlocking { settings.semesterStart.first() }
         val totalWeeks = runBlocking { settings.totalWeeks.first() }
         val reminderMode = runBlocking { settings.reminderMode.first() }
+        val adjustments = runBlocking { settings.scheduleAdjustments.first() }
         val exams = runBlocking { db.examDao().getAllExams().first() }
-        scheduleToday(context, courses, exams, semesterStart, totalWeeks, reminderMinutes, reminderMode, liveUpdate, examLiveUpdate, { p -> settings.getStartTime(p) }, { p -> settings.getEndTime(p) })
+        scheduleToday(
+            context = context,
+            courses = courses,
+            exams = exams,
+            semesterStart = semesterStart,
+            totalWeeks = totalWeeks,
+            adjustments = adjustments,
+            reminderMinutes = reminderMinutes,
+            reminderMode = reminderMode,
+            liveUpdate = liveUpdate,
+            examLiveUpdate = examLiveUpdate,
+            getStartTime = { p -> settings.getStartTime(p) },
+            getEndTime = { p -> settings.getEndTime(p) }
+        )
     }
 
     private fun scheduleToday(
@@ -73,6 +103,7 @@ object ReminderScheduler {
         exams: List<ExamEntity>,
         semesterStart: LocalDate,
         totalWeeks: Int,
+        adjustments: List<ScheduleAdjustment> = emptyList(),
         reminderMinutes: Int,
         reminderMode: String = "notify",
         liveUpdate: Boolean,
@@ -94,6 +125,7 @@ object ReminderScheduler {
             semesterStart = semesterStart,
             totalWeeks = totalWeeks,
             today = today,
+            adjustments = adjustments,
             getStartTime = getStartTime,
             getEndTime = getEndTime
         ) + buildTodayExamSessions(exams, today)
@@ -225,6 +257,7 @@ object ReminderScheduler {
         semesterStart: LocalDate,
         totalWeeks: Int,
         today: LocalDate,
+        adjustments: List<ScheduleAdjustment>,
         getStartTime: (Int) -> String,
         getEndTime: (Int) -> String
     ): List<ReminderSession> {
@@ -232,9 +265,8 @@ object ReminderScheduler {
         val date = today
         val sessions = mutableListOf<ReminderSession>()
         val week = weekForDate(semesterStart, date)
-        if (week in 1..totalWeeks) {
-
-            courses.asSequence()
+        val adjustedCourses = ScheduleResolver.todayCourses(courses, week, date, semesterStart, adjustments)
+        adjustedCourses.asSequence()
                 .filter { !it.isHidden }
                 .filter { it.dayOfWeek == date.dayOfWeek.value }
                 .filter { it.isInWeek(week) }
@@ -256,7 +288,6 @@ object ReminderScheduler {
                         )
                     )
                 }
-        }
         return sessions.sortedWith(compareBy({ it.start }, { it.name }))
     }
 

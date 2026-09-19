@@ -43,6 +43,7 @@ fun TodayScreen(
     showExamSchedule: Boolean = false,
     examLookaheadWeeks: Int = 2,
     semesterStart: java.time.LocalDate = java.time.LocalDate.now(),
+    scheduleAdjustments: List<com.ty.gkschedule.data.ScheduleAdjustment> = emptyList(),
     getStartTime: (Int) -> String,
     getEndTime: (Int) -> String,
     onCourseLongPress: (Course) -> Unit,
@@ -58,8 +59,8 @@ fun TodayScreen(
     val todayDow = today.dayOfWeek.value
     val tomorrowWeek = if (today.dayOfWeek.value == 7) currentWeek + 1 else currentWeek
 
-    val todayCourses = remember(courses, currentWeek, today) {
-        ScheduleResolver.todayCourses(courses, currentWeek, today)
+    val todayCourses = remember(courses, currentWeek, today, semesterStart, scheduleAdjustments) {
+        ScheduleResolver.todayCourses(courses, currentWeek, today, semesterStart, scheduleAdjustments)
     }
 
     val todayExams = remember(exams, showExamSchedule, today) {
@@ -68,8 +69,8 @@ fun TodayScreen(
 
     val allTodayCourses = todayCourses
 
-    val tomorrowCourses = remember(courses, currentWeek, today) {
-        ScheduleResolver.tomorrowCourses(courses, currentWeek, today)
+    val tomorrowCourses = remember(courses, currentWeek, today, semesterStart, scheduleAdjustments) {
+        ScheduleResolver.tomorrowCourses(courses, currentWeek, today, semesterStart, scheduleAdjustments)
     }
 
     val dayNames = mapOf(

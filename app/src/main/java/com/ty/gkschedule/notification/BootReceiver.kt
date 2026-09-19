@@ -32,6 +32,7 @@ class BootReceiver : BroadcastReceiver() {
                 val semesterStart = runBlocking { settings.semesterStart.first() }
                 val totalWeeks = runBlocking { settings.totalWeeks.first() }
                 val reminderMode = runBlocking { settings.reminderMode.first() }
+                val adjustments = runBlocking { settings.scheduleAdjustments.first() }
                 val exams = runBlocking {
                     database.examDao().getAllExams().first()
                 }
@@ -44,6 +45,7 @@ class BootReceiver : BroadcastReceiver() {
                     exams = exams,
                     semesterStart = semesterStart,
                     totalWeeks = totalWeeks,
+                    adjustments = adjustments,
                     reminderMinutes = reminderMinutes,
                     reminderMode = reminderMode,
                     liveUpdate = liveUpdate,

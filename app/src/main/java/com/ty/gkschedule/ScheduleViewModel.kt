@@ -17,6 +17,7 @@ import com.ty.gkschedule.data.CourseDatabase
 import com.ty.gkschedule.data.CredentialStore
 import com.ty.gkschedule.data.ExamEntity
 import com.ty.gkschedule.data.SettingsDataStore
+import com.ty.gkschedule.data.ScheduleAdjustment
 import com.ty.gkschedule.notification.ReminderScheduler
 import com.ty.gkschedule.util.IcsExport
 import com.ty.gkschedule.util.ImageExport
@@ -34,7 +35,8 @@ private data class ReminderConfig(
     val liveUpdate: Boolean,
     val examLiveUpdate: Boolean,
     val semesterStart: LocalDate,
-    val totalWeeks: Int
+    val totalWeeks: Int,
+    val adjustments: List<ScheduleAdjustment>
 )
 
 class ScheduleViewModel(application: Application) : AndroidViewModel(application) {
@@ -54,6 +56,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     val totalWeeks: Flow<Int> = settings.totalWeeks
     val periodsPerDay: Flow<Int> = settings.periodsPerDay
     val semesterStart: Flow<LocalDate> = settings.semesterStart
+    val scheduleAdjustments: Flow<List<com.ty.gkschedule.data.ScheduleAdjustment>> = settings.scheduleAdjustments
     val darkMode: Flow<String> = settings.darkMode
     val language: Flow<String> = settings.language
     val startPage: Flow<String> = settings.startPage
@@ -193,7 +196,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
         // Schedule reminders when courses or settings change
         // ponytail: 一天≤30个闹钟，IO线程排；<=0时只删不排
         viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
-            combine(courses, examList, settings.reminderMinutes, settings.reminderMode, settings.reminderLiveUpdate, settings.reminderExamLiveUpdate, settings.semesterStart, settings.totalWeeks) { values ->
+            combine(courses, examList, settings.reminderMinutes, settings.reminderMode, settings.reminderLiveUpdate, settings.reminderExamLiveUpdate, settings.semesterStart, settings.totalWeeks, settings.scheduleAdjustments) { values ->
                 @Suppress("UNCHECKED_CAST")
                 ReminderConfig(
                     courses = values[0] as List<Course>,
@@ -203,7 +206,8 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                     liveUpdate = values[4] as Boolean,
                     examLiveUpdate = values[5] as Boolean,
                     semesterStart = values[6] as LocalDate,
-                    totalWeeks = values[7] as Int
+                    totalWeeks = values[7] as Int,
+                    adjustments = values[8] as List<ScheduleAdjustment>
                 )
             }.collect { config ->
                 // ponytail: 任一开就排，全关才删——进度通知独立于课前提醒
@@ -215,6 +219,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                         exams = config.exams,
                         semesterStart = config.semesterStart,
                         totalWeeks = config.totalWeeks,
+                        adjustments = config.adjustments,
                         reminderMinutes = config.reminderMinutes,
                         reminderMode = config.reminderMode,
                         liveUpdate = config.liveUpdate,
@@ -244,6 +249,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
 
     fun setWeek(week: Int) { _selectedWeek.value = week }
 
+    fun setScheduleAdjustments(value: List<com.ty.gkschedule.data.ScheduleAdjustment>) { viewModelScope.launch { settings.setScheduleAdjustments(value) } }
     fun getStartTime(period: Int): String = settings.getStartTime(period)
     fun getEndTime(period: Int): String = settings.getEndTime(period)
 

@@ -60,6 +60,7 @@ class SettingsDataStore(private val context: Context) {
         private val WEEKLY_BLOCK_MULTILINE = booleanPreferencesKey("weekly_block_multiline")
         private val AUTO_CHECK_UPDATE_DAILY = booleanPreferencesKey("auto_check_update_daily")
         private val LAST_UPDATE_CHECK_DATE = stringPreferencesKey("last_update_check_date")
+        private val SCHEDULE_ADJUSTMENTS = stringPreferencesKey("schedule_adjustments")
 
         private val DEFAULT_START_TIMES = listOf(
             "08:30", "09:20", "10:25", "11:15",  // Morning 1-4
@@ -124,6 +125,9 @@ class SettingsDataStore(private val context: Context) {
     // ponytail: 每日首次启动自动查更新——默认开，关则MainActivity跳过
     val autoCheckUpdateDaily: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[AUTO_CHECK_UPDATE_DAILY] ?: true }
     val lastUpdateCheckDate: Flow<String> = context.dataStore.data.map { prefs -> prefs[LAST_UPDATE_CHECK_DATE] ?: "" }
+    val scheduleAdjustments: Flow<List<ScheduleAdjustment>> = context.dataStore.data.map { prefs ->
+        ScheduleAdjustmentCodec.decode(prefs[SCHEDULE_ADJUSTMENTS] ?: "")
+    }
 
     fun getCurrentWeek(): Flow<Int> = context.dataStore.data.map { prefs ->
         val start = prefs[SEMESTER_START]?.let { LocalDate.parse(it) } ?: LocalDate.now()
@@ -205,6 +209,9 @@ class SettingsDataStore(private val context: Context) {
     suspend fun setWeeklyBlockMultiline(enabled: Boolean) { context.dataStore.edit { it[WEEKLY_BLOCK_MULTILINE] = enabled } }
     suspend fun setAutoCheckUpdateDaily(enabled: Boolean) { context.dataStore.edit { it[AUTO_CHECK_UPDATE_DAILY] = enabled } }
     suspend fun setLastUpdateCheckDate(date: String) { context.dataStore.edit { it[LAST_UPDATE_CHECK_DATE] = date } }
+    suspend fun setScheduleAdjustments(value: List<ScheduleAdjustment>) {
+        context.dataStore.edit { it[SCHEDULE_ADJUSTMENTS] = ScheduleAdjustmentCodec.encode(value) }
+    }
     suspend fun saveCasTicket(ticket: String) { context.dataStore.edit { it[CAS_TICKET] = ticket } }
     suspend fun saveCachedExams(json: String, year: String, semester: String) {
         context.dataStore.edit {

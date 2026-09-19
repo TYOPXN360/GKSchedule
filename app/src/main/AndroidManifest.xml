@@ -69,6 +69,10 @@
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
         <activity
+            android:name=".ui.settings.SubSettingsAdjustmentActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
             android:name=".ui.settings.SubSettingsScheduleStyleActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />

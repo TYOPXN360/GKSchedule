@@ -52,6 +52,7 @@ import androidx.compose.ui.unit.dp
 import com.ty.gkschedule.R
 import com.ty.gkschedule.data.Course
 import com.ty.gkschedule.data.ScheduleResolver
+import com.ty.gkschedule.data.ScheduleAdjustment
 import com.ty.gkschedule.data.ScheduleItem
 import com.ty.gkschedule.util.CourseColors
 
@@ -76,6 +77,7 @@ fun WeeklyScheduleScreen(
     hideEmptyWeeks: Boolean,
     showDateInHeader: Boolean,
     semesterStart: java.time.LocalDate,
+    scheduleAdjustments: List<ScheduleAdjustment> = emptyList(),
     isRefreshing: Boolean,
     exams: List<com.ty.gkschedule.data.ExamEntity> = emptyList(),
     showExamSchedule: Boolean = false,
@@ -337,9 +339,21 @@ fun WeeklyScheduleScreen(
                     .onGloballyPositioned { cropBottomPx = it.positionInRoot().y.toInt() + it.size.height }
             ) { page ->
                 val week = visibleWeeks.getOrElse(page) { currentWeek }
-                val weekBlocks = remember(week, colorGroupMode, diffColorPerWeek, scheduleItems, colorScheduleItems, mergeConsecutive, detailedSplit, periodsPerDay, getStartTime, getEndTime) {
+                val adjustedCourses = remember(week, courses, semesterStart, scheduleAdjustments) {
+                     ScheduleResolver.applyAdjustments(courses, semesterStart, week, scheduleAdjustments)
+                 }
+                 val adjustedColorCourses = remember(week, colorCourses, semesterStart, scheduleAdjustments) {
+                     ScheduleResolver.applyAdjustments(colorCourses, semesterStart, week, scheduleAdjustments)
+                 }
+                 val weekItems = remember(week, adjustedCourses, exams, showExamSchedule, semesterStart, getStartTime, getEndTime) {
+                     ScheduleResolver.buildItems(adjustedCourses, exams, showExamSchedule, semesterStart, getStartTime, getEndTime)
+                 }
+                 val weekColorItems = remember(week, adjustedColorCourses, exams, semesterStart, getStartTime, getEndTime) {
+                     ScheduleResolver.buildItems(adjustedColorCourses, exams, true, semesterStart, getStartTime, getEndTime)
+                 }
+                 val weekBlocks = remember(week, colorGroupMode, diffColorPerWeek, weekItems, weekColorItems, mergeConsecutive, detailedSplit, periodsPerDay, getStartTime, getEndTime) {
                     ScheduleResolver.buildRenderBlocks(
-                        items = scheduleItems,
+                        items = weekItems,
                         week = week,
                         colorGroupMode = colorGroupMode,
                         diffColorPerWeek = diffColorPerWeek,
@@ -348,7 +362,7 @@ fun WeeklyScheduleScreen(
                         periodsPerDay = periodsPerDay,
                         getStartTime = getStartTime,
                         getEndTime = getEndTime,
-                        colorItems = colorScheduleItems
+                        colorItems = weekColorItems
                     )
                 }
 
