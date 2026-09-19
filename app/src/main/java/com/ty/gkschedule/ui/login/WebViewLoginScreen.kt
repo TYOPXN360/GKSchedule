@@ -268,18 +268,18 @@ fun WebViewLoginScreen(
                                     Icons.Default.Refresh,
                                     contentDescription = null,
                                     modifier = Modifier.size(40.dp),
-                                    tint = MaterialTheme.colorScheme.inverseOnSurface
+                                    tint = ComposeColor.White
                                 )
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
                                     text = stringResource(R.string.qr_expired),
                                     style = MaterialTheme.typography.titleMedium,
-                                    color = MaterialTheme.colorScheme.inverseOnSurface
+                                    color = ComposeColor.White
                                 )
                                 Text(
                                     text = stringResource(R.string.qr_tap_to_refresh),
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.inverseOnSurface.copy(alpha = 0.7f)
+                                    color = ComposeColor.White.copy(alpha = 0.7f)
                                 )
                             }
                         }
