@@ -21,11 +21,17 @@ object CourseImporter {
 
             val first = entries.first()
             // Each group has the same section, collect all weeks
-            val allWeeks = entries.map { it.week }.distinct().sorted()
-            val weekRange = when (entries.firstNotNullOfOrNull { it.singleOrDoubleWeek?.trim() }) {
-                "单" -> "odd"
-                "双" -> "even"
-                else -> buildWeekRange(allWeeks, semesterMaxWeek)
+            val allWeeks = entries.map { it.week }.filter { it > 0 }.distinct().sorted()
+            // ponytail: 精确周次优先，singleOrDoubleWeek 只兜底——它会把"1,5,17"这类子集泛化成整学期单周，
+            // 于是同一时段另一教室的同名课周次被抹平，两条在课表页重叠
+            val weekRange = if (allWeeks.isEmpty()) {
+                when (entries.firstNotNullOfOrNull { it.singleOrDoubleWeek?.trim() }) {
+                    "单" -> "odd"
+                    "双" -> "even"
+                    else -> "all"
+                }
+            } else {
+                buildWeekRange(allWeeks, semesterMaxWeek)
             }
 
             Course(
@@ -66,29 +72,15 @@ object CourseImporter {
         }
     }
 
-    private fun mergeConsecutive(sorted: List<Int>): List<List<Int>> {
-        if (sorted.isEmpty()) return emptyList()
-        val result = mutableListOf<MutableList<Int>>()
-        var current = mutableListOf(sorted[0])
-        for (i in 1 until sorted.size) {
-            if (sorted[i] == sorted[i - 1] + 1) {
-                current.add(sorted[i])
-            } else {
-                result.add(current)
-                current = mutableListOf(sorted[i])
-            }
-        }
-        result.add(current)
-        return result
-    }
-
     private fun buildWeekRange(weeks: List<Int>, semesterMaxWeek: Int): String {
         if (weeks.isEmpty()) return "all"
-        if (semesterMaxWeek > 0 && weeks == (1..semesterMaxWeek).toList()) return "all"
-        val allOdd = weeks.all { it % 2 == 1 }
-        val allEven = weeks.all { it % 2 == 0 }
-        if (allOdd) return "odd"
-        if (allEven) return "even"
+        if (semesterMaxWeek > 0) {
+            if (weeks == (1..semesterMaxWeek).toList()) return "all"
+            // ponytail: 只有覆盖整学期的完整单/双周才配预设；子集必须逐周保留，
+            // 否则 {1,5,17} 会被写成 odd，与另一教室的同名课在同一周叠在一起
+            if (weeks == (1..semesterMaxWeek step 2).toList()) return "odd"
+            if (weeks == (2..semesterMaxWeek step 2).toList()) return "even"
+        }
         return buildCompactRange(weeks)
     }
 
