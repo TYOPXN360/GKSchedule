@@ -221,7 +221,7 @@
     <string name="scan_login_title">扫码登录</string>
     <string name="scan_login_desc">打开钉钉扫描下方二维码登录</string>
     <string name="scan_login_warning">极不推荐！\n登录仅为一次性登录，过期需要重新扫码登录，强烈建议账号密码登录！</string>
-    <string name="scan_login_tip">二维码2分钟过期，可点上方按钮保存。</string>
+    <string name="scan_login_tip">二维码大概 15 秒过期，可点上方按钮保存。</string>
     <string name="scan_login_float_tip">请务必在小窗或者分屏模式下操作，防止二维码过期</string>
     <string name="save_qr">保存二维码</string>
     <string name="refresh_qr">刷新</string>
