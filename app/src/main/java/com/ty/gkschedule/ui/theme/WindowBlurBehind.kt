@@ -27,6 +27,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
@@ -175,7 +176,6 @@ fun BackdropDialog(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     androidx.activity.compose.BackHandler(onBack = onDismiss)
-    val transitionState = remember { MutableTransitionState(false).apply { targetState = true } }
     Box(Modifier.fillMaxSize()) {
         Box(
             Modifier
@@ -183,10 +183,12 @@ fun BackdropDialog(
                 .background(Color.Black.copy(alpha = 0.12f))
                 .clickable(onClick = onDismiss)
         )
-        AnimatedVisibility(
-            modifier = Modifier.fillMaxWidth().wrapContentHeight().align(Alignment.Center),
-            visibleState = transitionState,
-            enter = slideInVertically(initialOffsetY = { it / 4 }, animationSpec = tween(220)) + fadeIn(tween(160))
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentHeight()
+                .align(Alignment.Center)
+                .zIndex(1f)
         ) {
             BlurCardSurface(
                 backdrop = backdrop,

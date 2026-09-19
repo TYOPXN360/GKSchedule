@@ -15,6 +15,7 @@ import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -55,7 +56,7 @@ fun AboutScreen(
     // ponytail: 重登录Dialog糊开关
     blurEnabled: Boolean = false
 ) {
-    var showReloginDialog by remember { mutableStateOf(false) }
+    var showReloginDialog by rememberSaveable { mutableStateOf(false) }
 
     val backdrop = top.yukonga.miuix.kmp.blur.rememberLayerBackdrop()
 
@@ -147,7 +148,10 @@ fun AboutScreen(
                             }
                             Spacer(modifier = Modifier.height(12.dp))
                             Button(
-                                onClick = { onRefreshCaptcha(); showReloginDialog = true },
+                                onClick = {
+                                    onRefreshCaptcha()
+                                    showReloginDialog = true
+                                },
                                 modifier = Modifier.fillMaxWidth(0.6f),
                                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                             ) {
@@ -287,7 +291,7 @@ fun AboutScreen(
     } // 背景Box
 
     if (showReloginDialog) {
-        var captcha by remember { mutableStateOf("") }
+        var captcha by rememberSaveable { mutableStateOf("") }
         com.ty.gkschedule.ui.theme.BackdropDialog(
             backdrop = backdrop,
             enabled = blurEnabled,
