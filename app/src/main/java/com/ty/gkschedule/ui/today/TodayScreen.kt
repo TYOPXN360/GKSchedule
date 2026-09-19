@@ -555,7 +555,8 @@ private fun CourseCard(
                         }
                         Spacer(modifier = Modifier.width(6.dp))
                     }
-                    Text(course.name, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f), maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    // ponytail: 今日页课程名完整换行展示，不截断（卡片高度自适应）
+                    Text(course.name, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
                     if (realIsPast) {
                         androidx.compose.animation.AnimatedVisibility(visible = animDone, enter = androidx.compose.animation.scaleIn() + androidx.compose.animation.fadeIn()) {
                             Icon(Icons.Default.Check, null, modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)

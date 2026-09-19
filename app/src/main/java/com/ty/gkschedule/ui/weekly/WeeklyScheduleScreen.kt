@@ -488,7 +488,6 @@ fun WeeklyScheduleScreen(
                                         themeHue = themeHue
                                     ).content
                                 }
-                                // ponytail: 块内名+地点共享剩余高——名先吃(多行开不限行)，吃完还剩才给地点，溢出才省略
                                 Column(modifier = Modifier.fillMaxSize()) {
                                     if (block.item.isExam) {
                                         Box(
@@ -507,21 +506,11 @@ fun WeeklyScheduleScreen(
                                             Text("隐藏", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = textColor, maxLines = 1)
                                         }
                                     }
-                                    // ponytail: 课程名先占用地点之外的剩余高度，只有空间不足时才省略
-                                    if (block.item.classroom.isNotEmpty()) {
-                                        Text(block.item.name, modifier = Modifier.weight(1f), style = MaterialTheme.typography.labelMedium, color = textColor, maxLines = if (blockMultiline) Int.MAX_VALUE else 1, overflow = TextOverflow.Ellipsis)
-                                        if (block.item.classroom.isNotEmpty()) {
-                                            androidx.compose.foundation.layout.BoxWithConstraints(modifier = Modifier.fillMaxWidth().weight(1f, fill = false)) {
-                                                if (maxHeight > 18.dp) {
-                                                    Text(block.item.classroom, style = MaterialTheme.typography.labelSmall, color = textColor.copy(alpha = 0.7f), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                                }
-                                            }
-                                        }
-                                    } else {
-                                        Text(block.item.name, modifier = Modifier.weight(1f), style = MaterialTheme.typography.labelMedium, color = textColor, maxLines = if (blockMultiline) Int.MAX_VALUE else 1, overflow = TextOverflow.Ellipsis)
-                                        if (block.item.classroom.isNotEmpty()) {
-                                            Text(block.item.classroom, style = MaterialTheme.typography.labelSmall, color = textColor.copy(alpha = 0.7f), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                        }
+                                    // ponytail: 名/地点上下紧挨——名只吃自身高度(fill=false)不撑满整块，地点紧随其后
+                                    // 名限行省略：多行开最多3行，关单行；块太矮(h<44dp)时让位给名，不画地点
+                                    Text(block.item.name, modifier = Modifier.weight(1f, fill = false), style = MaterialTheme.typography.labelMedium, color = textColor, maxLines = if (blockMultiline) 3 else 1, overflow = TextOverflow.Ellipsis)
+                                    if (block.item.classroom.isNotEmpty() && h >= 44.dp) {
+                                        Text(block.item.classroom, style = MaterialTheme.typography.labelSmall, color = textColor.copy(alpha = 0.7f), maxLines = 1, overflow = TextOverflow.Ellipsis)
                                     }
                                 }
                             }
