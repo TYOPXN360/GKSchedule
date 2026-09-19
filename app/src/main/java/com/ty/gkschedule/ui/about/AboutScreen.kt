@@ -54,7 +54,8 @@ fun AboutScreen(
     // ponytail: 默认底栏避让开关——悬浮pill不占位，传false不留白
     applyBottomBarInset: Boolean = true,
     // ponytail: 重登录Dialog糊开关
-    blurEnabled: Boolean = false
+    blurEnabled: Boolean = false,
+    hasSavedCredentials: Boolean = false
 ) {
     var showReloginDialog by rememberSaveable { mutableStateOf(false) }
 
@@ -149,8 +150,12 @@ fun AboutScreen(
                             Spacer(modifier = Modifier.height(12.dp))
                             Button(
                                 onClick = {
-                                    onRefreshCaptcha()
-                                    showReloginDialog = true
+                                    if (hasSavedCredentials) {
+                                        onRefreshCaptcha()
+                                        showReloginDialog = true
+                                    } else {
+                                        onLogin()
+                                    }
                                 },
                                 modifier = Modifier.fillMaxWidth(0.6f),
                                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
