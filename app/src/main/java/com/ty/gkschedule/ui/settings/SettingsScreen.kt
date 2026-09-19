@@ -1,5 +1,6 @@
 package com.ty.gkschedule.ui.settings
 import com.ty.gkschedule.ui.theme.GKSwitch
+import com.ty.gkschedule.ui.theme.LocalBlurDropdownBackdrop
 
 import android.app.DatePickerDialog
 import androidx.compose.animation.*
@@ -307,7 +308,7 @@ private fun SubPage(
                 .padding(horizontal = 16.dp)
         ) {
             Spacer(modifier = Modifier.height(16.dp))
-            content()
+            CompositionLocalProvider(LocalBlurDropdownBackdrop provides backdrop) { content() }
             Spacer(modifier = Modifier.height(32.dp))
         }
     }

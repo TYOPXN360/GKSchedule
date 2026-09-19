@@ -5,6 +5,7 @@
 /.gradle-home/
 /.kotlin/
 /.android/
+/.home/
 *.apk
 *.aab
 
