@@ -34,6 +34,7 @@ import top.yukonga.miuix.kmp.blur.blur
 import top.yukonga.miuix.kmp.blur.drawBackdrop
 
 val LocalBlurDropdownBackdrop = staticCompositionLocalOf<Backdrop?> { null }
+val LocalBackdropDialogDismiss = staticCompositionLocalOf<() -> Unit> { {} }
 
 // ponytail: QPR2结论——Dialog卡片真磨砂对第三方App不可做：
 // ponytail: 反射BackgroundBlurDrawable被blocklist；窗口级需translucent但Compose Dialog全屏糊整屏；
@@ -156,8 +157,9 @@ fun BackdropDialog(
     LaunchedEffect(transitionState.currentState, transitionState.targetState) {
         if (!transitionState.currentState && !transitionState.targetState) onDismiss()
     }
-    AnimatedVisibility(
-        visibleState = transitionState,
+    CompositionLocalProvider(LocalBackdropDialogDismiss provides ::requestDismiss) {
+        AnimatedVisibility(
+            visibleState = transitionState,
         modifier = Modifier.fillMaxSize().zIndex(100f),
         enter = fadeIn(tween(160)) + androidx.compose.animation.scaleIn(initialScale = 0.94f, animationSpec = tween(180)),
         exit = fadeOut(tween(120)) + androidx.compose.animation.scaleOut(targetScale = 0.94f, animationSpec = tween(120))
@@ -184,6 +186,7 @@ fun BackdropDialog(
             content = content
         )
     }
+}
 }
 }
 

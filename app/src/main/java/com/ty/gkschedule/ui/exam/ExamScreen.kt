@@ -41,6 +41,8 @@ import com.ty.gkschedule.data.ScheduleResolver
 import com.ty.gkschedule.data.ScheduleItem
 import com.ty.gkschedule.util.CourseColors
 import com.ty.gkschedule.ui.theme.LocalAppIsDark
+import com.ty.gkschedule.ui.theme.LocalBackdropDialogDismiss
+import com.ty.gkschedule.ui.theme.BlurDropdownMenu
 import com.ty.gkschedule.ui.theme.Md3Card
 import com.ty.gkschedule.ui.theme.Md3CardVariant
 import java.time.LocalDate
@@ -383,6 +385,7 @@ fun ExamScreen(
             onDismiss = onDismissRelogin,
         ) {
             Column(modifier = Modifier.padding(vertical = 16.dp)) {
+                val dismissDialog = LocalBackdropDialogDismiss.current
                 Text("教务系统登录过期", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.onSurface)
                 Spacer(modifier = Modifier.height(16.dp))
                 Text("请输入验证码重新登录", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -404,8 +407,8 @@ fun ExamScreen(
                 OutlinedTextField(value = captcha, onValueChange = { captcha = it }, label = { Text("验证码") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
                 Spacer(modifier = Modifier.height(16.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    TextButton(onClick = onDismissRelogin) { Text("取消") }
-                    TextButton(onClick = { if (captcha.isNotBlank()) { onQuickRelogin(captcha); onDismissRelogin() } }, enabled = captcha.isNotBlank()) { Text("登录") }
+                    TextButton(onClick = dismissDialog) { Text("取消") }
+                    TextButton(onClick = { if (captcha.isNotBlank()) { onQuickRelogin(captcha); dismissDialog() } }, enabled = captcha.isNotBlank()) { Text("登录") }
                 }
             }
         }

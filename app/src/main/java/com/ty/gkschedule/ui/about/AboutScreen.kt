@@ -30,7 +30,7 @@ import com.ty.gkschedule.R
 import com.ty.gkschedule.ui.theme.BadgeColorPalette
 import com.ty.gkschedule.ui.theme.Md3Card
 import com.ty.gkschedule.ui.theme.Md3CardVariant
-import com.ty.gkschedule.ui.theme.MonetIconBadge
+import com.ty.gkschedule.ui.theme.LocalBackdropDialogDismiss
 import top.yukonga.miuix.kmp.blur.layerBackdrop
 import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
 
@@ -311,6 +311,7 @@ fun QuickReloginDialog(
         enabled = enabled,
         onDismiss = onDismiss
     ) {
+        val dismissDialog = LocalBackdropDialogDismiss.current
         Column(modifier = Modifier.padding(24.dp)) {
             Text("教务系统登录过期", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(16.dp))
@@ -342,9 +343,9 @@ fun QuickReloginDialog(
             )
             Spacer(modifier = Modifier.height(16.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
+                TextButton(onClick = dismissDialog) { Text(stringResource(R.string.cancel)) }
                 TextButton(
-                    onClick = { onQuickRelogin(captcha); onDismiss() },
+                    onClick = { onQuickRelogin(captcha); dismissDialog() },
                     enabled = captcha.isNotBlank()
                 ) { Text("登录") }
             }
