@@ -4,6 +4,7 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.PredictiveBackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.MutableTransitionState
@@ -145,18 +146,31 @@ fun BackdropDialog(
     onDismiss: () -> Unit,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    BackHandler(onBack = onDismiss)
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .zIndex(100f),
+    val transitionState = remember {
+        MutableTransitionState(false).apply { targetState = true }
+    }
+    fun requestDismiss() {
+        if (transitionState.targetState) transitionState.targetState = false
+    }
+    BackHandler(onBack = ::requestDismiss)
+    LaunchedEffect(transitionState.currentState, transitionState.targetState) {
+        if (!transitionState.currentState && !transitionState.targetState) onDismiss()
+    }
+    AnimatedVisibility(
+        visibleState = transitionState,
+        modifier = Modifier.fillMaxSize().zIndex(100f),
+        enter = fadeIn(tween(160)) + androidx.compose.animation.scaleIn(initialScale = 0.94f, animationSpec = tween(180)),
+        exit = fadeOut(tween(120)) + androidx.compose.animation.scaleOut(targetScale = 0.94f, animationSpec = tween(120))
+    ) {
+        Box(
+
         contentAlignment = Alignment.Center
     ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.Black.copy(alpha = if (enabled) 0.12f else 0.18f))
-                .pointerInput(Unit) { detectTapGestures(onTap = { onDismiss() }) }
+                .pointerInput(Unit) { detectTapGestures(onTap = { requestDismiss() }) }
         )
         BlurCardSurface(
             backdrop = backdrop,
@@ -170,6 +184,7 @@ fun BackdropDialog(
             content = content
         )
     }
+}
 }
 
 @Composable
