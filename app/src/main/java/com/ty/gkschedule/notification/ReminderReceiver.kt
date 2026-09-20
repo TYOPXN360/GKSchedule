@@ -120,10 +120,18 @@ class ReminderReceiver : BroadcastReceiver() {
             builder
                 .setContentTitle("$titlePrefix：$courseName")
                 .setContentText(contentText)
-                .setProgress(100, percent, false)
                 .setOngoing(true)
                 .setAutoCancel(false)
                 .setRequestPromotedOngoing(true)
+            if (Build.VERSION.SDK_INT >= 36) {
+                builder.setStyle(
+                    NotificationCompat.ProgressStyle()
+                        .addProgressSegment(NotificationCompat.ProgressStyle.Segment(100))
+                        .setProgress(percent)
+                )
+            } else {
+                builder.setProgress(100, percent, false)
+            }
         } else {
             val titlePrefix = if (itemType == "exam") "考前提醒" else "课前提醒"
             val fallback = if (itemType == "exam") "即将考试" else "即将上课"
