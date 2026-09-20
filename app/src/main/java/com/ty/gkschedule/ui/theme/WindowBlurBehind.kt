@@ -1,9 +1,6 @@
 package com.ty.gkschedule.ui.theme
 
-import android.os.Build
-import android.view.View
-import android.view.Window
-import android.view.WindowManager
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.PredictiveBackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -13,7 +10,6 @@ import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.*
@@ -30,26 +26,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.zIndex
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
-import androidx.compose.ui.window.DialogWindowProvider
 import top.yukonga.miuix.kmp.blur.Backdrop
 import top.yukonga.miuix.kmp.blur.blur
 import top.yukonga.miuix.kmp.blur.drawBackdrop
 
 val LocalBlurDropdownBackdrop = staticCompositionLocalOf<Backdrop?> { null }
-
-fun View.findDialogWindow(): Window? {
-    var current: View? = this
-    while (current != null) {
-        if (current is DialogWindowProvider) return current.window
-        current = current.parent as? View
-    }
-    val ctx = this.context
-    if (ctx is DialogWindowProvider) return ctx.window
-    return null
-}
 
 // ponytail: QPR2结论——Dialog卡片真磨砂对第三方App不可做：
 // ponytail: 反射BackgroundBlurDrawable被blocklist；窗口级需translucent但Compose Dialog全屏糊整屏；
@@ -69,34 +52,11 @@ fun BlurCard(
         if (enabled) backgroundColor else backgroundColor.copy(alpha = 1f)
     } else Color.Transparent
 
-    // ponytail: Dialog默认60%黑幕压死底子，降到12%才透光
-    val view = LocalView.current
-    DisposableEffect(view) {
-        view.applyDialogWindowBlur()
-        view.post { view.applyDialogWindowBlur() }
-        onDispose { }
-    }
-
     Column(modifier = modifier.clip(shape).background(bg)) { content() }
 }
 
 // ponytail: A方案验证失败——Compose Dialog窗口全屏，窗口级模糊必糊整屏（含卡片外）
 // ponytail: QPR2上只糊卡片内对第三方App不可做，回退tint半透明卡（不穿帮）；反射探测日志保留
-private fun View.applyDialogWindowBlur(enabled: Boolean = true) {
-    findDialogWindow()?.let { window ->
-        window.setDimAmount(if (enabled) 0.12f else 0.32f)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            if (enabled) {
-                window.addFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND)
-                window.attributes = window.attributes.apply { blurBehindRadius = 32 }
-            } else {
-                window.clearFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND)
-                window.attributes = window.attributes.apply { blurBehindRadius = 0 }
-            }
-        }
-    }
-}
-
 @Composable
 fun BackdropBottomSheet(
     backdrop: Backdrop,
@@ -185,39 +145,30 @@ fun BackdropDialog(
     onDismiss: () -> Unit,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    androidx.compose.ui.window.Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(
-            usePlatformDefaultWidth = false,
-            decorFitsSystemWindows = false,
-            dismissOnBackPress = true,
-            dismissOnClickOutside = false
-        )
+    BackHandler(onBack = onDismiss)
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .zIndex(100f),
+        contentAlignment = Alignment.Center
     ) {
-        val view = LocalView.current
-        DisposableEffect(view, enabled) {
-            view.applyDialogWindowBlur(enabled)
-            onDispose { view.applyDialogWindowBlur(false) }
-        }
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = if (enabled) 0.08f else 0.18f))
-                .pointerInput(Unit) { detectTapGestures(onTap = { onDismiss() }) },
-            contentAlignment = Alignment.Center
-        ) {
-            BlurCardSurface(
-                backdrop = backdrop,
-                enabled = enabled,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
-                    .pointerInput(Unit) { detectTapGestures { } },
-                cornerRadiusDp = 28f,
-                backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.86f),
-                content = content
-            )
-        }
+                .background(Color.Black.copy(alpha = if (enabled) 0.12f else 0.18f))
+                .pointerInput(Unit) { detectTapGestures(onTap = { onDismiss() }) }
+        )
+        BlurCardSurface(
+            backdrop = backdrop,
+            enabled = enabled,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .pointerInput(Unit) { detectTapGestures { } },
+            cornerRadiusDp = 28f,
+            backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.86f),
+            content = content
+        )
     }
 }
 
