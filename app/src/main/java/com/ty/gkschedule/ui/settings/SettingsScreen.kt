@@ -192,7 +192,7 @@ private fun SettingsMainPage(
                 .verticalScroll(rememberScrollState())
                 .padding(top = padding.calculateTopPadding())
         ) {
-            val catIcons = listOf(Icons.Default.CalendarMonth, Icons.Default.Palette, Icons.Default.GridOn, Icons.Default.Notifications, Icons.Default.Sync, Icons.Default.Storage, Icons.Default.SwapHoriz)
+            val catIcons = listOf(Icons.Default.CalendarMonth, Icons.Default.SwapHoriz, Icons.Default.Palette, Icons.Default.GridOn, Icons.Default.Notifications, Icons.Default.Sync, Icons.Default.Storage)
             val catTitles = listOf(
                 stringResource(R.string.settings_category_semester),
                 stringResource(R.string.settings_category_adjustment),
