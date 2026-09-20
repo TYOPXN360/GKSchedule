@@ -552,6 +552,7 @@ fun ScheduleApp(
             }
         } else {
             // ponytail: 默认底栏snackbar已回Scaffold默认槽，这里不再自挂
+        }
         if (showQuickRelogin) {
             com.ty.gkschedule.ui.about.QuickReloginDialog(
                 backdrop = backdrop,
@@ -563,7 +564,6 @@ fun ScheduleApp(
             )
         }
         } // pill兄弟层
-    }
     // ponytail: key(startTabIndex)重建pager时旧PredictiveBackHandler残留注册=首页被吞；
     // ponytail: 用key与pager同命，旧handler随旧组合销毁，新组合按当前页注册
     key(startTabIndex) {
