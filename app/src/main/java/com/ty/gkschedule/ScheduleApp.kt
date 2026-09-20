@@ -394,6 +394,7 @@ fun ScheduleApp(
     // ponytail: NavHost只剩tabs+子页——tabs常驻时route=tabs，子页时route=子页名
     val showBottomBar = currentRoute == null || currentRoute == "tabs"
     var overlayVisible by remember { mutableStateOf(false) }
+    var showQuickRelogin by remember { mutableStateOf(false) }
     fun navigateTab(route: String) {
         (tabIndexMap[route])?.let { handlePageChange(it) }
     }
@@ -508,7 +509,7 @@ fun ScheduleApp(
                                     val periodsPerDayVal by viewModel.periodsPerDay.collectAsState(initial = 10)
                                     val hasSavedCredentials by viewModel.hasSavedCredentials.collectAsState(initial = false)
                                      val displayWeeks = if (hideEmptyWeeks && courses.isNotEmpty()) { val weeksWithCourses = courses.flatMap { course -> (1..totalWeeksVal).filter { course.isInWeek(it) } }.toSet(); weeksWithCourses.size.coerceAtLeast(1) } else totalWeeksVal
-                                    AboutScreen(loginState = loginState, savedStudentId = savedStudentId, savedRealName = savedRealName, savedDeptName = savedDeptName, semesterStart = semesterStart, totalWeeks = displayWeeks, periodsPerDay = periodsPerDayVal, captchaImageBase64 = captchaImage, onLogin = { context.startActivity(Intent(context, com.ty.gkschedule.ui.login.LoginActivity::class.java)) }, onLogout = { viewModel.logout() }, onQuickRelogin = { cap -> viewModel.quickRelogin(cap) }, onRefreshCaptcha = { viewModel.refreshCaptcha() }, onOpenSettings = { context.startActivity(Intent(context, com.ty.gkschedule.ui.settings.SettingsActivity::class.java)) }, onOpenAbout = { context.startActivity(Intent(context, com.ty.gkschedule.ui.about.AboutActivity::class.java)) }, onOpenExam = { context.startActivity(Intent(context, com.ty.gkschedule.ui.exam.ExamActivity::class.java)) }, applyBottomBarInset = !compactNavBar, blurEnabled = blurEffect, hasSavedCredentials = hasSavedCredentials)
+                                    AboutScreen(loginState = loginState, savedStudentId = savedStudentId, savedRealName = savedRealName, savedDeptName = savedDeptName, semesterStart = semesterStart, totalWeeks = displayWeeks, periodsPerDay = periodsPerDayVal, captchaImageBase64 = captchaImage, onLogin = { context.startActivity(Intent(context, com.ty.gkschedule.ui.login.LoginActivity::class.java)) }, onLogout = { viewModel.logout() }, onQuickRelogin = { cap -> viewModel.quickRelogin(cap) }, onRefreshCaptcha = { viewModel.refreshCaptcha() }, onOpenSettings = { context.startActivity(Intent(context, com.ty.gkschedule.ui.settings.SettingsActivity::class.java)) }, onOpenAbout = { context.startActivity(Intent(context, com.ty.gkschedule.ui.about.AboutActivity::class.java)) }, onOpenExam = { context.startActivity(Intent(context, com.ty.gkschedule.ui.exam.ExamActivity::class.java)) }, applyBottomBarInset = !compactNavBar, blurEnabled = blurEffect, hasSavedCredentials = hasSavedCredentials, onOpenQuickRelogin = { showQuickRelogin = true })
                                 }
                             }
                         }
@@ -551,6 +552,16 @@ fun ScheduleApp(
             }
         } else {
             // ponytail: 默认底栏snackbar已回Scaffold默认槽，这里不再自挂
+        if (showQuickRelogin) {
+            com.ty.gkschedule.ui.about.QuickReloginDialog(
+                backdrop = backdrop,
+                enabled = blurEffect,
+                captchaImageBase64 = captchaImage,
+                onRefreshCaptcha = { viewModel.refreshCaptcha() },
+                onQuickRelogin = { viewModel.quickRelogin(it) },
+                onDismiss = { showQuickRelogin = false }
+            )
+        }
         } // pill兄弟层
     }
     // ponytail: key(startTabIndex)重建pager时旧PredictiveBackHandler残留注册=首页被吞；

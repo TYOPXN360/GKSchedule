@@ -47,6 +47,7 @@ fun AboutScreen(
     onLogin: () -> Unit,
     onLogout: () -> Unit,
     onQuickRelogin: (String) -> Unit = {},
+    onOpenQuickRelogin: () -> Unit = {},
     onRefreshCaptcha: () -> Unit = {},
     onOpenSettings: () -> Unit,
     onOpenAbout: () -> Unit,
@@ -57,8 +58,6 @@ fun AboutScreen(
     blurEnabled: Boolean = false,
     hasSavedCredentials: Boolean = false
 ) {
-    var showReloginDialog by rememberSaveable { mutableStateOf(false) }
-
     val backdrop = top.yukonga.miuix.kmp.blur.rememberLayerBackdrop()
 
     // ponytail: 底色与今日/课表/管理统一——暗surface/亮surfaceContainer（ScheduleApp主源同值）
@@ -152,7 +151,7 @@ fun AboutScreen(
                                 onClick = {
                                     if (hasSavedCredentials) {
                                         onRefreshCaptcha()
-                                        showReloginDialog = true
+                                        onOpenQuickRelogin()
                                     } else {
                                         onLogin()
                                     }
@@ -295,65 +294,59 @@ fun AboutScreen(
         } // Column
     } // 背景Box
 
-    if (showReloginDialog) {
-        var captcha by rememberSaveable { mutableStateOf("") }
-        com.ty.gkschedule.ui.theme.BackdropDialog(
-            backdrop = backdrop,
-            enabled = blurEnabled,
-            onDismiss = { showReloginDialog = false }
-        ) {
-            Column(modifier = Modifier.padding(24.dp)) {
-                Text(
-                    text = "教务系统登录过期",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                Text("请输入验证码重新登录", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Spacer(modifier = Modifier.height(12.dp))
-                if (captchaImageBase64 != null && captchaImageBase64.isNotEmpty()) {
-                    val bitmap = remember(captchaImageBase64) {
-                        try {
-                            val bytes = android.util.Base64.decode(captchaImageBase64, android.util.Base64.DEFAULT)
-                            android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-                        } catch (_: Exception) { null }
-                    }
-                    if (bitmap != null) {
-                        Card(
-                            modifier = Modifier.size(width = 120.dp, height = 56.dp)
-                                .clickable { onRefreshCaptcha() },
-                            shape = MaterialTheme.shapes.small
-                        ) {
-                            Image(bitmap = bitmap.asImageBitmap(), contentDescription = "Captcha",
-                                modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Fit)
-                        }
+}
+
+@Composable
+fun QuickReloginDialog(
+    backdrop: top.yukonga.miuix.kmp.blur.Backdrop,
+    enabled: Boolean,
+    captchaImageBase64: String?,
+    onRefreshCaptcha: () -> Unit,
+    onQuickRelogin: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var captcha by rememberSaveable { mutableStateOf("") }
+    com.ty.gkschedule.ui.theme.BackdropDialog(
+        backdrop = backdrop,
+        enabled = enabled,
+        onDismiss = onDismiss
+    ) {
+        Column(modifier = Modifier.padding(24.dp)) {
+            Text("教务系统登录过期", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(16.dp))
+            Text("请输入验证码重新登录", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(modifier = Modifier.height(12.dp))
+            if (!captchaImageBase64.isNullOrEmpty()) {
+                val bitmap = remember(captchaImageBase64) {
+                    runCatching {
+                        val bytes = android.util.Base64.decode(captchaImageBase64, android.util.Base64.DEFAULT)
+                        android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                    }.getOrNull()
+                }
+                if (bitmap != null) {
+                    Card(
+                        modifier = Modifier.size(width = 120.dp, height = 56.dp).clickable(onClick = onRefreshCaptcha),
+                        shape = MaterialTheme.shapes.small
+                    ) {
+                        Image(bitmap = bitmap.asImageBitmap(), contentDescription = "Captcha", modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Fit)
                     }
                 }
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = captcha,
-                    onValueChange = { captcha = it },
-                    label = { Text(stringResource(R.string.login_captcha)) },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    TextButton(onClick = { showReloginDialog = false }) { Text(stringResource(R.string.cancel)) }
-                    TextButton(
-                        onClick = {
-                            if (captcha.isNotBlank()) {
-                                onQuickRelogin(captcha)
-                                showReloginDialog = false
-                            }
-                        },
-                        enabled = captcha.isNotBlank()
-                    ) { Text("登录") }
-                }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            OutlinedTextField(
+                value = captcha,
+                onValueChange = { captcha = it },
+                label = { Text(stringResource(R.string.login_captcha)) },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
+                TextButton(
+                    onClick = { onQuickRelogin(captcha); onDismiss() },
+                    enabled = captcha.isNotBlank()
+                ) { Text("登录") }
             }
         }
     }
