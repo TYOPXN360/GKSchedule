@@ -3,6 +3,7 @@ package com.ty.gkschedule.ui.theme
 import android.os.Build
 import android.view.View
 import android.view.Window
+import android.view.WindowManager
 import androidx.activity.compose.PredictiveBackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -81,9 +82,18 @@ fun BlurCard(
 
 // ponytail: A方案验证失败——Compose Dialog窗口全屏，窗口级模糊必糊整屏（含卡片外）
 // ponytail: QPR2上只糊卡片内对第三方App不可做，回退tint半透明卡（不穿帮）；反射探测日志保留
-private fun View.applyDialogWindowBlur() {
-    findDialogWindow()?.let { w ->
-        w.setDimAmount(0.12f)
+private fun View.applyDialogWindowBlur(enabled: Boolean = true) {
+    findDialogWindow()?.let { window ->
+        window.setDimAmount(if (enabled) 0.12f else 0.32f)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (enabled) {
+                window.addFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND)
+                window.attributes = window.attributes.apply { blurBehindRadius = 32 }
+            } else {
+                window.clearFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND)
+                window.attributes = window.attributes.apply { blurBehindRadius = 0 }
+            }
+        }
     }
 }
 
@@ -175,27 +185,36 @@ fun BackdropDialog(
     onDismiss: () -> Unit,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    androidx.activity.compose.BackHandler(onBack = onDismiss)
-    Box(Modifier.fillMaxSize()) {
-        Box(
-            Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.12f))
-                .clickable(onClick = onDismiss)
+    androidx.compose.ui.window.Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            decorFitsSystemWindows = false,
+            dismissOnBackPress = true,
+            dismissOnClickOutside = false
         )
+    ) {
+        val view = LocalView.current
+        DisposableEffect(view, enabled) {
+            view.applyDialogWindowBlur(enabled)
+            onDispose { view.applyDialogWindowBlur(false) }
+        }
         Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .wrapContentHeight()
-                .align(Alignment.Center)
-                .zIndex(1f)
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = if (enabled) 0.08f else 0.18f))
+                .pointerInput(Unit) { detectTapGestures(onTap = { onDismiss() }) },
+            contentAlignment = Alignment.Center
         ) {
             BlurCardSurface(
                 backdrop = backdrop,
                 enabled = enabled,
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .pointerInput(Unit) { detectTapGestures { } },
                 cornerRadiusDp = 28f,
-                backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.78f),
+                backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.86f),
                 content = content
             )
         }
