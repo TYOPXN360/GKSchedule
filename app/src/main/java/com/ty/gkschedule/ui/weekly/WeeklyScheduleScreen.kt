@@ -615,8 +615,20 @@ fun WeeklyScheduleScreen(
                                 hideFabs = true
                                 onScreenshotHidePill()
                                 kotlinx.coroutines.delay(300)
+                                // ponytail: miuix糊走RuntimeShader，软件渲染draw()直接抛；PixelCopy走硬件管线必过
+                                val loc = IntArray(2)
+                                rootView.getLocationInWindow(loc)
                                 val fb = android.graphics.Bitmap.createBitmap(rootView.width, rootView.height, android.graphics.Bitmap.Config.ARGB_8888)
-                                rootView.draw(android.graphics.Canvas(fb))
+                                val latch = java.util.concurrent.CountDownLatch(1)
+                                var copyResult = -1
+                                android.view.PixelCopy.request(
+                                    (hapticView.context as android.app.Activity).window,
+                                    android.graphics.Rect(loc[0], loc[1], loc[0] + rootView.width, loc[1] + rootView.height),
+                                    fb, { copyResult = it; latch.countDown() },
+                                    android.os.Handler(android.os.Looper.getMainLooper())
+                                )
+                                latch.await(3, java.util.concurrent.TimeUnit.SECONDS)
+                                if (copyResult != android.view.PixelCopy.SUCCESS) throw IllegalStateException("PixelCopy=$copyResult")
                                 hideFabs = false
                                 onScreenshotRestorePill()
                                 val c = android.graphics.Bitmap.createBitmap(fb, 0, cropTopPx.coerceIn(0, fb.height), fb.width, cropBottomPx.coerceIn(cropTopPx.coerceIn(0, fb.height), fb.height) - cropTopPx.coerceIn(0, fb.height))
