@@ -94,6 +94,12 @@
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
 
+        <!-- ponytail: 去签到子页——开关+获取课程ID+匹配结果 -->
+        <activity
+            android:name=".ui.settings.SubSettingsGoSignActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
         <activity
             android:name=".ui.exam.ExamActivity"
             android:exported="true"
