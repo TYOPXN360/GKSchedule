@@ -1058,6 +1058,7 @@ internal fun GoSignPage(
     blurEnabled: Boolean = true
 ) {
     var fetching by remember { mutableStateOf(false) }
+    val context = androidx.compose.ui.platform.LocalContext.current
     val matched = remember(courses) { courses.filter { it.chaoxingCourseId > 0L }.distinctBy { it.name }.sortedBy { it.name } }
 
     SubPage(title = stringResource(R.string.go_sign_entry_title), onBack = onBack, blurEnabled = blurEnabled) {
@@ -1079,8 +1080,9 @@ internal fun GoSignPage(
                 ) {
                     if (!fetching) {
                         fetching = true
-                        onFetchChaoxingCourses {
+                        onFetchChaoxingCourses { msg ->
                             fetching = false
+                            android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()
                         }
                     }
                 }
