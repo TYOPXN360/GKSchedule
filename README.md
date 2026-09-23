@@ -21,7 +21,6 @@
 - 子页展示上次获取结果（持久保存）与已匹配课程的 ID 列表，同名课程只显示一条。
 - 总开关与课表页子开关默认关闭，开启后才显示按钮和设置项。
 - 未配置 ID、未安装随地大小签或跳转失败时均有明确提示；也可在课程编辑页手动填写超星 ID 作为兜底。
-- 配套集成已提交至上游：[aquamarine5/ChaoxingSignFaker#220](https://github.com/aquamarine5/ChaoxingSignFaker/pull/220)。
 
 ### 管理课程
 
