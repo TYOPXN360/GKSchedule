@@ -532,6 +532,7 @@ fun WeeklyScheduleScreen(
                                     }
                                     // ponytail: 地点名始终完整显示(不省略，也不因块矮被略过)——先占位，课程名再吃剩下的高度
                                     // 课程名按"块高-地点高"能排几行就排几行(maxLines=可容纳行数)，塞不下的部分才省略
+                                    // ponytail: 多行是常态，不随自适应开关变单行；开关只管时间列宽度自适应
                                     androidx.compose.foundation.layout.BoxWithConstraints(
                                         modifier = Modifier.fillMaxWidth().weight(1f, fill = false)
                                     ) {
@@ -540,7 +541,7 @@ fun WeeklyScheduleScreen(
                                         }
                                         val fitLines = (maxHeight / lineHDp).toInt().coerceAtLeast(1)
                                         Text(block.item.name, style = MaterialTheme.typography.labelMedium, color = textColor,
-                                            maxLines = if (blockMultiline) fitLines else 1, overflow = TextOverflow.Ellipsis)
+                                            maxLines = fitLines, overflow = TextOverflow.Ellipsis)
                                     }
                                     if (block.item.classroom.isNotEmpty()) {
                                         Text(block.item.classroom, style = MaterialTheme.typography.labelSmall, color = textColor.copy(alpha = 0.7f))
