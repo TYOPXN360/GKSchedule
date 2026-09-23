@@ -627,7 +627,10 @@ fun WeeklyScheduleScreen(
                                     fb, { copyResult = it; latch.countDown() },
                                     android.os.Handler(android.os.Looper.getMainLooper())
                                 )
-                                latch.await(3, java.util.concurrent.TimeUnit.SECONDS)
+                                // ponytail: 回调回主线程，await必须让出主线程否则死锁超时
+                                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                    latch.await(3, java.util.concurrent.TimeUnit.SECONDS)
+                                }
                                 if (copyResult != android.view.PixelCopy.SUCCESS) throw IllegalStateException("PixelCopy=$copyResult")
                                 hideFabs = false
                                 onScreenshotRestorePill()
