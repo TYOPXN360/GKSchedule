@@ -247,7 +247,7 @@
     <string name="update_size">File size</string>
     <string name="go_sign_entry_title">Sign Link</string>
     <string name="go_sign_entry_desc">Jump to ChaoxingSignFaker for Chaoxing sign-in</string>
-    <string name="go_sign_switch_title">Show \"Go Sign\" button on today page course details</string>
+    <string name="go_sign_switch_title">Show button on today page course details</string>
     <string name="go_sign_section_fetch">Course ID fetch</string>
     <string name="go_sign_fetch_item">Fetch course IDs</string>
     <string name="go_sign_fetching">Fetching…</string>
