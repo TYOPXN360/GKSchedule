@@ -97,6 +97,8 @@ fun WeeklyScheduleScreen(
     blockMultiline: Boolean = true,
     // ponytail: 默认底栏避让开关——悬浮pill不占位，传false不留白
     applyBottomBarInset: Boolean = true,
+    // ponytail: 签到联动——课表页详情也显示去签到按钮
+    showGoSign: Boolean = false,
     getStartTime: (Int) -> String = { "" },
     getEndTime: (Int) -> String = { "" },
     onOverlayVisibilityChange: (Boolean) -> Unit = {}
@@ -683,6 +685,7 @@ fun WeeklyScheduleScreen(
     detailItem?.let { item ->
         val isDark = com.ty.gkschedule.ui.theme.LocalAppIsDark.current
         val targetWeek = if (item.isExam) item.weekRange.toIntOrNull() ?: currentWeek else currentWeek
+        val unmatchedTip = stringResource(R.string.go_sign_toast_unmatched)
         ScheduleItemDetailSheet(item = item, getStartTime = getStartTime, getEndTime = getEndTime,
             onDismiss = { detailItem = null }, onEdit = {
                 detailItem = null
@@ -691,6 +694,11 @@ fun WeeklyScheduleScreen(
                     is ScheduleItem.ExamItem -> onExamEdit(item.exam)
                 }
             },
+            onGoSign = if (showGoSign && item is ScheduleItem.CourseItem) {
+                fun() {
+                    com.ty.gkschedule.api.ChaoxingApi.goSignOrToast(hapticContext, item.course, unmatchedTip)
+                }
+            } else null,
             colorEngine = colorEngine,
             colorGroupMode = colorGroupMode,
             colorIndex = detailColorIndex,

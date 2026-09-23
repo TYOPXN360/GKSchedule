@@ -265,4 +265,6 @@
     <string name="go_sign_err_empty_courses">No courses returned</string>
     <string name="go_sign_err_empty_result">Empty response</string>
     <string name="go_sign_unknown">Unknown error</string>
+    <string name="go_sign_switch_weekly_title">Also show the button on schedule page course details</string>
+    <string name="go_sign_launch_fail">Launch failed: %s</string>
 </resources>

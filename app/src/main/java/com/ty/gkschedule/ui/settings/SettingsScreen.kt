@@ -1049,6 +1049,8 @@ private fun DropdownItem(icon: androidx.compose.ui.graphics.vector.ImageVector, 
 internal fun GoSignPage(
     goSignEnabled: Boolean,
     onGoSignEnabledChange: (Boolean) -> Unit,
+    goSignWeeklyEnabled: Boolean,
+    onGoSignWeeklyEnabledChange: (Boolean) -> Unit,
     courses: List<com.ty.gkschedule.data.Course>,
     fetchResult: String?,
     onFetchChaoxingCourses: ((String) -> Unit) -> Unit,
@@ -1061,6 +1063,10 @@ internal fun GoSignPage(
     SubPage(title = stringResource(R.string.go_sign_entry_title), onBack = onBack, blurEnabled = blurEnabled) {
         SettingsCard {
             SwitchItem(Icons.Default.OpenInNew, stringResource(R.string.go_sign_switch_title), goSignEnabled, onGoSignEnabledChange)
+            if (goSignEnabled) {
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
+                SwitchItem(Icons.Default.CalendarMonth, stringResource(R.string.go_sign_switch_weekly_title), goSignWeeklyEnabled, onGoSignWeeklyEnabledChange)
+            }
         }
         if (goSignEnabled) {
             Spacer(modifier = Modifier.height(12.dp))

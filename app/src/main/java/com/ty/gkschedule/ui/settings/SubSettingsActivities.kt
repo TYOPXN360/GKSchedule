@@ -231,12 +231,15 @@ class SubSettingsGoSignActivity : SubSettingsBaseActivity() {
     @Composable
     override fun SubContent(vm: ScheduleViewModel, finish: () -> Unit) {
         val goSignEnabled by vm.goSignEnabled.collectAsState(initial = false)
+        val goSignWeeklyEnabled by vm.goSignWeeklyEnabled.collectAsState(initial = false)
         val goSignFetchResult by vm.goSignFetchResult.collectAsState(initial = "")
         val courses by vm.courses.collectAsState(initial = emptyList())
         val blurEffect by vm.blurEffect.collectAsState(initial = false)
         GoSignPage(
             goSignEnabled = goSignEnabled,
             onGoSignEnabledChange = { vm.setGoSignEnabled(it) },
+            goSignWeeklyEnabled = goSignWeeklyEnabled,
+            onGoSignWeeklyEnabledChange = { vm.setGoSignWeeklyEnabled(it) },
             courses = courses,
             fetchResult = goSignFetchResult.ifEmpty { null },
             onFetchChaoxingCourses = { cb -> vm.fetchChaoxingCourses(cb) },
