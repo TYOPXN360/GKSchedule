@@ -57,6 +57,7 @@ fun TodayScreen(
 ) {
     val today = LocalDate.now()
     val todayDow = today.dayOfWeek.value
+    val context = androidx.compose.ui.platform.LocalContext.current
     val tomorrowWeek = if (today.dayOfWeek.value == 7) currentWeek + 1 else currentWeek
 
     val todayCourses = remember(courses, currentWeek, today, semesterStart, scheduleAdjustments) {
@@ -397,7 +398,27 @@ fun TodayScreen(
             currentWeek = detailWeek,
             diffColorPerWeek = diffColorPerWeek,
             blurEnabled = blurEnabled,
-             backdrop = backdrop
+             backdrop = backdrop,
+            onGoSign = {
+                if (course.chaoxingClassId <= 0 || course.chaoxingCourseId <= 0L || course.chaoxingFid <= 0) {
+                    android.widget.Toast.makeText(context, "未配置超星ID：请先编辑课程，填写 classId / courseId / fid", android.widget.Toast.LENGTH_SHORT).show()
+                } else {
+                    val signIntent = android.content.Intent("org.aquamarine5.brainspark.chaoxingsignfaker.action.OPEN_SIGN").apply {
+                        setPackage("org.aquamarine5.brainspark.chaoxingsignfaker")
+                        putExtra("classId", course.chaoxingClassId)
+                        putExtra("courseId", course.chaoxingCourseId)
+                        putExtra("fid", course.chaoxingFid)
+                        putExtra("courseName", course.name)
+                    }
+                    runCatching { context.startActivity(signIntent) }.onFailure {
+                        android.widget.Toast.makeText(
+                            context,
+                            if (it is android.content.ActivityNotFoundException) "未安装 ChaoxingSignFaker" else "跳转失败: ${it.message}",
+                            android.widget.Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            }
         )
     }
 
