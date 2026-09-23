@@ -387,6 +387,7 @@ fun TodayScreen(
             colorGroupMode = colorGroupMode,
             diffColorPerWeek = diffColorPerWeek
         )
+        val unmatchedTip = stringResource(R.string.go_sign_toast_unmatched)
         com.ty.gkschedule.ui.weekly.ScheduleItemDetailSheet(
             item = com.ty.gkschedule.data.ScheduleItem.CourseItem(course),
             getStartTime = getStartTime,
@@ -402,7 +403,7 @@ fun TodayScreen(
              backdrop = backdrop,
             onGoSign = if (!goSignEnabled) null else fun() {
                 if (course.chaoxingClassId <= 0 || course.chaoxingCourseId <= 0L || course.chaoxingFid <= 0) {
-                    android.widget.Toast.makeText(context, "未匹配超星ID：请先在设置→去签到获取课程ID，或编辑课程手动填写", android.widget.Toast.LENGTH_SHORT).show()
+                    android.widget.Toast.makeText(context, unmatchedTip, android.widget.Toast.LENGTH_SHORT).show()
                 } else {
                     val signIntent = android.content.Intent("org.aquamarine5.brainspark.chaoxingsignfaker.action.OPEN_SIGN").apply {
                         setPackage("org.aquamarine5.brainspark.chaoxingsignfaker")

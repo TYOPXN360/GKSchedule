@@ -275,8 +275,8 @@ private fun SettingsMainPage(
                     }
                     HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
                     ListItem(
-                        headlineContent = { Text("去签到", style = MaterialTheme.typography.titleMedium) },
-                        supportingContent = { Text("跳转 ChaoxingSignFaker 签到与课程ID匹配", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                        headlineContent = { Text(stringResource(R.string.go_sign_entry_title), style = MaterialTheme.typography.titleMedium) },
+                        supportingContent = { Text(stringResource(R.string.go_sign_entry_desc), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) },
                         leadingContent = {
                             val badgeColor = com.ty.gkschedule.util.CourseColors.getSettingsBadgeColor(3)
                             Surface(modifier = Modifier.size(40.dp), shape = MaterialTheme.shapes.small, color = badgeColor.container, contentColor = badgeColor.content) {
@@ -1058,18 +1058,18 @@ internal fun GoSignPage(
     var fetching by remember { mutableStateOf(false) }
     val matched = remember(courses) { courses.filter { it.chaoxingCourseId > 0L }.distinctBy { it.name }.sortedBy { it.name } }
 
-    SubPage(title = "去签到", onBack = onBack, blurEnabled = blurEnabled) {
+    SubPage(title = stringResource(R.string.go_sign_entry_title), onBack = onBack, blurEnabled = blurEnabled) {
         SettingsCard {
-            SwitchItem(Icons.Default.OpenInNew, "课程详情显示\"去签到\"按钮", goSignEnabled, onGoSignEnabledChange)
+            SwitchItem(Icons.Default.OpenInNew, stringResource(R.string.go_sign_switch_title), goSignEnabled, onGoSignEnabledChange)
         }
         if (goSignEnabled) {
             Spacer(modifier = Modifier.height(12.dp))
-            SectionHeader("课程ID获取")
+            SectionHeader(stringResource(R.string.go_sign_section_fetch))
             SettingsCard {
                 SettingsItem(
                     Icons.Default.Refresh,
-                    "获取课程ID",
-                    subtitle = if (fetching) "获取中…" else "读取 ChaoxingSignFaker 的课程并按名称匹配"
+                    stringResource(R.string.go_sign_fetch_item),
+                    subtitle = if (fetching) stringResource(R.string.go_sign_fetching) else stringResource(R.string.go_sign_fetch_item_desc)
                 ) {
                     if (!fetching) {
                         fetching = true
@@ -1080,18 +1080,18 @@ internal fun GoSignPage(
                 }
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
                 ListItem(
-                    headlineContent = { Text("上次获取结果") },
-                    supportingContent = { Text(fetchResult ?: "尚未获取", color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                    headlineContent = { Text(stringResource(R.string.go_sign_last_result)) },
+                    supportingContent = { Text(fetchResult ?: stringResource(R.string.go_sign_never_fetched), color = MaterialTheme.colorScheme.onSurfaceVariant) },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                 )
             }
             Spacer(modifier = Modifier.height(12.dp))
-            SectionHeader("已匹配课程 (${matched.size})")
+            SectionHeader(stringResource(R.string.go_sign_matched_section, matched.size))
             SettingsCard {
                 if (matched.isEmpty()) {
                     ListItem(
-                        headlineContent = { Text("暂无已匹配课程", color = MaterialTheme.colorScheme.onSurfaceVariant) },
-                        supportingContent = { Text("点击上方\"获取课程ID\"后自动回填") },
+                        headlineContent = { Text(stringResource(R.string.go_sign_no_matched), color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                        supportingContent = { Text(stringResource(R.string.go_sign_fetch_hint)) },
                         colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                     )
                 } else matched.forEach { course ->

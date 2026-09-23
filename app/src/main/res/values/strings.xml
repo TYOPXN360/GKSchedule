@@ -245,4 +245,24 @@
     <string name="update_browser">Browser</string>
     <string name="update_error">Failed to check for updates</string>
     <string name="update_size">File size</string>
+    <string name="go_sign_entry_title">Sign Link</string>
+    <string name="go_sign_entry_desc">Jump to ChaoxingSignFaker for Chaoxing sign-in</string>
+    <string name="go_sign_switch_title">Show \"Go Sign\" button on course details</string>
+    <string name="go_sign_section_fetch">Course ID fetch</string>
+    <string name="go_sign_fetch_item">Fetch course IDs</string>
+    <string name="go_sign_fetching">Fetching…</string>
+    <string name="go_sign_fetch_item_desc">Read courses from ChaoxingSignFaker and match by name</string>
+    <string name="go_sign_last_result">Last fetch result</string>
+    <string name="go_sign_never_fetched">Not fetched yet</string>
+    <string name="go_sign_matched_section" formatted="false">Matched courses (%1$d)</string>
+    <string name="go_sign_no_matched">No matched courses yet</string>
+    <string name="go_sign_fetch_hint">Tap \"Fetch course IDs\" above to backfill</string>
+    <string name="go_sign_toast_unmatched">Chaoxing IDs not matched: fetch them under Settings - Sign Link, or fill them in course edit</string>
+    <string name="go_sign_fetch_ok" formatted="false">Fetched %1$d courses, matched %2$d</string>
+    <string name="go_sign_not_installed">ChaoxingSignFaker not installed</string>
+    <string name="go_sign_fetch_fail">Fetch failed: %s</string>
+    <string name="go_sign_err_fid">Response missing fid</string>
+    <string name="go_sign_err_empty_courses">No courses returned</string>
+    <string name="go_sign_err_empty_result">Empty response</string>
+    <string name="go_sign_unknown">Unknown error</string>
 </resources>
