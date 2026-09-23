@@ -1073,7 +1073,7 @@ internal fun GoSignPage(
                 enabled = blurEnabled,
                 modifier = Modifier.fillMaxWidth(),
                 radiusDp = 36f,
-                backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.48f),
+                backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                 cornerRadiusDp = 28f
             ) {
                 Column(modifier = Modifier.padding(24.dp)) {
