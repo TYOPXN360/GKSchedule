@@ -112,9 +112,6 @@ fun SettingsScreen(
     onCompactNavBarChange: (Boolean) -> Unit = {},
     pillContentMode: Int = 0,
     onPillContentModeChange: (Int) -> Unit = {},
-    goSignEnabled: Boolean = false,
-    onGoSignEnabledChange: (Boolean) -> Unit = {},
-    onFetchChaoxingCourses: ((String) -> Unit) -> Unit = {},
     onFetchExam: () -> Unit,
     onExportJson: () -> Unit,
     onImportJson: () -> Unit,
@@ -142,15 +139,13 @@ fun SettingsScreen(
                             "notification" -> SubSettingsNotificationActivity::class.java
                             "sync" -> SubSettingsSyncActivity::class.java
                             "data" -> SubSettingsDataActivity::class.java
+                            "go_sign" -> SubSettingsGoSignActivity::class.java
                             else -> null
                         }
                         cls?.let { c -> context.startActivity(android.content.Intent(context, c)) }
                     },
                     onExit = { (context as? android.app.Activity)?.finish() },
-                    blurEnabled = blurEffect,
-                    goSignEnabled = goSignEnabled,
-                    onGoSignEnabledChange = onGoSignEnabledChange,
-                    onFetchChaoxingCourses = onFetchChaoxingCourses
+                    blurEnabled = blurEffect
                 )
             }
         }
@@ -162,12 +157,8 @@ fun SettingsScreen(
 @Composable
 private fun SettingsMainPage(
     onOpenPage: (String) -> Unit, onExit: () -> Unit,
-    blurEnabled: Boolean = true,
-    goSignEnabled: Boolean = false,
-    onGoSignEnabledChange: (Boolean) -> Unit = {},
-    onFetchChaoxingCourses: ((String) -> Unit) -> Unit = {}
+    blurEnabled: Boolean = true
 ) {
-    val context = LocalContext.current
     val surf = MaterialTheme.colorScheme.surface
     val surfLow = MaterialTheme.colorScheme.surfaceContainerLow
     val surfCont = MaterialTheme.colorScheme.surfaceContainer
@@ -282,28 +273,20 @@ private fun SettingsMainPage(
                             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
                         }
                     }
-                }
-            }
-            Spacer(modifier = Modifier.height(12.dp))
-            SectionHeader("去签到")
-            com.ty.gkschedule.ui.theme.Md3Card(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                variant = com.ty.gkschedule.ui.theme.Md3CardVariant.Elevated
-            ) {
-                Column {
-                    SwitchItem(Icons.Default.OpenInNew, "课程详情显示\"去签到\"按钮", goSignEnabled, onGoSignEnabledChange)
-                    if (goSignEnabled) {
-                        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
-                        SettingsItem(
-                            Icons.Default.Refresh,
-                            "获取课程ID",
-                            subtitle = "读取 ChaoxingSignFaker 的课程并按名称匹配"
-                        ) {
-                            onFetchChaoxingCourses { msg ->
-                                android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()
+                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
+                    ListItem(
+                        headlineContent = { Text("去签到", style = MaterialTheme.typography.titleMedium) },
+                        supportingContent = { Text("跳转 ChaoxingSignFaker 签到与课程ID匹配", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                        leadingContent = {
+                            val badgeColor = com.ty.gkschedule.util.CourseColors.getSettingsBadgeColor(3)
+                            Surface(modifier = Modifier.size(40.dp), shape = MaterialTheme.shapes.small, color = badgeColor.container, contentColor = badgeColor.content) {
+                                Box(contentAlignment = Alignment.Center) { Icon(Icons.Default.OpenInNew, contentDescription = null, modifier = Modifier.size(22.dp)) }
                             }
-                        }
-                    }
+                        },
+                        trailingContent = { Icon(Icons.Default.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                        modifier = Modifier.clickable(onClick = { onOpenPage("go_sign") })
+                    )
                 }
             }
             Spacer(modifier = Modifier.height(32.dp))
@@ -1057,5 +1040,80 @@ private fun DropdownItem(icon: androidx.compose.ui.graphics.vector.ImageVector, 
             colors = ListItemDefaults.colors(containerColor = Color.Transparent),
             modifier = if (enabled) Modifier.clickable { expanded = true } else Modifier
         )
+    }
+}
+
+// === 去签到 ===
+
+@Composable
+internal fun GoSignPage(
+    goSignEnabled: Boolean,
+    onGoSignEnabledChange: (Boolean) -> Unit,
+    courses: List<com.ty.gkschedule.data.Course>,
+    onFetchChaoxingCourses: ((String) -> Unit) -> Unit,
+    onBack: () -> Unit,
+    blurEnabled: Boolean = true
+) {
+    var fetching by remember { mutableStateOf(false) }
+    var fetchResult by remember { mutableStateOf<String?>(null) }
+    val matched = remember(courses) { courses.filter { it.chaoxingCourseId > 0L }.sortedBy { it.name } }
+
+    SubPage(title = "去签到", onBack = onBack, blurEnabled = blurEnabled) {
+        SettingsCard {
+            SwitchItem(Icons.Default.OpenInNew, "课程详情显示\"去签到\"按钮", goSignEnabled, onGoSignEnabledChange)
+        }
+        if (goSignEnabled) {
+            Spacer(modifier = Modifier.height(12.dp))
+            SectionHeader("课程ID获取")
+            SettingsCard {
+                SettingsItem(
+                    Icons.Default.Refresh,
+                    "获取课程ID",
+                    subtitle = if (fetching) "获取中…" else "读取 ChaoxingSignFaker 的课程并按名称匹配"
+                ) {
+                    if (!fetching) {
+                        fetching = true
+                        fetchResult = null
+                        onFetchChaoxingCourses { msg ->
+                            fetching = false
+                            fetchResult = msg
+                        }
+                    }
+                }
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
+                ListItem(
+                    headlineContent = { Text("上次获取结果") },
+                    supportingContent = { Text(fetchResult ?: "尚未获取", color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+                )
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            SectionHeader("已匹配课程 (${matched.size})")
+            SettingsCard {
+                if (matched.isEmpty()) {
+                    ListItem(
+                        headlineContent = { Text("暂无已匹配课程", color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                        supportingContent = { Text("点击上方\"获取课程ID\"后自动回填") },
+                        colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+                    )
+                } else matched.forEach { course ->
+                    if (course != matched.first()) {
+                        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
+                    }
+                    ListItem(
+                        headlineContent = { Text(course.name, fontWeight = FontWeight.Medium) },
+                        supportingContent = {
+                            Text(
+                                "classId=${course.chaoxingClassId} · courseId=${course.chaoxingCourseId} · fid=${course.chaoxingFid}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        },
+                        colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+                    )
+                }
+            }
+        }
+        Spacer(modifier = Modifier.height(32.dp))
     }
 }
