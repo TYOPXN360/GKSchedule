@@ -112,6 +112,7 @@ class SubSettingsScheduleStyleActivity : SubSettingsBaseActivity() {
         val detailedSplit by vm.detailedSplit.collectAsState(initial = false)
         val showDateInHeader by vm.showDateInHeader.collectAsState(initial = false)
         val blockMultiline by vm.weeklyBlockMultiline.collectAsState(initial = true)
+        val hideWeeklyEdit by vm.hideWeeklyEdit.collectAsState(initial = false)
         val blurEffect by vm.blurEffect.collectAsState(initial = false)
         ScheduleStylePage(
             gridHeight = gridHeight, gridCorner = gridCorner, gridSpacing = gridSpacing,
@@ -130,6 +131,8 @@ class SubSettingsScheduleStyleActivity : SubSettingsBaseActivity() {
             onShowDateInHeaderChange = { vm.setShowDateInHeader(it) },
             blockMultiline = blockMultiline,
             onBlockMultilineChange = { vm.setWeeklyBlockMultiline(it) },
+            hideWeeklyEdit = hideWeeklyEdit,
+            onHideWeeklyEditChange = { vm.setHideWeeklyEdit(it) },
             onBack = finish, blurEnabled = blurEffect
         )
     }

@@ -270,6 +270,7 @@
     <string name="go_sign_switch_info_title">How to use the Go Sign button</string>
     <string name="go_sign_info_link_word">ChaoxingSignFaker</string>
     <string name="hide_course_manage">Hide course management page</string>
+    <string name="hide_weekly_edit">Hide edit button on schedule course details</string>
     <string name="style_reset_defaults">Reset to defaults</string>
     <string name="go_sign_switch_info_body">1. Install and sign in to ChaoxingSignFaker\n2. Turn on the switch here and tap \"Fetch course IDs\" to match your courses\n3. Open a course on the Today page and tap \"Go Sign\" to jump to its sign-in page\n\nSign-in choices and confirmation stay inside ChaoxingSignFaker; this app never signs for you.</string>
 </resources>

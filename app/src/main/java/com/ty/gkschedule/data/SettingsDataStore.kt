@@ -65,6 +65,7 @@ class SettingsDataStore(private val context: Context) {
         private val GO_SIGN_WEEKLY_ENABLED = booleanPreferencesKey("go_sign_weekly_enabled")
         private val GO_SIGN_FETCH_RESULT = stringPreferencesKey("go_sign_fetch_result")
         private val HIDE_COURSE_MANAGE = booleanPreferencesKey("hide_course_manage")
+        private val HIDE_WEEKLY_EDIT = booleanPreferencesKey("hide_weekly_edit")
 
         private val DEFAULT_START_TIMES = listOf(
             "08:30", "09:20", "10:25", "11:15",  // Morning 1-4
@@ -123,7 +124,7 @@ class SettingsDataStore(private val context: Context) {
     val showHiddenCourses: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[SHOW_HIDDEN_COURSES] ?: false }
     val compactNavBar: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[COMPACT_NAV_BAR] ?: true }
     val pillContentMode: Flow<Int> = context.dataStore.data.map { prefs -> prefs[PILL_CONTENT_MODE] ?: 0 }
-    val blurEffect: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[BLUR_EFFECT] ?: true }
+    val blurEffect: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[BLUR_EFFECT] ?: false }
     // ponytail: 课表块多行名——关=单行截断，开关默认关
     val weeklyBlockMultiline: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[WEEKLY_BLOCK_MULTILINE] ?: true }
     // ponytail: 每日首次启动自动查更新——默认开，关则MainActivity跳过
@@ -230,9 +231,14 @@ class SettingsDataStore(private val context: Context) {
     val goSignWeeklyEnabled: Flow<Boolean> = context.dataStore.data.map { it[GO_SIGN_WEEKLY_ENABLED] ?: false }
     val goSignFetchResult: Flow<String> = context.dataStore.data.map { it[GO_SIGN_FETCH_RESULT] ?: "" }
     val hideCourseManage: Flow<Boolean> = context.dataStore.data.map { it[HIDE_COURSE_MANAGE] ?: false }
+    val hideWeeklyEdit: Flow<Boolean> = context.dataStore.data.map { it[HIDE_WEEKLY_EDIT] ?: false }
 
     suspend fun setGoSignEnabled(enabled: Boolean) {
         context.dataStore.edit { it[GO_SIGN_ENABLED] = enabled }
+    }
+
+    suspend fun setHideWeeklyEdit(hidden: Boolean) {
+        context.dataStore.edit { it[HIDE_WEEKLY_EDIT] = hidden }
     }
 
     suspend fun setHideCourseManage(hidden: Boolean) {

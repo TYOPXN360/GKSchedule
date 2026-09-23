@@ -99,6 +99,8 @@ fun WeeklyScheduleScreen(
     applyBottomBarInset: Boolean = true,
     // ponytail: 签到联动——课表页详情也显示去签到按钮
     showGoSign: Boolean = false,
+    // ponytail: 课表页详情隐藏编辑按钮（设置开关，默认显示）
+    hideWeeklyEdit: Boolean = false,
     getStartTime: (Int) -> String = { "" },
     getEndTime: (Int) -> String = { "" },
     onOverlayVisibilityChange: (Boolean) -> Unit = {}
@@ -696,7 +698,7 @@ fun WeeklyScheduleScreen(
         val targetWeek = if (item.isExam) item.weekRange.toIntOrNull() ?: currentWeek else currentWeek
         val unmatchedTip = stringResource(R.string.go_sign_toast_unmatched)
         ScheduleItemDetailSheet(item = item, getStartTime = getStartTime, getEndTime = getEndTime,
-            onDismiss = { detailItem = null }, onEdit = {
+            onDismiss = { detailItem = null }, onEdit = if (hideWeeklyEdit) null else fun() {
                 detailItem = null
                 when (item) {
                     is ScheduleItem.CourseItem -> onCourseLongPress(item.course)

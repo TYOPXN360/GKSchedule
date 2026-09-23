@@ -456,6 +456,8 @@ internal fun ScheduleStylePage(
     onShowDateInHeaderChange: (Boolean) -> Unit,
     blockMultiline: Boolean = true,
     onBlockMultilineChange: (Boolean) -> Unit = {},
+    hideWeeklyEdit: Boolean = false,
+    onHideWeeklyEditChange: (Boolean) -> Unit = {},
     onBack: () -> Unit,
     blurEnabled: Boolean = true
 ) {
@@ -513,6 +515,8 @@ internal fun ScheduleStylePage(
         SettingsCard {
             // ponytail: 课表块名多行——关=单行截断，开=最多3行自然折行
             SwitchItem(Icons.Default.WrapText, stringResource(R.string.block_multiline), blockMultiline, onBlockMultilineChange)
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
+            SwitchItem(Icons.Default.EditOff, stringResource(R.string.hide_weekly_edit), hideWeeklyEdit, onHideWeeklyEditChange)
         }
     }
 }
