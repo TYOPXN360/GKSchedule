@@ -269,24 +269,26 @@ private fun SettingsMainPage(
                             colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                             modifier = Modifier.clickable(onClick = catCallbacks[index])
                         )
+                        if (index == 4) {
+                            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
+                            val goSignBadge = com.ty.gkschedule.util.CourseColors.getSettingsBadgeColor(3)
+                            ListItem(
+                                headlineContent = { Text(stringResource(R.string.go_sign_entry_title), style = MaterialTheme.typography.titleMedium) },
+                                supportingContent = { Text(stringResource(R.string.go_sign_entry_desc), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                                leadingContent = {
+                                    Surface(modifier = Modifier.size(40.dp), shape = MaterialTheme.shapes.small, color = goSignBadge.container, contentColor = goSignBadge.content) {
+                                        Box(contentAlignment = Alignment.Center) { Icon(Icons.Default.OpenInNew, contentDescription = null, modifier = Modifier.size(22.dp)) }
+                                    }
+                                },
+                                trailingContent = { Icon(Icons.Default.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+                                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                                modifier = Modifier.clickable(onClick = { onOpenPage("go_sign") })
+                            )
+                        }
                         if (index < 6) {
                             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
                         }
                     }
-                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
-                    ListItem(
-                        headlineContent = { Text(stringResource(R.string.go_sign_entry_title), style = MaterialTheme.typography.titleMedium) },
-                        supportingContent = { Text(stringResource(R.string.go_sign_entry_desc), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) },
-                        leadingContent = {
-                            val badgeColor = com.ty.gkschedule.util.CourseColors.getSettingsBadgeColor(3)
-                            Surface(modifier = Modifier.size(40.dp), shape = MaterialTheme.shapes.small, color = badgeColor.container, contentColor = badgeColor.content) {
-                                Box(contentAlignment = Alignment.Center) { Icon(Icons.Default.OpenInNew, contentDescription = null, modifier = Modifier.size(22.dp)) }
-                            }
-                        },
-                        trailingContent = { Icon(Icons.Default.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
-                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                        modifier = Modifier.clickable(onClick = { onOpenPage("go_sign") })
-                    )
                 }
             }
             Spacer(modifier = Modifier.height(32.dp))
