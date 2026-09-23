@@ -463,7 +463,8 @@ fun AboutDetailPage(
                     }
                 }
             },
-            blurEnabled = blurEnabled
+            // ponytail: 更新框固定纯色，不跟毛玻璃开关走半透明
+            blurEnabled = false
         )
     }
 }
