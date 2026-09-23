@@ -39,7 +39,11 @@ data class Course(
     val customStartTime: String = "",  // HH:mm
     val customEndTime: String = "",    // HH:mm
     val isManuallyEdited: Boolean = false, // 手动编辑过，同步时不会被覆盖
-    val isHidden: Boolean = false // 在课表中隐藏
+    val isHidden: Boolean = false, // 在课表中隐藏
+    // ponytail: 手动对应的超星ID——填了才显示"去签到"按钮（教务数据拿不到超星的）
+    val chaoxingClassId: Int = 0,
+    val chaoxingCourseId: Long = 0,
+    val chaoxingFid: Int = 0
 ) {
     fun endPeriod(): Int = startPeriod + periods - 1
 

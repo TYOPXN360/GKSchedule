@@ -70,6 +70,9 @@ fun CourseEditScreen(
     var isCustomTime by remember { mutableStateOf(course?.isCustomTime ?: false) }
     var customStartTime by remember { mutableStateOf(course?.customStartTime ?: "08:00") }
     var customEndTime by remember { mutableStateOf(course?.customEndTime ?: "09:00") }
+    var chaoxingClassId by remember { mutableStateOf(course?.chaoxingClassId?.takeIf { it != 0 }?.toString() ?: "") }
+    var chaoxingCourseId by remember { mutableStateOf(course?.chaoxingCourseId?.takeIf { it != 0L }?.toString() ?: "") }
+    var chaoxingFid by remember { mutableStateOf(course?.chaoxingFid?.takeIf { it != 0 }?.toString() ?: "") }
 
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showM3StartTimePicker by remember { mutableStateOf(false) }
@@ -249,11 +252,16 @@ fun CourseEditScreen(
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) { weekRangeOptions.forEach { (key, label) -> FilterChip(selected = weekRange == key || (key == "custom" && weekRange !in listOf("all", "odd", "even")), onClick = { weekRange = key }, label = { Text(label, style = MaterialTheme.typography.labelSmall) }) } }
             if (weekRange == "custom") { OutlinedTextField(value = customWeekRange, onValueChange = { customWeekRange = it }, label = { Text(stringResource(R.string.week_range_hint)) }, modifier = Modifier.fillMaxWidth(), singleLine = true) }
             OutlinedTextField(value = remark, onValueChange = { remark = it }, label = { Text(stringResource(R.string.course_remark)) }, placeholder = { Text(stringResource(R.string.course_remark_hint)) }, modifier = Modifier.fillMaxWidth(), minLines = 1)
+            Text("超星签到对接（可选）", style = MaterialTheme.typography.labelLarge)
+            Text("填好 classId / courseId / fid 后，课程详情页会多出\"去签到\"按钮，跳转 ChaoxingSignFaker", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            OutlinedTextField(value = chaoxingClassId, onValueChange = { chaoxingClassId = it }, label = { Text("超星 classId") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+            OutlinedTextField(value = chaoxingCourseId, onValueChange = { chaoxingCourseId = it }, label = { Text("超星 courseId") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+            OutlinedTextField(value = chaoxingFid, onValueChange = { chaoxingFid = it }, label = { Text("超星 fid") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
             Spacer(modifier = Modifier.height(8.dp))
             Button(onClick = {
                 val finalWeekRange = when (weekRange) { "all", "odd", "even" -> weekRange; else -> customWeekRange.ifEmpty { weekRange } }
                 val currentId = batchCourses.getOrNull(selectedTabIndex)?.id ?: course?.id ?: 0L
-                onSave(Course(id = currentId, name = name.trim(), teacher = teacher.trim(), classroom = classroom.trim(), dayOfWeek = dayOfWeek, startPeriod = startPeriod, periods = periods, colorIndex = colorIndex, weekRange = finalWeekRange, remark = remark.trim(), isCustomTime = isCustomTime, customStartTime = customStartTime, customEndTime = customEndTime, isManuallyEdited = true, isHidden = isHidden), hiddenScopeName)
+                onSave(Course(id = currentId, name = name.trim(), teacher = teacher.trim(), classroom = classroom.trim(), dayOfWeek = dayOfWeek, startPeriod = startPeriod, periods = periods, colorIndex = colorIndex, weekRange = finalWeekRange, remark = remark.trim(), isCustomTime = isCustomTime, customStartTime = customStartTime, customEndTime = customEndTime, isManuallyEdited = true, isHidden = isHidden, chaoxingClassId = chaoxingClassId.toIntOrNull() ?: 0, chaoxingCourseId = chaoxingCourseId.toLongOrNull() ?: 0, chaoxingFid = chaoxingFid.toIntOrNull() ?: 0), hiddenScopeName)
             }, modifier = Modifier.fillMaxWidth(), enabled = name.isNotBlank()) { Text(if (batchCourses.size > 1) "保存当前标签课程 (${selectedTabIndex + 1}/${batchCourses.size})" else stringResource(R.string.save)) }
         }
     if (showDeleteDialog && course != null) { com.ty.gkschedule.ui.theme.BlurAlertDialog(onDismissRequest = { showDeleteDialog = false }, blurEnabled = blurEnabled, title = { Text(stringResource(R.string.confirm_delete)) }, text = { Text(stringResource(R.string.confirm_delete_msg)) }, confirmButton = { TextButton(onClick = { onDelete(course); showDeleteDialog = false }) { Text(stringResource(R.string.delete)) } }, dismissButton = { TextButton(onClick = { showDeleteDialog = false }) { Text(stringResource(R.string.cancel)) } }) }

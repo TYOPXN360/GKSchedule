@@ -13,6 +13,10 @@
     <!-- ponytail: miuix-blur要求minSdk33，本项目31，用到的blur API在31+全可用，强制合并 -->
     <uses-sdk tools:overrideLibrary="top.yukonga.miuix.kmp.blur" />
 
+    <queries>
+        <package android:name="org.aquamarine5.brainspark.chaoxingsignfaker" />
+    </queries>
+
     <application
         android:allowBackup="true"
         android:name=".GKScheduleApp"
