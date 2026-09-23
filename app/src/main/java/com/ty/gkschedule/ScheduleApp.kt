@@ -571,12 +571,14 @@ fun ScheduleApp(
     key(startTabIndex) {
         if (showBottomBar && pagerState.currentPage != 0) {
             androidx.activity.compose.PredictiveBackHandler { progress: kotlinx.coroutines.flow.Flow<androidx.activity.BackEventCompat> ->
+                var committed = false
                 try {
                     progress.collect { }
+                    committed = true
                 } catch (e: kotlinx.coroutines.CancellationException) {
                     throw e
                 } finally {
-                    handlePageChange(0)
+                    if (committed) handlePageChange(0)
                 }
             }
         }
