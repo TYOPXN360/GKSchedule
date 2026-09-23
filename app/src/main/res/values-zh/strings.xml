@@ -275,5 +275,6 @@
     <string name="go_sign_switch_weekly_title">课表页的课程详情也显示按钮</string>
     <string name="go_sign_launch_fail">跳转失败: %s</string>
     <string name="go_sign_switch_info_title">去签到按钮怎么用</string>
+    <string name="go_sign_info_link_word">随地大小签</string>
     <string name="go_sign_switch_info_body">1. 安装并登录随地大小签（ChaoxingSignFaker）\n2. 在本页开启开关，点击\"获取课程ID\"完成课程匹配\n3. 今日页点开课程详情，点击\"去签到\"跳转对应签到页\n\n签到方式的选择与确认仍在随地大小签内完成，本应用不代签。</string>
 </resources>

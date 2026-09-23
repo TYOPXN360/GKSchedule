@@ -1084,22 +1084,23 @@ internal fun GoSignPage(
                     Column(modifier = Modifier.padding(24.dp)) {
                         Text(stringResource(R.string.go_sign_switch_info_title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                         Spacer(modifier = Modifier.height(16.dp))
-                        Text(stringResource(R.string.go_sign_switch_info_body), style = MaterialTheme.typography.bodyMedium)
-                        Spacer(modifier = Modifier.height(12.dp))
+                        val bodyText = stringResource(R.string.go_sign_switch_info_body)
+                        val linkWord = stringResource(R.string.go_sign_info_link_word)
                         Text(
-                            "https://github.com/aquamarine5/ChaoxingSignFaker",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.clickable {
-                                runCatching {
-                                    context.startActivity(
-                                        android.content.Intent(
-                                            android.content.Intent.ACTION_VIEW,
-                                            android.net.Uri.parse("https://github.com/aquamarine5/ChaoxingSignFaker")
+                            remember(bodyText, linkWord) {
+                                androidx.compose.ui.text.buildAnnotatedString {
+                                    append(bodyText)
+                                    val start = bodyText.indexOf(linkWord)
+                                    if (start >= 0) {
+                                        addLink(
+                                            androidx.compose.ui.text.LinkAnnotation.Url("https://github.com/aquamarine5/ChaoxingSignFaker"),
+                                            start,
+                                            start + linkWord.length
                                         )
-                                    )
+                                    }
                                 }
-                            }
+                            },
+                            style = MaterialTheme.typography.bodyMedium
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
