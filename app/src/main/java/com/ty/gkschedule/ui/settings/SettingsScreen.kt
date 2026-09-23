@@ -605,8 +605,9 @@ internal fun NotificationPage(
                                 backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.48f),
                                 cornerRadiusDp = 28f
                             ) {
-                                Column(modifier = Modifier.padding(24.dp)) {
-                                    Text(stringResource(R.string.reminder_live_update), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                                androidx.compose.runtime.CompositionLocalProvider(androidx.compose.material3.LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
+                                    Column(modifier = Modifier.padding(24.dp)) {
+                                        Text(stringResource(R.string.reminder_live_update), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                                     Spacer(modifier = Modifier.height(16.dp))
                                     Text(stringResource(R.string.reminder_live_update_desc), style = MaterialTheme.typography.bodyMedium)
                                     Spacer(modifier = Modifier.height(16.dp))
@@ -617,6 +618,7 @@ internal fun NotificationPage(
                             }
                         }
                     }
+                }
                     HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
                     SwitchItem(Icons.Default.Event, stringResource(R.string.reminder_exam_live_update), reminderExamLiveUpdate, onReminderExamLiveUpdateChange)
                 }
@@ -781,8 +783,9 @@ internal fun SyncPage(
                         backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.48f),
                         cornerRadiusDp = 28f
                     ) {
-                        Column(modifier = Modifier.padding(24.dp)) {
-                            Text(stringResource(R.string.token_heartbeat), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                        androidx.compose.runtime.CompositionLocalProvider(androidx.compose.material3.LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
+                            Column(modifier = Modifier.padding(24.dp)) {
+                                Text(stringResource(R.string.token_heartbeat), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(stringResource(R.string.token_heartbeat_desc), style = MaterialTheme.typography.bodyMedium)
                             Spacer(modifier = Modifier.height(16.dp))
@@ -792,6 +795,7 @@ internal fun SyncPage(
                         }
                     }
                 }
+            }
             }
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
             // showExamSchedule moved to ExamScreen
@@ -1076,29 +1080,31 @@ internal fun GoSignPage(
                 backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                 cornerRadiusDp = 28f
             ) {
-                Column(modifier = Modifier.padding(24.dp)) {
-                    Text(stringResource(R.string.go_sign_switch_info_title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(stringResource(R.string.go_sign_switch_info_body), style = MaterialTheme.typography.bodyMedium)
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        "https://github.com/aquamarine5/ChaoxingSignFaker",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.clickable {
-                            runCatching {
-                                context.startActivity(
-                                    android.content.Intent(
-                                        android.content.Intent.ACTION_VIEW,
-                                        android.net.Uri.parse("https://github.com/aquamarine5/ChaoxingSignFaker")
+                androidx.compose.runtime.CompositionLocalProvider(androidx.compose.material3.LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
+                    Column(modifier = Modifier.padding(24.dp)) {
+                        Text(stringResource(R.string.go_sign_switch_info_title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(stringResource(R.string.go_sign_switch_info_body), style = MaterialTheme.typography.bodyMedium)
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            "https://github.com/aquamarine5/ChaoxingSignFaker",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.clickable {
+                                runCatching {
+                                    context.startActivity(
+                                        android.content.Intent(
+                                            android.content.Intent.ACTION_VIEW,
+                                            android.net.Uri.parse("https://github.com/aquamarine5/ChaoxingSignFaker")
+                                        )
                                     )
-                                )
+                                }
                             }
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                            TextButton(onClick = { showSwitchInfo = false }) { Text("OK") }
                         }
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                        TextButton(onClick = { showSwitchInfo = false }) { Text("OK") }
                     }
                 }
             }
