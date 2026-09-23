@@ -71,6 +71,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     val showTimeLabel: Flow<Boolean> = settings.showTimeLabel
     val savedRealName: Flow<String> = settings.savedRealName
     val goSignEnabled: Flow<Boolean> = settings.goSignEnabled
+    val goSignFetchResult: Flow<String> = settings.goSignFetchResult
     val savedDeptName: Flow<String> = settings.savedDeptName
     val detailedSplit: Flow<Boolean> = settings.detailedSplit
     val colorEngine: Flow<Int> = settings.colorEngine
@@ -396,6 +397,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                 if (it is IllegalArgumentException) "未安装 ChaoxingSignFaker"
                 else "获取失败: ${it.message ?: "未知错误"}"
             }
+            settings.setGoSignFetchResult(msg)
             kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) { onResult(msg) }
         }
     }
@@ -403,23 +405,25 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     private suspend fun matchChaoxingCourses(cxCourses: List<ChaoxingApi.CxCourse>, fid: Int): Int {
         val local = courseDao.getAllCourses().first()
         var matched = 0
-        local.forEach { course ->
-            val target = cxCourses.find { it.name == course.name }
+        local.distinctBy { it.name }.forEach { representative ->
+            val target = cxCourses.find { it.name == representative.name }
                 ?: cxCourses.find {
-                    course.name.length >= 4 && (it.name.contains(course.name) || course.name.contains(it.name))
+                    representative.name.length >= 4 && (it.name.contains(representative.name) || representative.name.contains(it.name))
                 } ?: return@forEach
             matched++
-            if (course.chaoxingClassId != target.classId ||
-                course.chaoxingCourseId != target.courseId ||
-                course.chaoxingFid != fid
-            ) {
-                courseDao.updateCourse(
-                    course.copy(
-                        chaoxingClassId = target.classId,
-                        chaoxingCourseId = target.courseId,
-                        chaoxingFid = fid
+            local.filter { it.name == representative.name }.forEach { row ->
+                if (row.chaoxingClassId != target.classId ||
+                    row.chaoxingCourseId != target.courseId ||
+                    row.chaoxingFid != fid
+                ) {
+                    courseDao.updateCourse(
+                        row.copy(
+                            chaoxingClassId = target.classId,
+                            chaoxingCourseId = target.courseId,
+                            chaoxingFid = fid
+                        )
                     )
-                )
+                }
             }
         }
         return matched

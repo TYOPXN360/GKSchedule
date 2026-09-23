@@ -1050,13 +1050,13 @@ internal fun GoSignPage(
     goSignEnabled: Boolean,
     onGoSignEnabledChange: (Boolean) -> Unit,
     courses: List<com.ty.gkschedule.data.Course>,
+    fetchResult: String?,
     onFetchChaoxingCourses: ((String) -> Unit) -> Unit,
     onBack: () -> Unit,
     blurEnabled: Boolean = true
 ) {
     var fetching by remember { mutableStateOf(false) }
-    var fetchResult by remember { mutableStateOf<String?>(null) }
-    val matched = remember(courses) { courses.filter { it.chaoxingCourseId > 0L }.sortedBy { it.name } }
+    val matched = remember(courses) { courses.filter { it.chaoxingCourseId > 0L }.distinctBy { it.name }.sortedBy { it.name } }
 
     SubPage(title = "去签到", onBack = onBack, blurEnabled = blurEnabled) {
         SettingsCard {
@@ -1073,10 +1073,8 @@ internal fun GoSignPage(
                 ) {
                     if (!fetching) {
                         fetching = true
-                        fetchResult = null
-                        onFetchChaoxingCourses { msg ->
+                        onFetchChaoxingCourses {
                             fetching = false
-                            fetchResult = msg
                         }
                     }
                 }
