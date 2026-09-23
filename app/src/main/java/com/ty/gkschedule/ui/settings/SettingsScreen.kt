@@ -664,9 +664,7 @@ internal fun SyncPage(
 
     SubPage(stringResource(R.string.settings_category_sync), onBack, blurEnabled = blurEnabled) {
         SettingsCard {
-            SwitchItem(Icons.Default.PowerSettingsNew, stringResource(R.string.auto_sync_on_start), autoSyncOnStart) {
-                onAutoSyncOnStartChange(it)
-            }
+            SwitchItem(Icons.Default.PowerSettingsNew, stringResource(R.string.auto_sync_on_start), autoSyncOnStart, onAutoSyncOnStartChange)
             // ponytail: 关启动同步才展定时项——开则收起，同课表样式抽屉同款
             androidx.compose.animation.AnimatedVisibility(
                 visible = !autoSyncOnStart,
@@ -1000,15 +998,22 @@ private fun StepperItem(icon: androidx.compose.ui.graphics.vector.ImageVector, t
 }
 
 @Composable
-private fun SwitchItem(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, checked: Boolean, onChange: (Boolean) -> Unit) {
+private fun SwitchItem(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, checked: Boolean, onChange: (Boolean) -> Unit, onInfo: (() -> Unit)? = null) {
     ListItem(
         headlineContent = { Text(title) },
         leadingContent = { Icon(icon, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
         trailingContent = {
-            GKSwitch(
-                checked = checked,
-                onCheckedChange = onChange
-            )
+            androidx.compose.foundation.layout.Row(verticalAlignment = Alignment.CenterVertically) {
+                if (onInfo != null) {
+                    IconButton(onClick = onInfo) {
+                        Icon(Icons.Default.Info, "Info", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+                GKSwitch(
+                    checked = checked,
+                    onCheckedChange = onChange
+                )
+            }
         },
         colors = ListItemDefaults.colors(containerColor = Color.Transparent)
     )
@@ -1058,12 +1063,57 @@ internal fun GoSignPage(
     blurEnabled: Boolean = true
 ) {
     var fetching by remember { mutableStateOf(false) }
+    var showSwitchInfo by remember { mutableStateOf(false) }
     val context = androidx.compose.ui.platform.LocalContext.current
     val matched = remember(courses) { courses.filter { it.chaoxingCourseId > 0L }.distinctBy { it.name }.sortedBy { it.name } }
 
+    if (showSwitchInfo) {
+        androidx.compose.ui.window.Dialog(onDismissRequest = { showSwitchInfo = false }) {
+            com.ty.gkschedule.ui.theme.BlurCard(
+                enabled = blurEnabled,
+                modifier = Modifier.fillMaxWidth(),
+                radiusDp = 36f,
+                backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.48f),
+                cornerRadiusDp = 28f
+            ) {
+                Column(modifier = Modifier.padding(24.dp)) {
+                    Text(stringResource(R.string.go_sign_switch_info_title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(stringResource(R.string.go_sign_switch_info_body), style = MaterialTheme.typography.bodyMedium)
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        "https://github.com/aquamarine5/ChaoxingSignFaker",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.clickable {
+                            runCatching {
+                                context.startActivity(
+                                    android.content.Intent(
+                                        android.content.Intent.ACTION_VIEW,
+                                        android.net.Uri.parse("https://github.com/aquamarine5/ChaoxingSignFaker")
+                                    )
+                                )
+                            }
+                        }
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                        TextButton(onClick = { showSwitchInfo = false }) { Text("OK") }
+                    }
+                }
+            }
+        }
+    }
+
     SubPage(title = stringResource(R.string.go_sign_entry_title), onBack = onBack, blurEnabled = blurEnabled) {
         SettingsCard {
-            SwitchItem(Icons.Default.OpenInNew, stringResource(R.string.go_sign_switch_title), goSignEnabled, onGoSignEnabledChange)
+            SwitchItem(
+                Icons.Default.OpenInNew,
+                stringResource(R.string.go_sign_switch_title),
+                goSignEnabled,
+                onGoSignEnabledChange,
+                onInfo = { showSwitchInfo = true }
+            )
             if (goSignEnabled) {
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
                 SwitchItem(Icons.Default.CalendarMonth, stringResource(R.string.go_sign_switch_weekly_title), goSignWeeklyEnabled, onGoSignWeeklyEnabledChange)
