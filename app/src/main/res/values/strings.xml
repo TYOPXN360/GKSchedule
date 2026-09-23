@@ -258,7 +258,7 @@
     <string name="go_sign_no_matched">No matched courses yet</string>
     <string name="go_sign_fetch_hint">Tap \"Fetch course IDs\" above to backfill</string>
     <string name="go_sign_toast_unmatched">Chaoxing IDs not matched: fetch them under Settings - Sign Link, or fill them in course edit</string>
-    <string name="go_sign_fetch_ok" formatted="false">Fetched %1$d courses, matched %2$d</string>
+    <string name="go_sign_fetch_ok" formatted="false">Success: fetched %1$d courses, matched %2$d</string>
     <string name="go_sign_not_installed">ChaoxingSignFaker not installed</string>
     <string name="go_sign_fetch_fail">Fetch failed: %s</string>
     <string name="go_sign_err_fid">Response missing fid</string>

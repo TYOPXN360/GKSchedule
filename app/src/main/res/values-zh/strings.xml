@@ -265,7 +265,7 @@
     <string name="go_sign_no_matched">暂无已匹配课程</string>
     <string name="go_sign_fetch_hint">点击上方\"获取课程ID\"后自动回填</string>
     <string name="go_sign_toast_unmatched">未匹配超星ID：请先在设置→签到联动获取课程ID，或编辑课程手动填写</string>
-    <string name="go_sign_fetch_ok" formatted="false">已获取 %1$d 门课程，匹配 %2$d 门</string>
+    <string name="go_sign_fetch_ok" formatted="false">获取成功：已获取 %1$d 门，匹配 %2$d 门</string>
     <string name="go_sign_not_installed">未安装 ChaoxingSignFaker</string>
     <string name="go_sign_fetch_fail">获取失败: %s</string>
     <string name="go_sign_err_fid">返回数据缺少 fid</string>
