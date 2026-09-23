@@ -75,13 +75,13 @@ sealed class Screen(val route: String) {
 }
 
 @Composable
-private fun navItemList(): List<Pair<Screen, Triple<androidx.compose.ui.graphics.vector.ImageVector, String, String>>> =
+private fun navItemList(hideCourses: Boolean = false): List<Pair<Screen, Triple<androidx.compose.ui.graphics.vector.ImageVector, String, String>>> =
     listOf(
         Screen.Today to Triple(Icons.Default.Today, "今日", "today"),
         Screen.Weekly to Triple(Icons.Default.DateRange, "课表", "weekly"),
         Screen.Courses to Triple(Icons.AutoMirrored.Filled.LibraryBooks, "课程", "courses"),
         Screen.About to Triple(Icons.Default.Person, "我的", "about")
-    )
+    ).filterNot { hideCourses && it.first == Screen.Courses }
 
 // 悬浮药丸底栏：展开居中底部；收起整条左滑，只剩左边半胶囊书签
 // ponytail: 单Animatable进度p驱动双graphicsLayer位移（方案B）；选中补全用静态if，无涟漪抖动
@@ -95,6 +95,7 @@ private fun FloatingPillNavBar(
     collapsed: Boolean,
     onCollapsedChange: (Boolean) -> Unit,
     visible: Boolean,
+    hideCourses: Boolean = false,
     onNavigate: (Screen) -> Unit
 ) {
     // ponytail: 一份进度+一份spring，两个视图时序物理上不错开
@@ -196,7 +197,7 @@ private fun FloatingPillNavBar(
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            navItemList().forEach { (screen, triple) ->
+            navItemList(hideCourses).forEach { (screen, triple) ->
                 var expanded by remember(screen.route) { mutableStateOf(true) }
                 val selected = currentRoute == screen.route
                 val showBoth = pillContentMode == 0
@@ -345,6 +346,7 @@ fun ScheduleApp(
     val blurEffect by viewModel.blurEffect.collectAsState(initial = false)
     val goSignEnabled by viewModel.goSignEnabled.collectAsState(initial = false)
     val goSignWeeklyEnabled by viewModel.goSignWeeklyEnabled.collectAsState(initial = false)
+    val hideCourseManage by viewModel.hideCourseManage.collectAsState(initial = false)
     val startPage by viewModel.startPage.collectAsState(initial = "today")
     val displayCourses = if (showHiddenCourses) courses else courses.filter { !it.isHidden }
     val examList by viewModel.examList.collectAsState(initial = emptyList())
@@ -439,7 +441,7 @@ fun ScheduleApp(
                         // ponytail: 关开关纯色——糊开才透明+糊底
                         containerColor = if (blurEffect) androidx.compose.ui.graphics.Color.Transparent else barBg
                     ) {
-                        navItemList().forEach { (screen, triple) ->
+                        navItemList(hideCourseManage).forEach { (screen, triple) ->
                             NavigationBarItem(
                                 icon = { Icon(triple.first, contentDescription = triple.second) },
                                 label = { Text(triple.second) },
@@ -531,7 +533,8 @@ fun ScheduleApp(
                     currentRoute = tabRoutes.getOrElse(pagerState.currentPage) { "today" }, pillContentMode = pillContentMode, screenshotHidden = screenshotHidden,
                     blurEnabled = blurEffect, backdrop = backdrop,
                     collapsed = pillCollapsed, onCollapsedChange = { viewModel.setPillCollapsed(it) },
-                    visible = showBottomBar && !overlayVisible && !(pillHidden && !pillCollapsed)
+                    visible = showBottomBar && !overlayVisible && !(pillHidden && !pillCollapsed),
+                    hideCourses = hideCourseManage
                 ) { screen ->
                     com.ty.gkschedule.util.HapticFeedback.light(navView)
                     navigateTab(screen.route)

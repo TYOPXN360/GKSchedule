@@ -376,6 +376,8 @@ internal fun AppearancePage(
     onCompactNavBarChange: (Boolean) -> Unit, onPillContentModeChange: (Int) -> Unit,
     onColorEngineChange: (Int) -> Unit, onColorGroupModeChange: (Int) -> Unit,
     onDiffColorPerWeekChange: (Boolean) -> Unit, onShowHiddenCoursesChange: (Boolean) -> Unit,
+    hideCourseManage: Boolean = false,
+    onHideCourseManageChange: (Boolean) -> Unit = {},
     onBack: () -> Unit,
     blurEnabled: Boolean = true
 ) {
@@ -394,6 +396,8 @@ internal fun AppearancePage(
                 startPage, onSelect = onStartPageChange, blurEnabled = blurEnabled)
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
             SwitchItem(Icons.Default.BlurOn, stringResource(R.string.blur_effect), blurEffect, onBlurEffectChange)
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
+            SwitchItem(Icons.Default.VisibilityOff, stringResource(R.string.hide_course_manage), hideCourseManage, onHideCourseManageChange)
         }
         Spacer(modifier = Modifier.height(16.dp))
         SectionHeader(stringResource(R.string.style_section_navbar))
@@ -470,6 +474,21 @@ internal fun ScheduleStylePage(
             StepperItem(Icons.Default.RoundedCorner, stringResource(R.string.grid_corner), gridCorner, 0, 20, onGridCornerChange)
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
             StepperItem(Icons.Default.SpaceBar, stringResource(R.string.grid_spacing), gridSpacing, 0, 8, onGridSpacingChange)
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
+            OutlinedButton(
+                onClick = {
+                    // ponytail: 与DataStore默认同步——GRID_HEIGHT/CORNER/SPACING ?: 52/8/2
+                    onGridHeightChange(52)
+                    onGridCornerChange(8)
+                    onGridSpacingChange(2)
+                },
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                shape = MaterialTheme.shapes.medium
+            ) {
+                Icon(Icons.Default.RestartAlt, null, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(stringResource(R.string.style_reset_defaults))
+            }
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
             SwitchItem(Icons.Default.ViewColumn, stringResource(R.string.merge_consecutive), mergeConsecutive, onMergeConsecutiveChange)
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))

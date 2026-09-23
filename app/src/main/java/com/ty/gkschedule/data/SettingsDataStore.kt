@@ -64,6 +64,7 @@ class SettingsDataStore(private val context: Context) {
         private val GO_SIGN_ENABLED = booleanPreferencesKey("go_sign_enabled")
         private val GO_SIGN_WEEKLY_ENABLED = booleanPreferencesKey("go_sign_weekly_enabled")
         private val GO_SIGN_FETCH_RESULT = stringPreferencesKey("go_sign_fetch_result")
+        private val HIDE_COURSE_MANAGE = booleanPreferencesKey("hide_course_manage")
 
         private val DEFAULT_START_TIMES = listOf(
             "08:30", "09:20", "10:25", "11:15",  // Morning 1-4
@@ -228,9 +229,14 @@ class SettingsDataStore(private val context: Context) {
     val goSignEnabled: Flow<Boolean> = context.dataStore.data.map { it[GO_SIGN_ENABLED] ?: false }
     val goSignWeeklyEnabled: Flow<Boolean> = context.dataStore.data.map { it[GO_SIGN_WEEKLY_ENABLED] ?: false }
     val goSignFetchResult: Flow<String> = context.dataStore.data.map { it[GO_SIGN_FETCH_RESULT] ?: "" }
+    val hideCourseManage: Flow<Boolean> = context.dataStore.data.map { it[HIDE_COURSE_MANAGE] ?: false }
 
     suspend fun setGoSignEnabled(enabled: Boolean) {
         context.dataStore.edit { it[GO_SIGN_ENABLED] = enabled }
+    }
+
+    suspend fun setHideCourseManage(hidden: Boolean) {
+        context.dataStore.edit { it[HIDE_COURSE_MANAGE] = hidden }
     }
 
     suspend fun setGoSignWeeklyEnabled(enabled: Boolean) {
