@@ -258,7 +258,7 @@ private fun CourseListItem(
                         Spacer(modifier = Modifier.width(8.dp))
                         Surface(shape = CircleShape, color = courseColor.container) {
                             Text(
-                                text = "${instanceCount}节",
+                                text = stringResource(R.string.instance_count_fmt, instanceCount),
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold,

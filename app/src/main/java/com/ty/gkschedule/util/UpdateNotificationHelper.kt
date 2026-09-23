@@ -38,13 +38,13 @@ object UpdateNotificationHelper {
         )
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notif_class)
-            .setContentTitle("发现新版本 v${info.latestVersion}")
-            .setContentText("当前版本 v${info.currentVersion}，点击查看更新详情")
-            .setStyle(NotificationCompat.BigTextStyle().bigText(info.releaseNotes.ifEmpty { "有新版本可用" }))
+            .setContentTitle(context.getString(R.string.update_found_fmt, info.latestVersion))
+            .setContentText(context.getString(R.string.update_tap_detail_fmt, info.currentVersion))
+            .setStyle(NotificationCompat.BigTextStyle().bigText(info.releaseNotes.ifEmpty { context.getString(R.string.update_available_note) }))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
             .setContentIntent(openPending)
-            .addAction(R.drawable.ic_notif_class, "更新", openPending)
+            .addAction(R.drawable.ic_notif_class, context.getString(R.string.update_action), openPending)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             context.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)
             != android.content.pm.PackageManager.PERMISSION_GRANTED
@@ -54,8 +54,8 @@ object UpdateNotificationHelper {
 
     private fun createChannel(context: Context) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
-        val channel = NotificationChannel(CHANNEL_ID, "应用更新", NotificationManager.IMPORTANCE_HIGH).apply {
-            description = "应用版本更新提醒"
+        val channel = NotificationChannel(CHANNEL_ID, context.getString(R.string.update_channel), NotificationManager.IMPORTANCE_HIGH).apply {
+            description = context.getString(R.string.update_channel_desc)
         }
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         nm.createNotificationChannel(channel)

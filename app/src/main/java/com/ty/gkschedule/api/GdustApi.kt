@@ -1,5 +1,7 @@
 package com.ty.gkschedule.api
 
+import com.ty.gkschedule.GKScheduleApp
+import com.ty.gkschedule.R
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import okhttp3.*
@@ -177,15 +179,15 @@ class GdustApi {
         val parsed = try {
             json.decodeFromString<LoginCodeResponse>(body)
         } catch (e: Exception) {
-            throw Exception("解析验证码响应失败: ${body.take(100)}")
+            throw Exception(GKScheduleApp.context.getString(R.string.api_captcha_parse_fail, body.take(100)))
         }
         
         val data = parsed.extractData()
         val isSuccess = parsed.success || parsed.ok || parsed.code == 0
         when {
             data != null -> data
-            isSuccess -> throw Exception("验证码数据为空")
-            else -> throw Exception(parsed.msg.ifEmpty { "获取验证码失败" })
+            isSuccess -> throw Exception(GKScheduleApp.context.getString(R.string.api_captcha_empty))
+            else -> throw Exception(parsed.msg.ifEmpty { GKScheduleApp.context.getString(R.string.api_captcha_fail) })
         }
     }
 
@@ -212,9 +214,9 @@ class GdustApi {
         if (isSuccess && parsed.data.isNotEmpty()) {
             parsed.data // ticket
         } else if (isSuccess) {
-            throw Exception("登录成功但未返回ticket: ${parsed.msg}")
+            throw Exception(GKScheduleApp.context.getString(R.string.api_no_ticket, parsed.msg))
         } else {
-            throw Exception(parsed.msg.ifEmpty { "登录失败" })
+            throw Exception(parsed.msg.ifEmpty { GKScheduleApp.context.getString(R.string.api_login_fail) })
         }
     }
 
@@ -250,7 +252,7 @@ class GdustApi {
             authToken = user.token
             user
         } else {
-            throw Exception(parsed.msg.ifEmpty { "获取token失败" })
+            throw Exception(parsed.msg.ifEmpty { GKScheduleApp.context.getString(R.string.api_token_fail) })
         }
     }
 
@@ -286,7 +288,7 @@ class GdustApi {
         if (parsed.success && parsed.data != null) {
             parsed.data
         } else {
-            throw Exception(parsed.msg.ifEmpty { "获取学期信息失败" })
+            throw Exception(parsed.msg.ifEmpty { GKScheduleApp.context.getString(R.string.api_term_fail) })
         }
     }
 
@@ -308,7 +310,7 @@ class GdustApi {
         if (parsed.success && parsed.data != null) {
             parsed.data.courseList
         } else {
-            throw Exception(parsed.msg.ifEmpty { "获取课程失败" })
+            throw Exception(parsed.msg.ifEmpty { GKScheduleApp.context.getString(R.string.api_course_fail) })
         }
     }
 
@@ -428,7 +430,7 @@ class GdustApi {
         if (parsed.success && parsed.data != null) {
             parsed.data
         } else {
-            throw Exception(parsed.msg.ifEmpty { "获取用户信息失败" })
+            throw Exception(parsed.msg.ifEmpty { GKScheduleApp.context.getString(R.string.api_userinfo_fail) })
         }
     }
 
@@ -509,7 +511,7 @@ class GdustApi {
         android.util.Log.d("GdustApi", "Query: status=${qResp.code}, body=${body.take(300)}")
 
         if (qResp.code != 200 || body.contains("<!DOCTYPE") || body.isEmpty()) {
-            throw Exception("教务系统认证失败，请在校园网浏览器中先登录教务系统后再试")
+            throw Exception(GKScheduleApp.context.getString(R.string.api_edu_auth_fail))
         }
         val parsed = json.decodeFromString<ExamResponse>(body)
         android.util.Log.d("GdustApi", "=== DONE: ${parsed.items?.size ?: 0} exams ===")

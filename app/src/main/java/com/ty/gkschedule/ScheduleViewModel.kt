@@ -147,7 +147,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                 savedStudentId = sid
                 _savedStudentIdFlow.value = sid
                 _loginState.value = LoginState.TokenExpired
-                _messages.emit("登录已过期，请快速登录")
+                _messages.emit(app.getString(R.string.msg_session_expired_quick))
             } else if (token.isNotEmpty() && sid.isNotEmpty()) {
                 api.setToken(token)
                 savedStudentId = sid
@@ -195,7 +195,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                     }
                     api.setToken("")
                     _loginState.value = LoginState.TokenExpired
-                    _messages.emit("登录已过期，请快速登录")
+                    _messages.emit(app.getString(R.string.msg_session_expired_quick))
                 }
             }
         }
@@ -535,7 +535,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
             }.onFailure { e ->
                 android.util.Log.e("GdustApi", "Captcha fetch failed: ${e.message}")
                 if (_loginState.value !is LoginState.LoggedOut) {
-                    _loginState.value = LoginState.Error(e.message ?: "获取验证码失败")
+                    _loginState.value = LoginState.Error(e.message ?: app.getString(R.string.msg_captcha_fetch_fail))
                 }
             }
         }
@@ -616,7 +616,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
 
             _loginState.value = LoginState.ImportResult(courses.size)
         } catch (e: Exception) {
-            _loginState.value = LoginState.Error("导入失败: ${e.message}")
+            _loginState.value = LoginState.Error(app.getString(R.string.msg_import_fail, e.message))
         }
     }
 
@@ -625,7 +625,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
         if (!api.hasToken() || savedStudentId.isEmpty()) {
             _isRefreshing.value = true
             viewModelScope.launch {
-                _messages.emit("请先登录教务系统")
+                _messages.emit(app.getString(R.string.msg_login_required))
                 _isRefreshing.value = false
             }
             return
@@ -663,7 +663,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                     }
                 }
                 if (failedWeeks > 0) {
-                    _messages.emit("同步未完成，已保留原课表")
+                    _messages.emit(app.getString(R.string.msg_sync_incomplete))
                     return@launch
                 }
                 if (remoteCourses.isNotEmpty()) {
@@ -697,16 +697,16 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                             val isHid = hiddenNames.contains(c.name)
                             courseDao.insertCourse(c.copy(isHidden = isHid))
                         }
-                        _messages.emit("已更新 ${newCourses.size} 门课程")
+                        _messages.emit(app.getString(R.string.msg_courses_updated, newCourses.size))
                     } else {
-                        _messages.emit("课程无变化")
+                        _messages.emit(app.getString(R.string.msg_no_changes))
                     }
                 }
             } catch (e: Exception) {
                 if (isTokenExpired(e.message)) {
                     handleTokenExpired()
                 } else {
-                    _messages.emit("刷新失败: ${e.message ?: "网络错误"}")
+                    _messages.emit(app.getString(R.string.msg_refresh_fail, e.message ?: app.getString(R.string.msg_net_generic)))
                 }
             } finally {
                 _isRefreshing.value = false
@@ -720,18 +720,18 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
 
     // ponytail: 后端msg是英文/代码+堆栈拼盘，前端只做关键字映射；未知原文截断200字兜底
     private fun friendlyLoginError(raw: String?): String {
-        if (raw.isNullOrBlank()) return "登录失败，请重试"
+        if (raw.isNullOrBlank()) return app.getString(R.string.msg_login_retry)
         val lower = raw.lowercase()
         return when {
             "captcha" in lower || "code" in lower && ("wrong" in lower || "invalid" in lower || "error" in lower) ||
-                "验证码" in raw -> "验证码错误，请重新输入"
-            "password" in lower || "密码" in raw -> "密码错误，请重新输入"
+                "验证码" in raw -> app.getString(R.string.msg_captcha_wrong)
+            "password" in lower || "密码" in raw -> app.getString(R.string.msg_password_wrong)
             "account" in lower || "username" in lower || "loginname" in lower ||
-                "账号" in raw || "用户不存在" in raw -> "账号错误，请检查学号"
-            "ticket" in lower -> "登录票据失效，请重试"
-            "token" in lower -> "登录已过期，请重新登录"
+                "账号" in raw || "用户不存在" in raw -> app.getString(R.string.msg_account_wrong)
+            "ticket" in lower -> app.getString(R.string.msg_ticket_invalid)
+            "token" in lower -> app.getString(R.string.msg_session_expired_relogin)
             "timeout" in lower || "connect" in lower || "network" in lower ||
-                "网络" in raw || "超时" in raw -> "网络异常，请检查网络后重试"
+                "网络" in raw || "超时" in raw -> app.getString(R.string.msg_network_error)
             else -> raw.take(200)
         }
     }
@@ -742,7 +742,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
         api.setToken("")
         settings.markTokenExpired()
         _loginState.value = LoginState.TokenExpired
-        _messages.emit("登录已过期，请快速登录")
+        _messages.emit(app.getString(R.string.msg_session_expired_quick))
     }
 
     /**
@@ -770,7 +770,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                 settings.clearTokenExpired()
                 importFromSchool(user.id)
             } catch (e: Exception) {
-                _loginState.value = LoginState.Error("登录失败: ${e.message}")
+                _loginState.value = LoginState.Error(app.getString(R.string.msg_login_fail, e.message))
             }
         }
     }
@@ -782,7 +782,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
             val sid = CredentialStore.loadStudentId(app).first()
             val pwd = CredentialStore.loadPassword(app).first()
             if (sid.isEmpty() || pwd.isEmpty()) {
-                _loginState.value = LoginState.Error("无保存的凭据，请手动登录")
+                _loginState.value = LoginState.Error(app.getString(R.string.msg_no_credentials))
                 return@launch
             }
             api.login(sid, pwd, captcha, captchaUuid)
@@ -872,7 +872,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                     // Only delete remote exams, preserve local (manually added) exams
                     examDao.deleteRemoteExams()
                     examDao.insertAll(entities)
-                    _messages.emit("已获取 ${entities.size} 条考试信息")
+                    _messages.emit(app.getString(R.string.msg_exam_fetched, entities.size))
                 }.onFailure { e ->
                     val msg = e.message ?: ""
                     if (msg.contains("901") || msg.contains("认证失败") || msg.contains("未登录")) {
@@ -881,11 +881,11 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                         refreshCaptcha()
                         _showExamReloginDialog.value = true
                     } else {
-                        _messages.emit("获取考试信息失败: $msg")
+                        _messages.emit(app.getString(R.string.msg_exam_fetch_fail, msg))
                     }
                 }
             } catch (e: Exception) {
-                _messages.emit("获取考试信息失败: ${e.message}")
+                _messages.emit(app.getString(R.string.msg_exam_fetch_fail, e.message))
             } finally {
                 _examLoading.value = false
             }

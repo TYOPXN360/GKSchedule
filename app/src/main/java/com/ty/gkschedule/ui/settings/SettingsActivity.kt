@@ -199,7 +199,7 @@ class SettingsActivity : AppCompatActivity() {
                                 val json = vm.exportJson()
                                 if (json != null) {
                                     if (vm.saveJsonToDownload(json)) {
-                                        android.widget.Toast.makeText(context, "已导出到 Downloads/schedule_export.json", android.widget.Toast.LENGTH_LONG).show()
+                                        android.widget.Toast.makeText(context, context.getString(R.string.exported_json_fmt, "schedule_export.json"), android.widget.Toast.LENGTH_LONG).show()
                                     }
                                 } else {
                                     android.widget.Toast.makeText(context, context.getString(R.string.import_failed), android.widget.Toast.LENGTH_SHORT).show()
@@ -217,7 +217,7 @@ class SettingsActivity : AppCompatActivity() {
                                 val ics = vm.exportIcs()
                                 if (ics != null) {
                                     if (vm.saveIcsToDownload(ics)) {
-                                        android.widget.Toast.makeText(context, "已导出到 Downloads/schedule_export.ics", android.widget.Toast.LENGTH_LONG).show()
+                                        android.widget.Toast.makeText(context, context.getString(R.string.exported_json_fmt, "schedule_export.ics"), android.widget.Toast.LENGTH_LONG).show()
                                     }
                                 }
                             }

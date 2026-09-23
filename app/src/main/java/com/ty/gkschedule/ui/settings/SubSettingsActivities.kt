@@ -1,5 +1,6 @@
 package com.ty.gkschedule.ui.settings
 
+import com.ty.gkschedule.R
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -213,18 +214,18 @@ class SubSettingsDataActivity : SubSettingsBaseActivity() {
                 scope.launch {
                     val json = vm.exportJson()
                     if (json != null && vm.saveJsonToDownload(json)) {
-                        android.widget.Toast.makeText(context, "已导出到 Downloads/schedule_export.json", android.widget.Toast.LENGTH_LONG).show()
+                        android.widget.Toast.makeText(context, context.getString(R.string.exported_json_fmt, "schedule_export.json"), android.widget.Toast.LENGTH_LONG).show()
                     }
                 }
             },
             onImportJson = {
-                android.widget.Toast.makeText(context, "请回设置主页用导入", android.widget.Toast.LENGTH_SHORT).show()
+                android.widget.Toast.makeText(context, context.getString(R.string.import_via_home), android.widget.Toast.LENGTH_SHORT).show()
             },
             onExportIcs = {
                 scope.launch {
                     val ics = vm.exportIcs()
                     if (ics != null && vm.saveIcsToDownload(ics)) {
-                        android.widget.Toast.makeText(context, "已导出到 Downloads/schedule_export.ics", android.widget.Toast.LENGTH_LONG).show()
+                        android.widget.Toast.makeText(context, context.getString(R.string.exported_json_fmt, "schedule_export.ics"), android.widget.Toast.LENGTH_LONG).show()
                     }
                 }
             },

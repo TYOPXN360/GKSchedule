@@ -437,7 +437,7 @@ internal fun AppearancePage(
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
             SwitchItem(Icons.Default.Palette, stringResource(R.string.diff_color_per_week), diffColorPerWeek, onDiffColorPerWeekChange)
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
-            SwitchItem(Icons.Default.VisibilityOff, "显示已隐藏的课程", showHiddenCourses, onShowHiddenCoursesChange)
+            SwitchItem(Icons.Default.VisibilityOff, stringResource(R.string.show_hidden_courses_setting), showHiddenCourses, onShowHiddenCoursesChange)
         }
     }
 }

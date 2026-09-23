@@ -1,5 +1,6 @@
 package com.ty.gkschedule
 
+import com.ty.gkschedule.R
 import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.BackHandler
@@ -75,12 +76,12 @@ sealed class Screen(val route: String) {
 }
 
 @Composable
-private fun navItemList(hideCourses: Boolean = false): List<Pair<Screen, Triple<androidx.compose.ui.graphics.vector.ImageVector, String, String>>> =
+private fun navItemList(hideCourses: Boolean = false): List<Pair<Screen, Triple<androidx.compose.ui.graphics.vector.ImageVector, Int, String>>> =
     listOf(
-        Screen.Today to Triple(Icons.Default.Today, "今日", "today"),
-        Screen.Weekly to Triple(Icons.Default.DateRange, "课表", "weekly"),
-        Screen.Courses to Triple(Icons.AutoMirrored.Filled.LibraryBooks, "课程", "courses"),
-        Screen.About to Triple(Icons.Default.Person, "我的", "about")
+        Screen.Today to Triple(Icons.Default.Today, R.string.nav_today, "today"),
+        Screen.Weekly to Triple(Icons.Default.DateRange, R.string.nav_schedule, "weekly"),
+        Screen.Courses to Triple(Icons.AutoMirrored.Filled.LibraryBooks, R.string.nav_courses, "courses"),
+        Screen.About to Triple(Icons.Default.Person, R.string.nav_about, "about")
     ).filterNot { hideCourses && it.first == Screen.Courses }
 
 // 悬浮药丸底栏：展开居中底部；收起整条左滑，只剩左边半胶囊书签
@@ -222,7 +223,7 @@ private fun FloatingPillNavBar(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     // ponytail: 仅抽屉——图标常驻，文字expand/shrinkVertical展开，不推入
-                    if (visibleIcon) Icon(triple.first, contentDescription = triple.second, tint = fg, modifier = Modifier.size(iconSize))
+                    if (visibleIcon) Icon(triple.first, contentDescription = stringResource(triple.second), tint = fg, modifier = Modifier.size(iconSize))
                     androidx.compose.animation.AnimatedVisibility(
                         visible = visibleText,
                         enter = androidx.compose.animation.expandHorizontally(expandFrom = Alignment.Start) + androidx.compose.animation.fadeIn(),
@@ -230,7 +231,7 @@ private fun FloatingPillNavBar(
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             if (visibleIcon) Spacer(modifier = Modifier.width(gapW))
-                            Text(triple.second, style = textStyle, color = fg, maxLines = 1)
+                            Text(stringResource(triple.second), style = textStyle, color = fg, maxLines = 1)
                         }
                     }
                 }
@@ -249,7 +250,7 @@ private fun FloatingPillNavBar(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    Icons.Default.ChevronLeft, contentDescription = "收起",
+                    Icons.Default.ChevronLeft, contentDescription = stringResource(R.string.app_collapse),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(iconSize)
                 )
@@ -296,7 +297,7 @@ private fun FloatingPillNavBar(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
-                Icons.Default.ChevronRight, contentDescription = "展开",
+                Icons.Default.ChevronRight, contentDescription = stringResource(R.string.app_expand),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(iconSize)
             )
@@ -444,8 +445,8 @@ fun ScheduleApp(
                     ) {
                         navItemList(hideCourseManage).forEach { (screen, triple) ->
                             NavigationBarItem(
-                                icon = { Icon(triple.first, contentDescription = triple.second) },
-                                label = { Text(triple.second) },
+                                icon = { Icon(triple.first, contentDescription = stringResource(triple.second)) },
+                                label = { Text(stringResource(triple.second)) },
                                 selected = pagerState.currentPage == (tabIndexMap[screen.route] ?: 0),
                                 onClick = {
                                     com.ty.gkschedule.util.HapticFeedback.light(navView)

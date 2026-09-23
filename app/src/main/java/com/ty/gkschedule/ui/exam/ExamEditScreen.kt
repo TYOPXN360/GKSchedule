@@ -1,5 +1,7 @@
 package com.ty.gkschedule.ui.exam
 
+import com.ty.gkschedule.R
+import androidx.compose.ui.res.stringResource
 import android.content.ClipData
 import android.content.ClipboardManager
 import androidx.compose.animation.AnimatedVisibility
@@ -138,7 +140,7 @@ fun ExamEditScreen(
     Box(Modifier.fillMaxSize()) {
     Scaffold(contentWindowInsets = WindowInsets(0, 0, 0, 0), containerColor = scaffoldBg, topBar = {
         com.ty.gkschedule.ui.theme.BlurTopBar(
-            title = { Text(if (exam == null) "添加考试安排" else "编辑考试安排", fontWeight = FontWeight.Bold) },
+            title = { Text(if (exam == null) stringResource(R.string.exam_add_title) else stringResource(R.string.exam_edit_title), fontWeight = FontWeight.Bold) },
             navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") } },
             actions = { if (exam != null) { IconButton(onClick = { onDelete(exam) }) { Icon(Icons.Default.Delete, "Delete", tint = MaterialTheme.colorScheme.error) } } },
                 backdrop = backdrop,
@@ -162,15 +164,15 @@ fun ExamEditScreen(
             Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh), modifier = Modifier.fillMaxWidth().border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.25f), MaterialTheme.shapes.large), shape = MaterialTheme.shapes.large) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(modifier = Modifier.fillMaxWidth().clickable { showAiPanel = !showAiPanel }, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) { Icon(Icons.Default.AutoAwesome, null, tint = MaterialTheme.colorScheme.primary); Text("从AI中导入", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }
-                        Text(if (showAiPanel) "收起" else "展开", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) { Icon(Icons.Default.AutoAwesome, null, tint = MaterialTheme.colorScheme.primary); Text(stringResource(R.string.ai_import_section), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }
+                        Text(if (showAiPanel) stringResource(R.string.app_collapse) else stringResource(R.string.app_expand), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
                     }
                     AnimatedVisibility(visible = showAiPanel) {
                         Column(modifier = Modifier.padding(top = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                            Text("1. 复制提示词发送给 AI。直接复制包含 markdown 格式的混杂聊天记录即可。", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            Button(onClick = { clipboardManager.setPrimaryClip(ClipData.newPlainText("AI exam import prompt", examAiPrompt)); android.widget.Toast.makeText(context, "提示词已复制！", android.widget.Toast.LENGTH_SHORT).show() }, shape = MaterialTheme.shapes.medium, modifier = Modifier.fillMaxWidth()) { Icon(Icons.Default.ContentCopy, null, modifier = Modifier.size(16.dp)); Spacer(modifier = Modifier.width(8.dp)); Text("复制 AI 考务解析提示词", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold) }
-                            Text("2. 在下方贴入包含 JSON 数组代码块的聊天数据全文：", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            OutlinedTextField(value = aiClipboardInput, onValueChange = { aiClipboardInput = it; aiErrorHint = "" }, placeholder = { Text("支持贴入包含大模型寒暄文本的前后交际复合消息内容...", style = MaterialTheme.typography.bodyMedium) }, leadingIcon = { Icon(Icons.Default.DataObject, null) }, modifier = Modifier.fillMaxWidth(), minLines = 2, maxLines = 4, shape = MaterialTheme.shapes.medium)
+                            Text(stringResource(R.string.ai_step1_exam), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Button(onClick = { clipboardManager.setPrimaryClip(ClipData.newPlainText("AI exam import prompt", examAiPrompt)); android.widget.Toast.makeText(context, context.getString(R.string.ai_copied_toast), android.widget.Toast.LENGTH_SHORT).show() }, shape = MaterialTheme.shapes.medium, modifier = Modifier.fillMaxWidth()) { Icon(Icons.Default.ContentCopy, null, modifier = Modifier.size(16.dp)); Spacer(modifier = Modifier.width(8.dp)); Text(stringResource(R.string.ai_copy_exam_prompt), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold) }
+                            Text(stringResource(R.string.ai_step2_exam), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            OutlinedTextField(value = aiClipboardInput, onValueChange = { aiClipboardInput = it; aiErrorHint = "" }, placeholder = { Text(stringResource(R.string.ai_paste_hint_exam), style = MaterialTheme.typography.bodyMedium) }, leadingIcon = { Icon(Icons.Default.DataObject, null) }, modifier = Modifier.fillMaxWidth(), minLines = 2, maxLines = 4, shape = MaterialTheme.shapes.medium)
                             if (aiErrorHint.isNotEmpty()) Text(aiErrorHint, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
                             FilledTonalButton(onClick = {
                                 if (aiClipboardInput.isBlank()) return@FilledTonalButton
@@ -191,10 +193,10 @@ fun ExamEditScreen(
                                         remarkText = first.customRemark
                                         examDate = try { LocalDate.parse(first.examDate) } catch (_: Exception) { LocalDate.now() }
                                         aiErrorHint = ""; showAiPanel = false
-                                        android.widget.Toast.makeText(context, "成功录入 ${parsedExams.size} 场考试，请通过多标签切换审核！", android.widget.Toast.LENGTH_SHORT).show()
-                                    } else { aiErrorHint = "未发现有效的考务配置信息。" }
-                                } catch (e: Exception) { aiErrorHint = "考务清洗失败，请确保贴入的信息中带有标准的 [ ... ] 数组节点。" }
-                            }, shape = MaterialTheme.shapes.medium, enabled = aiClipboardInput.isNotBlank(), modifier = Modifier.fillMaxWidth()) { Text("智能清洗并解析注入", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold) }
+                                        android.widget.Toast.makeText(context, context.getString(R.string.exam_recognized_fmt, parsedExams.size), android.widget.Toast.LENGTH_SHORT).show()
+                                    } else { aiErrorHint = context.getString(R.string.ai_no_exam_node) }
+                                } catch (e: Exception) { aiErrorHint = context.getString(R.string.ai_clean_fail_exam) }
+                            }, shape = MaterialTheme.shapes.medium, enabled = aiClipboardInput.isNotBlank(), modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.ai_clean_btn), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold) }
                         }
                     }
                 }
@@ -212,19 +214,19 @@ fun ExamEditScreen(
                             selectedMethods = target.examMethod.split(",").map { it.trim() }.filter { it.isNotEmpty() }.toSet()
                             remarkText = target.customRemark
                             examDate = try { LocalDate.parse(target.examDate) } catch (_: Exception) { LocalDate.now() }
-                        }, text = { Text("考试 ${index + 1}", fontWeight = FontWeight.Bold) })
+                        }, text = { Text(stringResource(R.string.exam_tab_fmt, index + 1), fontWeight = FontWeight.Bold) })
                     }
                 }
             }
 
             // Form fields
-            OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("考试科目") }, leadingIcon = { Icon(Icons.Default.Class, null) }, modifier = Modifier.fillMaxWidth(), singleLine = true, shape = RoundedCornerShape(12.dp))
-            Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh), modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) { Row(modifier = Modifier.clickable { showM3DatePicker = true }.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Default.CalendarMonth, null, tint = MaterialTheme.colorScheme.primary); Spacer(modifier = Modifier.width(16.dp)); Column { Text("考试日期", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant); Text(examDate.format(DateTimeFormatter.ofPattern("yyyy年MM月dd日")), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium) } } }
-            Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh), modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) { Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) { Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Default.AccessTime, null, tint = MaterialTheme.colorScheme.primary); Spacer(modifier = Modifier.width(16.dp)); Text("考试时间", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold) }; Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) { OutlinedButton(onClick = { showM3StartTimePicker = true }, modifier = Modifier.weight(1f)) { Text("开始: $startTime") }; OutlinedButton(onClick = { showM3EndTimePicker = true }, modifier = Modifier.weight(1f)) { Text("结束: $endTime") } } } }
-            OutlinedTextField(value = classroom, onValueChange = { classroom = it }, label = { Text("考场 / 教室") }, leadingIcon = { Icon(Icons.Default.Room, null) }, modifier = Modifier.fillMaxWidth(), singleLine = true, shape = RoundedCornerShape(12.dp))
-            OutlinedTextField(value = teacher, onValueChange = { teacher = it }, label = { Text("监考教师 (选填)") }, leadingIcon = { Icon(Icons.Default.Person, null) }, modifier = Modifier.fillMaxWidth(), singleLine = true, shape = RoundedCornerShape(12.dp))
+            OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text(stringResource(R.string.exam_subject)) }, leadingIcon = { Icon(Icons.Default.Class, null) }, modifier = Modifier.fillMaxWidth(), singleLine = true, shape = RoundedCornerShape(12.dp))
+            Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh), modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) { Row(modifier = Modifier.clickable { showM3DatePicker = true }.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Default.CalendarMonth, null, tint = MaterialTheme.colorScheme.primary); Spacer(modifier = Modifier.width(16.dp)); Column { Text(stringResource(R.string.exam_date_label), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant); Text(examDate.format(DateTimeFormatter.ofPattern(stringResource(R.string.exam_date_pattern))), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium) } } }
+            Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh), modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) { Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) { Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Default.AccessTime, null, tint = MaterialTheme.colorScheme.primary); Spacer(modifier = Modifier.width(16.dp)); Text(stringResource(R.string.exam_time_label), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold) }; Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) { OutlinedButton(onClick = { showM3StartTimePicker = true }, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.exam_start_fmt, startTime)) }; OutlinedButton(onClick = { showM3EndTimePicker = true }, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.exam_end_fmt, endTime)) } } } }
+            OutlinedTextField(value = classroom, onValueChange = { classroom = it }, label = { Text(stringResource(R.string.exam_room_label)) }, leadingIcon = { Icon(Icons.Default.Room, null) }, modifier = Modifier.fillMaxWidth(), singleLine = true, shape = RoundedCornerShape(12.dp))
+            OutlinedTextField(value = teacher, onValueChange = { teacher = it }, label = { Text(stringResource(R.string.exam_invigilator_label)) }, leadingIcon = { Icon(Icons.Default.Person, null) }, modifier = Modifier.fillMaxWidth(), singleLine = true, shape = RoundedCornerShape(12.dp))
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("考试方式", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.exam_method_label), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 // Paper type selection (mutually exclusive)
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     listOf("闭卷", "开卷", "开卷(半)").forEach { method ->
@@ -236,7 +238,7 @@ fun ExamEditScreen(
                                     add(method)
                                 }
                             },
-                            label = { Text(method) }
+                            label = { Text(examMethodLabel(method)) }
                         )
                     }
                 }
@@ -251,11 +253,11 @@ fun ExamEditScreen(
                                 selectedMethods + "机考"
                             }
                         },
-                        label = { Text("机考") }
+                        label = { Text(stringResource(R.string.exam_method_computer)) }
                     )
                 }
             }
-            OutlinedTextField(value = remarkText, onValueChange = { remarkText = it }, label = { Text("其他备注 (选填)") }, leadingIcon = { Icon(Icons.AutoMirrored.Filled.Assignment, null) }, modifier = Modifier.fillMaxWidth(), minLines = 1, shape = RoundedCornerShape(12.dp))
+            OutlinedTextField(value = remarkText, onValueChange = { remarkText = it }, label = { Text(stringResource(R.string.exam_remark_label)) }, leadingIcon = { Icon(Icons.AutoMirrored.Filled.Assignment, null) }, modifier = Modifier.fillMaxWidth(), minLines = 1, shape = RoundedCornerShape(12.dp))
             Spacer(modifier = Modifier.height(16.dp))
             Button(onClick = {
                 if (name.isBlank()) return@Button
@@ -264,13 +266,13 @@ fun ExamEditScreen(
                     val finalBatch = batchExams.toMutableList().apply { this[selectedTabIndex] = currentExam }
                     onSave(finalBatch)
                 } else { onSave(listOf(currentExam)) }
-            }, modifier = Modifier.fillMaxWidth().height(52.dp), shape = RoundedCornerShape(26.dp), enabled = name.isNotBlank()) { Text(if (batchExams.size > 1) "保存全部考试安排 (${batchExams.size})" else "保存安排", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }
+            }, modifier = Modifier.fillMaxWidth().height(52.dp), shape = RoundedCornerShape(26.dp), enabled = name.isNotBlank()) { Text(if (batchExams.size > 1) stringResource(R.string.save_all_exams_fmt, batchExams.size) else stringResource(R.string.save_arrangement), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }
             Spacer(modifier = Modifier.height(24.dp))
         }
     }
 
-    if (showM3DatePicker) { val initialEpochMillis = remember(examDate) { examDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli() }; val datePickerState = rememberDatePickerState(initialSelectedDateMillis = initialEpochMillis); com.ty.gkschedule.ui.theme.BlurDatePickerDialog(onDismissRequest = { showM3DatePicker = false }, blurEnabled = blurEnabled, confirmButton = { TextButton(onClick = { datePickerState.selectedDateMillis?.let { millis -> examDate = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).toLocalDate() }; showM3DatePicker = false }) { Text("确定") } }, dismissButton = { TextButton(onClick = { showM3DatePicker = false }) { Text("取消") } }, content = { DatePicker(state = datePickerState, colors = DatePickerDefaults.colors(containerColor = Color.Transparent)) }) }
-    if (showM3StartTimePicker) { val startParts = startTime.split(":"); val timePickerState = rememberTimePickerState(initialHour = startParts.getOrNull(0)?.toIntOrNull() ?: 9, initialMinute = startParts.getOrNull(1)?.toIntOrNull() ?: 0, is24Hour = true); com.ty.gkschedule.ui.theme.BackdropAlertDialog(backdrop = backdrop, onDismissRequest = { showM3StartTimePicker = false }, blurEnabled = blurEnabled, confirmButton = { TextButton(onClick = { startTime = String.format("%02d:%02d", timePickerState.hour, timePickerState.minute); showM3StartTimePicker = false }) { Text("确定") } }, dismissButton = { TextButton(onClick = { showM3StartTimePicker = false }) { Text("取消") } }, title = { Text("选择开始时间", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }, text = { Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { TimePicker(state = timePickerState) } }) }
-    if (showM3EndTimePicker) { val endParts = endTime.split(":"); val timePickerState = rememberTimePickerState(initialHour = endParts.getOrNull(0)?.toIntOrNull() ?: 11, initialMinute = endParts.getOrNull(1)?.toIntOrNull() ?: 0, is24Hour = true); com.ty.gkschedule.ui.theme.BackdropAlertDialog(backdrop = backdrop, onDismissRequest = { showM3EndTimePicker = false }, blurEnabled = blurEnabled, confirmButton = { TextButton(onClick = { endTime = String.format("%02d:%02d", timePickerState.hour, timePickerState.minute); showM3EndTimePicker = false }) { Text("确定") } }, dismissButton = { TextButton(onClick = { showM3EndTimePicker = false }) { Text("取消") } }, title = { Text("选择结束时间", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }, text = { Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { TimePicker(state = timePickerState) } }) }
+    if (showM3DatePicker) { val initialEpochMillis = remember(examDate) { examDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli() }; val datePickerState = rememberDatePickerState(initialSelectedDateMillis = initialEpochMillis); com.ty.gkschedule.ui.theme.BlurDatePickerDialog(onDismissRequest = { showM3DatePicker = false }, blurEnabled = blurEnabled, confirmButton = { TextButton(onClick = { datePickerState.selectedDateMillis?.let { millis -> examDate = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).toLocalDate() }; showM3DatePicker = false }) { Text(stringResource(R.string.ok)) } }, dismissButton = { TextButton(onClick = { showM3DatePicker = false }) { Text(stringResource(R.string.cancel)) } }, content = { DatePicker(state = datePickerState, colors = DatePickerDefaults.colors(containerColor = Color.Transparent)) }) }
+    if (showM3StartTimePicker) { val startParts = startTime.split(":"); val timePickerState = rememberTimePickerState(initialHour = startParts.getOrNull(0)?.toIntOrNull() ?: 9, initialMinute = startParts.getOrNull(1)?.toIntOrNull() ?: 0, is24Hour = true); com.ty.gkschedule.ui.theme.BackdropAlertDialog(backdrop = backdrop, onDismissRequest = { showM3StartTimePicker = false }, blurEnabled = blurEnabled, confirmButton = { TextButton(onClick = { startTime = String.format("%02d:%02d", timePickerState.hour, timePickerState.minute); showM3StartTimePicker = false }) { Text(stringResource(R.string.ok)) } }, dismissButton = { TextButton(onClick = { showM3StartTimePicker = false }) { Text(stringResource(R.string.cancel)) } }, title = { Text(stringResource(R.string.pick_start_time), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }, text = { Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { TimePicker(state = timePickerState) } }) }
+    if (showM3EndTimePicker) { val endParts = endTime.split(":"); val timePickerState = rememberTimePickerState(initialHour = endParts.getOrNull(0)?.toIntOrNull() ?: 11, initialMinute = endParts.getOrNull(1)?.toIntOrNull() ?: 0, is24Hour = true); com.ty.gkschedule.ui.theme.BackdropAlertDialog(backdrop = backdrop, onDismissRequest = { showM3EndTimePicker = false }, blurEnabled = blurEnabled, confirmButton = { TextButton(onClick = { endTime = String.format("%02d:%02d", timePickerState.hour, timePickerState.minute); showM3EndTimePicker = false }) { Text(stringResource(R.string.ok)) } }, dismissButton = { TextButton(onClick = { showM3EndTimePicker = false }) { Text(stringResource(R.string.cancel)) } }, title = { Text(stringResource(R.string.pick_end_time), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }, text = { Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { TimePicker(state = timePickerState) } }) }
 }
 }

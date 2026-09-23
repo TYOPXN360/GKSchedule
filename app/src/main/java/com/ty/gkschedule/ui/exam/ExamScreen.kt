@@ -1,4 +1,6 @@
 package com.ty.gkschedule.ui.exam
+import com.ty.gkschedule.R
+import androidx.compose.ui.res.stringResource
 import com.ty.gkschedule.ui.theme.GKSwitch
 import com.ty.gkschedule.ui.theme.BlurCard
 import com.ty.gkschedule.ui.theme.BackdropDialog
@@ -116,7 +118,7 @@ fun ExamScreen(
         containerColor = scaffoldBg,
         topBar = {
             com.ty.gkschedule.ui.theme.BlurTopBar(
-                title = { Text("考试安排", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.exam_schedule_entry), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
@@ -144,7 +146,7 @@ fun ExamScreen(
                 containerColor = if (blurEnabled) androidx.compose.ui.graphics.Color.Transparent else fabBrand,
                 contentColor = if (blurEnabled) fabOnBrand else fabOnBrand
             ) {
-                Icon(Icons.Default.Add, contentDescription = "添加考试")
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.add_exam))
             }
         }
     ) { padding ->
@@ -175,7 +177,7 @@ fun ExamScreen(
                         val years = ((curStart - 2)..(curStart + 2)).map { "$it-${it + 1}" }.reversed()
                         OutlinedCard(onClick = { yearExpanded = true }, modifier = Modifier.weight(1f)) {
                             Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                                Text(examYear.ifEmpty { "学年" }, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+                                Text(examYear.ifEmpty { stringResource(R.string.exam_year_placeholder) }, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
                                 Icon(Icons.Default.ArrowDropDown, null, modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
                             }
                         }
@@ -188,14 +190,14 @@ fun ExamScreen(
                         var semExpanded by remember { mutableStateOf(false) }
                         OutlinedCard(onClick = { semExpanded = true }, modifier = Modifier.weight(1f)) {
                             Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                                Text(if (examSemester == "1") "第一学期" else "第二学期", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+                                Text(if (examSemester == "1") stringResource(R.string.semester_first) else stringResource(R.string.semester_second), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
                                 Icon(Icons.Default.ArrowDropDown, null, modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
                             }
                         }
                         Box {
                             com.ty.gkschedule.ui.theme.BlurDropdownMenu(backdrop = backdrop, expanded = semExpanded, onDismissRequest = { semExpanded = false }, blurEnabled = blurEnabled) {
-                                DropdownMenuItem(text = { Text("第一学期") }, onClick = { onSemesterChange("1"); semExpanded = false })
-                                DropdownMenuItem(text = { Text("第二学期") }, onClick = { onSemesterChange("2"); semExpanded = false })
+                                DropdownMenuItem(text = { Text(stringResource(R.string.semester_first)) }, onClick = { onSemesterChange("1"); semExpanded = false })
+                                DropdownMenuItem(text = { Text(stringResource(R.string.semester_second)) }, onClick = { onSemesterChange("2"); semExpanded = false })
                             }
                         }
                     }
@@ -204,7 +206,7 @@ fun ExamScreen(
 
                     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         Icon(Icons.Default.Info, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
-                        Text(text = "请在校园网下获取", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
+                        Text(text = stringResource(R.string.campus_network_hint), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
                         Button(
                             onClick = onRefresh,
                             enabled = !isLoading,
@@ -215,7 +217,7 @@ fun ExamScreen(
                             } else {
                                 Icon(Icons.Default.Refresh, null, modifier = Modifier.size(18.dp))
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text("获取数据", fontWeight = FontWeight.Bold)
+                                Text(stringResource(R.string.fetch_data), fontWeight = FontWeight.Bold)
                             }
                         }
                     }
@@ -227,8 +229,8 @@ fun ExamScreen(
                             Icon(Icons.Default.GridView, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                             Spacer(modifier = Modifier.width(12.dp))
                             Column {
-                                Text("以课表形式显示考试安排", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
-                                Text("开启后考试日程将作为方块平铺在大盘网格中", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f))
+                                Text(stringResource(R.string.exam_show_in_grid), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                                Text(stringResource(R.string.exam_show_in_grid_desc), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f))
                             }
                         }
                         GKSwitch(
@@ -244,15 +246,15 @@ fun ExamScreen(
                             Icon(Icons.Default.Event, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                             Spacer(modifier = Modifier.width(12.dp))
                             Column {
-                                Text("考试预览周数", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
-                                Text("今日页提前多少周显示考试", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f))
+                                Text(stringResource(R.string.exam_preview_weeks), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                                Text(stringResource(R.string.exam_preview_weeks_desc), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f))
                             }
                         }
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             IconButton(onClick = { if (examLookaheadWeeks > 1) onExamLookaheadWeeksChange(examLookaheadWeeks - 1) }, enabled = examLookaheadWeeks > 1) {
                                 Text("−", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.primary)
                             }
-                            Text("$examLookaheadWeeks 周", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                            Text(stringResource(R.string.weeks_fmt, examLookaheadWeeks), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                             IconButton(onClick = { if (examLookaheadWeeks < 20) onExamLookaheadWeeksChange(examLookaheadWeeks + 1) }, enabled = examLookaheadWeeks < 20) {
                                 Text("+", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.primary)
                             }
@@ -269,7 +271,7 @@ fun ExamScreen(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Icon(Icons.Default.School, null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
                         Spacer(modifier = Modifier.height(16.dp))
-                        Text(text = "暂无考试安排", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
+                        Text(text = stringResource(R.string.no_exams), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
                     }
                 }
             } else {
@@ -342,7 +344,7 @@ fun ExamScreen(
                                     Spacer(modifier = Modifier.height(4.dp))
                                     Text(course.classroom, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
-                                if (!isPast && daysLeft >= 0) { Spacer(modifier = Modifier.width(8.dp)); Surface(shape = CircleShape, color = if (daysLeft == 0L) MaterialTheme.colorScheme.errorContainer else examColor.container, contentColor = if (daysLeft == 0L) MaterialTheme.colorScheme.onErrorContainer else examColor.content) { Text(if (daysLeft == 0L) "今天" else "剩 ${daysLeft} 天", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)) } }
+                                if (!isPast && daysLeft >= 0) { Spacer(modifier = Modifier.width(8.dp)); Surface(shape = CircleShape, color = if (daysLeft == 0L) MaterialTheme.colorScheme.errorContainer else examColor.container, contentColor = if (daysLeft == 0L) MaterialTheme.colorScheme.onErrorContainer else examColor.content) { Text(if (daysLeft == 0L) stringResource(R.string.today_word) else stringResource(R.string.days_left_fmt, daysLeft), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)) } }
                             }
                         }
                     }
@@ -386,9 +388,9 @@ fun ExamScreen(
         ) {
             Column(modifier = Modifier.padding(vertical = 16.dp)) {
                 val dismissDialog = LocalBackdropDialogDismiss.current
-                Text("教务系统登录过期", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.onSurface)
+                Text(stringResource(R.string.edu_session_expired), style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.onSurface)
                 Spacer(modifier = Modifier.height(16.dp))
-                Text("请输入验证码重新登录", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.captcha_relogin_hint), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(modifier = Modifier.height(12.dp))
                 if (!captchaImageBase64.isNullOrEmpty()) {
                     val bitmap = remember(captchaImageBase64) {
@@ -404,11 +406,11 @@ fun ExamScreen(
                     }
                 }
                 Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(value = captcha, onValueChange = { captcha = it }, label = { Text("验证码") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+                OutlinedTextField(value = captcha, onValueChange = { captcha = it }, label = { Text(stringResource(R.string.captcha_label)) }, modifier = Modifier.fillMaxWidth(), singleLine = true)
                 Spacer(modifier = Modifier.height(16.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    TextButton(onClick = dismissDialog) { Text("取消") }
-                    TextButton(onClick = { if (captcha.isNotBlank()) { onQuickRelogin(captcha); dismissDialog() } }, enabled = captcha.isNotBlank()) { Text("登录") }
+                    TextButton(onClick = dismissDialog) { Text(stringResource(R.string.cancel)) }
+                    TextButton(onClick = { if (captcha.isNotBlank()) { onQuickRelogin(captcha); dismissDialog() } }, enabled = captcha.isNotBlank()) { Text(stringResource(R.string.login_button)) }
                 }
             }
         }
@@ -460,13 +462,13 @@ private fun ExamCard(exam: ExamEntity, examColor: CourseColors.CourseColorPair, 
                         if (isPast) {
                             Spacer(modifier = Modifier.width(6.dp))
                             Surface(shape = CircleShape, color = MaterialTheme.colorScheme.surfaceVariant) {
-                                Text("已结束", modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                Text(stringResource(R.string.status_ended), modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
                                     style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         } else if (isNow) {
                             Spacer(modifier = Modifier.width(6.dp))
                             Surface(shape = CircleShape, color = examColor.container) {
-                                Text("进行中", modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                Text(stringResource(R.string.current_course), modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
                                     style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = examColor.content)
                             }
                         }
@@ -476,13 +478,13 @@ private fun ExamCard(exam: ExamEntity, examColor: CourseColors.CourseColorPair, 
                         if (exam.examDate.isNotEmpty()) Text(exam.examDate + " " + exam.examTimeRange, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha))
                         if (exam.classroom.isNotEmpty()) { Spacer(modifier = Modifier.width(8.dp)); Text(exam.classroom, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha)) }
                     }
-                    if (exam.examMethod.isNotEmpty()) Text(exam.examMethod, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha * 0.7f))
+                    if (exam.examMethod.isNotEmpty()) Text(examMethodFullLabel(exam.examMethod), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha * 0.7f))
                 }
                 if (!isPast && !isNow && daysLeft >= 0) {
                     Spacer(modifier = Modifier.width(8.dp))
                     Surface(shape = CircleShape, color = if (daysLeft == 0L) MaterialTheme.colorScheme.errorContainer else examColor.container,
                         contentColor = if (daysLeft == 0L) MaterialTheme.colorScheme.onErrorContainer else examColor.content) {
-                        Text(if (daysLeft == 0L) "今天" else "剩 ${daysLeft} 天", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
+                        Text(if (daysLeft == 0L) stringResource(R.string.today_word) else stringResource(R.string.days_left_fmt, daysLeft), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
                     }
                 }
             }

@@ -77,7 +77,7 @@ fun AboutDetailPage(
                 title = { Text(stringResource(R.string.about_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "返回")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back_cd))
                     }
                 },
                 backdrop = backdrop,
@@ -334,7 +334,7 @@ fun AboutDetailPage(
                     Spacer(modifier = Modifier.height(12.dp))
                     Text("• SchedU", style = MaterialTheme.typography.bodyMedium)
                     Spacer(modifier = Modifier.height(4.dp))
-                    Text("• 拾光课程表", style = MaterialTheme.typography.bodyMedium)
+                    Text(stringResource(R.string.thanks_shiguang), style = MaterialTheme.typography.bodyMedium)
                     Spacer(modifier = Modifier.height(4.dp))
                     Text("• TimeFlow", style = MaterialTheme.typography.bodyMedium)
                 }
@@ -439,7 +439,7 @@ fun AboutDetailPage(
                                 context, url,
                                 "GKSchedule-v${updateInfo!!.latestVersion}.apk"
                             )
-                            android.widget.Toast.makeText(context, "已开始下载，可在通知栏查看进度", android.widget.Toast.LENGTH_SHORT).show()
+                            android.widget.Toast.makeText(context, context.getString(R.string.download_start_note), android.widget.Toast.LENGTH_SHORT).show()
                         }
                     },
                     enabled = updateInfo?.downloadUrl?.isNotEmpty() == true

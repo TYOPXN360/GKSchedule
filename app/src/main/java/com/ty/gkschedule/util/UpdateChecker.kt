@@ -1,5 +1,6 @@
 package com.ty.gkschedule.util
 
+import com.ty.gkschedule.R
 import android.app.DownloadManager
 import android.content.Context
 import android.content.Intent
@@ -110,10 +111,10 @@ object UpdateChecker {
         maxAttempts: Int = 3,
         initialDelayMs: Long = 2000L
     ): Result<UpdateInfo> {
-        var lastResult: Result<UpdateInfo> = Result.failure(IllegalStateException("未执行"))
+        var lastResult: Result<UpdateInfo> = Result.failure(IllegalStateException(context.getString(R.string.update_not_run)))
         repeat(maxAttempts) { attempt ->
             val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
-            if (cm.activeNetwork == null) return Result.failure(java.io.IOException("网络不可用"))
+            if (cm.activeNetwork == null) return Result.failure(java.io.IOException(context.getString(R.string.update_no_network)))
             lastResult = checkForUpdate(context)
             if (lastResult.isSuccess) return lastResult
             android.util.Log.w("UpdateChecker", "第${attempt + 1}次检查失败", lastResult.exceptionOrNull())
@@ -140,7 +141,7 @@ object UpdateChecker {
         val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
         val request = DownloadManager.Request(Uri.parse(url))
             .setTitle("GKSchedule v${fileName.substringAfter('v').substringBefore(".apk")}")
-            .setDescription("正在下载更新")
+            .setDescription(context.getString(R.string.update_downloading))
             .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
             .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
             .setMimeType("application/vnd.android.package-archive")

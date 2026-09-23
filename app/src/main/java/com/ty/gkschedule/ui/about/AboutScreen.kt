@@ -117,7 +117,7 @@ fun AboutScreen(
                         }
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
-                            text = savedRealName.ifEmpty { "已登录" },
+                            text = savedRealName.ifEmpty { stringResource(R.string.about_logged_in) },
                             style = MaterialTheme.typography.titleLarge,
                             color = if (isTokenExpired) MaterialTheme.colorScheme.onSurface
                                     else MaterialTheme.colorScheme.onPrimaryContainer
@@ -143,7 +143,7 @@ fun AboutScreen(
                                 ) {
                                     Icon(Icons.Default.Warning, null, modifier = Modifier.size(14.dp))
                                     Spacer(modifier = Modifier.width(4.dp))
-                                    Text(text = "登录已过期，请重新验证", style = MaterialTheme.typography.labelSmall)
+                                    Text(text = stringResource(R.string.session_reverify), style = MaterialTheme.typography.labelSmall)
                                 }
                             }
                             Spacer(modifier = Modifier.height(12.dp))
@@ -161,7 +161,7 @@ fun AboutScreen(
                             ) {
                                 Icon(Icons.AutoMirrored.Filled.Login, null, modifier = Modifier.size(18.dp))
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("重新登录")
+                                Text(stringResource(R.string.relogin_btn))
                             }
                         }
                     }
@@ -253,8 +253,8 @@ fun AboutScreen(
         Md3Card(modifier = Modifier.fillMaxWidth(), variant = Md3CardVariant.Elevated) {
             Column {
                 ListItem(
-                    headlineContent = { Text("考试安排") },
-                    supportingContent = { Text("查看考试时间和考场") },
+                    headlineContent = { Text(stringResource(R.string.exam_schedule_entry)) },
+                    supportingContent = { Text(stringResource(R.string.exam_schedule_desc)) },
                     leadingContent = { val bc = com.ty.gkschedule.util.CourseColors.getSettingsBadgeColor(3); Surface(modifier = Modifier.size(40.dp), shape = MaterialTheme.shapes.small, color = bc.container, contentColor = bc.content) { Box(contentAlignment = Alignment.Center) { Icon(Icons.Default.School, null, modifier = Modifier.size(22.dp)) } } },
                     trailingContent = { Icon(Icons.Default.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
@@ -313,9 +313,9 @@ fun QuickReloginDialog(
     ) {
         val dismissDialog = LocalBackdropDialogDismiss.current
         Column(modifier = Modifier.padding(24.dp)) {
-            Text("教务系统登录过期", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.edu_session_expired), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(16.dp))
-            Text("请输入验证码重新登录", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stringResource(R.string.captcha_relogin_hint), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(modifier = Modifier.height(12.dp))
             if (!captchaImageBase64.isNullOrEmpty()) {
                 val bitmap = remember(captchaImageBase64) {
@@ -347,7 +347,7 @@ fun QuickReloginDialog(
                 TextButton(
                     onClick = { onQuickRelogin(captcha); dismissDialog() },
                     enabled = captcha.isNotBlank()
-                ) { Text("登录") }
+                ) { Text(stringResource(R.string.login_button)) }
             }
         }
     }

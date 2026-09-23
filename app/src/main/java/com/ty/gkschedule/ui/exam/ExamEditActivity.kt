@@ -1,5 +1,6 @@
 package com.ty.gkschedule.ui.exam
 
+import com.ty.gkschedule.R
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -36,7 +37,7 @@ class ExamEditActivity : AppCompatActivity() {
                     semesterStart = semesterStart,
                     onSave = { entities ->
                         vm.saveExams(entities)
-                        android.widget.Toast.makeText(this, "成功导入 ${entities.size} 场考试！", android.widget.Toast.LENGTH_SHORT).show()
+                        android.widget.Toast.makeText(this, getString(R.string.exams_imported_fmt, entities.size), android.widget.Toast.LENGTH_SHORT).show()
                         finish()
                     },
                     onDelete = { entity ->

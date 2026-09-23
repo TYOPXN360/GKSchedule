@@ -1,5 +1,6 @@
 package com.ty.gkschedule.notification
 
+import com.ty.gkschedule.R
 import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -102,12 +103,12 @@ class ReminderReceiver : BroadcastReceiver() {
             } else {
                 progressPercent(startEpoch, endEpoch)
             }
-            val chipText = if (isCountdown) countdownChipText(startEpoch) else "$percent%"
+            val chipText = if (isCountdown) countdownChipText(context, startEpoch) else "$percent%"
             val titlePrefix = when {
-                isCountdown && itemType == "exam" -> "考试倒计时"
-                isCountdown -> "上课倒计时"
-                itemType == "exam" -> "正在考试"
-                else -> "正在上课"
+                isCountdown && itemType == "exam" -> context.getString(R.string.notif_exam_countdown)
+                isCountdown -> context.getString(R.string.notif_class_countdown)
+                itemType == "exam" -> context.getString(R.string.notif_in_exam)
+                else -> context.getString(R.string.notif_in_class)
             }
 
             // ponytail: Live smallIcon用favicon白模剪影（状态栏只取alpha），largeIcon用彩色favicon
@@ -115,8 +116,8 @@ class ReminderReceiver : BroadcastReceiver() {
                 .setLargeIcon(android.graphics.BitmapFactory.decodeResource(context.resources, com.ty.gkschedule.R.drawable.ic_notif_live_large))
                 .setShortCriticalText(chipText)
 
-            val contentText = if (isCountdown) "${countdownBodyText(startEpoch)} · ${body.ifEmpty { "即将开始" }}"
-            else "${percent}% · ${body.ifEmpty { "进行中" }}"
+            val contentText = if (isCountdown) "${countdownBodyText(context, startEpoch)} · ${body.ifEmpty { context.getString(R.string.notif_upcoming) }}"
+            else "${percent}% · ${body.ifEmpty { context.getString(R.string.notif_in_progress) }}"
             builder
                 .setContentTitle("$titlePrefix：$courseName")
                 .setContentText(contentText)
@@ -133,10 +134,10 @@ class ReminderReceiver : BroadcastReceiver() {
                 builder.setProgress(100, percent, false)
             }
         } else {
-            val titlePrefix = if (itemType == "exam") "考前提醒" else "课前提醒"
-            val fallback = if (itemType == "exam") "即将考试" else "即将上课"
+            val titlePrefix = if (itemType == "exam") context.getString(R.string.notif_exam_reminder) else context.getString(R.string.notif_class_reminder)
+            val fallback = if (itemType == "exam") context.getString(R.string.notif_about_to_exam) else context.getString(R.string.notif_about_to_class)
             val detail = body.ifEmpty { fallback }
-            val contentText = if (reminderMinutes > 0) "${reminderMinutes}分钟后 · $detail" else detail
+            val contentText = if (reminderMinutes > 0) context.getString(R.string.notif_minutes_ago, reminderMinutes, detail) else detail
             builder
                 .setSmallIcon(com.ty.gkschedule.R.drawable.ic_notif_class)
                 .setContentTitle("$titlePrefix：$courseName")
@@ -219,26 +220,26 @@ class ReminderReceiver : BroadcastReceiver() {
         "$itemType|$name|$startEpoch".hashCode()
 
     // ponytail: 倒计时chip/正文——剩余分钟，<1分钟显示秒
-    private fun countdownChipText(startEpoch: Long): String {
+    private fun countdownChipText(context: Context, startEpoch: Long): String {
         val remainMs = (startEpoch - System.currentTimeMillis()).coerceAtLeast(0L)
         val mins = (remainMs / 60000L).toInt()
-        return if (mins >= 1) "${mins}分" else "${(remainMs / 1000L).toInt()}秒"
+        return if (mins >= 1) context.getString(R.string.notif_remain_min, mins) else context.getString(R.string.notif_remain_sec, (remainMs / 1000L).toInt())
     }
 
-    private fun countdownBodyText(startEpoch: Long): String {
+    private fun countdownBodyText(context: Context, startEpoch: Long): String {
         val remainMs = (startEpoch - System.currentTimeMillis()).coerceAtLeast(0L)
         val mins = (remainMs / 60000L).toInt()
-        return if (mins >= 1) "还有${mins}分钟" else "还有${(remainMs / 1000L).toInt()}秒"
+        return if (mins >= 1) context.getString(R.string.notif_remaining_min, mins) else context.getString(R.string.notif_remaining_sec, (remainMs / 1000L).toInt())
     }
 
     private fun createNotificationChannel(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                "课程提醒",
+                context.getString(R.string.notif_course_channel),
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
-                description = "课前提醒通知"
+                description = context.getString(R.string.notif_course_channel_desc)
             }
             val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             nm.createNotificationChannel(channel)

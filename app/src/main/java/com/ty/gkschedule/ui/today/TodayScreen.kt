@@ -223,9 +223,9 @@ fun TodayScreen(
                 HorizontalDivider()
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.School, contentDescription = "今日考试", modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.error)
+                    Icon(Icons.Default.School, contentDescription = stringResource(R.string.today_exam_section), modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.error)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("今日考试", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(R.string.today_exam_section), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.error)
                 }
                 Spacer(modifier = Modifier.height(4.dp))
             }
@@ -266,7 +266,7 @@ fun TodayScreen(
                 Spacer(modifier = Modifier.height(8.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
-                            Icons.Default.WbSunny, contentDescription = "明日课程",
+                            Icons.Default.WbSunny, contentDescription = stringResource(R.string.tomorrow_courses),
                             modifier = Modifier.size(20.dp),
                             tint = MaterialTheme.colorScheme.primary
                         )
@@ -326,13 +326,13 @@ fun TodayScreen(
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        Icons.Default.School, contentDescription = "考试",
+                        Icons.Default.School, contentDescription = stringResource(R.string.exam_tag),
                         modifier = Modifier.size(20.dp),
                         tint = MaterialTheme.colorScheme.primary
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "近期考试",
+                        text = stringResource(R.string.recent_exams),
                         style = MaterialTheme.typography.titleMedium
                     )
                 }
@@ -447,7 +447,7 @@ private fun EmptyCard(text: String) {
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(
-                Icons.Default.Schedule, contentDescription = "暂无课程",
+                Icons.Default.Schedule, contentDescription = stringResource(R.string.no_courses),
                 modifier = Modifier.size(32.dp),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
             )
@@ -670,13 +670,13 @@ private fun ExamCard(exam: com.ty.gkschedule.data.ExamEntity, examColor: com.ty.
                         if (isPast) {
                             Spacer(modifier = Modifier.width(6.dp))
                             Surface(shape = CircleShape, color = MaterialTheme.colorScheme.surfaceVariant) {
-                                Text("已结束", modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                Text(stringResource(R.string.status_ended), modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
                                     style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         } else if (isNow) {
                             Spacer(modifier = Modifier.width(6.dp))
                             Surface(shape = CircleShape, color = examColor.container) {
-                                Text("进行中", modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                Text(stringResource(R.string.current_course), modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
                                     style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = examColor.content)
                             }
                         }
@@ -692,7 +692,7 @@ private fun ExamCard(exam: com.ty.gkschedule.data.ExamEntity, examColor: com.ty.
                     Spacer(modifier = Modifier.width(8.dp))
                     Surface(shape = CircleShape, color = if (daysLeft == 0L) MaterialTheme.colorScheme.errorContainer else examColor.container,
                         contentColor = if (daysLeft == 0L) MaterialTheme.colorScheme.onErrorContainer else examColor.content) {
-                        Text(if (daysLeft == 0L) "今天" else "剩 ${daysLeft} 天", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
+                        Text(if (daysLeft == 0L) stringResource(R.string.today_word) else stringResource(R.string.days_left_fmt, daysLeft), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
                     }
                 }
             }

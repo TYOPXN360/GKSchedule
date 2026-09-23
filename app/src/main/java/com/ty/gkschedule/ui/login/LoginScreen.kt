@@ -57,8 +57,9 @@ fun LoginScreen(
 
     val isLoading = loginState is LoginState.Loading
     val errorMessage = (loginState as? LoginState.Error)?.message
-    val successMessage = (loginState as? LoginState.Success)?.let { "登录成功: ${it.name} (${it.studentId})" }
-    val importResult = (loginState as? LoginState.ImportResult)?.let { "导入完成: ${it.count} 门课程" }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val successMessage = (loginState as? LoginState.Success)?.let { context.getString(R.string.login_success_fmt, it.name, it.studentId) }
+    val importResult = (loginState as? LoginState.ImportResult)?.let { context.getString(R.string.import_done_fmt, it.count) }
 
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
@@ -204,7 +205,7 @@ fun LoginScreen(
                             Icon(Icons.Default.Error, null, modifier = Modifier.size(18.dp),
                                 tint = MaterialTheme.colorScheme.onErrorContainer)
                             Spacer(modifier = Modifier.width(6.dp))
-                        Text("错误",
+                        Text(stringResource(R.string.step_error),
                             color = MaterialTheme.colorScheme.onErrorContainer)
                         }
                         Text(errorMessage, color = MaterialTheme.colorScheme.onErrorContainer,
@@ -223,7 +224,7 @@ fun LoginScreen(
                             Icon(Icons.Default.CheckCircle, null, modifier = Modifier.size(18.dp),
                                 tint = MaterialTheme.colorScheme.onPrimaryContainer)
                             Spacer(modifier = Modifier.width(6.dp))
-                        Text("成功",
+                        Text(stringResource(R.string.step_success),
                             color = MaterialTheme.colorScheme.onPrimaryContainer)
                         }
                         Text(successMessage, color = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -242,7 +243,7 @@ fun LoginScreen(
                             Icon(Icons.Default.School, null, modifier = Modifier.size(18.dp),
                                 tint = MaterialTheme.colorScheme.onTertiaryContainer)
                             Spacer(modifier = Modifier.width(6.dp))
-                        Text("导入",
+                        Text(stringResource(R.string.step_import),
                             color = MaterialTheme.colorScheme.onTertiaryContainer)
                         }
                         Text(importResult, color = MaterialTheme.colorScheme.onTertiaryContainer,

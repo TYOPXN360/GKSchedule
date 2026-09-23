@@ -179,15 +179,15 @@ fun CourseEditScreen(
             Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh), modifier = Modifier.fillMaxWidth().border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.25f), MaterialTheme.shapes.large), shape = MaterialTheme.shapes.large) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(modifier = Modifier.fillMaxWidth().clickable { showAiPanel = !showAiPanel }, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) { Icon(Icons.Default.AutoAwesome, null, tint = MaterialTheme.colorScheme.primary); Text("从AI中导入", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }
-                        Text(if (showAiPanel) "收起" else "展开", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) { Icon(Icons.Default.AutoAwesome, null, tint = MaterialTheme.colorScheme.primary); Text(stringResource(R.string.ai_import_section), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }
+                        Text(if (showAiPanel) stringResource(R.string.app_collapse) else stringResource(R.string.app_expand), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
                     }
                     AnimatedVisibility(visible = showAiPanel) {
                         Column(modifier = Modifier.padding(top = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                            Text("1. 复制提示词到 AI 软件。你可以直接复制包含 AI 回复全文的整条消息，系统会自动剔除杂质代码符号。", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            Button(onClick = { clipboardManager.setPrimaryClip(ClipData.newPlainText("AI course import prompt", courseAiPrompt)); android.widget.Toast.makeText(context, "提示词已复制！", android.widget.Toast.LENGTH_SHORT).show() }, shape = MaterialTheme.shapes.medium, modifier = Modifier.fillMaxWidth()) { Icon(Icons.Default.ContentCopy, null, modifier = Modifier.size(16.dp)); Spacer(modifier = Modifier.width(8.dp)); Text("复制 AI 解析提示词", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold) }
-                            Text("2. 在下方贴入包含 JSON 代码块的消息全文：", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            OutlinedTextField(value = aiClipboardInput, onValueChange = { aiClipboardInput = it; aiErrorHint = "" }, placeholder = { Text("支持包含 Markdown 标识或聊天问候语的整条消息复合文本...", style = MaterialTheme.typography.bodyMedium) }, leadingIcon = { Icon(Icons.Default.DataObject, null) }, modifier = Modifier.fillMaxWidth(), minLines = 2, maxLines = 4, shape = MaterialTheme.shapes.medium)
+                            Text(stringResource(R.string.ai_step1_course), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Button(onClick = { clipboardManager.setPrimaryClip(ClipData.newPlainText("AI course import prompt", courseAiPrompt)); android.widget.Toast.makeText(context, context.getString(R.string.ai_copied_toast), android.widget.Toast.LENGTH_SHORT).show() }, shape = MaterialTheme.shapes.medium, modifier = Modifier.fillMaxWidth()) { Icon(Icons.Default.ContentCopy, null, modifier = Modifier.size(16.dp)); Spacer(modifier = Modifier.width(8.dp)); Text(stringResource(R.string.ai_copy_prompt_btn), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold) }
+                            Text(stringResource(R.string.ai_step2_course), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            OutlinedTextField(value = aiClipboardInput, onValueChange = { aiClipboardInput = it; aiErrorHint = "" }, placeholder = { Text(stringResource(R.string.ai_paste_hint), style = MaterialTheme.typography.bodyMedium) }, leadingIcon = { Icon(Icons.Default.DataObject, null) }, modifier = Modifier.fillMaxWidth(), minLines = 2, maxLines = 4, shape = MaterialTheme.shapes.medium)
                             if (aiErrorHint.isNotEmpty()) Text(aiErrorHint, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
                             FilledTonalButton(onClick = {
                                 if (aiClipboardInput.isBlank()) return@FilledTonalButton
@@ -205,10 +205,10 @@ fun CourseEditScreen(
                                         val firstWeekRange = weekRangePreset(first.weekRange) ?: first.weekRange; if (firstWeekRange == "all" || firstWeekRange == "odd" || firstWeekRange == "even") { weekRange = firstWeekRange; customWeekRange = "" } else { weekRange = "custom"; customWeekRange = firstWeekRange }
                                         isCustomTime = first.isCustomTime; customStartTime = first.customStartTime; customEndTime = first.customEndTime; isHidden = false
                                         aiErrorHint = ""; showAiPanel = false
-                                        android.widget.Toast.makeText(context, "成功识别到 ${mappedCourses.size} 门课程，请通过多标签页进行切换核对！", android.widget.Toast.LENGTH_SHORT).show()
-                                    } else { aiErrorHint = "未在 JSON 数组中发现有效的课程节点。" }
-                                } catch (e: Exception) { aiErrorHint = "智能中转清洗失败，请确保贴入的文本内含有完整的 [ ... ] 数组闭环代码。" }
-                            }, shape = MaterialTheme.shapes.medium, enabled = aiClipboardInput.isNotBlank(), modifier = Modifier.fillMaxWidth()) { Text("智能清洗并解析注入", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold) }
+                                        android.widget.Toast.makeText(context, context.getString(R.string.ai_recognized_fmt, mappedCourses.size), android.widget.Toast.LENGTH_SHORT).show()
+                                    } else { aiErrorHint = context.getString(R.string.ai_no_node) }
+                                } catch (e: Exception) { aiErrorHint = context.getString(R.string.ai_clean_fail) }
+                            }, shape = MaterialTheme.shapes.medium, enabled = aiClipboardInput.isNotBlank(), modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.ai_clean_btn), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold) }
                         }
                     }
                 }
@@ -233,9 +233,9 @@ fun CourseEditScreen(
                             isCustomTime = target.isCustomTime; customStartTime = target.customStartTime; customEndTime = target.customEndTime
                         }, text = {
                             val target = batchCourses[index]
-                            val dayNames = listOf("一", "二", "三", "四", "五", "六", "日")
+                            val dayNames = listOf(stringResource(R.string.wd_1), stringResource(R.string.wd_2), stringResource(R.string.wd_3), stringResource(R.string.wd_4), stringResource(R.string.wd_5), stringResource(R.string.wd_6), stringResource(R.string.wd_7))
                             val dayLabel = if (target.dayOfWeek in 1..7) dayNames[target.dayOfWeek - 1] else "${target.dayOfWeek}"
-                            Text("周${dayLabel} ${target.startPeriod}-${target.endPeriod()}节", fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.tab_course_fmt, dayLabel, target.startPeriod, target.endPeriod()), fontWeight = FontWeight.Bold)
                         })
                     }
                 }
@@ -252,21 +252,21 @@ fun CourseEditScreen(
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) { weekRangeOptions.forEach { (key, label) -> FilterChip(selected = weekRange == key || (key == "custom" && weekRange !in listOf("all", "odd", "even")), onClick = { weekRange = key }, label = { Text(label, style = MaterialTheme.typography.labelSmall) }) } }
             if (weekRange == "custom") { OutlinedTextField(value = customWeekRange, onValueChange = { customWeekRange = it }, label = { Text(stringResource(R.string.week_range_hint)) }, modifier = Modifier.fillMaxWidth(), singleLine = true) }
             OutlinedTextField(value = remark, onValueChange = { remark = it }, label = { Text(stringResource(R.string.course_remark)) }, placeholder = { Text(stringResource(R.string.course_remark_hint)) }, modifier = Modifier.fillMaxWidth(), minLines = 1)
-            Text("超星签到对接（可选）", style = MaterialTheme.typography.labelLarge)
-            Text("填好 classId / courseId / fid 后，课程详情页会多出\"去签到\"按钮，跳转 ChaoxingSignFaker", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            OutlinedTextField(value = chaoxingClassId, onValueChange = { chaoxingClassId = it }, label = { Text("超星 classId") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
-            OutlinedTextField(value = chaoxingCourseId, onValueChange = { chaoxingCourseId = it }, label = { Text("超星 courseId") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
-            OutlinedTextField(value = chaoxingFid, onValueChange = { chaoxingFid = it }, label = { Text("超星 fid") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+            Text(stringResource(R.string.cx_section), style = MaterialTheme.typography.labelLarge)
+            Text(stringResource(R.string.cx_section_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            OutlinedTextField(value = chaoxingClassId, onValueChange = { chaoxingClassId = it }, label = { Text(stringResource(R.string.cx_classid_label)) }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+            OutlinedTextField(value = chaoxingCourseId, onValueChange = { chaoxingCourseId = it }, label = { Text(stringResource(R.string.cx_courseid_label)) }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+            OutlinedTextField(value = chaoxingFid, onValueChange = { chaoxingFid = it }, label = { Text(stringResource(R.string.cx_fid_label)) }, modifier = Modifier.fillMaxWidth(), singleLine = true)
             Spacer(modifier = Modifier.height(8.dp))
             Button(onClick = {
                 val finalWeekRange = when (weekRange) { "all", "odd", "even" -> weekRange; else -> customWeekRange.ifEmpty { weekRange } }
                 val currentId = batchCourses.getOrNull(selectedTabIndex)?.id ?: course?.id ?: 0L
                 onSave(Course(id = currentId, name = name.trim(), teacher = teacher.trim(), classroom = classroom.trim(), dayOfWeek = dayOfWeek, startPeriod = startPeriod, periods = periods, colorIndex = colorIndex, weekRange = finalWeekRange, remark = remark.trim(), isCustomTime = isCustomTime, customStartTime = customStartTime, customEndTime = customEndTime, isManuallyEdited = true, isHidden = isHidden, chaoxingClassId = chaoxingClassId.toIntOrNull() ?: 0, chaoxingCourseId = chaoxingCourseId.toLongOrNull() ?: 0, chaoxingFid = chaoxingFid.toIntOrNull() ?: 0), hiddenScopeName)
-            }, modifier = Modifier.fillMaxWidth(), enabled = name.isNotBlank()) { Text(if (batchCourses.size > 1) "保存当前标签课程 (${selectedTabIndex + 1}/${batchCourses.size})" else stringResource(R.string.save)) }
+            }, modifier = Modifier.fillMaxWidth(), enabled = name.isNotBlank()) { Text(if (batchCourses.size > 1) stringResource(R.string.save_tab_batch_fmt, selectedTabIndex + 1, batchCourses.size) else stringResource(R.string.save)) }
         }
     if (showDeleteDialog && course != null) { com.ty.gkschedule.ui.theme.BlurAlertDialog(onDismissRequest = { showDeleteDialog = false }, blurEnabled = blurEnabled, title = { Text(stringResource(R.string.confirm_delete)) }, text = { Text(stringResource(R.string.confirm_delete_msg)) }, confirmButton = { TextButton(onClick = { onDelete(course); showDeleteDialog = false }) { Text(stringResource(R.string.delete)) } }, dismissButton = { TextButton(onClick = { showDeleteDialog = false }) { Text(stringResource(R.string.cancel)) } }) }
-    if (showM3StartTimePicker) { val startParts = customStartTime.split(":"); val timePickerState = rememberTimePickerState(initialHour = startParts.getOrNull(0)?.toIntOrNull() ?: 8, initialMinute = startParts.getOrNull(1)?.toIntOrNull() ?: 0, is24Hour = true); com.ty.gkschedule.ui.theme.BackdropAlertDialog(backdrop = backdrop, onDismissRequest = { showM3StartTimePicker = false }, blurEnabled = blurEnabled, confirmButton = { TextButton(onClick = { customStartTime = String.format("%02d:%02d", timePickerState.hour, timePickerState.minute); showM3StartTimePicker = false }) { Text("确定") } }, dismissButton = { TextButton(onClick = { showM3StartTimePicker = false }) { Text("取消") } }, title = { Text(stringResource(R.string.custom_start_time), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }, text = { Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { TimePicker(state = timePickerState) } }) }
-    if (showM3EndTimePicker) { val endParts = customEndTime.split(":"); val timePickerState = rememberTimePickerState(initialHour = endParts.getOrNull(0)?.toIntOrNull() ?: 9, initialMinute = endParts.getOrNull(1)?.toIntOrNull() ?: 0, is24Hour = true); com.ty.gkschedule.ui.theme.BackdropAlertDialog(backdrop = backdrop, onDismissRequest = { showM3EndTimePicker = false }, blurEnabled = blurEnabled, confirmButton = { TextButton(onClick = { customEndTime = String.format("%02d:%02d", timePickerState.hour, timePickerState.minute); showM3EndTimePicker = false }) { Text("确定") } }, dismissButton = { TextButton(onClick = { showM3EndTimePicker = false }) { Text("取消") } }, title = { Text(stringResource(R.string.custom_end_time), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }, text = { Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { TimePicker(state = timePickerState) } }) }
+    if (showM3StartTimePicker) { val startParts = customStartTime.split(":"); val timePickerState = rememberTimePickerState(initialHour = startParts.getOrNull(0)?.toIntOrNull() ?: 8, initialMinute = startParts.getOrNull(1)?.toIntOrNull() ?: 0, is24Hour = true); com.ty.gkschedule.ui.theme.BackdropAlertDialog(backdrop = backdrop, onDismissRequest = { showM3StartTimePicker = false }, blurEnabled = blurEnabled, confirmButton = { TextButton(onClick = { customStartTime = String.format("%02d:%02d", timePickerState.hour, timePickerState.minute); showM3StartTimePicker = false }) { Text(stringResource(R.string.ok)) } }, dismissButton = { TextButton(onClick = { showM3StartTimePicker = false }) { Text(stringResource(R.string.cancel)) } }, title = { Text(stringResource(R.string.custom_start_time), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }, text = { Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { TimePicker(state = timePickerState) } }) }
+    if (showM3EndTimePicker) { val endParts = customEndTime.split(":"); val timePickerState = rememberTimePickerState(initialHour = endParts.getOrNull(0)?.toIntOrNull() ?: 9, initialMinute = endParts.getOrNull(1)?.toIntOrNull() ?: 0, is24Hour = true); com.ty.gkschedule.ui.theme.BackdropAlertDialog(backdrop = backdrop, onDismissRequest = { showM3EndTimePicker = false }, blurEnabled = blurEnabled, confirmButton = { TextButton(onClick = { customEndTime = String.format("%02d:%02d", timePickerState.hour, timePickerState.minute); showM3EndTimePicker = false }) { Text(stringResource(R.string.ok)) } }, dismissButton = { TextButton(onClick = { showM3EndTimePicker = false }) { Text(stringResource(R.string.cancel)) } }, title = { Text(stringResource(R.string.custom_end_time), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }, text = { Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { TimePicker(state = timePickerState) } }) }
 }
 }
 }
@@ -279,9 +279,9 @@ private fun CourseHiddenSwitch(isHidden: Boolean, onHiddenChange: (Boolean) -> U
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text("隐藏该课程", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.hide_course_switch), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
             Text(
-                "勾选后该课程的所有排课实例都不再显示在今日和课表主页中",
+                stringResource(R.string.hide_course_desc),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

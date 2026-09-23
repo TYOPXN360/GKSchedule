@@ -293,7 +293,7 @@ fun WeeklyScheduleScreen(
                                     .background(MaterialTheme.colorScheme.primary)
                                     .padding(horizontal = 4.dp, vertical = 1.dp)
                             ) {
-                                Text("今", style = MaterialTheme.typography.titleSmall,
+                                Text(stringResource(R.string.today_single), style = MaterialTheme.typography.titleSmall,
                                     color = MaterialTheme.colorScheme.onPrimary)
                             }
                         }
@@ -520,7 +520,7 @@ fun WeeklyScheduleScreen(
                                             modifier = Modifier.padding(bottom = 2.dp).clip(RoundedCornerShape(4.dp)).background(textColor.copy(alpha = 0.2f)).padding(horizontal = 4.dp, vertical = 1.dp),
                                             contentAlignment = Alignment.Center
                                         ) {
-                                            Text("考试", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = textColor, maxLines = 1)
+                                            Text(stringResource(R.string.exam_tag), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = textColor, maxLines = 1)
                                         }
                                     }
                                     val isHidden = block.item.let { it is ScheduleItem.CourseItem && it.course.isHidden }
@@ -529,7 +529,7 @@ fun WeeklyScheduleScreen(
                                             modifier = Modifier.padding(bottom = 2.dp).clip(RoundedCornerShape(4.dp)).background(textColor.copy(alpha = 0.2f)).padding(horizontal = 4.dp, vertical = 1.dp),
                                             contentAlignment = Alignment.Center
                                         ) {
-                                            Text("隐藏", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = textColor, maxLines = 1)
+                                            Text(stringResource(R.string.hidden_short), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = textColor, maxLines = 1)
                                         }
                                     }
                                     // ponytail: 地点名始终完整显示(不省略，也不因块矮被略过)——先占位，课程名再吃剩下的高度
@@ -649,11 +649,11 @@ fun WeeklyScheduleScreen(
                                 onScreenshotRestorePill()
                                 val c = android.graphics.Bitmap.createBitmap(fb, 0, cropTopPx.coerceIn(0, fb.height), fb.width, cropBottomPx.coerceIn(cropTopPx.coerceIn(0, fb.height), fb.height) - cropTopPx.coerceIn(0, fb.height))
                                 val s = com.ty.gkschedule.util.ImageExport.saveBitmapToGallery(context, c, "Pictures/Screenshots/schedule_${System.currentTimeMillis()}.png")
-                                android.widget.Toast.makeText(context, if (s) "已保存到 Pictures/Screenshots" else "保存失败", android.widget.Toast.LENGTH_SHORT).show()
+                                android.widget.Toast.makeText(context, if (s) context.getString(R.string.screenshot_saved) else context.getString(R.string.screenshot_save_fail), android.widget.Toast.LENGTH_SHORT).show()
                             } catch (e: Exception) {
                                 hideFabs = false
                                 onScreenshotRestorePill()
-                                android.widget.Toast.makeText(context, "截图失败: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
+                                android.widget.Toast.makeText(context, context.getString(R.string.screenshot_fail_fmt, e.message), android.widget.Toast.LENGTH_SHORT).show()
                             }
                         }
                     }, shape = fabShape, elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp),
@@ -786,29 +786,29 @@ fun ScheduleItemDetailSheet(item: ScheduleItem, getStartTime: (Int) -> String, g
                         modifier = Modifier.padding(end = 8.dp).clip(RoundedCornerShape(4.dp)).background(hctColors.content.copy(alpha = 0.2f)).padding(horizontal = 4.dp, vertical = 1.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("考试", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = hctColors.content, maxLines = 1)
+                        Text(stringResource(R.string.exam_tag), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = hctColors.content, maxLines = 1)
                     }
                 }
                 Text(item.name, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f, fill = false), maxLines = 2, overflow = TextOverflow.Ellipsis)
             }
             Spacer(modifier = Modifier.height(16.dp))
-            val dayNames = listOf("", "周一", "周二", "周三", "周四", "周五", "周六", "周日")
-            DetailRow("星期", dayNames.getOrElse(item.dayOfWeek) { "" })
+            val dayNames = listOf("", stringResource(R.string.mon), stringResource(R.string.tue), stringResource(R.string.wed), stringResource(R.string.thu), stringResource(R.string.fri), stringResource(R.string.sat), stringResource(R.string.sun))
+            DetailRow(stringResource(R.string.day_of_week), dayNames.getOrElse(item.dayOfWeek) { "" })
             if (item.isCustomTime) {
-                DetailRow("时间", "${item.customStartTime} - ${item.customEndTime}")
+                DetailRow(stringResource(R.string.detail_time), "${item.customStartTime} - ${item.customEndTime}")
             } else {
-                DetailRow("节次", "${item.startPeriod}-${item.endPeriod()}节")
-                DetailRow("时间", "${getStartTime(item.startPeriod)} - ${getEndTime(item.endPeriod())}")
+                DetailRow(stringResource(R.string.detail_periods), stringResource(R.string.period_range_fmt, item.startPeriod, item.endPeriod()))
+                DetailRow(stringResource(R.string.detail_time), "${getStartTime(item.startPeriod)} - ${getEndTime(item.endPeriod())}")
             }
-            if (item.teacher.isNotEmpty()) DetailRow("教师", item.teacher)
-            if (item.classroom.isNotEmpty()) DetailRow("教室", item.classroom)
-            DetailRow("周次", when (item.weekRange) {
-                 "all" -> "全部周"
-                 "odd" -> "单周"
-                 "even" -> "双周"
+            if (item.teacher.isNotEmpty()) DetailRow(stringResource(R.string.detail_teacher), item.teacher)
+            if (item.classroom.isNotEmpty()) DetailRow(stringResource(R.string.course_classroom), item.classroom)
+            DetailRow(stringResource(R.string.detail_week), when (item.weekRange) {
+                 "all" -> stringResource(R.string.all_weeks)
+                 "odd" -> stringResource(R.string.odd_weeks)
+                 "even" -> stringResource(R.string.even_weeks)
                  else -> item.weekRange
              })
-            if (cleanedRemark.isNotEmpty()) DetailRow("备注", cleanedRemark)
+            if (cleanedRemark.isNotEmpty()) DetailRow(stringResource(R.string.course_remark), cleanedRemark)
             if (onGoSign != null || onEdit != null) {
                 Spacer(modifier = Modifier.height(16.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -817,14 +817,14 @@ fun ScheduleItemDetailSheet(item: ScheduleItem, getStartTime: (Int) -> String, g
                             onClick = onGoSign,
                             modifier = Modifier.weight(1f),
                             shape = MaterialTheme.shapes.medium
-                        ) { Text("去签到") }
+                        ) { Text(stringResource(R.string.detail_go_sign)) }
                     }
                     if (onEdit != null) {
                         FilledTonalButton(
                             onClick = onEdit,
                             modifier = if (onGoSign != null) Modifier.weight(1f) else Modifier.fillMaxWidth(),
                             shape = MaterialTheme.shapes.medium
-                        ) { Text("编辑") }
+                        ) { Text(stringResource(R.string.edit_btn)) }
                     }
                 }
             }
