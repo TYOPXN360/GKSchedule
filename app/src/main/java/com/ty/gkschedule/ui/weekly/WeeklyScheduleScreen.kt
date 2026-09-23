@@ -707,7 +707,7 @@ fun WeeklyScheduleScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ScheduleItemDetailSheet(item: ScheduleItem, getStartTime: (Int) -> String, getEndTime: (Int) -> String, onDismiss: () -> Unit, onEdit: () -> Unit, colorEngine: Int = 0, colorGroupMode: Int = 0, colorIndex: Int? = null, classroomColorIndex: Int = 0, dotColor: Color? = null, currentWeek: Int = 0, diffColorPerWeek: Boolean = false, blurEnabled: Boolean = true, backdrop: top.yukonga.miuix.kmp.blur.Backdrop, onGoSign: (() -> Unit)? = null) {
+fun ScheduleItemDetailSheet(item: ScheduleItem, getStartTime: (Int) -> String, getEndTime: (Int) -> String, onDismiss: () -> Unit, onEdit: (() -> Unit)? = null, colorEngine: Int = 0, colorGroupMode: Int = 0, colorIndex: Int? = null, classroomColorIndex: Int = 0, dotColor: Color? = null, currentWeek: Int = 0, diffColorPerWeek: Boolean = false, blurEnabled: Boolean = true, backdrop: top.yukonga.miuix.kmp.blur.Backdrop, onGoSign: (() -> Unit)? = null) {
     val isDark = com.ty.gkschedule.ui.theme.LocalAppIsDark.current
     val themeHue = CourseColors.currentThemeHue()
     val hctColors = remember(item, colorEngine, colorGroupMode, colorIndex, classroomColorIndex, currentWeek, diffColorPerWeek, isDark, themeHue) {
@@ -790,25 +790,23 @@ fun ScheduleItemDetailSheet(item: ScheduleItem, getStartTime: (Int) -> String, g
                  else -> item.weekRange
              })
             if (cleanedRemark.isNotEmpty()) DetailRow("备注", cleanedRemark)
-            Spacer(modifier = Modifier.height(16.dp))
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (onGoSign != null) {
-                    FilledTonalButton(
-                        onClick = onGoSign,
-                        modifier = Modifier.weight(1f),
-                        shape = MaterialTheme.shapes.medium
-                    ) { Text("去签到") }
-                    FilledTonalButton(
-                        onClick = onEdit,
-                        modifier = Modifier.weight(1f),
-                        shape = MaterialTheme.shapes.medium
-                    ) { Text("编辑") }
-                } else {
-                    FilledTonalButton(
-                        onClick = onEdit,
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = MaterialTheme.shapes.medium
-                    ) { Text("编辑") }
+            if (onGoSign != null || onEdit != null) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (onGoSign != null) {
+                        FilledTonalButton(
+                            onClick = onGoSign,
+                            modifier = Modifier.weight(1f),
+                            shape = MaterialTheme.shapes.medium
+                        ) { Text("去签到") }
+                    }
+                    if (onEdit != null) {
+                        FilledTonalButton(
+                            onClick = onEdit,
+                            modifier = if (onGoSign != null) Modifier.weight(1f) else Modifier.fillMaxWidth(),
+                            shape = MaterialTheme.shapes.medium
+                        ) { Text("编辑") }
+                    }
                 }
             }
         }
