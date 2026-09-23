@@ -272,4 +272,6 @@
     <string name="go_sign_err_empty_courses">对方未返回任何课程</string>
     <string name="go_sign_err_empty_result">返回数据为空</string>
     <string name="go_sign_unknown">未知错误</string>
+    <string name="go_sign_switch_weekly_title">课表页的课程详情也显示按钮</string>
+    <string name="go_sign_launch_fail">跳转失败: %s</string>
 </resources>

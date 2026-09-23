@@ -71,6 +71,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     val showTimeLabel: Flow<Boolean> = settings.showTimeLabel
     val savedRealName: Flow<String> = settings.savedRealName
     val goSignEnabled: Flow<Boolean> = settings.goSignEnabled
+    val goSignWeeklyEnabled: Flow<Boolean> = settings.goSignWeeklyEnabled
     val goSignFetchResult: Flow<String> = settings.goSignFetchResult
     val savedDeptName: Flow<String> = settings.savedDeptName
     val detailedSplit: Flow<Boolean> = settings.detailedSplit
@@ -377,6 +378,10 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
 
     fun setGoSignEnabled(enabled: Boolean) {
         viewModelScope.launch { settings.setGoSignEnabled(enabled) }
+    }
+
+    fun setGoSignWeeklyEnabled(enabled: Boolean) {
+        viewModelScope.launch { settings.setGoSignWeeklyEnabled(enabled) }
     }
 
     // ponytail: 静默读 Faker 的 ContentProvider 拉课程，按名字匹配回填classId/courseId/fid

@@ -62,6 +62,7 @@ class SettingsDataStore(private val context: Context) {
         private val LAST_UPDATE_CHECK_DATE = stringPreferencesKey("last_update_check_date")
         private val SCHEDULE_ADJUSTMENTS = stringPreferencesKey("schedule_adjustments")
         private val GO_SIGN_ENABLED = booleanPreferencesKey("go_sign_enabled")
+        private val GO_SIGN_WEEKLY_ENABLED = booleanPreferencesKey("go_sign_weekly_enabled")
         private val GO_SIGN_FETCH_RESULT = stringPreferencesKey("go_sign_fetch_result")
 
         private val DEFAULT_START_TIMES = listOf(
@@ -225,10 +226,15 @@ class SettingsDataStore(private val context: Context) {
 
     // === 去签到（ChaoxingSignFaker 跳转） ===
     val goSignEnabled: Flow<Boolean> = context.dataStore.data.map { it[GO_SIGN_ENABLED] ?: false }
+    val goSignWeeklyEnabled: Flow<Boolean> = context.dataStore.data.map { it[GO_SIGN_WEEKLY_ENABLED] ?: false }
     val goSignFetchResult: Flow<String> = context.dataStore.data.map { it[GO_SIGN_FETCH_RESULT] ?: "" }
 
     suspend fun setGoSignEnabled(enabled: Boolean) {
         context.dataStore.edit { it[GO_SIGN_ENABLED] = enabled }
+    }
+
+    suspend fun setGoSignWeeklyEnabled(enabled: Boolean) {
+        context.dataStore.edit { it[GO_SIGN_WEEKLY_ENABLED] = enabled }
     }
 
     suspend fun setGoSignFetchResult(result: String) {

@@ -402,24 +402,7 @@ fun TodayScreen(
             blurEnabled = blurEnabled,
              backdrop = backdrop,
             onGoSign = if (!goSignEnabled) null else fun() {
-                if (course.chaoxingClassId <= 0 || course.chaoxingCourseId <= 0L || course.chaoxingFid <= 0) {
-                    android.widget.Toast.makeText(context, unmatchedTip, android.widget.Toast.LENGTH_SHORT).show()
-                } else {
-                    val signIntent = android.content.Intent("org.aquamarine5.brainspark.chaoxingsignfaker.action.OPEN_SIGN").apply {
-                        setPackage("org.aquamarine5.brainspark.chaoxingsignfaker")
-                        putExtra("classId", course.chaoxingClassId)
-                        putExtra("courseId", course.chaoxingCourseId)
-                        putExtra("fid", course.chaoxingFid)
-                        putExtra("courseName", course.name)
-                    }
-                    runCatching { context.startActivity(signIntent) }.onFailure {
-                        android.widget.Toast.makeText(
-                            context,
-                            if (it is android.content.ActivityNotFoundException) "未安装 ChaoxingSignFaker" else "跳转失败: ${it.message}",
-                            android.widget.Toast.LENGTH_SHORT
-                        ).show()
-                    }
-                }
+                com.ty.gkschedule.api.ChaoxingApi.goSignOrToast(context, course, unmatchedTip)
             }
         )
     }
