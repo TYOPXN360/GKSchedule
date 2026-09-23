@@ -254,7 +254,7 @@
     <string name="refreshing">刷新中…</string>
     <string name="go_sign_entry_title">签到联动</string>
     <string name="go_sign_entry_desc">跳转 随地大小签 进行学习通签到</string>
-    <string name="go_sign_switch_title">课程详情显示\"去签到\"按钮</string>
+    <string name="go_sign_switch_title">今日页课程详情显示\"去签到\"按钮</string>
     <string name="go_sign_section_fetch">课程ID获取</string>
     <string name="go_sign_fetch_item">获取课程ID</string>
     <string name="go_sign_fetching">获取中…</string>
