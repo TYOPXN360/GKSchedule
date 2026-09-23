@@ -386,16 +386,17 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                 val uri = android.net.Uri.parse("content://org.aquamarine5.brainspark.chaoxingsignfaker.courses")
                 val bundle = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
                     app.contentResolver.call(uri, "getCourses", null, null)
-                } ?: throw IllegalStateException("返回数据为空")
+                } ?: throw IllegalStateException(app.getString(R.string.go_sign_err_empty_result))
                 bundle.getString("error")?.let { throw IllegalStateException(it) }
-                val json = bundle.getString("json") ?: throw IllegalStateException("返回数据为空")
+                val json = bundle.getString("json") ?: throw IllegalStateException(app.getString(R.string.go_sign_err_empty_result))
                 val (fid, courses) = ChaoxingApi.parseFetchResult(json)
-                if (fid <= 0) throw IllegalStateException("返回数据缺少 fid")
-                if (courses.isEmpty()) throw IllegalStateException("对方未返回任何课程")
-                "已获取 ${courses.size} 门课程，匹配 ${matchChaoxingCourses(courses, fid)} 门"
+                if (fid <= 0) throw IllegalStateException(app.getString(R.string.go_sign_err_fid))
+                if (courses.isEmpty()) throw IllegalStateException(app.getString(R.string.go_sign_err_empty_courses))
+                val count = matchChaoxingCourses(courses, fid)
+                app.getString(R.string.go_sign_fetch_ok, courses.size, count)
             }.getOrElse {
-                if (it is IllegalArgumentException) "未安装 ChaoxingSignFaker"
-                else "获取失败: ${it.message ?: "未知错误"}"
+                if (it is IllegalArgumentException) app.getString(R.string.go_sign_not_installed)
+                else app.getString(R.string.go_sign_fetch_fail, it.message ?: app.getString(R.string.go_sign_unknown))
             }
             settings.setGoSignFetchResult(msg)
             kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) { onResult(msg) }

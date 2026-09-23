@@ -252,4 +252,24 @@
     <string name="pull_to_refresh">下拉刷新</string>
     <string name="release_to_refresh">松开刷新</string>
     <string name="refreshing">刷新中…</string>
+    <string name="go_sign_entry_title">签到联动</string>
+    <string name="go_sign_entry_desc">跳转 随地大小签 进行学习通签到</string>
+    <string name="go_sign_switch_title">课程详情显示\"去签到\"按钮</string>
+    <string name="go_sign_section_fetch">课程ID获取</string>
+    <string name="go_sign_fetch_item">获取课程ID</string>
+    <string name="go_sign_fetching">获取中…</string>
+    <string name="go_sign_fetch_item_desc">读取 ChaoxingSignFaker 的课程并按名称匹配</string>
+    <string name="go_sign_last_result">上次获取结果</string>
+    <string name="go_sign_never_fetched">尚未获取</string>
+    <string name="go_sign_matched_section" formatted="false">已匹配课程 (%1$d)</string>
+    <string name="go_sign_no_matched">暂无已匹配课程</string>
+    <string name="go_sign_fetch_hint">点击上方\"获取课程ID\"后自动回填</string>
+    <string name="go_sign_toast_unmatched">未匹配超星ID：请先在设置→签到联动获取课程ID，或编辑课程手动填写</string>
+    <string name="go_sign_fetch_ok" formatted="false">已获取 %1$d 门课程，匹配 %2$d 门</string>
+    <string name="go_sign_not_installed">未安装 ChaoxingSignFaker</string>
+    <string name="go_sign_fetch_fail">获取失败: %s</string>
+    <string name="go_sign_err_fid">返回数据缺少 fid</string>
+    <string name="go_sign_err_empty_courses">对方未返回任何课程</string>
+    <string name="go_sign_err_empty_result">返回数据为空</string>
+    <string name="go_sign_unknown">未知错误</string>
 </resources>
