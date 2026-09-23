@@ -122,7 +122,15 @@ fun WeeklyScheduleScreen(
     val backdrop = top.yukonga.miuix.kmp.blur.rememberLayerBackdrop()
     val hapticContext = androidx.compose.ui.platform.LocalContext.current
     val hapticView = androidx.compose.ui.platform.LocalView.current
-    val labelWidthDp = if (showPeriodLabel) { if (showTimeLabel) 64.dp else 36.dp } else 0.dp
+    // ponytail: 课程名显示自适应（默认开）——收窄时间列让课程块每行放得下3个字；
+    // 下限=时间文本可读宽，上限=原64dp；屏太窄时优先保时间列
+    val labelWidthBase = if (showPeriodLabel) { if (showTimeLabel) 64.dp else 36.dp } else 0.dp
+    val labelWidthDp = if (blockMultiline && showPeriodLabel && showTimeLabel) {
+        val conf = androidx.compose.ui.platform.LocalConfiguration.current
+        val floor = (34f * conf.fontScale).toInt().coerceIn(36, 64)
+        val tripleCell = (36f * conf.fontScale + 8f + 2f * gridSpacing + 4f).toInt()
+        (conf.screenWidthDp - 16 - tripleCell * 7).coerceIn(floor, 64).dp
+    } else labelWidthBase
 
     // Build unified schedule items (replaces id<0 hack)
     val scheduleItems = remember(courses, exams, showExamSchedule, semesterStart, getStartTime, getEndTime) {
