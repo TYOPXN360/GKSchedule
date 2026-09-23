@@ -16,12 +16,12 @@
 
 ### 签到联动
 
-- 与随地大小签（ChaoxingSignFaker）联动：在设置的"签到联动"子页开启开关后，今日页 / 课表页的课程详情会出现"去签到"按钮，一键跳转到随地大小签对应课程的签到页，完成学习通签到。
+- 与[随地大小签（ChaoxingSignFaker）](https://github.com/aquamarine5/ChaoxingSignFaker)联动：在设置的"签到联动"子页开启开关后，今日页 / 课表页的课程详情会出现"去签到"按钮，一键跳转到随地大小签对应课程的签到页，完成学习通签到。
 - 支持"获取课程ID"：静默读取随地大小签已登录账号的课程列表，按课程名自动匹配并回填 classId / courseId / fid，完成后提示获取与匹配的课程门数。
 - 子页展示上次获取结果（持久保存）与已匹配课程的 ID 列表，同名课程只显示一条。
 - 总开关与课表页子开关默认关闭，开启后才显示按钮和设置项。
 - 未配置 ID、未安装随地大小签或跳转失败时均有明确提示；也可在课程编辑页手动填写超星 ID 作为兜底。
-- 配套集成已提交至上游：aquamarine5/ChaoxingSignFaker#220。
+- 配套集成已提交至上游：[aquamarine5/ChaoxingSignFaker#220](https://github.com/aquamarine5/ChaoxingSignFaker/pull/220)。
 
 ### 管理课程
 
@@ -186,7 +186,7 @@ app/src/main/java/com/ty/gkschedule/
 ## 鸣谢
 
 - Jetpack Compose 与 Material Design 3
-- aquamarine5 的 ChaoxingSignFaker（随地大小签），签到联动跳转与课程数据支持
+- aquamarine5 的 [ChaoxingSignFaker（随地大小签）](https://github.com/aquamarine5/ChaoxingSignFaker)，签到联动跳转与课程数据支持
 - SchedU、拾光课程表、TimeFlow 等参考项目
 - 参与测试和反馈的同学
 
