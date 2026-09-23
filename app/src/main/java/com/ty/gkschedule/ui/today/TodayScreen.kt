@@ -563,7 +563,8 @@ private fun CourseCard(
                         Spacer(modifier = Modifier.width(6.dp))
                     }
                     // ponytail: 今日页课程名完整换行展示，不截断（卡片高度自适应）
-                    Text(course.name, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                    // ponytail: 右侧留一个字位（20dp≈16sp字宽+间隙）再换行，不顶到时间/打勾区
+                    Text(course.name, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f).padding(end = 20.dp))
                 }
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
