@@ -22,8 +22,8 @@ android {
         applicationId = "com.ty.gkschedule"
         minSdk = 31
         targetSdk = 36
-        versionCode = 18
-        versionName = "2.3.1"
+        versionCode = 19
+        versionName = "2.3.3"
     }
 
     signingConfigs {
