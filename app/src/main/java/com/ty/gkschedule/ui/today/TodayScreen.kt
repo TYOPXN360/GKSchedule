@@ -53,6 +53,8 @@ fun TodayScreen(
     applyBottomBarInset: Boolean = true,
     // ponytail: 详情Sheet糊开关（ScheduleItemDetailSheet透传）
     blurEnabled: Boolean = true,
+    // ponytail: 去签到总开关——设置页开启才显示详情页按钮
+    goSignEnabled: Boolean = false,
     onOverlayVisibilityChange: (Boolean) -> Unit = {}
 ) {
     val today = LocalDate.now()
@@ -399,9 +401,9 @@ fun TodayScreen(
             diffColorPerWeek = diffColorPerWeek,
             blurEnabled = blurEnabled,
              backdrop = backdrop,
-            onGoSign = {
+            onGoSign = if (!goSignEnabled) null else fun() {
                 if (course.chaoxingClassId <= 0 || course.chaoxingCourseId <= 0L || course.chaoxingFid <= 0) {
-                    android.widget.Toast.makeText(context, "未配置超星ID：请先编辑课程，填写 classId / courseId / fid", android.widget.Toast.LENGTH_SHORT).show()
+                    android.widget.Toast.makeText(context, "未匹配超星ID：请先在设置→去签到获取课程ID，或编辑课程手动填写", android.widget.Toast.LENGTH_SHORT).show()
                 } else {
                     val signIntent = android.content.Intent("org.aquamarine5.brainspark.chaoxingsignfaker.action.OPEN_SIGN").apply {
                         setPackage("org.aquamarine5.brainspark.chaoxingsignfaker")

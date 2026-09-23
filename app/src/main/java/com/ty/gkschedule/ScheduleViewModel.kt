@@ -9,6 +9,7 @@ import android.provider.MediaStore
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.ty.gkschedule.api.ChaoxingApi
 import com.ty.gkschedule.api.CourseImporter
 import com.ty.gkschedule.api.GdustApi
 import com.ty.gkschedule.data.Course
@@ -69,6 +70,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     val mergeConsecutive: Flow<Boolean> = settings.mergeConsecutive
     val showTimeLabel: Flow<Boolean> = settings.showTimeLabel
     val savedRealName: Flow<String> = settings.savedRealName
+    val goSignEnabled: Flow<Boolean> = settings.goSignEnabled
     val savedDeptName: Flow<String> = settings.savedDeptName
     val detailedSplit: Flow<Boolean> = settings.detailedSplit
     val colorEngine: Flow<Int> = settings.colorEngine
@@ -370,6 +372,57 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
 
     fun setAutoCheckUpdateDaily(enabled: Boolean) {
         viewModelScope.launch { settings.setAutoCheckUpdateDaily(enabled) }
+    }
+
+    fun setGoSignEnabled(enabled: Boolean) {
+        viewModelScope.launch { settings.setGoSignEnabled(enabled) }
+    }
+
+    // ponytail: 静默读 Faker 的 ContentProvider 拉课程，按名字匹配回填classId/courseId/fid
+    fun fetchChaoxingCourses(onResult: (String) -> Unit) {
+        viewModelScope.launch {
+            val msg = runCatching {
+                val uri = android.net.Uri.parse("content://org.aquamarine5.brainspark.chaoxingsignfaker.courses")
+                val bundle = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    app.contentResolver.call(uri, "getCourses", null, null)
+                } ?: throw IllegalStateException("返回数据为空")
+                bundle.getString("error")?.let { throw IllegalStateException(it) }
+                val json = bundle.getString("json") ?: throw IllegalStateException("返回数据为空")
+                val (fid, courses) = ChaoxingApi.parseFetchResult(json)
+                if (fid <= 0) throw IllegalStateException("返回数据缺少 fid")
+                if (courses.isEmpty()) throw IllegalStateException("对方未返回任何课程")
+                "已获取 ${courses.size} 门课程，匹配 ${matchChaoxingCourses(courses, fid)} 门"
+            }.getOrElse {
+                if (it is IllegalArgumentException) "未安装 ChaoxingSignFaker"
+                else "获取失败: ${it.message ?: "未知错误"}"
+            }
+            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) { onResult(msg) }
+        }
+    }
+
+    private suspend fun matchChaoxingCourses(cxCourses: List<ChaoxingApi.CxCourse>, fid: Int): Int {
+        val local = courseDao.getAllCourses().first()
+        var matched = 0
+        local.forEach { course ->
+            val target = cxCourses.find { it.name == course.name }
+                ?: cxCourses.find {
+                    course.name.length >= 4 && (it.name.contains(course.name) || course.name.contains(it.name))
+                } ?: return@forEach
+            matched++
+            if (course.chaoxingClassId != target.classId ||
+                course.chaoxingCourseId != target.courseId ||
+                course.chaoxingFid != fid
+            ) {
+                courseDao.updateCourse(
+                    course.copy(
+                        chaoxingClassId = target.classId,
+                        chaoxingCourseId = target.courseId,
+                        chaoxingFid = fid
+                    )
+                )
+            }
+        }
+        return matched
     }
 
     private suspend fun rescheduleSync() {

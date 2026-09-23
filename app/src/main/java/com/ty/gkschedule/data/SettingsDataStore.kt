@@ -61,6 +61,7 @@ class SettingsDataStore(private val context: Context) {
         private val AUTO_CHECK_UPDATE_DAILY = booleanPreferencesKey("auto_check_update_daily")
         private val LAST_UPDATE_CHECK_DATE = stringPreferencesKey("last_update_check_date")
         private val SCHEDULE_ADJUSTMENTS = stringPreferencesKey("schedule_adjustments")
+        private val GO_SIGN_ENABLED = booleanPreferencesKey("go_sign_enabled")
 
         private val DEFAULT_START_TIMES = listOf(
             "08:30", "09:20", "10:25", "11:15",  // Morning 1-4
@@ -219,5 +220,12 @@ class SettingsDataStore(private val context: Context) {
             it[CACHED_EXAM_YEAR] = year
             it[CACHED_EXAM_SEMESTER] = semester
         }
+    }
+
+    // === 去签到（ChaoxingSignFaker 跳转） ===
+    val goSignEnabled: Flow<Boolean> = context.dataStore.data.map { it[GO_SIGN_ENABLED] ?: false }
+
+    suspend fun setGoSignEnabled(enabled: Boolean) {
+        context.dataStore.edit { it[GO_SIGN_ENABLED] = enabled }
     }
 }
