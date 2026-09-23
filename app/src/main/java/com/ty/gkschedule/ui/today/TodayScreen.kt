@@ -392,7 +392,6 @@ fun TodayScreen(
             getStartTime = getStartTime,
             getEndTime = getEndTime,
             onDismiss = { detailCourse = null },
-            onEdit = { detailCourse = null; onCourseLongPress(course) },
             colorEngine = colorEngine,
             colorGroupMode = colorGroupMode,
             colorIndex = colorAssignment.colorIndex,
