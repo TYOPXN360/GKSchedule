@@ -112,6 +112,9 @@ fun SettingsScreen(
     onCompactNavBarChange: (Boolean) -> Unit = {},
     pillContentMode: Int = 0,
     onPillContentModeChange: (Int) -> Unit = {},
+    goSignEnabled: Boolean = false,
+    onGoSignEnabledChange: (Boolean) -> Unit = {},
+    onFetchChaoxingCourses: ((String) -> Unit) -> Unit = {},
     onFetchExam: () -> Unit,
     onExportJson: () -> Unit,
     onImportJson: () -> Unit,
@@ -144,7 +147,10 @@ fun SettingsScreen(
                         cls?.let { c -> context.startActivity(android.content.Intent(context, c)) }
                     },
                     onExit = { (context as? android.app.Activity)?.finish() },
-                    blurEnabled = blurEffect
+                    blurEnabled = blurEffect,
+                    goSignEnabled = goSignEnabled,
+                    onGoSignEnabledChange = onGoSignEnabledChange,
+                    onFetchChaoxingCourses = onFetchChaoxingCourses
                 )
             }
         }
@@ -156,8 +162,12 @@ fun SettingsScreen(
 @Composable
 private fun SettingsMainPage(
     onOpenPage: (String) -> Unit, onExit: () -> Unit,
-    blurEnabled: Boolean = true
+    blurEnabled: Boolean = true,
+    goSignEnabled: Boolean = false,
+    onGoSignEnabledChange: (Boolean) -> Unit = {},
+    onFetchChaoxingCourses: ((String) -> Unit) -> Unit = {}
 ) {
+    val context = LocalContext.current
     val surf = MaterialTheme.colorScheme.surface
     val surfLow = MaterialTheme.colorScheme.surfaceContainerLow
     val surfCont = MaterialTheme.colorScheme.surfaceContainer
@@ -270,6 +280,28 @@ private fun SettingsMainPage(
                         )
                         if (index < 6) {
                             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
+                        }
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            SectionHeader("去签到")
+            com.ty.gkschedule.ui.theme.Md3Card(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                variant = com.ty.gkschedule.ui.theme.Md3CardVariant.Elevated
+            ) {
+                Column {
+                    SwitchItem(Icons.Default.OpenInNew, "课程详情显示\"去签到\"按钮", goSignEnabled, onGoSignEnabledChange)
+                    if (goSignEnabled) {
+                        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
+                        SettingsItem(
+                            Icons.Default.Refresh,
+                            "获取课程ID",
+                            subtitle = "读取 ChaoxingSignFaker 的课程并按名称匹配"
+                        ) {
+                            onFetchChaoxingCourses { msg ->
+                                android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()
+                            }
                         }
                     }
                 }

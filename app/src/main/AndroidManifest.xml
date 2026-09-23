@@ -15,6 +15,7 @@
 
     <queries>
         <package android:name="org.aquamarine5.brainspark.chaoxingsignfaker" />
+        <provider android:authorities="org.aquamarine5.brainspark.chaoxingsignfaker.courses" />
     </queries>
 
     <application

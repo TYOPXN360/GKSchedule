@@ -53,6 +53,7 @@ class SettingsActivity : AppCompatActivity() {
             val language by vm.language.collectAsState(initial = "system")
             val startPage by vm.startPage.collectAsState(initial = "today")
             val blurEffect by vm.blurEffect.collectAsState(initial = false)
+            val goSignEnabled by vm.goSignEnabled.collectAsState(initial = false)
 
             // Apply language change — recreate activity when language changes
             var lastLanguage by remember { mutableStateOf(language) }
@@ -153,6 +154,9 @@ class SettingsActivity : AppCompatActivity() {
                         onCompactNavBarChange = { vm.setCompactNavBar(it) },
                         pillContentMode = pillContentMode,
                         onPillContentModeChange = { vm.setPillContentMode(it) },
+                        goSignEnabled = goSignEnabled,
+                        onGoSignEnabledChange = { vm.setGoSignEnabled(it) },
+                        onFetchChaoxingCourses = { cb -> vm.fetchChaoxingCourses(cb) },
                         onSemesterStartChange = { vm.setSemesterStart(it) },
                         onTotalWeeksChange = { vm.setTotalWeeks(it) },
                         onPeriodsPerDayChange = { vm.setPeriodsPerDay(it) },
