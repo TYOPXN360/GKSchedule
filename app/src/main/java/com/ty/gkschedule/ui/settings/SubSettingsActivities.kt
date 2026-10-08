@@ -240,7 +240,7 @@ class SubSettingsGoSignActivity : SubSettingsBaseActivity() {
         val goSignEnabled by vm.goSignEnabled.collectAsState(initial = false)
         val goSignWeeklyEnabled by vm.goSignWeeklyEnabled.collectAsState(initial = false)
         val goSignFetchResult by vm.goSignFetchResult.collectAsState(initial = "")
-        val unusedCx by vm.goSignUnusedCourses.collectAsState(initial = emptyList())
+        val unusedCx by vm.goSignUnusedCourses.collectAsState(initial = 0 to emptyList())
         val courses by vm.courses.collectAsState(initial = emptyList())
         val blurEffect by vm.blurEffect.collectAsState(initial = false)
         GoSignPage(

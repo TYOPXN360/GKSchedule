@@ -48,6 +48,17 @@ object ChaoxingApi {
         }
     }
 
+    // ponytail: 复用与 provider 相同的 JSON 结构，本地存未匹配列表
+    fun toJson(fid: Int, courses: List<CxCourse>): String =
+        JSONObject().put("fid", fid).put(
+            "courses",
+            org.json.JSONArray().apply {
+                courses.forEach {
+                    put(JSONObject().put("name", it.name).put("classId", it.classId).put("courseId", it.courseId))
+                }
+            }
+        ).toString()
+
     fun parseFetchResult(json: String): Pair<Int, List<CxCourse>> {
         val root = JSONObject(json)
         val fid = root.optInt("fid", 0)

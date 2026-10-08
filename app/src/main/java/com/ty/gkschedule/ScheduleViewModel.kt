@@ -74,8 +74,12 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     val goSignWeeklyEnabled: Flow<Boolean> = settings.goSignWeeklyEnabled
     val goSignFetchResult: Flow<String> = settings.goSignFetchResult
 
-    // 上次拉取时 Faker 侧有、课表里没匹配上的课（含其 classId/courseId），供设置页展示
-    val goSignUnusedCourses = MutableStateFlow<List<ChaoxingApi.CxCourse>>(emptyList())
+    // 上次拉取时 Faker 侧有、课表里没匹配上的课（fid 全局一份），供设置页展示；落盘，重开仍在
+    val goSignUnusedCourses: Flow<Pair<Int, List<ChaoxingApi.CxCourse>>> =
+        settings.goSignUnusedCourses.map { json ->
+            if (json.isBlank()) 0 to emptyList()
+            else runCatching { ChaoxingApi.parseFetchResult(json) }.getOrDefault(0 to emptyList())
+        }
     val hideCourseManage: Flow<Boolean> = settings.hideCourseManage
     val hideWeeklyEdit: Flow<Boolean> = settings.hideWeeklyEdit
     val savedDeptName: Flow<String> = settings.savedDeptName
@@ -411,7 +415,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                 if (fid <= 0) throw IllegalStateException(app.getString(R.string.go_sign_err_fid))
                 if (courses.isEmpty()) throw IllegalStateException(app.getString(R.string.go_sign_err_empty_courses))
                 val (n, unused) = matchChaoxingCourses(courses, fid)
-                goSignUnusedCourses.value = unused
+                settings.setGoSignUnusedCourses(ChaoxingApi.toJson(fid, unused))
                 app.getString(R.string.go_sign_fetch_ok, courses.size, n)
             }.getOrElse {
                 if (it is SecurityException) {
