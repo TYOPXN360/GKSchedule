@@ -472,7 +472,16 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
         val local = courseDao.getAllCourses().first()
         val usedCx = mutableSetOf<Int>()
         var matched = 0
-        local.distinctBy { it.name }.forEach { representative ->
+        // ponytail: 手动绑过的课先按 ID 认领对应超学通课，避免重拉后又被算成未匹配
+        val boundKeys = local.filter { it.chaoxingCourseId > 0L }
+            .map { ChaoxingApi.cxKey(it.chaoxingClassId, it.chaoxingCourseId) }.toSet()
+        cxCourses.indices.forEach { i ->
+            if (ChaoxingApi.cxKey(cxCourses[i].classId, cxCourses[i].courseId) in boundKeys) {
+                usedCx += i
+                matched++
+            }
+        }
+        local.distinctBy { it.name }.filter { it.chaoxingCourseId <= 0L }.forEach { representative ->
             val idx = cxCourses.indexOfFirst { it.name == representative.name }
                 .takeIf { it >= 0 } ?: cxCourses.indices.firstOrNull {
                     representative.name.length >= 4 &&
