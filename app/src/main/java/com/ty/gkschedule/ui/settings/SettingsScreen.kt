@@ -1086,6 +1086,7 @@ internal fun GoSignPage(
     goSignWeeklyEnabled: Boolean,
     onGoSignWeeklyEnabledChange: (Boolean) -> Unit,
     courses: List<com.ty.gkschedule.data.Course>,
+    unusedCxCourses: List<com.ty.gkschedule.api.ChaoxingApi.CxCourse>,
     fetchResult: String?,
     onFetchChaoxingCourses: ((String) -> Unit) -> Unit,
     onBack: () -> Unit,
@@ -1095,7 +1096,7 @@ internal fun GoSignPage(
     var showSwitchInfo by remember { mutableStateOf(false) }
     val context = androidx.compose.ui.platform.LocalContext.current
     val matched = remember(courses) { courses.filter { it.chaoxingCourseId > 0L }.distinctBy { it.name }.sortedBy { it.name } }
-    val unmatched = remember(courses) { courses.filter { it.chaoxingCourseId <= 0L }.distinctBy { it.name }.sortedBy { it.name } }
+    val unusedCx: List<com.ty.gkschedule.api.ChaoxingApi.CxCourse> = unusedCxCourses
 
     if (showSwitchInfo) {
         androidx.compose.ui.window.Dialog(onDismissRequest = { showSwitchInfo = false }) {
@@ -1202,19 +1203,19 @@ internal fun GoSignPage(
                     )
                 }
             }
-            if (unmatched.isNotEmpty()) {
+            if (unusedCx.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(12.dp))
-                SectionHeader(stringResource(R.string.go_sign_unmatched_section, unmatched.size))
+                SectionHeader(stringResource(R.string.go_sign_unmatched_section, unusedCx.size))
                 SettingsCard {
-                    unmatched.forEach { course ->
-                        if (course != unmatched.first()) {
+                    unusedCx.forEach { course ->
+                        if (course != unusedCx.first()) {
                             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
                         }
                         ListItem(
                             headlineContent = { Text(course.name, fontWeight = FontWeight.Medium) },
                             supportingContent = {
                                 Text(
-                                    stringResource(R.string.go_sign_unmatched_ids, course.chaoxingClassId, course.chaoxingCourseId, course.chaoxingFid),
+                                    stringResource(R.string.go_sign_unmatched_ids, course.classId, course.courseId),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )

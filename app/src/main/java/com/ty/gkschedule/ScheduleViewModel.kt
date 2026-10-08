@@ -73,6 +73,9 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     val goSignEnabled: Flow<Boolean> = settings.goSignEnabled
     val goSignWeeklyEnabled: Flow<Boolean> = settings.goSignWeeklyEnabled
     val goSignFetchResult: Flow<String> = settings.goSignFetchResult
+
+    // 上次拉取时 Faker 侧有、课表里没匹配上的课（含其 classId/courseId），供设置页展示
+    val goSignUnusedCourses = MutableStateFlow<List<ChaoxingApi.CxCourse>>(emptyList())
     val hideCourseManage: Flow<Boolean> = settings.hideCourseManage
     val hideWeeklyEdit: Flow<Boolean> = settings.hideWeeklyEdit
     val savedDeptName: Flow<String> = settings.savedDeptName
@@ -407,8 +410,9 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                 val (fid, courses) = ChaoxingApi.parseFetchResult(json)
                 if (fid <= 0) throw IllegalStateException(app.getString(R.string.go_sign_err_fid))
                 if (courses.isEmpty()) throw IllegalStateException(app.getString(R.string.go_sign_err_empty_courses))
-                val count = matchChaoxingCourses(courses, fid)
-                app.getString(R.string.go_sign_fetch_ok, courses.size, count)
+                val (n, unused) = matchChaoxingCourses(courses, fid)
+                goSignUnusedCourses.value = unused
+                app.getString(R.string.go_sign_fetch_ok, courses.size, n)
             }.getOrElse {
                 if (it is SecurityException) {
                     // Faker 侧未开启"允许其他应用查询学习通信息"
@@ -422,8 +426,10 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
-    private suspend fun matchChaoxingCourses(cxCourses: List<ChaoxingApi.CxCourse>, fid: Int): Int {
+    // ponytail: 返回(匹配数, Faker 侧未被课表用掉的课)
+    private suspend fun matchChaoxingCourses(cxCourses: List<ChaoxingApi.CxCourse>, fid: Int): Pair<Int, List<ChaoxingApi.CxCourse>> {
         val local = courseDao.getAllCourses().first()
+        val usedCx = mutableSetOf<Int>()
         var matched = 0
         local.distinctBy { it.name }.forEach { representative ->
             val idx = cxCourses.indexOfFirst { it.name == representative.name }
@@ -433,6 +439,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                 }
             if (idx == null) return@forEach
             val target = cxCourses[idx]
+            usedCx += idx
             matched++
             local.filter { it.name == representative.name }.forEach { row ->
                 if (row.chaoxingClassId != target.classId ||
@@ -449,7 +456,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                 }
             }
         }
-        return matched
+        return matched to cxCourses.indices.filter { it !in usedCx }.map { cxCourses[it] }
     }
 
     private suspend fun rescheduleSync() {
