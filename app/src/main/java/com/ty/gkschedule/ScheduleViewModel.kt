@@ -398,7 +398,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     fun fetchChaoxingCourses(onResult: (String) -> Unit) {
         viewModelScope.launch {
             val msg = runCatching {
-                val uri = android.net.Uri.parse("content://org.aquamarine5.brainspark.chaoxingsignfaker.courses")
+                val uri = android.net.Uri.parse("content://org.aquamarine5.brainspark.chaoxingsignfaker.coursesProvider")
                 val bundle = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
                     app.contentResolver.call(uri, "getCourses", null, null)
                 } ?: throw IllegalStateException(app.getString(R.string.go_sign_err_empty_result))
@@ -410,7 +410,11 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                 val count = matchChaoxingCourses(courses, fid)
                 app.getString(R.string.go_sign_fetch_ok, courses.size, count)
             }.getOrElse {
-                if (it is IllegalArgumentException) app.getString(R.string.go_sign_not_installed)
+                if (it is SecurityException) {
+                    // Faker 侧未开启"允许其他应用查询学习通信息"
+                    ChaoxingApi.openAllowExternalQuerySetting(app)
+                    app.getString(R.string.go_sign_need_permission)
+                } else if (it is IllegalArgumentException) app.getString(R.string.go_sign_not_installed)
                 else app.getString(R.string.go_sign_fetch_fail, it.message ?: app.getString(R.string.go_sign_unknown))
             }
             settings.setGoSignFetchResult(msg)

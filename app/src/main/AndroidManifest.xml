@@ -8,6 +8,7 @@
     <uses-permission android:name="android.permission.POST_PROMOTED_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <uses-permission android:name="org.aquamarine5.brainspark.chaoxingsignfaker.permission.QUERY_CHAOXING_INFORMATION" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <!-- ponytail: miuix-blur要求minSdk33，本项目31，用到的blur API在31+全可用，强制合并 -->
@@ -15,7 +16,7 @@
 
     <queries>
         <package android:name="org.aquamarine5.brainspark.chaoxingsignfaker" />
-        <provider android:authorities="org.aquamarine5.brainspark.chaoxingsignfaker.courses" />
+        <provider android:authorities="org.aquamarine5.brainspark.chaoxingsignfaker.coursesProvider" />
     </queries>
 
     <application

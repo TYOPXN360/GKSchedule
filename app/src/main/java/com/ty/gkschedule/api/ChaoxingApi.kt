@@ -9,6 +9,17 @@ object ChaoxingApi {
 
     private const val ACTION_OPEN_SIGN = "org.aquamarine5.brainspark.chaoxingsignfaker.action.OPEN_SIGN"
     private const val FAKER_PACKAGE = "org.aquamarine5.brainspark.chaoxingsignfaker"
+    private const val ACTION_OPEN_EXTERNAL_SETTING =
+        "org.aquamarine5.brainspark.chaoxingsignfaker.action.OPEN_SETTING_TO_ALLOW_EXTERNAL_QUERY_PREMISSION"
+
+    // ponytail: 拉不到课程多半是 Faker 侧未允许外部查询，直接把他跳到那个开关页
+    fun openAllowExternalQuerySetting(context: android.content.Context): Boolean =
+        runCatching {
+            context.startActivity(
+                android.content.Intent(ACTION_OPEN_EXTERNAL_SETTING).setPackage(FAKER_PACKAGE)
+                    .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+            )
+        }.isSuccess
 
     // ponytail: 今日页/课表页共用的去签到跳转——缺ID和未安装都在这兜底
     fun goSignOrToast(
