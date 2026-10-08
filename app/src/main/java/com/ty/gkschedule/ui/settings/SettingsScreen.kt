@@ -1147,7 +1147,7 @@ internal fun GoSignPage(
     val candidates = remember(courses, picking) {
         picking?.let { cx -> courses.filter { it.chaoxingCourseId <= 0L }.distinctBy { it.name }.sortedBy { it.name } } ?: emptyList()
     }
-    androidx.compose.ui.window.Dialog(onDismissRequest = { picking = null; confirming = null }) {
+    if (picking != null) androidx.compose.ui.window.Dialog(onDismissRequest = { picking = null; confirming = null }) {
         com.ty.gkschedule.ui.theme.BlurCard(
             enabled = blurEnabled,
             modifier = Modifier.fillMaxWidth(),
