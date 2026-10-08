@@ -65,6 +65,7 @@ class SettingsDataStore(private val context: Context) {
         private val GO_SIGN_WEEKLY_ENABLED = booleanPreferencesKey("go_sign_weekly_enabled")
         private val GO_SIGN_FETCH_RESULT = stringPreferencesKey("go_sign_fetch_result")
         private val GO_SIGN_UNUSED_COURSES = stringPreferencesKey("go_sign_unused_courses")
+        private val GO_SIGN_ALL_COURSES = stringPreferencesKey("go_sign_all_courses")
         private val HIDE_COURSE_MANAGE = booleanPreferencesKey("hide_course_manage")
         private val HIDE_WEEKLY_EDIT = booleanPreferencesKey("hide_weekly_edit")
 
@@ -233,6 +234,8 @@ class SettingsDataStore(private val context: Context) {
     val goSignFetchResult: Flow<String> = context.dataStore.data.map { it[GO_SIGN_FETCH_RESULT] ?: "" }
     // JSON，格式同 ChaoxingSignFaker 返回：{"fid":n,"courses":[{name,classId,courseId}]}
     val goSignUnusedCourses: Flow<String> = context.dataStore.data.map { it[GO_SIGN_UNUSED_COURSES] ?: "" }
+    // 上次拉取的全部超学通课，供跳转签到时取超学通课名作标题
+    val goSignAllCourses: Flow<String> = context.dataStore.data.map { it[GO_SIGN_ALL_COURSES] ?: "" }
     val hideCourseManage: Flow<Boolean> = context.dataStore.data.map { it[HIDE_COURSE_MANAGE] ?: false }
     val hideWeeklyEdit: Flow<Boolean> = context.dataStore.data.map { it[HIDE_WEEKLY_EDIT] ?: false }
 
@@ -258,5 +261,9 @@ class SettingsDataStore(private val context: Context) {
 
     suspend fun setGoSignUnusedCourses(json: String) {
         context.dataStore.edit { it[GO_SIGN_UNUSED_COURSES] = json }
+    }
+
+    suspend fun setGoSignAllCourses(json: String) {
+        context.dataStore.edit { it[GO_SIGN_ALL_COURSES] = json }
     }
 }

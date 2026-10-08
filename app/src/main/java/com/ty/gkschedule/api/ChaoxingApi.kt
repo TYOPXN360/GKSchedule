@@ -9,6 +9,11 @@ object ChaoxingApi {
 
     private const val ACTION_OPEN_SIGN = "org.aquamarine5.brainspark.chaoxingsignfaker.action.OPEN_SIGN"
     private const val FAKER_PACKAGE = "org.aquamarine5.brainspark.chaoxingsignfaker"
+    // ponytail: 上次拉取的超学通课名缓存（classId:courseId -> 超学通课名），跳转时当标题用
+    @Volatile
+    var cxNames: Map<String, String> = emptyMap()
+
+    fun cxKey(classId: Int, courseId: Long) = "$classId:$courseId"
     private const val ACTION_OPEN_EXTERNAL_SETTING =
         "org.aquamarine5.brainspark.chaoxingsignfaker.action.OPEN_SETTING_TO_ALLOW_EXTERNAL_QUERY_PREMISSION"
 
@@ -36,7 +41,10 @@ object ChaoxingApi {
             putExtra("classId", course.chaoxingClassId)
             putExtra("courseId", course.chaoxingCourseId)
             putExtra("fid", course.chaoxingFid)
-            // ponytail: 不传 courseName——Faker 会拿它当标题显示，标题要用超学通自己的课名
+            // 用超学通自己的课名（拉取时缓存的），别用课表课名
+            cxNames[cxKey(course.chaoxingClassId, course.chaoxingCourseId)]?.let {
+                putExtra("courseName", it)
+            }
         }
         runCatching { context.startActivity(intent) }.onFailure {
             android.widget.Toast.makeText(

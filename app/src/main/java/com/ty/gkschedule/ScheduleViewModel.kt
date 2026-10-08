@@ -141,6 +141,15 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
 
     init {
         viewModelScope.launch {
+            // 回填超学通课名缓存：跳转签到时标题要用超学通自己的课名
+            val json = settings.goSignAllCourses.first()
+            if (json.isNotBlank()) runCatching {
+                ChaoxingApi.parseFetchResult(json).second
+            }.getOrDefault(emptyList()).takeIf { it.isNotEmpty() }?.let {
+                ChaoxingApi.cxNames = it.associate { c -> ChaoxingApi.cxKey(c.classId, c.courseId) to c.name }
+            }
+        }
+        viewModelScope.launch {
             _selectedWeek.value = settings.getCurrentWeek().first()
         }
         // Restore saved login info
@@ -416,6 +425,8 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                 if (courses.isEmpty()) throw IllegalStateException(app.getString(R.string.go_sign_err_empty_courses))
                 val (n, unused) = matchChaoxingCourses(courses, fid)
                 settings.setGoSignUnusedCourses(ChaoxingApi.toJson(fid, unused))
+                settings.setGoSignAllCourses(ChaoxingApi.toJson(fid, courses))
+                ChaoxingApi.cxNames = courses.associate { ChaoxingApi.cxKey(it.classId, it.courseId) to it.name }
                 app.getString(R.string.go_sign_fetch_ok, courses.size, n)
             }.getOrElse {
                 if (it is SecurityException) {
