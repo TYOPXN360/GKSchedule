@@ -268,6 +268,14 @@
     <string name="go_sign_fetch_ok" formatted="false">获取成功：已获取 %1$d 门，匹配 %2$d 门</string>
     <string name="go_sign_unmatched_section" formatted="false">超学通未匹配课程 (%1$d)</string>
     <string name="go_sign_unmatched_ids" formatted="false">classId=%1$d · courseId=%2$d · fid=%3$d</string>
+    <string name="go_sign_bind_action">去匹配</string>
+    <string name="go_sign_pick_title" formatted="false">把“%1$s”匹配到哪门课？</string>
+    <string name="go_sign_confirm_title">确认</string>
+    <string name="go_sign_confirm_body" formatted="false">将“%2$s”的 classId/courseId/fid 写入“%1$s”？同名课程会一并更新。</string>
+    <string name="go_sign_confirm_ok">确定</string>
+    <string name="go_sign_cancel">取消</string>
+    <string name="go_sign_bind_ok">已匹配</string>
+    <string name="go_sign_bind_fail">匹配失败</string>
     <string name="go_sign_not_installed">未安装 ChaoxingSignFaker</string>
     <string name="go_sign_need_permission">请在 ChaoxingSignFaker 中开启“允许其他应用查询学习通信息”</string>
     <string name="go_sign_fetch_fail">获取失败: %s</string>

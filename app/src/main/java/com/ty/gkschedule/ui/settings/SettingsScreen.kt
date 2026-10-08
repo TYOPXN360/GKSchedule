@@ -1089,10 +1089,13 @@ internal fun GoSignPage(
     unusedCxCourses: Pair<Int, List<com.ty.gkschedule.api.ChaoxingApi.CxCourse>>,
     fetchResult: String?,
     onFetchChaoxingCourses: ((String) -> Unit) -> Unit,
+    onBindChaoxingCourse: (Long, Int, Long, Int, (Boolean) -> Unit) -> Unit,
     onBack: () -> Unit,
     blurEnabled: Boolean = true
 ) {
     var fetching by remember { mutableStateOf(false) }
+    var picking by remember { mutableStateOf<com.ty.gkschedule.api.ChaoxingApi.CxCourse?>(null) }
+    var confirming by remember { mutableStateOf<com.ty.gkschedule.data.Course?>(null) }
     var showSwitchInfo by remember { mutableStateOf(false) }
     val context = androidx.compose.ui.platform.LocalContext.current
     val matched = remember(courses) { courses.filter { it.chaoxingCourseId > 0L }.distinctBy { it.name }.sortedBy { it.name } }
@@ -1133,6 +1136,57 @@ internal fun GoSignPage(
                         Spacer(modifier = Modifier.height(16.dp))
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                             TextButton(onClick = { showSwitchInfo = false }) { Text("OK") }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // ponytail: 选课/确认都在 Dialog 里做，不另开 Activity
+    val candidates = remember(courses, picking) {
+        picking?.let { cx -> courses.filter { it.chaoxingCourseId <= 0L }.distinctBy { it.name }.sortedBy { it.name } } ?: emptyList()
+    }
+    androidx.compose.ui.window.Dialog(onDismissRequest = { picking = null; confirming = null }) {
+        com.ty.gkschedule.ui.theme.BlurCard(
+            enabled = blurEnabled,
+            modifier = Modifier.fillMaxWidth(),
+            radiusDp = 36f,
+            backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            cornerRadiusDp = 28f
+        ) {
+            androidx.compose.runtime.CompositionLocalProvider(androidx.compose.material3.LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
+                Column(modifier = Modifier.padding(24.dp).heightIn(max = 520.dp).verticalScroll(rememberScrollState())) {
+                    val cx = picking
+                    val target = confirming
+                    if (target == null && cx != null) {
+                        Text(stringResource(R.string.go_sign_pick_title, cx.name), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.height(12.dp))
+                        candidates.forEach { c ->
+                            TextButton(onClick = { confirming = c }, modifier = Modifier.fillMaxWidth()) {
+                                Text(c.name, modifier = Modifier.fillMaxWidth())
+                            }
+                        }
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                            TextButton(onClick = { picking = null }) { Text(stringResource(R.string.go_sign_cancel)) }
+                        }
+                    } else if (target != null && cx != null) {
+                        Text(stringResource(R.string.go_sign_confirm_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(stringResource(R.string.go_sign_confirm_body, target.name, cx.name))
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                            TextButton(onClick = { confirming = null }) { Text(stringResource(R.string.go_sign_cancel)) }
+                            TextButton(onClick = {
+                                confirming = null; picking = null
+                                onBindChaoxingCourse(target.id, cx.classId, cx.courseId, unusedCxFid) { ok ->
+                                    android.widget.Toast.makeText(
+                                        context,
+                                        context.getString(if (ok) R.string.go_sign_bind_ok else R.string.go_sign_bind_fail),
+                                        android.widget.Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            }) { Text(stringResource(R.string.go_sign_confirm_ok)) }
                         }
                     }
                 }
@@ -1220,6 +1274,9 @@ internal fun GoSignPage(
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
+                            },
+                            trailingContent = {
+                                TextButton(onClick = { picking = course }) { Text(stringResource(R.string.go_sign_bind_action)) }
                             },
                             colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                         )

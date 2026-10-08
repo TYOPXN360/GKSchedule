@@ -261,6 +261,14 @@
     <string name="go_sign_fetch_ok" formatted="false">Success: fetched %1$d courses, matched %2$d</string>
     <string name="go_sign_unmatched_section" formatted="false">Unmatched in ChaoxingSignFaker (%1$d)</string>
     <string name="go_sign_unmatched_ids" formatted="false">classId=%1$d · courseId=%2$d · fid=%3$d</string>
+    <string name="go_sign_bind_action">Bind</string>
+    <string name="go_sign_pick_title" formatted="false">Bind “%1$s” to which course?</string>
+    <string name="go_sign_confirm_title">Confirm</string>
+    <string name="go_sign_confirm_body" formatted="false">Write the classId/courseId/fid of “%2$s” into “%1$s”? All entries with the same name are updated.</string>
+    <string name="go_sign_confirm_ok">Confirm</string>
+    <string name="go_sign_cancel">Cancel</string>
+    <string name="go_sign_bind_ok">Bound</string>
+    <string name="go_sign_bind_fail">Bind failed</string>
     <string name="go_sign_not_installed">ChaoxingSignFaker not installed</string>
     <string name="go_sign_need_permission">Enable \"allow other apps to query\" in ChaoxingSignFaker</string>
     <string name="go_sign_fetch_fail">Fetch failed: %s</string>

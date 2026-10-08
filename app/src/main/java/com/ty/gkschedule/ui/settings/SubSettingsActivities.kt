@@ -252,6 +252,7 @@ class SubSettingsGoSignActivity : SubSettingsBaseActivity() {
             fetchResult = goSignFetchResult.ifEmpty { null },
             unusedCxCourses = unusedCx,
             onFetchChaoxingCourses = { cb -> vm.fetchChaoxingCourses(cb) },
+            onBindChaoxingCourse = { id, classId, courseId, fid, cb -> vm.bindChaoxingCourse(id, classId, courseId, fid, cb) },
             onBack = finish,
             blurEnabled = blurEffect
         )

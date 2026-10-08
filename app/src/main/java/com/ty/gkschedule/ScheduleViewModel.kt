@@ -431,6 +431,32 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     }
 
     // ponytail: 返回(匹配数, Faker 侧未被课表用掉的课)
+    // 手动绑定后把已绑上的超学通课从未匹配列表里剔除
+    private suspend fun refreshUnusedCxCourses() {
+        val (fid, unused) = settings.goSignUnusedCourses.first()
+            .let { if (it.isBlank()) 0 to emptyList() else runCatching { ChaoxingApi.parseFetchResult(it) }.getOrDefault(0 to emptyList()) }
+        if (unused.isEmpty()) return
+        val bound: Set<Pair<Int, Long>> = courseDao.getAllCourses().first()
+            .map { it.chaoxingClassId to it.chaoxingCourseId }.toSet()
+        val left = unused.filterNot { (it.classId to it.courseId) in bound }
+        if (left.size != unused.size) settings.setGoSignUnusedCourses(ChaoxingApi.toJson(fid, left))
+    }
+
+    // 手动把某门超学通课绑到某门本地课上（会同时改掉同名/同行的所有行，和拉取匹配一致）
+    fun bindChaoxingCourse(courseId: Long, classId: Int, courseIdCx: Long, fid: Int, onDone: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            val row = courseDao.getCourseById(courseId)
+            val ok = if (row == null) false else {
+                courseDao.getCoursesByNameOnce(row.name).forEach {
+                    courseDao.updateCourse(it.copy(chaoxingClassId = classId, chaoxingCourseId = courseIdCx, chaoxingFid = fid))
+                }
+                true
+            }
+            if (ok) refreshUnusedCxCourses()
+            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) { onDone(ok) }
+        }
+    }
+
     private suspend fun matchChaoxingCourses(cxCourses: List<ChaoxingApi.CxCourse>, fid: Int): Pair<Int, List<ChaoxingApi.CxCourse>> {
         val local = courseDao.getAllCourses().first()
         val usedCx = mutableSetOf<Int>()
