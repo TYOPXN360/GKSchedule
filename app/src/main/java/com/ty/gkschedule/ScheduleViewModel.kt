@@ -407,8 +407,14 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                 val (fid, courses) = ChaoxingApi.parseFetchResult(json)
                 if (fid <= 0) throw IllegalStateException(app.getString(R.string.go_sign_err_fid))
                 if (courses.isEmpty()) throw IllegalStateException(app.getString(R.string.go_sign_err_empty_courses))
-                val count = matchChaoxingCourses(courses, fid)
-                app.getString(R.string.go_sign_fetch_ok, courses.size, count)
+                val r = matchChaoxingCourses(courses, fid)
+                buildString {
+                    append(app.getString(R.string.go_sign_fetch_ok, courses.size, r.matched))
+                    if (r.unmatchedLocal.isNotEmpty())
+                        append("\n").append(app.getString(R.string.go_sign_unmatched_local, r.unmatchedLocal.joinToString("、")))
+                    if (r.unmatchedCx.isNotEmpty())
+                        append("\n").append(app.getString(R.string.go_sign_unmatched_cx, r.unmatchedCx.joinToString("、")))
+                }
             }.getOrElse {
                 if (it is SecurityException) {
                     // Faker 侧未开启"允许其他应用查询学习通信息"
@@ -422,14 +428,22 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
-    private suspend fun matchChaoxingCourses(cxCourses: List<ChaoxingApi.CxCourse>, fid: Int): Int {
+    private data class CxMatch(val matched: Int, val unmatchedLocal: List<String>, val unmatchedCx: List<String>)
+
+    private suspend fun matchChaoxingCourses(cxCourses: List<ChaoxingApi.CxCourse>, fid: Int): CxMatch {
         val local = courseDao.getAllCourses().first()
+        val usedCx = mutableSetOf<Int>()
         var matched = 0
+        val unmatchedLocal = mutableListOf<String>()
         local.distinctBy { it.name }.forEach { representative ->
-            val target = cxCourses.find { it.name == representative.name }
-                ?: cxCourses.find {
-                    representative.name.length >= 4 && (it.name.contains(representative.name) || representative.name.contains(it.name))
-                } ?: return@forEach
+            val idx = cxCourses.indexOfFirst { it.name == representative.name }
+                .takeIf { it >= 0 } ?: cxCourses.indices.firstOrNull {
+                    representative.name.length >= 4 &&
+                        (cxCourses[it].name.contains(representative.name) || representative.name.contains(cxCourses[it].name))
+                }
+            if (idx == null) { unmatchedLocal += representative.name; return@forEach }
+            val target = cxCourses[idx]
+            usedCx += idx
             matched++
             local.filter { it.name == representative.name }.forEach { row ->
                 if (row.chaoxingClassId != target.classId ||
@@ -446,7 +460,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                 }
             }
         }
-        return matched
+        return CxMatch(matched, unmatchedLocal, cxCourses.indices.filter { it !in usedCx }.map { cxCourses[it].name })
     }
 
     private suspend fun rescheduleSync() {
