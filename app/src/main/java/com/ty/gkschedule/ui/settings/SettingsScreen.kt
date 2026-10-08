@@ -1095,6 +1095,7 @@ internal fun GoSignPage(
     var showSwitchInfo by remember { mutableStateOf(false) }
     val context = androidx.compose.ui.platform.LocalContext.current
     val matched = remember(courses) { courses.filter { it.chaoxingCourseId > 0L }.distinctBy { it.name }.sortedBy { it.name } }
+    val unmatched = remember(courses) { courses.filter { it.chaoxingCourseId <= 0L }.distinctBy { it.name }.sortedBy { it.name } }
 
     if (showSwitchInfo) {
         androidx.compose.ui.window.Dialog(onDismissRequest = { showSwitchInfo = false }) {
@@ -1199,6 +1200,28 @@ internal fun GoSignPage(
                         },
                         colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                     )
+                }
+            }
+            if (unmatched.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(12.dp))
+                SectionHeader(stringResource(R.string.go_sign_unmatched_section, unmatched.size))
+                SettingsCard {
+                    unmatched.forEach { course ->
+                        if (course != unmatched.first()) {
+                            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
+                        }
+                        ListItem(
+                            headlineContent = { Text(course.name, fontWeight = FontWeight.Medium) },
+                            supportingContent = {
+                                Text(
+                                    stringResource(R.string.go_sign_unmatched_ids, course.chaoxingClassId, course.chaoxingCourseId, course.chaoxingFid),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            },
+                            colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+                        )
+                    }
                 }
             }
         }

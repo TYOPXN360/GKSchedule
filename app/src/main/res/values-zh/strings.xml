@@ -266,8 +266,8 @@
     <string name="go_sign_fetch_hint">点击上方\"获取课程ID\"后自动回填</string>
     <string name="go_sign_toast_unmatched">未匹配超星ID：请先在设置→签到联动获取课程ID，或编辑课程手动填写</string>
     <string name="go_sign_fetch_ok" formatted="false">获取成功：已获取 %1$d 门，匹配 %2$d 门</string>
-    <string name="go_sign_unmatched_local" formatted="false">课表中未匹配：%1$s</string>
-    <string name="go_sign_unmatched_cx" formatted="false">超学通未匹配：%1$s</string>
+    <string name="go_sign_unmatched_section" formatted="false">未匹配课程 (%1$d)</string>
+    <string name="go_sign_unmatched_ids" formatted="false">classId=%1$d · courseId=%2$d · fid=%3$d —— 编辑课程手动填写或改名校验</string>
     <string name="go_sign_not_installed">未安装 ChaoxingSignFaker</string>
     <string name="go_sign_need_permission">请在 ChaoxingSignFaker 中开启“允许其他应用查询学习通信息”</string>
     <string name="go_sign_fetch_fail">获取失败: %s</string>

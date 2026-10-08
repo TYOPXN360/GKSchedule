@@ -259,8 +259,8 @@
     <string name="go_sign_fetch_hint">Tap \"Fetch course IDs\" above to backfill</string>
     <string name="go_sign_toast_unmatched">Chaoxing IDs not matched: fetch them under Settings - Sign Link, or fill them in course edit</string>
     <string name="go_sign_fetch_ok" formatted="false">Success: fetched %1$d courses, matched %2$d</string>
-    <string name="go_sign_unmatched_local" formatted="false">Unmatched in your schedule: %1$s</string>
-    <string name="go_sign_unmatched_cx" formatted="false">Unmatched in ChaoxingSignFaker: %1$s</string>
+    <string name="go_sign_unmatched_section" formatted="false">Unmatched courses (%1$d)</string>
+    <string name="go_sign_unmatched_ids" formatted="false">classId=%1$d · courseId=%2$d · fid=%3$d — fill in or rename to match</string>
     <string name="go_sign_not_installed">ChaoxingSignFaker not installed</string>
     <string name="go_sign_need_permission">Enable \"allow other apps to query\" in ChaoxingSignFaker</string>
     <string name="go_sign_fetch_fail">Fetch failed: %s</string>
