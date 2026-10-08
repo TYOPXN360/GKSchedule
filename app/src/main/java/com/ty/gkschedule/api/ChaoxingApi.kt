@@ -36,7 +36,7 @@ object ChaoxingApi {
             putExtra("classId", course.chaoxingClassId)
             putExtra("courseId", course.chaoxingCourseId)
             putExtra("fid", course.chaoxingFid)
-            putExtra("courseName", course.name)
+            // ponytail: 不传 courseName——Faker 会拿它当标题显示，标题要用超学通自己的课名
         }
         runCatching { context.startActivity(intent) }.onFailure {
             android.widget.Toast.makeText(
