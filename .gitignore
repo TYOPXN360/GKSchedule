@@ -12,6 +12,9 @@
 # Source tools (JDK, SDK, Gradle zip)
 /source/
 
+# Local toolchain (JDK 17 / Gradle 9.4.1 / Android SDK)
+/.toolchain/
+
 # Local
 /local.properties
 /set-env.sh
