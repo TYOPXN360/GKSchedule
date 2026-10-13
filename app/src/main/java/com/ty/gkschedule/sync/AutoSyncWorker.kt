@@ -48,8 +48,11 @@ class AutoSyncWorker(
 
             val courses = CourseImporter.convertRemoteCourses(allCourses)
             val dao = CourseDatabase.getDatabase(applicationContext).courseDao()
+            // ponytail: 先取出旧课程回填签到 ID，否则每日全量重建会把用户手动绑定的超星 ID 清零
+            val existing = dao.getAllCoursesOnce()
+            val merged = CourseImporter.preserveLocalState(courses, existing)
             dao.deleteRemoteCourses()
-            courses.forEach { dao.insertCourse(it) }
+            merged.forEach { dao.insertCourse(it) }
             Result.success()
         } catch (e: Exception) {
             if (runAttemptCount < 3) Result.retry() else Result.failure()

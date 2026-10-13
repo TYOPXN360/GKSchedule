@@ -669,12 +669,10 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
             // Convert and save — preserve manually edited courses
             val courses = CourseImporter.convertRemoteCourses(allRemoteCourses)
             // Safe sync: only delete remote courses, preserve local (manually edited)
-            val hiddenNames = courseDao.getAllCourses().first().filter { it.isHidden }.map { it.name }.toSet()
+            // ponytail: 回填签到 ID 与隐藏状态——教务数据没有这些本地字段
+            val merged = CourseImporter.preserveLocalState(courses, courseDao.getAllCoursesOnce())
             courseDao.deleteRemoteCourses()
-            courses.forEach { c ->
-                val isHid = hiddenNames.contains(c.name)
-                courseDao.insertCourse(c.copy(isHidden = isHid))
-            }
+            merged.forEach { c -> courseDao.insertCourse(c) }
             // No longer need to re-insert manual courses — they were never deleted
             // (deleteRemoteCourses only removes isManuallyEdited=0 rows)
 
@@ -755,12 +753,9 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                     if (hasChanges) {
                         // Safe sync: only delete remote courses, preserve local
                         // Capture ALL hidden course names (both manual and remote)
-                        val hiddenNames = existingCourses.filter { it.isHidden }.map { it.name }.toSet()
+                        val merged = CourseImporter.preserveLocalState(newCourses, existingCourses)
                         courseDao.deleteRemoteCourses()
-                        newCourses.forEach { c ->
-                            val isHid = hiddenNames.contains(c.name)
-                            courseDao.insertCourse(c.copy(isHidden = isHid))
-                        }
+                        merged.forEach { c -> courseDao.insertCourse(c) }
                         _messages.emit(app.getString(R.string.msg_courses_updated, newCourses.size))
                     } else {
                         _messages.emit(app.getString(R.string.msg_no_changes))

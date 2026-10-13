@@ -9,6 +9,45 @@ import com.ty.gkschedule.data.Course
  */
 object CourseImporter {
 
+    /**
+     * 同步是"全量删除 + 全量插入"，而教务数据拿不到超星 ID。若直接插入重建后的 Course，
+     * 用户手动绑定的 chaoxing* 会全部归零，"去签到"按钮随之消失（表现为每天首次同步后失效）。
+     * 因此删除前先取出旧课程，在插入前回填本地状态。
+     */
+    fun preserveLocalState(
+        newCourses: List<Course>,
+        existingCourses: List<Course>
+    ): List<Course> {
+        if (existingCourses.isEmpty()) return newCourses
+
+        // 精确键优先，其次退化到 name+day+startPeriod，覆盖教师/教室被教务改动的情况
+        val exact = HashMap<String, Course>()
+        val loose = HashMap<String, MutableList<Course>>()
+        for (c in existingCourses) {
+            exact.putIfAbsent(exactKey(c), c)
+            loose.getOrPut(looseKey(c)) { mutableListOf() }.add(c)
+        }
+        val hiddenNames = existingCourses.filter { it.isHidden }.map { it.name }.toSet()
+
+        return newCourses.map { c ->
+            // ponytail: 同名同节次但不同教室的课是真实存在的，模糊键命中多条时宁可不回填，
+            // 否则会把超星 ID 绑到另一门课上
+            val candidates = loose[looseKey(c)].orEmpty()
+            val old = exact[exactKey(c)]
+                ?: candidates.singleOrNull()
+            c.copy(
+                chaoxingClassId = if (old != null && old.chaoxingClassId != 0) old.chaoxingClassId else c.chaoxingClassId,
+                chaoxingCourseId = if (old != null && old.chaoxingCourseId != 0L) old.chaoxingCourseId else c.chaoxingCourseId,
+                chaoxingFid = if (old != null && old.chaoxingFid != 0) old.chaoxingFid else c.chaoxingFid,
+                isHidden = c.isHidden || (old != null && old.isHidden) || hiddenNames.contains(c.name)
+            )
+        }
+    }
+
+    private fun exactKey(c: Course) = "${c.name}|${c.dayOfWeek}|${c.startPeriod}|${c.teacher}|${c.classroom}"
+
+    private fun looseKey(c: Course) = "${c.name}|${c.dayOfWeek}|${c.startPeriod}"
+
     fun convertRemoteCourses(remoteCourses: List<RemoteCourse>): List<Course> {
         // Group by course identity INCLUDING time slot
         val groups = remoteCourses.groupBy { r ->
