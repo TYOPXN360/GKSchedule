@@ -191,4 +191,6 @@ app/src/main/java/com/ty/gkschedule/
 
 ## 许可证
 
-MIT License
+本项目基于 [GNU General Public License v3.0](LICENSE) 发布。
+
+Copyright (C) 2026 GKSchedule contributors
