@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     // kotlin-android removed: AGP 9.0+ has built-in Kotlin support
@@ -28,15 +30,26 @@ android {
 
     signingConfigs {
         create("release") {
-            // ponytail: CI 从 GitHub 账户级 secrets 注入；本地回落到仓库内 keystore/（已 gitignore）
-            val ksPath = System.getenv("RELEASE_KEYSTORE")
-                ?: System.getenv("GITHUB_WORKSPACE")
-                    ?.let { "$it/keystore/gkschedule.keystore" }
-                ?: "${rootProject.projectDir}/keystore/gkschedule.keystore"
-            storeFile = file(ksPath)
-            storePassword = System.getenv("RELEASE_KEYSTORE_PASSWORD") ?: "tyopxn360"
-            keyAlias = System.getenv("RELEASE_KEY_ALIAS") ?: "tyopxn360"
-            keyPassword = System.getenv("RELEASE_KEY_PASSWORD") ?: "tyopxn360"
+            // ponytail: 密钥材料只在环境变量(CI=账户级secrets)或 local.properties(已gitignore)里，
+            // 仓库里不留任何明文口令
+            val props = Properties().apply {
+                val f = rootProject.file("local.properties")
+                if (f.exists()) f.inputStream().use { stream -> load(stream) }
+            }
+            fun secret(key: String): String? =
+                (System.getenv(key) ?: props.getProperty(key))?.takeIf { it.isNotBlank() }
+            val storePath = secret("RELEASE_KEYSTORE")
+                ?: (rootProject.projectDir.resolve("keystore/gkschedule.keystore").takeIf { it.exists() }?.path)
+            require(!storePath.isNullOrBlank()) {
+                "Release signing keystore not configured: set RELEASE_KEYSTORE (env or local.properties)"
+            }
+            storeFile = file(storePath)
+            storePassword = secret("RELEASE_KEYSTORE_PASSWORD")
+                ?: error("RELEASE_KEYSTORE_PASSWORD not set (env or local.properties)")
+            keyAlias = secret("RELEASE_KEY_ALIAS")
+                ?: error("RELEASE_KEY_ALIAS not set (env or local.properties)")
+            keyPassword = secret("RELEASE_KEY_PASSWORD")
+                ?: error("RELEASE_KEY_PASSWORD not set (env or local.properties)")
         }
     }
 

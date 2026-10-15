@@ -1,8 +1,16 @@
 name: Release
 
 on:
-  push:
-    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to release as (e.g. v2.3.9). Creates the tag if missing.'
+        required: true
+        default: ''
+      create_release:
+        description: 'Create a GitHub Release for the tag'
+        type: boolean
+        default: true
 
 jobs:
   build:
@@ -17,7 +25,7 @@ jobs:
 
       - uses: android-actions/setup-android@v3
 
-      # ponytail: keystore 走账户级 secrets（gh secret set --user ...），不随仓库分发
+      # ponytail: keystore 走账户级 secrets（gh secret set RELEASE_KEYSTORE_B64），不随仓库分发
       - name: Decode keystore
         env:
           KEYSTORE_B64: ${{ secrets.RELEASE_KEYSTORE_B64 }}
@@ -33,5 +41,14 @@ jobs:
         run: ./gradlew assembleRelease
 
       - uses: softprops/action-gh-release@v2
+        if: ${{ inputs.create_release }}
         with:
+          tag_name: ${{ inputs.tag || github.ref_name }}
+          name: ${{ inputs.tag || github.ref_name }}
           files: app/build/outputs/apk/release/app-release.apk
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ !inputs.create_release }}
+        with:
+          name: app-release-apk
+          path: app/build/outputs/apk/release/app-release.apk
