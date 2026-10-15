@@ -173,10 +173,12 @@ class ReminderReceiver : BroadcastReceiver() {
                     android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE
                 )
                 runCatching {
-                    if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.S || am.canScheduleExactAlarms()) {
-                        am.setExactAndAllowWhileIdle(android.app.AlarmManager.RTC_WAKEUP, nextMinute, pi)
+                    // ponytail: setAlarmClock 是 doze 下唯一不被限流的精确闹钟（setExactAndAllowWhileIdle
+                    // 待机时会被压到几分钟一次，倒计时/进度看上去就是"冻住了"）
+                    if (am.canScheduleExactAlarms()) {
+                        am.setAlarmClock(android.app.AlarmManager.AlarmClockInfo(nextMinute, pi), pi)
                     } else {
-                        am.set(android.app.AlarmManager.RTC_WAKEUP, nextMinute, pi)
+                        am.setExactAndAllowWhileIdle(android.app.AlarmManager.RTC_WAKEUP, nextMinute, pi)
                     }
                 }
             }
