@@ -133,6 +133,11 @@ class ReminderReceiver : BroadcastReceiver() {
             } else {
                 builder.setProgress(100, percent, false)
             }
+            // ponytail: 通知已不在活跃列表（被划掉/系统清掉后重建）时静默补发——
+            // setOnlyAlertOnce 只对"存在中的通知"生效，重建照样会响
+            if (runCatching { nm.activeNotifications.none { it.id == notificationId } }.getOrDefault(false)) {
+                builder.setSilent(true)
+            }
         } else {
             val titlePrefix = if (itemType == "exam") context.getString(R.string.notif_exam_reminder) else context.getString(R.string.notif_class_reminder)
             val fallback = if (itemType == "exam") context.getString(R.string.notif_about_to_exam) else context.getString(R.string.notif_about_to_class)
