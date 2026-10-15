@@ -28,10 +28,15 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = file("/mnt/TY/android/android-project/WIfikeyXposed/wifikeyxposed.keystore")
-            storePassword = "tyopxn360"
-            keyAlias = "tyopxn360"
-            keyPassword = "tyopxn360"
+            // ponytail: CI 从 GitHub 账户级 secrets 注入；本地回落到仓库内 keystore/（已 gitignore）
+            val ksPath = System.getenv("RELEASE_KEYSTORE")
+                ?: System.getenv("GITHUB_WORKSPACE")
+                    ?.let { "$it/keystore/gkschedule.keystore" }
+                ?: "${rootProject.projectDir}/keystore/gkschedule.keystore"
+            storeFile = file(ksPath)
+            storePassword = System.getenv("RELEASE_KEYSTORE_PASSWORD") ?: "tyopxn360"
+            keyAlias = System.getenv("RELEASE_KEY_ALIAS") ?: "tyopxn360"
+            keyPassword = System.getenv("RELEASE_KEY_PASSWORD") ?: "tyopxn360"
         }
     }
 

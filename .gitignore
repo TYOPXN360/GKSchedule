@@ -19,6 +19,7 @@
 /local.properties
 /set-env.sh
 /.dbtmp/
+/keystore/
 *.har
 *.png
 !app/src/main/res/mipmap-*/*.png
