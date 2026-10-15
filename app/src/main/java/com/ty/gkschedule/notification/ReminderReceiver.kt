@@ -117,7 +117,7 @@ class ReminderReceiver : BroadcastReceiver() {
                 .setShortCriticalText(chipText)
 
             val contentText = if (isCountdown) "${countdownBodyText(context, startEpoch)} · ${body.ifEmpty { context.getString(R.string.notif_upcoming) }}"
-            else "${percent}% · ${body.ifEmpty { context.getString(R.string.notif_in_progress) }}"
+            else "$percent% · ${inClassRemainText(context, endEpoch)} · ${body.ifEmpty { context.getString(R.string.notif_in_progress) }}"
             builder
                 .setContentTitle("$titlePrefix：$courseName")
                 .setContentText(contentText)
@@ -224,6 +224,15 @@ class ReminderReceiver : BroadcastReceiver() {
         val remainMs = (startEpoch - System.currentTimeMillis()).coerceAtLeast(0L)
         val mins = (remainMs / 60000L).toInt()
         return if (mins >= 1) context.getString(R.string.notif_remain_min, mins) else context.getString(R.string.notif_remain_sec, (remainMs / 1000L).toInt())
+    }
+
+    // ponytail: 上课中的正文加"还剩N分钟"——ProgressStyle 与 setProgress fallback 共用同一行文案
+    private fun inClassRemainText(context: Context, endEpoch: Long): String {
+        if (endEpoch <= 0L) return context.getString(R.string.notif_in_progress)
+        val remainMs = (endEpoch - System.currentTimeMillis()).coerceAtLeast(0L)
+        val mins = ((remainMs + 30000L) / 60000L).toInt()  // 30s 向上取整，避免刚开始就显示 0 分钟
+        return if (mins >= 1) context.getString(R.string.notif_remaining_min, mins)
+        else context.getString(R.string.notif_in_progress)
     }
 
     private fun countdownBodyText(context: Context, startEpoch: Long): String {
