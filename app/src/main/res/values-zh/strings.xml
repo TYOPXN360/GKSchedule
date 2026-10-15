@@ -397,8 +397,8 @@
     <string name="notif_minutes_ago">%1$d分钟后 · %2$s</string>
     <string name="notif_remain_min">%1$d分</string>
     <string name="notif_remain_sec">%1$d秒</string>
-    <string name="notif_remaining_min">还有%1$d分钟</string>
-    <string name="notif_remaining_sec">还有%1$d秒</string>
+    <string name="notif_remaining_min">剩%1$d分钟</string>
+    <string name="notif_remaining_sec">剩%1$d秒</string>
     <string name="notif_course_channel">课程提醒</string>
     <string name="notif_course_channel_desc">课前提醒通知</string>
     <string name="update_not_run">未执行</string>
