@@ -189,7 +189,6 @@
     <string name="disclaimer_exit">退出</string>
     <string name="about_settings_desc">学期、外观、课表样式</string>
     <string name="credits_title">鸣谢</string>
-    <string name="credits_ai">AI 助手</string>
     <string name="credits_component">组件库</string>
     <string name="credits_language">开发语言</string>
     <string name="credits_design">设计规范</string>

@@ -294,30 +294,6 @@ fun AboutDetailPage(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // AI Assistants section
-            Md3Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                variant = Md3CardVariant.Elevated
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = stringResource(R.string.credits_ai),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    AIItem("GPT-5.5")
-                    AIItem("Deepseek-v4-pro")
-                    AIItem("XiaoMi-Mimo-V2.5")
-                    AIItem("XiaoMi-Mimo-V2.5-pro")
-                    AIItem("Google-Gemini-v3.5-flash")
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
             // Reference projects section
             Md3Card(
                 modifier = Modifier
@@ -483,24 +459,6 @@ private fun CreditItem(label: String, value: String) {
         )
     }
     Spacer(modifier = Modifier.height(8.dp))
-}
-
-@Composable
-private fun AIItem(name: String) {
-    Row(
-        modifier = Modifier.padding(vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = "• ",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.primary
-        )
-        Text(
-            text = name,
-            style = MaterialTheme.typography.bodyMedium
-        )
-    }
 }
 
 private fun formatFileSize(bytes: Long): String {
