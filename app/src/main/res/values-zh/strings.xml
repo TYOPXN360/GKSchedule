@@ -386,6 +386,8 @@
     <string name="api_edu_auth_fail">教务系统认证失败，请在校园网浏览器中先登录教务系统后再试</string>
     <string name="notif_exam_countdown">考试倒计时</string>
     <string name="notif_class_countdown">上课倒计时</string>
+    <string name="notif_class_remaining_min">还有%1$d分钟上课</string>
+    <string name="notif_class_remaining_sec">还有%1$d秒上课</string>
     <string name="notif_in_exam">正在考试</string>
     <string name="notif_in_class">正在上课</string>
     <string name="notif_upcoming">即将开始</string>

@@ -379,6 +379,8 @@
     <string name="api_edu_auth_fail">Education system auth failed; log in via a campus-network browser first</string>
     <string name="notif_exam_countdown">Exam countdown</string>
     <string name="notif_class_countdown">Class countdown</string>
+    <string name="notif_class_remaining_min">%1$d min to class</string>
+    <string name="notif_class_remaining_sec">%1$d s to class</string>
     <string name="notif_in_exam">Exam in progress</string>
     <string name="notif_in_class">Class in progress</string>
     <string name="notif_upcoming">Starting soon</string>

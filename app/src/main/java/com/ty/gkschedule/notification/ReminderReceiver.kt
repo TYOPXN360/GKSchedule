@@ -116,7 +116,7 @@ class ReminderReceiver : BroadcastReceiver() {
                 .setLargeIcon(android.graphics.BitmapFactory.decodeResource(context.resources, com.ty.gkschedule.R.drawable.ic_notif_live_large))
                 .setShortCriticalText(chipText)
 
-            val contentText = if (isCountdown) "${countdownBodyText(context, startEpoch)} · ${body.ifEmpty { context.getString(R.string.notif_upcoming) }}"
+            val contentText = if (isCountdown) "${countdownBodyText(context, startEpoch, itemType == "exam")} · ${body.ifEmpty { context.getString(R.string.notif_upcoming) }}"
             else "$percent% · ${inClassRemainText(context, endEpoch)} · ${body.ifEmpty { context.getString(R.string.notif_in_progress) }}"
             builder
                 .setContentTitle("$titlePrefix：$courseName")
@@ -235,9 +235,11 @@ class ReminderReceiver : BroadcastReceiver() {
         else context.getString(R.string.notif_in_progress)
     }
 
-    private fun countdownBodyText(context: Context, startEpoch: Long): String {
+    private fun countdownBodyText(context: Context, startEpoch: Long, isExam: Boolean): String {
         val remainMs = (startEpoch - System.currentTimeMillis()).coerceAtLeast(0L)
         val mins = (remainMs / 60000L).toInt()
+        if (!isExam) return if (mins >= 1) context.getString(R.string.notif_class_remaining_min, mins)
+        else context.getString(R.string.notif_class_remaining_sec, (remainMs / 1000L).toInt())
         return if (mins >= 1) context.getString(R.string.notif_remaining_min, mins) else context.getString(R.string.notif_remaining_sec, (remainMs / 1000L).toInt())
     }
 
