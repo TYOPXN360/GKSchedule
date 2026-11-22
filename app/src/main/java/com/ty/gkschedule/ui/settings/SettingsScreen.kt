@@ -37,6 +37,7 @@ import kotlinx.coroutines.withContext
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
+import com.ty.gkschedule.ui.theme.GkAlertDialog
 import top.yukonga.miuix.kmp.blur.layerBackdrop
 import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
 
@@ -579,27 +580,18 @@ internal fun NotificationPage(
                         colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                     )
                     if (showModeInfo) {
-                        androidx.compose.ui.window.Dialog(onDismissRequest = { showModeInfo = false }) {
-                            com.ty.gkschedule.ui.theme.BlurCard(
-                                enabled = blurEnabled,
-                                modifier = Modifier.fillMaxWidth(),
-                                radiusDp = 36f,
-                                backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.48f),
-                                cornerRadiusDp = 28f
-                            ) {
-                                Column(modifier = Modifier.padding(24.dp)) {
-                                    Text(stringResource(R.string.reminder_mode), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                                    Spacer(modifier = Modifier.height(16.dp))
+                        GkAlertDialog(
+                            onDismissRequest = { showModeInfo = false },
+                            title = { Text(stringResource(R.string.reminder_mode), fontWeight = FontWeight.Bold) },
+                            text = {
+                                Column {
                                     Text("${stringResource(R.string.reminder_mode_notify)}：${stringResource(R.string.reminder_mode_notify_desc)}", style = MaterialTheme.typography.bodyMedium)
                                     Spacer(modifier = Modifier.height(8.dp))
                                     Text("${stringResource(R.string.reminder_mode_countdown)}：${stringResource(R.string.reminder_mode_countdown_desc)}", style = MaterialTheme.typography.bodyMedium)
-                                    Spacer(modifier = Modifier.height(16.dp))
-                                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                                        TextButton(onClick = { showModeInfo = false }) { Text("OK") }
-                                    }
                                 }
-                            }
-                        }
+                            },
+                            confirmButton = { TextButton(onClick = { showModeInfo = false }) { Text("OK") } }
+                        )
                     }
                 }
             }
@@ -622,28 +614,13 @@ internal fun NotificationPage(
                         colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                     )
                     if (showLiveInfo) {
-                        androidx.compose.ui.window.Dialog(onDismissRequest = { showLiveInfo = false }) {
-                            com.ty.gkschedule.ui.theme.BlurCard(
-                                enabled = blurEnabled,
-                                modifier = Modifier.fillMaxWidth(),
-                                radiusDp = 36f,
-                                backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.48f),
-                                cornerRadiusDp = 28f
-                            ) {
-                                androidx.compose.runtime.CompositionLocalProvider(androidx.compose.material3.LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
-                                    Column(modifier = Modifier.padding(24.dp)) {
-                                        Text(stringResource(R.string.reminder_live_update), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                                    Spacer(modifier = Modifier.height(16.dp))
-                                    Text(stringResource(R.string.reminder_live_update_desc), style = MaterialTheme.typography.bodyMedium)
-                                    Spacer(modifier = Modifier.height(16.dp))
-                                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                                        TextButton(onClick = { showLiveInfo = false }) { Text("OK") }
-                                    }
-                                }
-                            }
-                        }
+                        GkAlertDialog(
+                            onDismissRequest = { showLiveInfo = false },
+                            title = { Text(stringResource(R.string.reminder_live_update), fontWeight = FontWeight.Bold) },
+                            text = { Text(stringResource(R.string.reminder_live_update_desc), style = MaterialTheme.typography.bodyMedium) },
+                            confirmButton = { TextButton(onClick = { showLiveInfo = false }) { Text("OK") } }
+                        )
                     }
-                }
                     HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
                     SwitchItem(Icons.Default.Event, stringResource(R.string.reminder_exam_live_update), reminderExamLiveUpdate, onReminderExamLiveUpdateChange)
                 }
@@ -799,28 +776,12 @@ internal fun SyncPage(
                 colors = ListItemDefaults.colors(containerColor = Color.Transparent)
             )
             if (showHeartbeatInfo) {
-                // ponytail: 重登录同款BlurCard毛玻璃Dialog（dim 12%+底48%+半径36）
-                androidx.compose.ui.window.Dialog(onDismissRequest = { showHeartbeatInfo = false }) {
-                    com.ty.gkschedule.ui.theme.BlurCard(
-                        enabled = blurEnabled,
-                        modifier = Modifier.fillMaxWidth(),
-                        radiusDp = 36f,
-                        backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.48f),
-                        cornerRadiusDp = 28f
-                    ) {
-                        androidx.compose.runtime.CompositionLocalProvider(androidx.compose.material3.LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
-                            Column(modifier = Modifier.padding(24.dp)) {
-                                Text(stringResource(R.string.token_heartbeat), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text(stringResource(R.string.token_heartbeat_desc), style = MaterialTheme.typography.bodyMedium)
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                                TextButton(onClick = { showHeartbeatInfo = false }) { Text("OK") }
-                            }
-                        }
-                    }
-                }
-            }
+                GkAlertDialog(
+                    onDismissRequest = { showHeartbeatInfo = false },
+                    title = { Text(stringResource(R.string.token_heartbeat), fontWeight = FontWeight.Bold) },
+                    text = { Text(stringResource(R.string.token_heartbeat_desc), style = MaterialTheme.typography.bodyMedium) },
+                    confirmButton = { TextButton(onClick = { showHeartbeatInfo = false }) { Text("OK") } }
+                )
             }
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
             // showExamSchedule moved to ExamScreen
@@ -1103,94 +1064,74 @@ internal fun GoSignPage(
     val unusedCx = remember(unusedCxCourses) { unusedCxCourses.second }
 
     if (showSwitchInfo) {
-        androidx.compose.ui.window.Dialog(onDismissRequest = { showSwitchInfo = false }) {
-            com.ty.gkschedule.ui.theme.BlurCard(
-                enabled = blurEnabled,
-                modifier = Modifier.fillMaxWidth(),
-                radiusDp = 36f,
-                backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                cornerRadiusDp = 28f
-            ) {
-                androidx.compose.runtime.CompositionLocalProvider(androidx.compose.material3.LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
-                    Column(modifier = Modifier.padding(24.dp)) {
-                        Text(stringResource(R.string.go_sign_switch_info_title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                        Spacer(modifier = Modifier.height(16.dp))
-                        val bodyText = stringResource(R.string.go_sign_switch_info_body)
-                        val linkWord = stringResource(R.string.go_sign_info_link_word)
-                        Text(
-                            remember(bodyText, linkWord) {
-                                androidx.compose.ui.text.buildAnnotatedString {
-                                    append(bodyText)
-                                    val start = bodyText.indexOf(linkWord)
-                                    if (start >= 0) {
-                                        addLink(
-                                            androidx.compose.ui.text.LinkAnnotation.Url("https://github.com/aquamarine5/ChaoxingSignFaker"),
-                                            start,
-                                            start + linkWord.length
-                                        )
-                                    }
-                                }
-                            },
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                            TextButton(onClick = { showSwitchInfo = false }) { Text("OK") }
+        val bodyText = stringResource(R.string.go_sign_switch_info_body)
+        val linkWord = stringResource(R.string.go_sign_info_link_word)
+        GkAlertDialog(
+            onDismissRequest = { showSwitchInfo = false },
+            title = { Text(stringResource(R.string.go_sign_switch_info_title), fontWeight = FontWeight.Bold) },
+            text = {
+                Text(
+                    remember(bodyText, linkWord) {
+                        androidx.compose.ui.text.buildAnnotatedString {
+                            append(bodyText)
+                            val start = bodyText.indexOf(linkWord)
+                            if (start >= 0) {
+                                addLink(
+                                    androidx.compose.ui.text.LinkAnnotation.Url("https://github.com/aquamarine5/ChaoxingSignFaker"),
+                                    start,
+                                    start + linkWord.length
+                                )
+                            }
                         }
-                    }
-                }
-            }
-        }
+                    },
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = { TextButton(onClick = { showSwitchInfo = false }) { Text("OK") } }
+        )
     }
 
     // ponytail: 选课/确认都在 Dialog 里做，不另开 Activity
     val candidates = remember(courses, picking) {
         picking?.let { cx -> courses.filter { it.chaoxingCourseId <= 0L }.distinctBy { it.name }.sortedBy { it.name } } ?: emptyList()
     }
-    if (picking != null) androidx.compose.ui.window.Dialog(onDismissRequest = { picking = null; confirming = null }) {
-        com.ty.gkschedule.ui.theme.BlurCard(
-            enabled = blurEnabled,
-            modifier = Modifier.fillMaxWidth(),
-            radiusDp = 36f,
-            backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-            cornerRadiusDp = 28f
-        ) {
-            androidx.compose.runtime.CompositionLocalProvider(androidx.compose.material3.LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
-                Column(modifier = Modifier.padding(24.dp).heightIn(max = 520.dp).verticalScroll(rememberScrollState())) {
-                    val cx = picking
-                    val target = confirming
-                    if (target == null && cx != null) {
-                        Text(stringResource(R.string.go_sign_pick_title, cx.name), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                        Spacer(modifier = Modifier.height(12.dp))
+    if (picking != null) {
+        val cx = picking
+        val target = confirming
+        if (cx != null && target == null) {
+            GkAlertDialog(
+                onDismissRequest = { picking = null },
+                title = { Text(stringResource(R.string.go_sign_pick_title, cx.name), fontWeight = FontWeight.Bold) },
+                text = {
+                    Column(modifier = Modifier.heightIn(max = 400.dp).verticalScroll(rememberScrollState())) {
                         candidates.forEach { c ->
                             TextButton(onClick = { confirming = c }, modifier = Modifier.fillMaxWidth()) {
                                 Text(c.name, modifier = Modifier.fillMaxWidth())
                             }
                         }
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                            TextButton(onClick = { picking = null }) { Text(stringResource(R.string.go_sign_cancel)) }
-                        }
-                    } else if (target != null && cx != null) {
-                        Text(stringResource(R.string.go_sign_confirm_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(stringResource(R.string.go_sign_confirm_body, target.name, cx.name))
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                            TextButton(onClick = { confirming = null }) { Text(stringResource(R.string.go_sign_cancel)) }
-                            TextButton(onClick = {
-                                confirming = null; picking = null
-                                onBindChaoxingCourse(target.id, cx.classId, cx.courseId, unusedCxFid) { ok ->
-                                    android.widget.Toast.makeText(
-                                        context,
-                                        context.getString(if (ok) R.string.go_sign_bind_ok else R.string.go_sign_bind_fail),
-                                        android.widget.Toast.LENGTH_SHORT
-                                    ).show()
-                                }
-                            }) { Text(stringResource(R.string.go_sign_confirm_ok)) }
-                        }
                     }
-                }
-            }
+                },
+                confirmButton = { TextButton(onClick = { picking = null }) { Text(stringResource(R.string.go_sign_cancel)) } }
+            )
+        } else if (cx != null && target != null) {
+            GkAlertDialog(
+                onDismissRequest = { confirming = null },
+                title = { Text(stringResource(R.string.go_sign_confirm_title), fontWeight = FontWeight.Bold) },
+                text = { Text(stringResource(R.string.go_sign_confirm_body, target.name, cx.name), style = MaterialTheme.typography.bodyMedium) },
+                confirmButton = {
+                    TextButton(onClick = {
+                        confirming = null; picking = null
+                        onBindChaoxingCourse(target.id, cx.classId, cx.courseId, unusedCxFid) { ok ->
+                            android.widget.Toast.makeText(
+                                context,
+                                context.getString(if (ok) R.string.go_sign_bind_ok else R.string.go_sign_bind_fail),
+                                android.widget.Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }) { Text(stringResource(R.string.go_sign_confirm_ok)) }
+                },
+                dismissButton = { TextButton(onClick = { confirming = null }) { Text(stringResource(R.string.go_sign_cancel)) } }
+            )
         }
     }
 

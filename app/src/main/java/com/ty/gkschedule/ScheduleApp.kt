@@ -562,8 +562,6 @@ fun ScheduleApp(
         }
         if (showQuickRelogin) {
             com.ty.gkschedule.ui.about.QuickReloginDialog(
-                backdrop = backdrop,
-                enabled = blurEffect,
                 captchaImageBase64 = captchaImage,
                 onRefreshCaptcha = { viewModel.refreshCaptcha() },
                 onQuickRelogin = { viewModel.quickRelogin(it) },

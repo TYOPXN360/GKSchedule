@@ -31,6 +31,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.ty.gkschedule.ui.theme.GkAlertDialog
 import top.yukonga.miuix.kmp.blur.layerBackdrop
 import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
 
@@ -80,8 +81,7 @@ fun AboutDetailPage(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back_cd))
                     }
                 },
-                backdrop = backdrop,
-                blurEnabled = blurEnabled
+                backdrop = backdrop
             )
         }
     ) { padding ->
@@ -341,7 +341,7 @@ fun AboutDetailPage(
 
     // Disclaimer dialog
     if (showDisclaimerDialog) {
-        com.ty.gkschedule.ui.theme.BlurAlertDialog(
+        GkAlertDialog(
             onDismissRequest = { showDisclaimerDialog = false },
             title = { Text(stringResource(R.string.disclaimer_title)) },
             text = {
@@ -361,14 +361,13 @@ fun AboutDetailPage(
                 TextButton(onClick = { showDisclaimerDialog = false }) {
                     Text("OK")
                 }
-            },
-            blurEnabled = blurEnabled
+            }
         )
     }
 
     // Update dialog
     if (showUpdateDialog && updateInfo != null) {
-        com.ty.gkschedule.ui.theme.BlurAlertDialog(
+        GkAlertDialog(
             onDismissRequest = { showUpdateDialog = false },
             icon = { Icon(Icons.Default.SystemUpdate, null, tint = MaterialTheme.colorScheme.primary) },
             title = { Text(stringResource(R.string.update_available)) },
@@ -438,9 +437,7 @@ fun AboutDetailPage(
                         Text(stringResource(R.string.cancel))
                     }
                 }
-            },
-            // ponytail: 更新框固定纯色，不跟毛玻璃开关走半透明
-            blurEnabled = false
+            }
         )
     }
 }

@@ -3,7 +3,6 @@ import com.ty.gkschedule.R
 import androidx.compose.ui.res.stringResource
 import com.ty.gkschedule.ui.theme.GKSwitch
 import com.ty.gkschedule.ui.theme.BlurCard
-import com.ty.gkschedule.ui.theme.BackdropDialog
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -13,6 +12,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import com.ty.gkschedule.ui.theme.GkAlertDialog
 import top.yukonga.miuix.kmp.blur.blur
 import top.yukonga.miuix.kmp.blur.drawBackdrop
 import androidx.compose.material.icons.Icons
@@ -43,7 +43,6 @@ import com.ty.gkschedule.data.ScheduleResolver
 import com.ty.gkschedule.data.ScheduleItem
 import com.ty.gkschedule.util.CourseColors
 import com.ty.gkschedule.ui.theme.LocalAppIsDark
-import com.ty.gkschedule.ui.theme.LocalBackdropDialogDismiss
 import com.ty.gkschedule.ui.theme.BlurDropdownMenu
 import com.ty.gkschedule.ui.theme.Md3Card
 import com.ty.gkschedule.ui.theme.Md3CardVariant
@@ -378,42 +377,41 @@ fun ExamScreen(
         )
     }
 
-    // Re-login dialog — 只糊卡片不糊全屏，Dialog+BlurCard载体等大
+    // Re-login dialog — 原生 AlertDialog
     if (showReloginDialog) {
         var captcha by remember { mutableStateOf("") }
-        BackdropDialog(
-            backdrop = backdrop,
-            enabled = blurEnabled,
-            onDismiss = onDismissRelogin,
-        ) {
-            Column(modifier = Modifier.padding(vertical = 16.dp)) {
-                val dismissDialog = LocalBackdropDialogDismiss.current
-                Text(stringResource(R.string.edu_session_expired), style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.onSurface)
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(stringResource(R.string.captcha_relogin_hint), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Spacer(modifier = Modifier.height(12.dp))
-                if (!captchaImageBase64.isNullOrEmpty()) {
-                    val bitmap = remember(captchaImageBase64) {
-                        try {
-                            val bytes = android.util.Base64.decode(captchaImageBase64, android.util.Base64.DEFAULT)
-                            android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-                        } catch (_: Exception) { null }
-                    }
-                    if (bitmap != null) {
-                        Card(modifier = Modifier.size(width = 120.dp, height = 56.dp).clickable { onRefreshCaptcha() }, shape = MaterialTheme.shapes.extraSmall) {
-                            Image(bitmap = bitmap.asImageBitmap(), contentDescription = "Captcha", modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Fit)
+        GkAlertDialog(
+            onDismissRequest = onDismissRelogin,
+            title = { Text(stringResource(R.string.edu_session_expired), fontWeight = FontWeight.Bold) },
+            text = {
+                Column {
+                    Text(stringResource(R.string.captcha_relogin_hint), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Spacer(modifier = Modifier.height(12.dp))
+                    if (!captchaImageBase64.isNullOrEmpty()) {
+                        val bitmap = remember(captchaImageBase64) {
+                            runCatching {
+                                val bytes = android.util.Base64.decode(captchaImageBase64, android.util.Base64.DEFAULT)
+                                android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                            }.getOrNull()
+                        }
+                        if (bitmap != null) {
+                            Card(modifier = Modifier.size(width = 120.dp, height = 56.dp).clickable { onRefreshCaptcha() }, shape = MaterialTheme.shapes.extraSmall) {
+                                Image(bitmap = bitmap.asImageBitmap(), contentDescription = "Captcha", modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Fit)
+                            }
                         }
                     }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(value = captcha, onValueChange = { captcha = it }, label = { Text(stringResource(R.string.captcha_label)) }, modifier = Modifier.fillMaxWidth(), singleLine = true)
                 }
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(value = captcha, onValueChange = { captcha = it }, label = { Text(stringResource(R.string.captcha_label)) }, modifier = Modifier.fillMaxWidth(), singleLine = true)
-                Spacer(modifier = Modifier.height(16.dp))
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    TextButton(onClick = dismissDialog) { Text(stringResource(R.string.cancel)) }
-                    TextButton(onClick = { if (captcha.isNotBlank()) { onQuickRelogin(captcha); dismissDialog() } }, enabled = captcha.isNotBlank()) { Text(stringResource(R.string.login_button)) }
-                }
-            }
-        }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = { if (captcha.isNotBlank()) { onQuickRelogin(captcha); onDismissRelogin() } },
+                    enabled = captcha.isNotBlank()
+                ) { Text(stringResource(R.string.login_button)) }
+            },
+            dismissButton = { TextButton(onClick = onDismissRelogin) { Text(stringResource(R.string.cancel)) } }
+        )
     }
     }
 }

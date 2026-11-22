@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.lerp
 import com.ty.gkschedule.R
 import com.ty.gkschedule.data.Course
 import com.ty.gkschedule.util.CourseColors
+import com.ty.gkschedule.ui.theme.GkAlertDialog
 import top.yukonga.miuix.kmp.blur.blendColors
 import top.yukonga.miuix.kmp.blur.blur
 import top.yukonga.miuix.kmp.blur.drawBackdrop
@@ -107,8 +108,7 @@ fun CourseManageScreen(
                     }
                 },
                 scrollBehavior = scrollBehavior,
-                backdrop = backdrop,
-                blurEnabled = blurEnabled
+                backdrop = backdrop
             )
         },
         floatingActionButton = {
@@ -190,23 +190,21 @@ fun CourseManageScreen(
     }
 
     courseToDelete?.let { course ->
-        com.ty.gkschedule.ui.theme.BlurAlertDialog(
+        GkAlertDialog(
             onDismissRequest = { courseToDelete = null },
             title = { Text(stringResource(R.string.confirm_delete)) },
             text = { Text(stringResource(R.string.confirm_delete_msg)) },
             confirmButton = { TextButton(onClick = { onDeleteCourse(course); courseToDelete = null }) { Text(stringResource(R.string.delete)) } },
-            dismissButton = { TextButton(onClick = { courseToDelete = null }) { Text(stringResource(R.string.cancel)) } },
-            blurEnabled = blurEnabled
+            dismissButton = { TextButton(onClick = { courseToDelete = null }) { Text(stringResource(R.string.cancel)) } }
         )
     }
     if (showDeleteAllDialog) {
-        com.ty.gkschedule.ui.theme.BlurAlertDialog(
+        GkAlertDialog(
             onDismissRequest = { showDeleteAllDialog = false },
             title = { Text(stringResource(R.string.confirm_delete_all)) },
             text = { Text(stringResource(R.string.confirm_delete_all_msg)) },
             confirmButton = { TextButton(onClick = { onDeleteAll(); showDeleteAllDialog = false }) { Text(stringResource(R.string.delete)) } },
-            dismissButton = { TextButton(onClick = { showDeleteAllDialog = false }) { Text(stringResource(R.string.cancel)) } },
-            blurEnabled = blurEnabled
+            dismissButton = { TextButton(onClick = { showDeleteAllDialog = false }) { Text(stringResource(R.string.cancel)) } }
         )
     }
 }

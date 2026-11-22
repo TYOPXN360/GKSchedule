@@ -1,6 +1,5 @@
 package com.ty.gkschedule.ui.theme
 
-import androidx.activity.compose.BackHandler
 import androidx.activity.compose.PredictiveBackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -25,16 +24,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.zIndex
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.DialogProperties
 import top.yukonga.miuix.kmp.blur.Backdrop
 import top.yukonga.miuix.kmp.blur.blur
 import top.yukonga.miuix.kmp.blur.drawBackdrop
 
 val LocalBlurDropdownBackdrop = staticCompositionLocalOf<Backdrop?> { null }
-val LocalBackdropDialogDismiss = staticCompositionLocalOf<() -> Unit> { {} }
 
 // ponytail: QPR2结论——Dialog卡片真磨砂对第三方App不可做：
 // ponytail: 反射BackgroundBlurDrawable被blocklist；窗口级需translucent但Compose Dialog全屏糊整屏；
@@ -141,56 +137,6 @@ fun BackdropBottomSheet(
 }
 
 @Composable
-fun BackdropDialog(
-    backdrop: Backdrop,
-    enabled: Boolean,
-    onDismiss: () -> Unit,
-    content: @Composable ColumnScope.() -> Unit,
-) {
-    val transitionState = remember {
-        MutableTransitionState(false).apply { targetState = true }
-    }
-    fun requestDismiss() {
-        if (transitionState.targetState) transitionState.targetState = false
-    }
-    BackHandler(onBack = ::requestDismiss)
-    LaunchedEffect(transitionState.currentState, transitionState.targetState) {
-        if (!transitionState.currentState && !transitionState.targetState) onDismiss()
-    }
-    CompositionLocalProvider(LocalBackdropDialogDismiss provides ::requestDismiss) {
-        AnimatedVisibility(
-            visibleState = transitionState,
-        modifier = Modifier.fillMaxSize().zIndex(100f),
-        enter = fadeIn(tween(160)) + androidx.compose.animation.scaleIn(initialScale = 0.94f, animationSpec = tween(180)),
-        exit = fadeOut(tween(120)) + androidx.compose.animation.scaleOut(targetScale = 0.94f, animationSpec = tween(120))
-    ) {
-        Box(
-
-        contentAlignment = Alignment.Center
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = if (enabled) 0.12f else 0.18f))
-                .pointerInput(Unit) { detectTapGestures(onTap = { requestDismiss() }) }
-        )
-        BlurCardSurface(
-            backdrop = backdrop,
-            enabled = enabled,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp)
-                .pointerInput(Unit) { detectTapGestures { } },
-            cornerRadiusDp = 28f,
-            backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.86f),
-            content = content
-        )
-    }
-}
-}
-}
-
-@Composable
 private fun BlurCardSurface(
     backdrop: Backdrop,
     enabled: Boolean,
@@ -216,142 +162,7 @@ private fun BlurCardSurface(
     )
 }
 
-@Composable
-fun BackdropAlertDialog(
-    backdrop: Backdrop,
-    onDismissRequest: () -> Unit,
-    confirmButton: @Composable () -> Unit,
-    dismissButton: (@Composable () -> Unit)? = null,
-    title: (@Composable () -> Unit)? = null,
-    text: (@Composable () -> Unit)? = null,
-    blurEnabled: Boolean = true,
-) {
-    BackdropDialog(backdrop = backdrop, enabled = blurEnabled, onDismiss = onDismissRequest) {
-        Column(modifier = Modifier.padding(vertical = 16.dp)) {
-            if (title != null) {
-                CompositionLocalProvider(LocalTextStyle provides MaterialTheme.typography.headlineSmall) { title() }
-                Spacer(modifier = Modifier.height(16.dp))
-            }
-            if (text != null) {
-                CompositionLocalProvider(LocalTextStyle provides MaterialTheme.typography.bodyMedium) { text() }
-                Spacer(modifier = Modifier.height(16.dp))
-            }
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                dismissButton?.invoke()
-                Spacer(modifier = Modifier.width(8.dp))
-                confirmButton()
-            }
-        }
-    }
-}
-
-// ponytail: 关开关=纯色卡（enabled=false走Spacer底）；调用方Dialog/Dropdown/Sheet/详情卡全要透传开关
 @OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun BlurAlertDialog(
-    onDismissRequest: () -> Unit,
-    confirmButton: @Composable () -> Unit,
-    modifier: Modifier = Modifier,
-    dismissButton: (@Composable () -> Unit)? = null,
-    icon: (@Composable () -> Unit)? = null,
-    title: (@Composable () -> Unit)? = null,
-    text: (@Composable () -> Unit)? = null,
-    blurEnabled: Boolean = true,
-) {
-    BasicAlertDialog(
-        onDismissRequest = onDismissRequest,
-        modifier = modifier
-    ) {
-        BlurCard(
-            enabled = blurEnabled,
-            modifier = Modifier.fillMaxWidth(),
-            radiusDp = 32f,
-            backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.55f),
-            cornerRadiusDp = 28f
-        ) {
-            Column(modifier = Modifier.padding(24.dp)) {
-                if (icon != null) {
-                    Box(
-                        modifier = Modifier
-                            .padding(bottom = 16.dp)
-                            .align(Alignment.CenterHorizontally)
-                    ) { icon() }
-                }
-                if (title != null) {
-                    Box(modifier = Modifier.padding(bottom = 16.dp)) {
-                        CompositionLocalProvider(
-                            LocalTextStyle provides MaterialTheme.typography.headlineSmall
-                        ) { title() }
-                    }
-                }
-                if (text != null) {
-                    Box(
-                        modifier = Modifier
-                            .weight(weight = 1f, fill = false)
-                            .padding(bottom = 24.dp)
-                    ) {
-                        CompositionLocalProvider(
-                            LocalTextStyle provides MaterialTheme.typography.bodyMedium
-                        ) { text() }
-                    }
-                }
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    dismissButton?.invoke()
-                    Spacer(modifier = Modifier.width(8.dp))
-                    confirmButton()
-                }
-            }
-        }
-    }
-}
-
-// ponytail: 整卡包裹毛玻璃DatePickerDialog——DatePicker自身底色调用点置透明
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun BlurDatePickerDialog(
-    onDismissRequest: () -> Unit,
-    confirmButton: @Composable () -> Unit,
-    modifier: Modifier = Modifier,
-    dismissButton: (@Composable () -> Unit)? = null,
-    content: @Composable () -> Unit,
-    blurEnabled: Boolean = true,
-) {
-    BasicAlertDialog(
-        onDismissRequest = onDismissRequest,
-        modifier = modifier.wrapContentHeight(),
-        properties = DialogProperties(usePlatformDefaultWidth = false)
-    ) {
-        BlurCard(
-            enabled = blurEnabled,
-            modifier = Modifier
-                .width(360.dp)
-                .wrapContentHeight(),
-            radiusDp = 32f,
-            backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.55f),
-            cornerRadiusDp = 28f
-        ) {
-            Column(modifier = Modifier.padding(vertical = 12.dp)) {
-                content()
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(end = 16.dp, top = 8.dp),
-                    horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    dismissButton?.invoke()
-                    Spacer(modifier = Modifier.width(8.dp))
-                    confirmButton()
-                }
-            }
-        }
-    }
-}
-
 @Composable
 fun BlurDropdownMenu(
     expanded: Boolean,
