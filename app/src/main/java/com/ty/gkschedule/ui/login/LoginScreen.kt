@@ -19,6 +19,8 @@ import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -30,8 +32,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import com.ty.gkschedule.CaptchaState
 import com.ty.gkschedule.LoginState
 import com.ty.gkschedule.R
+import com.ty.gkschedule.ui.theme.CaptchaImageWithStatus
+import com.ty.gkschedule.ui.theme.CaptchaStatusLine
 import top.yukonga.miuix.kmp.blur.layerBackdrop
 import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
 
@@ -40,6 +45,7 @@ import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
 fun LoginScreen(
     loginState: LoginState?,
     captchaImageBase64: String?,
+    captchaState: CaptchaState,
     hasSavedCredentials: Boolean,
     onRefreshCaptcha: () -> Unit,
     onLogin: (studentId: String, password: String, captcha: String) -> Unit,
@@ -144,28 +150,18 @@ fun LoginScreen(
                     enabled = !isLoading
                 )
 
-                if (captchaImageBase64 != null && captchaImageBase64.isNotEmpty()) {
-                    val bitmap = remember(captchaImageBase64) {
-                        try {
-                            val bytes = Base64.decode(captchaImageBase64, Base64.DEFAULT)
-                            BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-                        } catch (_: Exception) { null }
-                    }
-                    if (bitmap != null) {
-                        Card(
-                            modifier = Modifier.size(width = 120.dp, height = 56.dp)
-                                .clickable { onRefreshCaptcha() },
-                            shape = MaterialTheme.shapes.extraSmall
-                        ) {
-                            Image(bitmap = bitmap.asImageBitmap(), contentDescription = "Captcha",
-                                modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Fit)
-                        }
-                    }
-                }
-                IconButton(onClick = onRefreshCaptcha, enabled = !isLoading) {
-                    Icon(Icons.Default.Refresh, "Refresh captcha")
+                CaptchaImageWithStatus(
+                    captchaImageBase64 = captchaImageBase64,
+                    captchaState = captchaState,
+                    onRefreshCaptcha = onRefreshCaptcha
+                )
+                IconButton(onClick = onRefreshCaptcha, enabled = !isLoading && captchaState !is CaptchaState.Loading) {
+                    Icon(Icons.Default.Refresh, stringResource(R.string.captcha_refresh))
                 }
             }
+
+            // 验证码状态副标题：加载中 / 加载失败（失败时给出原因）
+            CaptchaStatusLine(captchaState = captchaState)
 
             // Quick re-login with saved encrypted credentials.
             // Removed from login page - quick login only available from AboutScreen after token expiry.

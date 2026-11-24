@@ -362,6 +362,10 @@
     <string name="msg_network_error">网络异常，请检查网络后重试</string>
     <string name="msg_session_expired_quick">登录已过期，请快速登录</string>
     <string name="msg_captcha_fetch_fail">获取验证码失败</string>
+    <string name="captcha_loading">正在加载验证码…</string>
+    <string name="captcha_load_failed">加载失败</string>
+    <string name="captcha_load_failed_fmt">验证码加载失败：%1$s</string>
+    <string name="captcha_refresh">刷新验证码</string>
     <string name="msg_import_fail">导入失败: %1$s</string>
     <string name="msg_login_required">请先登录教务系统</string>
     <string name="msg_sync_incomplete">同步未完成，已保留原课表</string>

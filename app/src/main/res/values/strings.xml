@@ -355,6 +355,10 @@
     <string name="msg_network_error">Network error, check your connection and retry</string>
     <string name="msg_session_expired_quick">Session expired, please log in quickly</string>
     <string name="msg_captcha_fetch_fail">Failed to get captcha</string>
+    <string name="captcha_loading">Loading captcha…</string>
+    <string name="captcha_load_failed">Load failed</string>
+    <string name="captcha_load_failed_fmt">Failed to load captcha: %1$s</string>
+    <string name="captcha_refresh">Refresh captcha</string>
     <string name="msg_import_fail">Import failed: %1$s</string>
     <string name="msg_login_required">Please log in to the education system first</string>
     <string name="msg_sync_incomplete">Sync incomplete; previous schedule kept</string>

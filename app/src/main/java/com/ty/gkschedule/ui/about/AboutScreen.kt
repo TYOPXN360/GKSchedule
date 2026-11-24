@@ -26,7 +26,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.ty.gkschedule.LoginState
+import com.ty.gkschedule.CaptchaState
 import com.ty.gkschedule.R
+import com.ty.gkschedule.ui.theme.CaptchaStatusLine
+import com.ty.gkschedule.ui.theme.CaptchaImageWithStatus
 import com.ty.gkschedule.ui.theme.BadgeColorPalette
 import com.ty.gkschedule.ui.theme.Md3Card
 import com.ty.gkschedule.ui.theme.Md3CardVariant
@@ -44,6 +47,7 @@ fun AboutScreen(
     totalWeeks: Int,
     periodsPerDay: Int,
     captchaImageBase64: String? = null,
+    captchaState: CaptchaState = CaptchaState.Idle,
     onLogin: () -> Unit,
     onLogout: () -> Unit,
     onQuickRelogin: (String) -> Unit = {},
@@ -299,6 +303,7 @@ fun AboutScreen(
 @Composable
 fun QuickReloginDialog(
     captchaImageBase64: String?,
+    captchaState: CaptchaState,
     onRefreshCaptcha: () -> Unit,
     onQuickRelogin: (String) -> Unit,
     onDismiss: () -> Unit
@@ -311,23 +316,13 @@ fun QuickReloginDialog(
             Column {
                 Text(stringResource(R.string.captcha_relogin_hint), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(modifier = Modifier.height(12.dp))
-                if (!captchaImageBase64.isNullOrEmpty()) {
-                    val bitmap = remember(captchaImageBase64) {
-                        runCatching {
-                            val bytes = android.util.Base64.decode(captchaImageBase64, android.util.Base64.DEFAULT)
-                            android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-                        }.getOrNull()
-                    }
-                    if (bitmap != null) {
-                        Card(
-                            modifier = Modifier.size(width = 120.dp, height = 56.dp).clickable(onClick = onRefreshCaptcha),
-                            shape = MaterialTheme.shapes.small
-                        ) {
-                            Image(bitmap = bitmap.asImageBitmap(), contentDescription = "Captcha", modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Fit)
-                        }
-                    }
-                }
+                CaptchaImageWithStatus(
+                    captchaImageBase64 = captchaImageBase64,
+                    captchaState = captchaState,
+                    onRefreshCaptcha = onRefreshCaptcha
+                )
                 Spacer(modifier = Modifier.height(8.dp))
+                CaptchaStatusLine(captchaState = captchaState)
                 OutlinedTextField(
                     value = captcha,
                     onValueChange = { captcha = it },

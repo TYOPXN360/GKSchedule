@@ -126,6 +126,9 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     val loginState: StateFlow<LoginState> = _loginState
     private val _captchaImage = MutableStateFlow<String?>(null)
     val captchaImage: StateFlow<String?> = _captchaImage
+    // ponytail: 验证码自身的加载状态，与 loginState 分开——登录失败的错误文案不能被刷图覆盖
+    private val _captchaState = MutableStateFlow<CaptchaState>(CaptchaState.Idle)
+    val captchaState: StateFlow<CaptchaState> = _captchaState
     private var captchaUuid = ""
     private var savedStudentId = ""
     private val _savedStudentIdFlow = MutableStateFlow("")
@@ -584,6 +587,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     // --- Login ---
 
     fun refreshCaptcha(clearError: Boolean = true) {
+        _captchaState.value = CaptchaState.Loading
         viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
             api.getLoginCode().onSuccess { data ->
                 val imgBase64 = data.getImageBase64()
@@ -592,12 +596,14 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                 android.util.Log.d("GdustApi", "Captcha image starts with: ${imgBase64.take(50)}")
                 _captchaImage.value = imgBase64
                 captchaUuid = data.resolveUuid()
+                _captchaState.value = CaptchaState.Loaded
                 // ponytail: 验证码图刷新成功≠错误已读，登录失败的错误文案留着给用户看；只在进登录页/手动点刷新时清
                 if (clearError && _loginState.value is LoginState.Error) {
                     _loginState.value = LoginState.LoggedOut
                 }
             }.onFailure { e ->
                 android.util.Log.e("GdustApi", "Captcha fetch failed: ${e.message}")
+                _captchaState.value = CaptchaState.Failed(e.message ?: app.getString(R.string.msg_captcha_fetch_fail))
                 if (_loginState.value !is LoginState.LoggedOut) {
                     _loginState.value = LoginState.Error(e.message ?: app.getString(R.string.msg_captcha_fetch_fail))
                 }
@@ -970,6 +976,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     fun logout() {
         _loginState.value = LoginState.LoggedOut
         _captchaImage.value = null
+        _captchaState.value = CaptchaState.Idle
         captchaUuid = ""
         savedStudentId = ""
         _savedStudentIdFlow.value = ""
@@ -982,6 +989,13 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
             _loginState.value = LoginState.LoggedOut
         }
     }
+}
+
+sealed class CaptchaState {
+    data object Idle : CaptchaState()
+    data object Loading : CaptchaState()
+    data object Loaded : CaptchaState()
+    data class Failed(val message: String) : CaptchaState()
 }
 
 sealed class LoginState {
