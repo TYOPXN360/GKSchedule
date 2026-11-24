@@ -167,6 +167,9 @@ class SubSettingsSyncActivity : SubSettingsBaseActivity() {
         val autoSyncIntervalUnit by vm.autoSyncIntervalUnit.collectAsState(initial = "d")
         val tokenHeartbeat by vm.tokenHeartbeat.collectAsState(initial = false)
         val captchaOcr by vm.captchaOcr.collectAsState(initial = true)
+        val captchaModelState by vm.captchaModelState.collectAsState()
+        // ponytail: 进页面先把模型状态同步一次（文件可能在别处被删/被系统清）
+        LaunchedEffect(Unit) { vm.refreshCaptchaModelState() }
         val showExamSchedule by vm.showExamSchedule.collectAsState(initial = false)
         val examLookaheadWeeks by vm.examLookaheadWeeks.collectAsState(initial = 1)
         val diffColorPerWeek by vm.diffColorPerWeek.collectAsState(initial = false)
@@ -176,6 +179,7 @@ class SubSettingsSyncActivity : SubSettingsBaseActivity() {
             autoSyncOnStart = autoSyncOnStart, autoSyncIntervalValue = autoSyncIntervalValue,
             autoSyncIntervalUnit = autoSyncIntervalUnit, tokenHeartbeat = tokenHeartbeat,
             captchaOcr = captchaOcr,
+            captchaModelState = captchaModelState,
             showExamSchedule = showExamSchedule, examLookaheadWeeks = examLookaheadWeeks,
             diffColorPerWeek = diffColorPerWeek, autoCheckUpdateDaily = autoCheckUpdateDaily,
             onAutoSyncOnStartChange = { vm.setAutoSyncOnStart(it) },
@@ -183,6 +187,8 @@ class SubSettingsSyncActivity : SubSettingsBaseActivity() {
             onAutoSyncIntervalUnitChange = { vm.setAutoSyncIntervalUnit(it) },
             onTokenHeartbeatChange = { vm.setTokenHeartbeat(it) },
             onCaptchaOcrChange = { vm.setCaptchaOcr(it) },
+            onDownloadCaptchaModel = { vm.downloadCaptchaModel() },
+            onDeleteCaptchaModel = { vm.deleteCaptchaModel() },
             onShowExamScheduleChange = { vm.setShowExamSchedule(it) },
             onExamLookaheadWeeksChange = { vm.setExamLookaheadWeeks(it) },
             onDiffColorPerWeekChange = { vm.setDiffColorPerWeek(it) },

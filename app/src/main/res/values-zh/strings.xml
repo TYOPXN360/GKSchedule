@@ -162,6 +162,14 @@
     <string name="token_heartbeat_desc">每15分钟自动刷新Token，防止登录过期。低功耗，仅在有网络且电量充足时运行。</string>
     <string name="captcha_ocr">验证码自动识别</string>
     <string name="captcha_ocr_desc">在本机识别登录验证码并自动填入。会话过期后会自动取一张新验证码并识别好，方便快速重登。</string>
+    <string name="captcha_model_missing">识别模型未下载（约 5.2MB），下载后才会自动识别验证码；不下载就用手动输入。</string>
+    <string name="captcha_model_download">下载</string>
+    <string name="captcha_model_retry">重试</string>
+    <string name="captcha_model_delete">删除模型</string>
+    <string name="captcha_model_delete_desc">删除后验证码自动识别会关闭并回退到手动输入，可随时重新下载。</string>
+    <string name="captcha_model_downloading">正在下载识别模型 %1$d%%</string>
+    <string name="captcha_model_download_failed">下载失败，可重试：%1$s</string>
+    <string name="captcha_model_fail_generic">网络不可用</string>
     <string name="show_exam_schedule">显示考试安排</string>
     <string name="exam_lookahead_weeks">近期考试提前显示周数</string>
     <string name="diff_color_per_week">跨周同科不同色</string>

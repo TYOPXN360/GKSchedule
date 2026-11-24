@@ -47,8 +47,11 @@ object CaptchaOcr {
 
     /**
      * 识别 jpeg/png 字节。失败返回 null，调用方保留手动输入。
+     *
+     * 模型来源优先 filesDir 下的按需下载版本（见 [CaptchaModel]），没有再回退打包在
+     * assets 里的同名文件——正常发行包不带 assets 版本，这条兜底只给开发调试用。
      */
-    fun recognize(context: Context, imageBytes: ByteArray): String? = runCatching {
+    suspend fun recognize(context: Context, imageBytes: ByteArray): String? = runCatching {
         if (!isSupported) return null
         val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
             ?: return null
@@ -57,7 +60,7 @@ object CaptchaOcr {
         val data = input.data
         if (width <= 0 || data.isEmpty()) return null
 
-        val sess = session(context)
+        val sess = session(context) ?: return null
         val env = OrtEnvironment.getEnvironment()
         OnnxTensor.createTensor(
             env,
@@ -90,20 +93,43 @@ object CaptchaOcr {
         }
     }.getOrNull()
 
-    private fun session(context: Context): OrtSession = session ?: synchronized(lock) {
-        session ?: run {
+    /** 丢弃已加载的会话，删模型/换模型后调用。 */
+    fun reset() {
+        synchronized(lock) {
+            runCatching { session?.close() }
+            session = null
+        }
+    }
+
+    private suspend fun session(context: Context): OrtSession? {
+        session?.let { return it }
+        // ponytail: 取模型可能触发 suspend（filesDir 校验/读 DataStore），必须在锁外做，
+        // 否则 Kotlin 直接报 "suspension point is inside a critical section"
+        val bytes = loadModelBytes(context) ?: return null
+        synchronized(lock) {
+            session?.let { return it }
             val env = OrtEnvironment.getEnvironment()
             val created = OrtSession.SessionOptions().use { options ->
                 options.setIntraOpNumThreads(2)
                 options.setOptimizationLevel(OrtSession.SessionOptions.OptLevel.ALL_OPT)
-                // 直接从 assets 读进内存建会话，避免在磁盘上留一份 5MB 模型
-                val bytes = context.assets.open(MODEL_ASSET).use { it.readBytes() }
+                // 从内存建会话，避免在磁盘上再留一份 5MB 模型
                 env.createSession(bytes, options)
             }
             inputName = created.inputNames.firstOrNull() ?: INPUT_NAME
             session = created
-            created
+            return created
         }
+    }
+
+    /** filesDir 优先（按需下载、已校验），assets 兜底（仅供开发调试）。 */
+    private suspend fun loadModelBytes(context: Context): ByteArray? {
+        if (CaptchaModel.isReady(context)) {
+            runCatching { CaptchaModel.file(context).readBytes() }
+                .getOrNull()
+                ?.takeIf { it.isNotEmpty() }
+                ?.let { return it }
+        }
+        return runCatching { context.assets.open(MODEL_ASSET).use { it.readBytes() } }.getOrNull()
     }
 
     // ---- 预处理 ----

@@ -98,6 +98,8 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     val autoSyncIntervalUnit: Flow<String> = settings.autoSyncIntervalUnit
     val tokenHeartbeat: Flow<Boolean> = settings.tokenHeartbeat
     val captchaOcr: Flow<Boolean> = settings.captchaOcr
+    val captchaModelState: StateFlow<com.ty.gkschedule.captcha.CaptchaModelState> =
+        com.ty.gkschedule.captcha.CaptchaModel.state
     val showExamSchedule: Flow<Boolean> = settings.showExamSchedule
     val examLookaheadWeeks: Flow<Int> = settings.examLookaheadWeeks
     val diffColorPerWeek: Flow<Boolean> = settings.diffColorPerWeek
@@ -360,6 +362,23 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
         viewModelScope.launch { settings.setCaptchaOcr(enabled) }
     }
 
+    // ponytail: 模型按需下载——设置页进入时同步状态，下载/删除都交给 CaptchaModel 自己的作用域
+    fun refreshCaptchaModelState() {
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            com.ty.gkschedule.captcha.CaptchaModel.refresh(app)
+        }
+    }
+
+    fun downloadCaptchaModel() {
+        com.ty.gkschedule.captcha.CaptchaModel.download(app)
+    }
+
+    fun deleteCaptchaModel() {
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            com.ty.gkschedule.captcha.CaptchaModel.delete(app)
+        }
+    }
+
     fun setTokenHeartbeat(enabled: Boolean) {
         viewModelScope.launch {
             settings.setTokenHeartbeat(enabled)
@@ -612,6 +631,8 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                 // ponytail: 离线识别验证码，成功就自动填进输入框；失败保持 null，用户照样能手动输
                 val ocrOn = settings.captchaOcr.first()
                 val text = if (ocrOn) runCatching {
+                    // 模型没下载就直接跳过，省掉预处理开销（行为等同关闭识别）
+                    if (!com.ty.gkschedule.captcha.CaptchaModel.isReady(app)) return@runCatching null
                     val bytes = android.util.Base64.decode(imgBase64, android.util.Base64.DEFAULT)
                     com.ty.gkschedule.captcha.CaptchaOcr.recognize(app, bytes)
                 }.getOrNull() else null

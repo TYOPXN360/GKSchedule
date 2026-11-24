@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.ty.gkschedule.R
+import com.ty.gkschedule.captcha.CaptchaModelState
 import com.ty.gkschedule.data.ScheduleAdjustment
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -638,6 +639,7 @@ internal fun SyncPage(
     autoSyncIntervalUnit: String,
     tokenHeartbeat: Boolean,
     captchaOcr: Boolean = true,
+    captchaModelState: CaptchaModelState = CaptchaModelState.NotDownloaded,
     showExamSchedule: Boolean,
     examLookaheadWeeks: Int,
     diffColorPerWeek: Boolean,
@@ -647,6 +649,8 @@ internal fun SyncPage(
     onAutoSyncIntervalUnitChange: (String) -> Unit,
     onTokenHeartbeatChange: (Boolean) -> Unit,
     onCaptchaOcrChange: (Boolean) -> Unit = {},
+    onDownloadCaptchaModel: () -> Unit = {},
+    onDeleteCaptchaModel: () -> Unit = {},
     onShowExamScheduleChange: (Boolean) -> Unit,
     onExamLookaheadWeeksChange: (Int) -> Unit,
     onDiffColorPerWeekChange: (Boolean) -> Unit,
@@ -787,11 +791,24 @@ internal fun SyncPage(
             }
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
             // ponytail: 同一个开关管两件事——登录页自动填验证码、过期后自动预取并识别
+            // 模型不进 APK，按需下载（约 5.2MB）；没就绪时这里只显示下载入口，开关不出现
+            var showDeleteModelConfirm by remember { mutableStateOf(false) }
             ListItem(
                 headlineContent = { Text(stringResource(R.string.captcha_ocr)) },
                 supportingContent = {
                     Text(
-                        stringResource(R.string.captcha_ocr_desc),
+                        when (captchaModelState) {
+                            is CaptchaModelState.Ready -> stringResource(R.string.captcha_ocr_desc)
+                            is CaptchaModelState.Downloading -> stringResource(
+                                R.string.captcha_model_downloading,
+                                (captchaModelState.progress * 100).toInt()
+                            )
+                            is CaptchaModelState.Failed -> stringResource(
+                                R.string.captcha_model_download_failed,
+                                captchaModelState.message
+                            )
+                            else -> stringResource(R.string.captcha_model_missing)
+                        },
                         style = MaterialTheme.typography.bodyMedium
                     )
                 },
@@ -799,10 +816,55 @@ internal fun SyncPage(
                     Icon(Icons.Default.AutoAwesome, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 },
                 trailingContent = {
-                    GKSwitch(checked = captchaOcr, onCheckedChange = onCaptchaOcrChange)
+                    when (captchaModelState) {
+                        is CaptchaModelState.Ready -> Row(verticalAlignment = Alignment.CenterVertically) {
+                            IconButton(onClick = { showDeleteModelConfirm = true }) {
+                                Icon(
+                                    Icons.Default.DeleteOutline,
+                                    contentDescription = stringResource(R.string.captcha_model_delete),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            GKSwitch(checked = captchaOcr, onCheckedChange = onCaptchaOcrChange)
+                        }
+                        is CaptchaModelState.Downloading -> Row(verticalAlignment = Alignment.CenterVertically) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                "${(captchaModelState.progress * 100).toInt()}%",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        is CaptchaModelState.Failed -> TextButton(onClick = onDownloadCaptchaModel) {
+                            Text(stringResource(R.string.captcha_model_retry))
+                        }
+                        else -> TextButton(onClick = onDownloadCaptchaModel) {
+                            Text(stringResource(R.string.captcha_model_download))
+                        }
+                    }
                 },
                 colors = ListItemDefaults.colors(containerColor = Color.Transparent)
             )
+            if (showDeleteModelConfirm) {
+                GkAlertDialog(
+                    onDismissRequest = { showDeleteModelConfirm = false },
+                    title = { Text(stringResource(R.string.captcha_model_delete), fontWeight = FontWeight.Bold) },
+                    text = { Text(stringResource(R.string.captcha_model_delete_desc), style = MaterialTheme.typography.bodyMedium) },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            showDeleteModelConfirm = false
+                            onDeleteCaptchaModel()
+                        }) { Text(stringResource(R.string.captcha_model_delete)) }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showDeleteModelConfirm = false }) { Text("Cancel") }
+                    }
+                )
+            }
             // showExamSchedule moved to ExamScreen
         }
 

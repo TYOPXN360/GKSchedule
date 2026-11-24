@@ -162,6 +162,14 @@
     <string name="token_heartbeat_desc">Auto-refresh token every 15 minutes to prevent expiration. Low power, runs only when network available and battery not low.</string>
     <string name="captcha_ocr">CAPTCHA Recognition</string>
     <string name="captcha_ocr_desc">Recognize the login CAPTCHA on this device and fill it in. When the session expires, a fresh CAPTCHA is fetched and recognized automatically for quick re-login.</string>
+    <string name="captcha_model_missing">Recognition model not downloaded (~5.2 MB). Download it to enable auto-fill; otherwise type the CAPTCHA manually.</string>
+    <string name="captcha_model_download">Download</string>
+    <string name="captcha_model_retry">Retry</string>
+    <string name="captcha_model_delete">Delete model</string>
+    <string name="captcha_model_delete_desc">Deleting turns CAPTCHA recognition off and falls back to manual input. You can download it again anytime.</string>
+    <string name="captcha_model_downloading">Downloading recognition model %1$d%%</string>
+    <string name="captcha_model_download_failed">Download failed, you can retry: %1$s</string>
+    <string name="captcha_model_fail_generic">Network unavailable</string>
     <string name="show_exam_schedule">Show Exam Schedule</string>
     <string name="exam_lookahead_weeks">Upcoming exams window (weeks)</string>
     <string name="diff_color_per_week">Different color per week</string>
