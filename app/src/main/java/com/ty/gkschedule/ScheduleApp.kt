@@ -339,6 +339,7 @@ fun ScheduleApp(
     val loginState by viewModel.loginState.collectAsState()
     val captchaImage by viewModel.captchaImage.collectAsState()
     val captchaState by viewModel.captchaState.collectAsState()
+    val captchaText by viewModel.captchaText.collectAsState()
     val examLookaheadWeeks by viewModel.examLookaheadWeeks.collectAsState(initial = 1)
     val diffColorPerWeek by viewModel.diffColorPerWeek.collectAsState(initial = false)
     val showHiddenCourses by viewModel.showHiddenCourses.collectAsState(initial = false)
@@ -516,7 +517,7 @@ fun ScheduleApp(
                                     val periodsPerDayVal by viewModel.periodsPerDay.collectAsState(initial = 10)
                                     val hasSavedCredentials by viewModel.hasSavedCredentials.collectAsState(initial = false)
                                      val displayWeeks = if (hideEmptyWeeks && courses.isNotEmpty()) { val weeksWithCourses = courses.flatMap { course -> (1..totalWeeksVal).filter { course.isInWeek(it) } }.toSet(); weeksWithCourses.size.coerceAtLeast(1) } else totalWeeksVal
-                                    AboutScreen(loginState = loginState, savedStudentId = savedStudentId, savedRealName = savedRealName, savedDeptName = savedDeptName, semesterStart = semesterStart, totalWeeks = displayWeeks, periodsPerDay = periodsPerDayVal, captchaImageBase64 = captchaImage, captchaState = captchaState, onLogin = { context.startActivity(Intent(context, com.ty.gkschedule.ui.login.LoginActivity::class.java)) }, onLogout = { viewModel.logout() }, onQuickRelogin = { cap -> viewModel.quickRelogin(cap) }, onRefreshCaptcha = { viewModel.refreshCaptcha() }, onOpenSettings = { context.startActivity(Intent(context, com.ty.gkschedule.ui.settings.SettingsActivity::class.java)) }, onOpenAbout = { context.startActivity(Intent(context, com.ty.gkschedule.ui.about.AboutActivity::class.java)) }, onOpenExam = { context.startActivity(Intent(context, com.ty.gkschedule.ui.exam.ExamActivity::class.java)) }, applyBottomBarInset = !compactNavBar, blurEnabled = blurEffect, hasSavedCredentials = hasSavedCredentials, onOpenQuickRelogin = { showQuickRelogin = true })
+                                    AboutScreen(loginState = loginState, savedStudentId = savedStudentId, savedRealName = savedRealName, savedDeptName = savedDeptName, semesterStart = semesterStart, totalWeeks = displayWeeks, periodsPerDay = periodsPerDayVal, captchaImageBase64 = captchaImage, captchaState = captchaState, captchaText = captchaText, onLogin = { context.startActivity(Intent(context, com.ty.gkschedule.ui.login.LoginActivity::class.java)) }, onLogout = { viewModel.logout() }, onQuickRelogin = { cap -> viewModel.quickRelogin(cap) }, onRefreshCaptcha = { viewModel.refreshCaptcha() }, onOpenSettings = { context.startActivity(Intent(context, com.ty.gkschedule.ui.settings.SettingsActivity::class.java)) }, onOpenAbout = { context.startActivity(Intent(context, com.ty.gkschedule.ui.about.AboutActivity::class.java)) }, onOpenExam = { context.startActivity(Intent(context, com.ty.gkschedule.ui.exam.ExamActivity::class.java)) }, applyBottomBarInset = !compactNavBar, blurEnabled = blurEffect, hasSavedCredentials = hasSavedCredentials, onOpenQuickRelogin = { showQuickRelogin = true; if (captchaState !is CaptchaState.Loaded) viewModel.refreshCaptcha(clearError = false) })
                                 }
                             }
                         }
@@ -565,6 +566,7 @@ fun ScheduleApp(
             com.ty.gkschedule.ui.about.QuickReloginDialog(
                 captchaImageBase64 = captchaImage,
                 captchaState = captchaState,
+                captchaText = captchaText,
                 onRefreshCaptcha = { viewModel.refreshCaptcha() },
                 onQuickRelogin = { viewModel.quickRelogin(it) },
                 onDismiss = { showQuickRelogin = false }

@@ -48,6 +48,7 @@ class LoginActivity : AppCompatActivity() {
                     val loginState by vm.loginState.collectAsState()
                     val captchaImage by vm.captchaImage.collectAsState()
                     val captchaState by vm.captchaState.collectAsState()
+                    val captchaText by vm.captchaText.collectAsState()
                     val hasSavedCredentials by vm.hasSavedCredentials.collectAsState(initial = false)
                     val blurEffect by vm.blurEffect.collectAsState(initial = false)
                     var showQr by remember(startQr) { mutableStateOf(startQr) }
@@ -68,7 +69,7 @@ class LoginActivity : AppCompatActivity() {
                             }
                         }
                     } else {
-                        LoginScreen(loginState = loginState, captchaImageBase64 = captchaImage, captchaState = captchaState, hasSavedCredentials = hasSavedCredentials, onRefreshCaptcha = { vm.refreshCaptcha() }, onLogin = { sid, pwd, cap -> vm.login(sid, pwd, cap) }, onQuickRelogin = { cap -> vm.quickRelogin(cap) }, onWebViewLogin = { showQr = true }, onBack = { vm.clearLoginError(); finish() }, blurEnabled = blurEffect)
+                        LoginScreen(loginState = loginState, captchaImageBase64 = captchaImage, captchaState = captchaState, captchaText = captchaText, hasSavedCredentials = hasSavedCredentials, onRefreshCaptcha = { vm.refreshCaptcha() }, onLogin = { sid, pwd, cap -> vm.login(sid, pwd, cap) }, onQuickRelogin = { cap -> vm.quickRelogin(cap) }, onWebViewLogin = { showQr = true }, onBack = { vm.clearLoginError(); finish() }, blurEnabled = blurEffect)
                     }
                 }
             }

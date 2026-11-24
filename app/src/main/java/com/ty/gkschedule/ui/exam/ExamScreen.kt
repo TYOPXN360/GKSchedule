@@ -79,6 +79,7 @@ fun ExamScreen(
     showReloginDialog: Boolean = false,
     captchaImageBase64: String? = null,
     captchaState: CaptchaState = CaptchaState.Idle,
+    captchaText: String? = null,
     onYearChange: (String) -> Unit,
     onSemesterChange: (String) -> Unit,
     onRefresh: () -> Unit,
@@ -384,6 +385,9 @@ fun ExamScreen(
     // Re-login dialog — 原生 AlertDialog
     if (showReloginDialog) {
         var captcha by remember { mutableStateOf("") }
+        LaunchedEffect(captchaText) {
+            if (!captchaText.isNullOrEmpty()) captcha = captchaText
+        }
         GkAlertDialog(
             onDismissRequest = onDismissRelogin,
             title = { Text(stringResource(R.string.edu_session_expired), fontWeight = FontWeight.Bold) },

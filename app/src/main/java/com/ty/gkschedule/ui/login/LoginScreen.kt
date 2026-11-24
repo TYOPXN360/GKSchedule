@@ -46,6 +46,7 @@ fun LoginScreen(
     loginState: LoginState?,
     captchaImageBase64: String?,
     captchaState: CaptchaState,
+    captchaText: String?,
     hasSavedCredentials: Boolean,
     onRefreshCaptcha: () -> Unit,
     onLogin: (studentId: String, password: String, captcha: String) -> Unit,
@@ -60,6 +61,11 @@ fun LoginScreen(
     var password by remember { mutableStateOf("") }
     var captcha by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
+
+    // ponytail: 端侧 OCR 识别出来后自动填入；用户手改过也不锁，下一张图来了再覆盖
+    LaunchedEffect(captchaText) {
+        if (!captchaText.isNullOrEmpty()) captcha = captchaText
+    }
 
     val isLoading = loginState is LoginState.Loading
     val errorMessage = (loginState as? LoginState.Error)?.message

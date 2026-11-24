@@ -46,6 +46,7 @@ class SettingsDataStore(private val context: Context) {
         private val AUTO_SYNC_INTERVAL_VALUE = intPreferencesKey("auto_sync_interval_value")
         private val AUTO_SYNC_INTERVAL_UNIT = stringPreferencesKey("auto_sync_interval_unit") // "min", "h", "d"
         private val TOKEN_HEARTBEAT = booleanPreferencesKey("token_heartbeat")
+        private val CAPTCHA_OCR = booleanPreferencesKey("captcha_ocr")
         private val SHOW_EXAM_SCHEDULE = booleanPreferencesKey("show_exam_schedule")
         private val EXAM_LOOKAHEAD_WEEKS = intPreferencesKey("exam_lookahead_weeks")
         private val CAS_TICKET = stringPreferencesKey("cas_ticket")
@@ -116,6 +117,7 @@ class SettingsDataStore(private val context: Context) {
     val autoSyncIntervalValue: Flow<Int> = context.dataStore.data.map { prefs -> prefs[AUTO_SYNC_INTERVAL_VALUE] ?: 1 }
     val autoSyncIntervalUnit: Flow<String> = context.dataStore.data.map { prefs -> prefs[AUTO_SYNC_INTERVAL_UNIT] ?: "d" }
     val tokenHeartbeat: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[TOKEN_HEARTBEAT] ?: false }
+    val captchaOcr: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[CAPTCHA_OCR] ?: true }
     val showExamSchedule: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[SHOW_EXAM_SCHEDULE] ?: false }
     val examLookaheadWeeks: Flow<Int> = context.dataStore.data.map { prefs -> prefs[EXAM_LOOKAHEAD_WEEKS] ?: 1 }
     val casTicket: Flow<String> = context.dataStore.data.map { prefs -> prefs[CAS_TICKET] ?: "" }
@@ -206,6 +208,7 @@ class SettingsDataStore(private val context: Context) {
     suspend fun setAutoSyncIntervalValue(value: Int) { context.dataStore.edit { it[AUTO_SYNC_INTERVAL_VALUE] = value } }
     suspend fun setAutoSyncIntervalUnit(unit: String) { context.dataStore.edit { it[AUTO_SYNC_INTERVAL_UNIT] = unit } }
     suspend fun setTokenHeartbeat(enabled: Boolean) { context.dataStore.edit { it[TOKEN_HEARTBEAT] = enabled } }
+    suspend fun setCaptchaOcr(enabled: Boolean) { context.dataStore.edit { it[CAPTCHA_OCR] = enabled } }
     suspend fun setShowExamSchedule(show: Boolean) { context.dataStore.edit { it[SHOW_EXAM_SCHEDULE] = show } }
     suspend fun setExamLookaheadWeeks(weeks: Int) { context.dataStore.edit { it[EXAM_LOOKAHEAD_WEEKS] = weeks.coerceIn(0, 20) } }
     suspend fun setDiffColorPerWeek(enabled: Boolean) { context.dataStore.edit { it[DIFF_COLOR_PER_WEEK] = enabled } }

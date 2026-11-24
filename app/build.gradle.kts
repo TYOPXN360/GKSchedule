@@ -26,6 +26,11 @@ android {
         targetSdk = 36
         versionCode = 24
         versionName = "2.3.8"
+        // ponytail: onnxruntime-android 的 so 很大（arm64 未压缩 36MB/压缩后约 14MB），
+        // 只留 arm64-v8a，否则 APK 会被其它 ABI 撑到 50MB+
+        ndk {
+            abiFilters += "arm64-v8a"
+        }
     }
 
     signingConfigs {
@@ -79,6 +84,8 @@ android {
 
     packaging {
         jniLibs {
+            // ponytail: ONNX Runtime 的 .so 有 36MB，不压缩 APK 会到 46MB；压缩后约 23MB
+            useLegacyPackaging = true
             keepDebugSymbols += listOf(
                 "**/libandroidx.graphics.path.so",
                 "**/libdatastore_shared_counter.so"
@@ -108,6 +115,9 @@ dependencies {
 
     // ZXing for QR code generation
     implementation(libs.zxing.core)
+
+    // ONNX Runtime：登录验证码离线识别（ddddocr 模型）
+    implementation(libs.onnxruntime.android)
 
     // AppCompat for locale switching
     implementation(libs.appcompat)

@@ -637,6 +637,7 @@ internal fun SyncPage(
     autoSyncIntervalValue: Int,
     autoSyncIntervalUnit: String,
     tokenHeartbeat: Boolean,
+    captchaOcr: Boolean = true,
     showExamSchedule: Boolean,
     examLookaheadWeeks: Int,
     diffColorPerWeek: Boolean,
@@ -645,6 +646,7 @@ internal fun SyncPage(
     onAutoSyncIntervalValueChange: (Int) -> Unit,
     onAutoSyncIntervalUnitChange: (String) -> Unit,
     onTokenHeartbeatChange: (Boolean) -> Unit,
+    onCaptchaOcrChange: (Boolean) -> Unit = {},
     onShowExamScheduleChange: (Boolean) -> Unit,
     onExamLookaheadWeeksChange: (Int) -> Unit,
     onDiffColorPerWeekChange: (Boolean) -> Unit,
@@ -784,6 +786,23 @@ internal fun SyncPage(
                 )
             }
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
+            // ponytail: 同一个开关管两件事——登录页自动填验证码、过期后自动预取并识别
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.captcha_ocr)) },
+                supportingContent = {
+                    Text(
+                        stringResource(R.string.captcha_ocr_desc),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                },
+                leadingContent = {
+                    Icon(Icons.Default.AutoAwesome, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                },
+                trailingContent = {
+                    GKSwitch(checked = captchaOcr, onCheckedChange = onCaptchaOcrChange)
+                },
+                colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+            )
             // showExamSchedule moved to ExamScreen
         }
 

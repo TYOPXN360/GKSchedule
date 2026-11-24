@@ -186,6 +186,7 @@ app/src/main/java/com/ty/gkschedule/
 
 - Jetpack Compose 与 Material Design 3
 - aquamarine5 的 [ChaoxingSignFaker（随地大小签）](https://github.com/aquamarine5/ChaoxingSignFaker)，签到联动跳转与课程数据支持
+- [ddddocr](https://github.com/sml2h3/ddddocr) 提供验证码识别模型，[ONNX Runtime](https://onnxruntime.ai/) 提供端侧推理（详见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)）
 - SchedU、拾光课程表、TimeFlow 等参考项目
 - 参与测试和反馈的同学
 

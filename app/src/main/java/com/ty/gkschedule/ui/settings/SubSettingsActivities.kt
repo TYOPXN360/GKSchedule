@@ -166,6 +166,7 @@ class SubSettingsSyncActivity : SubSettingsBaseActivity() {
         val autoSyncIntervalValue by vm.autoSyncIntervalValue.collectAsState(initial = 1)
         val autoSyncIntervalUnit by vm.autoSyncIntervalUnit.collectAsState(initial = "d")
         val tokenHeartbeat by vm.tokenHeartbeat.collectAsState(initial = false)
+        val captchaOcr by vm.captchaOcr.collectAsState(initial = true)
         val showExamSchedule by vm.showExamSchedule.collectAsState(initial = false)
         val examLookaheadWeeks by vm.examLookaheadWeeks.collectAsState(initial = 1)
         val diffColorPerWeek by vm.diffColorPerWeek.collectAsState(initial = false)
@@ -174,12 +175,14 @@ class SubSettingsSyncActivity : SubSettingsBaseActivity() {
         SyncPage(
             autoSyncOnStart = autoSyncOnStart, autoSyncIntervalValue = autoSyncIntervalValue,
             autoSyncIntervalUnit = autoSyncIntervalUnit, tokenHeartbeat = tokenHeartbeat,
+            captchaOcr = captchaOcr,
             showExamSchedule = showExamSchedule, examLookaheadWeeks = examLookaheadWeeks,
             diffColorPerWeek = diffColorPerWeek, autoCheckUpdateDaily = autoCheckUpdateDaily,
             onAutoSyncOnStartChange = { vm.setAutoSyncOnStart(it) },
             onAutoSyncIntervalValueChange = { vm.setAutoSyncIntervalValue(it) },
             onAutoSyncIntervalUnitChange = { vm.setAutoSyncIntervalUnit(it) },
             onTokenHeartbeatChange = { vm.setTokenHeartbeat(it) },
+            onCaptchaOcrChange = { vm.setCaptchaOcr(it) },
             onShowExamScheduleChange = { vm.setShowExamSchedule(it) },
             onExamLookaheadWeeksChange = { vm.setExamLookaheadWeeks(it) },
             onDiffColorPerWeekChange = { vm.setDiffColorPerWeek(it) },

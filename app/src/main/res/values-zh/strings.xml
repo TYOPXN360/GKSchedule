@@ -160,6 +160,8 @@
     <string name="auto_sync_unit_d">天</string>
     <string name="token_heartbeat">Token心跳保活</string>
     <string name="token_heartbeat_desc">每15分钟自动刷新Token，防止登录过期。低功耗，仅在有网络且电量充足时运行。</string>
+    <string name="captcha_ocr">验证码自动识别</string>
+    <string name="captcha_ocr_desc">在本机识别登录验证码并自动填入。会话过期后会自动取一张新验证码并识别好，方便快速重登。</string>
     <string name="show_exam_schedule">显示考试安排</string>
     <string name="exam_lookahead_weeks">近期考试提前显示周数</string>
     <string name="diff_color_per_week">跨周同科不同色</string>

@@ -39,6 +39,7 @@ class ExamActivity : AppCompatActivity() {
                 val showExamReloginDialog by vm.showExamReloginDialog.collectAsState()
                 val captchaImage by vm.captchaImage.collectAsState()
                 val captchaState by vm.captchaState.collectAsState()
+                val captchaText by vm.captchaText.collectAsState()
                 val colorEngine by vm.colorEngine.collectAsState(initial = 0)
                 val colorGroupMode by vm.colorGroupMode.collectAsState(initial = 2)
                 val examLookaheadWeeks by vm.examLookaheadWeeks.collectAsState(initial = 1)
@@ -77,6 +78,7 @@ class ExamActivity : AppCompatActivity() {
                         showReloginDialog = showExamReloginDialog,
                         captchaImageBase64 = captchaImage,
                         captchaState = captchaState,
+                        captchaText = captchaText,
                         onYearChange = { vm.setExamYear(it) },
                         onSemesterChange = { vm.setExamSemester(it) },
                         onRefresh = { vm.refreshExamSchedule() },

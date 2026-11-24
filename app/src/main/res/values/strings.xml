@@ -160,6 +160,8 @@
     <string name="auto_sync_unit_d">days</string>
     <string name="token_heartbeat">Token Heartbeat</string>
     <string name="token_heartbeat_desc">Auto-refresh token every 15 minutes to prevent expiration. Low power, runs only when network available and battery not low.</string>
+    <string name="captcha_ocr">CAPTCHA Recognition</string>
+    <string name="captcha_ocr_desc">Recognize the login CAPTCHA on this device and fill it in. When the session expires, a fresh CAPTCHA is fetched and recognized automatically for quick re-login.</string>
     <string name="show_exam_schedule">Show Exam Schedule</string>
     <string name="exam_lookahead_weeks">Upcoming exams window (weeks)</string>
     <string name="diff_color_per_week">Different color per week</string>

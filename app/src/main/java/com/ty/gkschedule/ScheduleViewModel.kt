@@ -97,6 +97,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     val autoSyncIntervalValue: Flow<Int> = settings.autoSyncIntervalValue
     val autoSyncIntervalUnit: Flow<String> = settings.autoSyncIntervalUnit
     val tokenHeartbeat: Flow<Boolean> = settings.tokenHeartbeat
+    val captchaOcr: Flow<Boolean> = settings.captchaOcr
     val showExamSchedule: Flow<Boolean> = settings.showExamSchedule
     val examLookaheadWeeks: Flow<Int> = settings.examLookaheadWeeks
     val diffColorPerWeek: Flow<Boolean> = settings.diffColorPerWeek
@@ -129,6 +130,9 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     // ponytail: 验证码自身的加载状态，与 loginState 分开——登录失败的错误文案不能被刷图覆盖
     private val _captchaState = MutableStateFlow<CaptchaState>(CaptchaState.Idle)
     val captchaState: StateFlow<CaptchaState> = _captchaState
+    // ponytail: 端侧 OCR 识别出的验证码文字，UI 自动填入输入框；为 null 表示没识别出来
+    private val _captchaText = MutableStateFlow<String?>(null)
+    val captchaText: StateFlow<String?> = _captchaText
     private var captchaUuid = ""
     private var savedStudentId = ""
     private val _savedStudentIdFlow = MutableStateFlow("")
@@ -167,6 +171,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                 _savedStudentIdFlow.value = sid
                 _loginState.value = LoginState.TokenExpired
                 _messages.emit(app.getString(R.string.msg_session_expired_quick))
+                prefetchCaptchaForRelogin()
             } else if (token.isNotEmpty() && sid.isNotEmpty()) {
                 api.setToken(token)
                 savedStudentId = sid
@@ -215,6 +220,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                     api.setToken("")
                     _loginState.value = LoginState.TokenExpired
                     _messages.emit(app.getString(R.string.msg_session_expired_quick))
+                    prefetchCaptchaForRelogin()
                 }
             }
         }
@@ -348,6 +354,10 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
             settings.setAutoSyncIntervalUnit(unit)
             rescheduleSync()
         }
+    }
+
+    fun setCaptchaOcr(enabled: Boolean) {
+        viewModelScope.launch { settings.setCaptchaOcr(enabled) }
     }
 
     fun setTokenHeartbeat(enabled: Boolean) {
@@ -586,8 +596,10 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
 
     // --- Login ---
 
-    fun refreshCaptcha(clearError: Boolean = true) {
+    // ponytail: silent=后台预取，失败时不要把 TokenExpired 覆盖成 Error
+    fun refreshCaptcha(clearError: Boolean = true, silent: Boolean = false) {
         _captchaState.value = CaptchaState.Loading
+        _captchaText.value = null
         viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
             api.getLoginCode().onSuccess { data ->
                 val imgBase64 = data.getImageBase64()
@@ -597,6 +609,14 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                 _captchaImage.value = imgBase64
                 captchaUuid = data.resolveUuid()
                 _captchaState.value = CaptchaState.Loaded
+                // ponytail: 离线识别验证码，成功就自动填进输入框；失败保持 null，用户照样能手动输
+                val ocrOn = settings.captchaOcr.first()
+                val text = if (ocrOn) runCatching {
+                    val bytes = android.util.Base64.decode(imgBase64, android.util.Base64.DEFAULT)
+                    com.ty.gkschedule.captcha.CaptchaOcr.recognize(app, bytes)
+                }.getOrNull() else null
+                _captchaText.value = text
+                android.util.Log.d("GdustApi", "Captcha OCR: $text")
                 // ponytail: 验证码图刷新成功≠错误已读，登录失败的错误文案留着给用户看；只在进登录页/手动点刷新时清
                 if (clearError && _loginState.value is LoginState.Error) {
                     _loginState.value = LoginState.LoggedOut
@@ -604,7 +624,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
             }.onFailure { e ->
                 android.util.Log.e("GdustApi", "Captcha fetch failed: ${e.message}")
                 _captchaState.value = CaptchaState.Failed(e.message ?: app.getString(R.string.msg_captcha_fetch_fail))
-                if (_loginState.value !is LoginState.LoggedOut) {
+                if (!silent && _loginState.value !is LoginState.LoggedOut) {
                     _loginState.value = LoginState.Error(e.message ?: app.getString(R.string.msg_captcha_fetch_fail))
                 }
             }
@@ -808,6 +828,15 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
         settings.markTokenExpired()
         _loginState.value = LoginState.TokenExpired
         _messages.emit(app.getString(R.string.msg_session_expired_quick))
+        prefetchCaptchaForRelogin()
+    }
+
+    /**
+     * ponytail: 会话过期时若开了自动识别，先把新验证码取回并识别好，重登框打开即有结果。
+     * 关掉开关就完全不预取，登录页/重登框仍然能手输。
+     */
+    private suspend fun prefetchCaptchaForRelogin() {
+        if (settings.captchaOcr.first()) refreshCaptcha(clearError = false, silent = true)
     }
 
     /**
@@ -977,6 +1006,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
         _loginState.value = LoginState.LoggedOut
         _captchaImage.value = null
         _captchaState.value = CaptchaState.Idle
+        _captchaText.value = null
         captchaUuid = ""
         savedStudentId = ""
         _savedStudentIdFlow.value = ""

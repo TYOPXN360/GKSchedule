@@ -48,6 +48,7 @@ fun AboutScreen(
     periodsPerDay: Int,
     captchaImageBase64: String? = null,
     captchaState: CaptchaState = CaptchaState.Idle,
+    captchaText: String? = null,
     onLogin: () -> Unit,
     onLogout: () -> Unit,
     onQuickRelogin: (String) -> Unit = {},
@@ -304,11 +305,15 @@ fun AboutScreen(
 fun QuickReloginDialog(
     captchaImageBase64: String?,
     captchaState: CaptchaState,
+    captchaText: String?,
     onRefreshCaptcha: () -> Unit,
     onQuickRelogin: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
     var captcha by rememberSaveable { mutableStateOf("") }
+    LaunchedEffect(captchaText) {
+        if (!captchaText.isNullOrEmpty()) captcha = captchaText
+    }
     GkAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.edu_session_expired), fontWeight = FontWeight.Bold) },
