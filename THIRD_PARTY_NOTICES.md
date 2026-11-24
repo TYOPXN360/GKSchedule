@@ -10,7 +10,8 @@
 
 ## ddddocr
 
-- 用途：登录验证码识别模型 `app/src/main/assets/ddddocr_captcha.onnx`，及其预处理与解码方式（见 `app/src/main/java/com/ty/gkschedule/captcha/CaptchaOcr.kt`）。
+- 用途：登录验证码识别模型 `dddocr_captcha.onnx`，及其预处理与解码方式（见 `app/src/main/java/com/ty/gkschedule/captcha/CaptchaOcr.kt`）。
+- 分发：模型不随 APK 分发，由用户在设置页按需下载；文件固定在本仓库 tag `captcha-model-v1`，下载后校验 SHA-256 后才加载（见 `CaptchaModel.kt`）。
 - 说明：原模型 `common_old.onnx` 已裁剪输出分类头（仅保留 blank 与 `A-Za-z0-9` 共 63 类）以减小体积，未改变其行为许可。
 - 许可证：MIT
 - 项目主页：https://github.com/sml2h3/ddddocr
