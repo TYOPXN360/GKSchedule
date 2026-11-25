@@ -35,6 +35,7 @@ class ReminderReceiver : BroadcastReceiver() {
         const val EXTRA_NOTIFICATION_ID = "notification_id"
         const val EXTRA_REMINDER_MINUTES = "reminder_minutes"
         const val EXTRA_TRIGGER_TICK = "trigger_tick"
+        const val EXTRA_BREAK_EPOCHS = "break_epochs"
     }
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -70,6 +71,7 @@ class ReminderReceiver : BroadcastReceiver() {
         val endEpoch = intent.getLongExtra(EXTRA_END_EPOCH_MILLIS, 0L)
         val notificationId = intent.getIntExtra(EXTRA_NOTIFICATION_ID, stableNotificationId(itemType, courseName, startEpoch))
         val reminderMinutes = intent.getIntExtra(EXTRA_REMINDER_MINUTES, 0)
+        val breakEpochs = intent.getLongArrayExtra(EXTRA_BREAK_EPOCHS) ?: longArrayOf()
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
         if (eventType == EVENT_END) {
@@ -125,11 +127,39 @@ class ReminderReceiver : BroadcastReceiver() {
                 .setAutoCancel(false)
                 .setRequestPromotedOngoing(true)
             if (Build.VERSION.SDK_INT >= 36) {
-                builder.setStyle(
-                    NotificationCompat.ProgressStyle()
-                        .addProgressSegment(NotificationCompat.ProgressStyle.Segment(100))
-                        .setProgress(percent)
-                )
+                // ponytail: 官方 ProgressStyle——Segment 长度与 setProgress 共用同一把标尺（这里用秒）。
+                // 每个小节的时长是一段，相邻段交替配色，段边界正好落在“第一大节里第一小节下课”的时间点。
+                val style = NotificationCompat.ProgressStyle()
+                if (isCountdown) {
+                    style.addProgressSegment(NotificationCompat.ProgressStyle.Segment(100))
+                    style.setProgress(percent)
+                } else if (startEpoch > 0L && endEpoch > startEpoch) {
+                    val bounds = buildList {
+                        add(startEpoch)
+                        breakEpochs.filter { it > startEpoch && it < endEpoch }.sorted().forEach { add(it) }
+                        add(endEpoch)
+                    }
+                    val accent = runCatching { context.getColor(android.R.color.system_accent1_500) }
+                        .getOrDefault(0xFF4C8DFF.toInt())
+                    val accentSoft = runCatching { context.getColor(android.R.color.system_accent1_200) }
+                        .getOrDefault(0xFF9CBBFF.toInt())
+                    var totalSec = 0
+                    for (i in 0 until bounds.size - 1) {
+                        val len = ((bounds[i + 1] - bounds[i]) / 1000L).toInt().coerceAtLeast(1)
+                        totalSec += len
+                        style.addProgressSegment(
+                            NotificationCompat.ProgressStyle.Segment(len)
+                                .setColor(if (i % 2 == 0) accent else accentSoft)
+                        )
+                    }
+                    val elapsedSec = ((System.currentTimeMillis() - startEpoch) / 1000L)
+                        .coerceIn(0L, totalSec.toLong()).toInt()
+                    style.setProgress(elapsedSec)
+                } else {
+                    style.addProgressSegment(NotificationCompat.ProgressStyle.Segment(100))
+                    style.setProgress(percent)
+                }
+                builder.setStyle(style)
             } else {
                 builder.setProgress(100, percent, false)
             }
@@ -169,6 +199,7 @@ class ReminderReceiver : BroadcastReceiver() {
                     putExtra(EXTRA_NOTIFICATION_ID, notificationId)
                     putExtra(EXTRA_REMINDER_MINUTES, reminderMinutes)
                     putExtra(EXTRA_TRIGGER_TICK, true)
+                    if (breakEpochs.isNotEmpty()) putExtra(EXTRA_BREAK_EPOCHS, breakEpochs)
                 }
                 val am = context.getSystemService(Context.ALARM_SERVICE) as android.app.AlarmManager
                 val pi = android.app.PendingIntent.getBroadcast(
@@ -226,11 +257,12 @@ class ReminderReceiver : BroadcastReceiver() {
     private fun stableNotificationId(itemType: String, name: String, startEpoch: Long): Int =
         "$itemType|$name|$startEpoch".hashCode()
 
-    // ponytail: 倒计时chip/正文——剩余分钟，<1分钟显示秒
+    // ponytail: 倒计时chip——只到分钟，不足1分钟直接“即将开始”（不再逐秒跳，通知本来也只按分钟刷新）
     private fun countdownChipText(context: Context, startEpoch: Long): String {
         val remainMs = (startEpoch - System.currentTimeMillis()).coerceAtLeast(0L)
         val mins = (remainMs / 60000L).toInt()
-        return if (mins >= 1) context.getString(R.string.notif_remain_min, mins) else context.getString(R.string.notif_remain_sec, (remainMs / 1000L).toInt())
+        return if (mins >= 1) context.getString(R.string.notif_remain_min, mins)
+        else context.getString(R.string.notif_upcoming)
     }
 
     // ponytail: 上课中的正文加"还剩N分钟"——ProgressStyle 与 setProgress fallback 共用同一行文案
@@ -242,12 +274,13 @@ class ReminderReceiver : BroadcastReceiver() {
         else context.getString(R.string.notif_in_progress)
     }
 
+    // ponytail: 倒计时正文同样只到分钟，不足1分钟显示“即将开始”，不再出现秒级倒数
     private fun countdownBodyText(context: Context, startEpoch: Long, isExam: Boolean): String {
         val remainMs = (startEpoch - System.currentTimeMillis()).coerceAtLeast(0L)
         val mins = (remainMs / 60000L).toInt()
-        if (!isExam) return if (mins >= 1) context.getString(R.string.notif_class_remaining_min, mins)
-        else context.getString(R.string.notif_class_remaining_sec, (remainMs / 1000L).toInt())
-        return if (mins >= 1) context.getString(R.string.notif_remaining_min, mins) else context.getString(R.string.notif_remaining_sec, (remainMs / 1000L).toInt())
+        if (mins < 1) return context.getString(R.string.notif_upcoming)
+        return if (isExam) context.getString(R.string.notif_remaining_min, mins)
+        else context.getString(R.string.notif_class_remaining_min, mins)
     }
 
     private fun createNotificationChannel(context: Context) {

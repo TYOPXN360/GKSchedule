@@ -31,7 +31,9 @@ object ReminderScheduler {
         val classroom: String,
         val teacher: String,
         val start: LocalDateTime,
-        val end: LocalDateTime
+        val end: LocalDateTime,
+        // ponytail: 大节(2小节)第一小节下课时的时间点，用于进度条分段标记
+        val breakEpochs: LongArray = LongArray(0)
     )
 
     fun scheduleUpcomingReminders(
@@ -276,6 +278,8 @@ object ReminderScheduler {
                     val start = LocalDateTime.of(date, startTime)
                     val end = LocalDateTime.of(date, endTime)
                     if (!end.isAfter(start)) return@forEach
+                    val startEpoch = epochMillis(start)
+                    val endEpoch = epochMillis(end)
                     sessions.add(
                         ReminderSession(
                             kind = KIND_COURSE,
@@ -284,11 +288,42 @@ object ReminderScheduler {
                             classroom = course.classroom,
                             teacher = course.teacher,
                             start = start,
-                            end = end
+                            end = end,
+                            breakEpochs = periodBreaks(
+                                date = date,
+                                startPeriod = course.startPeriod,
+                                endPeriod = course.endPeriod(),
+                                startEpoch = startEpoch,
+                                endEpoch = endEpoch,
+                                getEndTime = getEndTime
+                            )
                         )
                     )
                 }
         return sessions.sortedWith(compareBy({ it.start }, { it.name }))
+    }
+
+    /**
+     * ponytail: 官方分段思路——一大节=两小节，取每个奇数小节的“下课时间”作为分段点。
+     * 只保留落在课程起止之间的点；课程从偶数小节起时，该大节的中断点不在课内，自然没有标记。
+     */
+    private fun periodBreaks(
+        date: LocalDate,
+        startPeriod: Int,
+        endPeriod: Int,
+        startEpoch: Long,
+        endEpoch: Long,
+        getEndTime: (Int) -> String
+    ): LongArray {
+        val breaks = mutableListOf<Long>()
+        for (period in startPeriod until endPeriod) {
+            if (period % 2 == 0) continue
+            val t = parseTime(getEndTime(period)) ?: continue
+            val epoch = LocalDateTime.of(date, t)
+                .atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+            if (epoch > startEpoch && epoch < endEpoch) breaks.add(epoch)
+        }
+        return breaks.toLongArray()
     }
 
     private fun buildTodayExamSessions(
@@ -370,6 +405,9 @@ object ReminderScheduler {
             putExtra(ReminderReceiver.EXTRA_NOTIFICATION_ID, notificationId)
             putExtra(ReminderReceiver.EXTRA_REMINDER_MINUTES, reminderMinutes)
             putExtra(ReminderReceiver.EXTRA_TRIGGER_TICK, triggerTick)
+            if (session.breakEpochs.isNotEmpty()) {
+                putExtra(ReminderReceiver.EXTRA_BREAK_EPOCHS, session.breakEpochs)
+            }
         }
         val pendingIntent = PendingIntent.getBroadcast(
             context,

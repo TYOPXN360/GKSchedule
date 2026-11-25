@@ -397,7 +397,6 @@
     <string name="notif_exam_countdown">Exam countdown</string>
     <string name="notif_class_countdown">Class countdown</string>
     <string name="notif_class_remaining_min">%1$d min to class</string>
-    <string name="notif_class_remaining_sec">%1$d s to class</string>
     <string name="notif_in_exam">Exam in progress</string>
     <string name="notif_in_class">Class in progress</string>
     <string name="notif_upcoming">Starting soon</string>
@@ -408,9 +407,7 @@
     <string name="notif_about_to_class">Class starting</string>
     <string name="notif_minutes_ago">in %1$d min · %2$s</string>
     <string name="notif_remain_min">%1$d min</string>
-    <string name="notif_remain_sec">%1$d s</string>
     <string name="notif_remaining_min">%1$d min left</string>
-    <string name="notif_remaining_sec">%1$d s left</string>
     <string name="notif_course_channel">Course reminders</string>
     <string name="notif_course_channel_desc">Class reminder notifications</string>
     <string name="update_not_run">Not run</string>

@@ -404,7 +404,6 @@
     <string name="notif_exam_countdown">考试倒计时</string>
     <string name="notif_class_countdown">上课倒计时</string>
     <string name="notif_class_remaining_min">还有%1$d分钟上课</string>
-    <string name="notif_class_remaining_sec">还有%1$d秒上课</string>
     <string name="notif_in_exam">正在考试</string>
     <string name="notif_in_class">正在上课</string>
     <string name="notif_upcoming">即将开始</string>
@@ -415,9 +414,7 @@
     <string name="notif_about_to_class">即将上课</string>
     <string name="notif_minutes_ago">%1$d分钟后 · %2$s</string>
     <string name="notif_remain_min">%1$d分</string>
-    <string name="notif_remain_sec">%1$d秒</string>
     <string name="notif_remaining_min">剩%1$d分钟</string>
-    <string name="notif_remaining_sec">剩%1$d秒</string>
     <string name="notif_course_channel">课程提醒</string>
     <string name="notif_course_channel_desc">课前提醒通知</string>
     <string name="update_not_run">未执行</string>
