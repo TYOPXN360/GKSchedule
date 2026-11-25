@@ -385,6 +385,10 @@
     <string name="msg_net_generic">网络错误</string>
     <string name="msg_login_fail">登录失败: %1$s</string>
     <string name="msg_no_credentials">无保存的凭据，请手动登录</string>
+    <string name="msg_auto_login_trying">登录已过期，正在尝试自动登录</string>
+    <string name="msg_auto_login_success">自动登录成功</string>
+    <string name="msg_auto_login_failed">自动登录失败，请手动输入验证码</string>
+    <string name="msg_auto_login_retry">验证码未通过，正在重试…</string>
     <string name="msg_exam_fetched">已获取 %1$d 条考试信息</string>
     <string name="msg_exam_fetch_fail">获取考试信息失败: %1$s</string>
     <string name="api_captcha_parse_fail">解析验证码响应失败: %1$s</string>

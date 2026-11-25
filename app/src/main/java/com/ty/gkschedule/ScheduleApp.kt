@@ -403,6 +403,10 @@ fun ScheduleApp(
     val showBottomBar = currentRoute == null || currentRoute == "tabs"
     var overlayVisible by remember { mutableStateOf(false) }
     var showQuickRelogin by remember { mutableStateOf(false) }
+    // ponytail: 自动重登成功后把重登弹窗收掉，别停在过期态界面等用户点
+    LaunchedEffect(loginState) {
+        if (loginState is LoginState.Success || loginState is LoginState.ImportResult) showQuickRelogin = false
+    }
     fun navigateTab(route: String) {
         (tabIndexMap[route])?.let { handlePageChange(it) }
     }

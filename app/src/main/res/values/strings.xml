@@ -378,6 +378,10 @@
     <string name="msg_net_generic">Network error</string>
     <string name="msg_login_fail">Login failed: %1$s</string>
     <string name="msg_no_credentials">No saved credentials, please log in manually</string>
+    <string name="msg_auto_login_trying">Session expired, trying auto login…</string>
+    <string name="msg_auto_login_success">Auto login succeeded</string>
+    <string name="msg_auto_login_failed">Auto login failed, please enter the captcha manually</string>
+    <string name="msg_auto_login_retry">Captcha not accepted, retrying…</string>
     <string name="msg_exam_fetched">Fetched %1$d exam entries</string>
     <string name="msg_exam_fetch_fail">Failed to fetch exams: %1$s</string>
     <string name="api_captcha_parse_fail">Failed to parse captcha response: %1$s</string>

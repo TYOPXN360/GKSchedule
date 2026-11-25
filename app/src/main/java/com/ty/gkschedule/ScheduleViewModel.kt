@@ -144,8 +144,8 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing
 
-    // One-shot messages for snackbar
-    private val _messages = MutableSharedFlow<String>()
+    // One-shot messages for snackbar（带缓冲：自动重登链路不能被 snackbar 的展示时长阻塞）
+    private val _messages = MutableSharedFlow<String>(extraBufferCapacity = 8)
     val messages: SharedFlow<String> = _messages
 
     init {
@@ -172,7 +172,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                 savedStudentId = sid
                 _savedStudentIdFlow.value = sid
                 _loginState.value = LoginState.TokenExpired
-                _messages.emit(app.getString(R.string.msg_session_expired_quick))
+                notifyExpiredIfNeeded()
                 prefetchCaptchaForRelogin()
             } else if (token.isNotEmpty() && sid.isNotEmpty()) {
                 api.setToken(token)
@@ -211,8 +211,9 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
             }
         }
         // Mirror token-expired changes written by background workers into UI state.
+        // ponytail: drop(1)——初始快照已由上面的 restore 处理，重复处理会并发预取验证码、错配 uuid
         viewModelScope.launch {
-            settings.tokenExpired.collect { expired ->
+            settings.tokenExpired.drop(1).collect { expired ->
                 if (expired && _loginState.value !is LoginState.TokenExpired) {
                     val sid = settings.savedStudentId.first()
                     if (sid.isNotEmpty()) {
@@ -221,7 +222,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                     }
                     api.setToken("")
                     _loginState.value = LoginState.TokenExpired
-                    _messages.emit(app.getString(R.string.msg_session_expired_quick))
+                    notifyExpiredIfNeeded()
                     prefetchCaptchaForRelogin()
                 }
             }
@@ -632,12 +633,17 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                 val ocrOn = settings.captchaOcr.first()
                 val text = if (ocrOn) runCatching {
                     // 模型没下载就直接跳过，省掉预处理开销（行为等同关闭识别）
-                    if (!com.ty.gkschedule.captcha.CaptchaModel.isReady(app)) return@runCatching null
+                    if (!com.ty.gkschedule.captcha.CaptchaModel.isReady(app)) {
+                        android.util.Log.d("GdustApi", "Captcha OCR skipped: model not ready")
+                        return@runCatching null
+                    }
                     val bytes = android.util.Base64.decode(imgBase64, android.util.Base64.DEFAULT)
                     com.ty.gkschedule.captcha.CaptchaOcr.recognize(app, bytes)
                 }.getOrNull() else null
                 _captchaText.value = text
                 android.util.Log.d("GdustApi", "Captcha OCR: $text")
+                // ponytail: 识别出验证码就不让用户再点一次——过期态下直接自动重登
+                if (!text.isNullOrBlank()) maybeAutoRelogin(text)
                 // ponytail: 验证码图刷新成功≠错误已读，登录失败的错误文案留着给用户看；只在进登录页/手动点刷新时清
                 if (clearError && _loginState.value is LoginState.Error) {
                     _loginState.value = LoginState.LoggedOut
@@ -660,6 +666,8 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
             api.login(studentId, password, captcha, captchaUuid)
                 .onSuccess { user ->
                     android.util.Log.d("GdustApi", "login SUCCESS: ${user.realName}, id=${user.id}")
+                    // 手动登录成功 → 自动重登的失败计数清零
+                    autoLoginAttempts = 0
                     savedStudentId = studentId
                     _savedStudentIdFlow.value = studentId
                     _loginState.value = LoginState.Success(user.realName.ifEmpty { studentId }, studentId)
@@ -731,6 +739,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
 
     // Public refresh — re-fetch courses using saved token
     fun refreshFromSchool() {
+        android.util.Log.d("GdustApi", "refreshFromSchool: hasToken=${api.hasToken()}, sid=$savedStudentId")
         if (!api.hasToken() || savedStudentId.isEmpty()) {
             _isRefreshing.value = true
             viewModelScope.launch {
@@ -848,8 +857,18 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
         api.setToken("")
         settings.markTokenExpired()
         _loginState.value = LoginState.TokenExpired
-        _messages.emit(app.getString(R.string.msg_session_expired_quick))
+        notifyExpiredIfNeeded()
         prefetchCaptchaForRelogin()
+    }
+
+    /**
+     * ponytail: “登录已过期，请快速登录”只在验证码识别关掉、且开着启动自动同步时提示；
+     * 识别开着的时候由自动重登链路自己发“正在尝试自动登录”，不重复打扰。
+     */
+    private suspend fun notifyExpiredIfNeeded() {
+        if (!settings.captchaOcr.first() && settings.autoSyncOnStart.first()) {
+            _messages.emit(app.getString(R.string.msg_session_expired_quick))
+        }
     }
 
     /**
@@ -858,6 +877,48 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
      */
     private suspend fun prefetchCaptchaForRelogin() {
         if (settings.captchaOcr.first()) refreshCaptcha(clearError = false, silent = true)
+    }
+
+    // ponytail: 自动重登连续失败上限——3 次都过不了就退回手动，别把验证码刷成死循环
+    private val autoLoginMaxAttempts = 3
+    private var autoLoginAttempts = 0
+    private val autoLoginLock = Any()
+    private var autoLoginInFlight = false
+    // ponytail: 手动登录页临时关掉自动重登，避免用户主动登录时被抢先顶掉页面
+    @Volatile private var autoLoginSuppressed = false
+
+    fun suppressAutoLogin(suppress: Boolean) { autoLoginSuppressed = suppress }
+
+    /**
+     * 过期态 + 识别出验证码 → 自动重登。只读本地加密凭据，没凭据就退回手动。
+     * 尝试次数只在失败时累加；手动登录成功会清零。
+     */
+    private fun maybeAutoRelogin(captcha: String) {
+        if (autoLoginSuppressed) return
+        if (_loginState.value !is LoginState.TokenExpired) return
+        if (autoLoginAttempts >= autoLoginMaxAttempts) return
+        synchronized(autoLoginLock) {
+            if (autoLoginInFlight) return
+            autoLoginInFlight = true
+        }
+        autoLoginAttempts++
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            try {
+                val sid = CredentialStore.loadStudentId(app).first()
+                val pwd = CredentialStore.loadPassword(app).first()
+                if (sid.isEmpty() || pwd.isEmpty()) {
+                    autoLoginAttempts = 0
+                    _loginState.value = LoginState.Error(app.getString(R.string.msg_no_credentials))
+                    _messages.emit(app.getString(R.string.msg_no_credentials))
+                    return@launch
+                }
+                android.util.Log.d("GdustApi", "Auto relogin attempt $autoLoginAttempts/$autoLoginMaxAttempts")
+                _messages.emit(app.getString(if (autoLoginAttempts == 1) R.string.msg_auto_login_trying else R.string.msg_auto_login_retry))
+                quickRelogin(captcha, auto = true)
+            } finally {
+                synchronized(autoLoginLock) { autoLoginInFlight = false }
+            }
+        }
     }
 
     /**
@@ -890,7 +951,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
-    fun quickRelogin(captcha: String) {
+    fun quickRelogin(captcha: String, auto: Boolean = false) {
         _loginState.value = LoginState.Loading
         viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
             // Load saved credentials
@@ -902,6 +963,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
             }
             api.login(sid, pwd, captcha, captchaUuid)
                 .onSuccess { user ->
+                    autoLoginAttempts = 0
                     savedStudentId = sid
                     _savedStudentIdFlow.value = sid
                     _loginState.value = LoginState.Success(user.realName.ifEmpty { sid }, sid)
@@ -912,7 +974,17 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                         settings.saveLoginInfo(user.token, sid, user.realName)
                     }
                     settings.clearTokenExpired()
-                    importFromSchool(sid)
+                    // 成功就收掉考试页的重登框，主界面的弹窗由 UI 观察登录态关闭
+                    _showExamReloginDialog.value = false
+                    if (auto) {
+                        _messages.emit(app.getString(R.string.msg_auto_login_success))
+                        // ponytail: 自动登录成功后，若开了“启动时自动同步”就补一次课程同步
+                        val autoSync = settings.autoSyncOnStart.first()
+                        android.util.Log.d("GdustApi", "Auto relogin success, autoSyncOnStart=$autoSync")
+                        if (autoSync) refreshFromSchool()
+                    } else {
+                        importFromSchool(sid)
+                    }
                     // Auto-retry exam query if it was the reason for re-login
                     if (pendingExamRetry) {
                         pendingExamRetry = false
@@ -923,6 +995,16 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                 .onFailure { e ->
                     if (isTokenExpired(e.message)) {
                         handleTokenExpired()
+                    } else if (auto) {
+                        if (autoLoginAttempts >= autoLoginMaxAttempts) {
+                            // 3 次都没过 → 退回手动，验证码仍然自动刷新/识别好
+                            _loginState.value = LoginState.Error(app.getString(R.string.msg_auto_login_failed))
+                            _messages.emit(app.getString(R.string.msg_auto_login_failed))
+                        } else {
+                            // 保持过期态，下一张验证码识别后继续自动尝试（提示由重试逻辑发）
+                            _loginState.value = LoginState.TokenExpired
+                        }
+                        refreshCaptcha(clearError = false)
                     } else {
                         _loginState.value = LoginState.Error(friendlyLoginError(e.message))
                         refreshCaptcha(clearError = false)
@@ -1025,6 +1107,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
 
     fun logout() {
         _loginState.value = LoginState.LoggedOut
+        autoLoginAttempts = 0
         _captchaImage.value = null
         _captchaState.value = CaptchaState.Idle
         _captchaText.value = null

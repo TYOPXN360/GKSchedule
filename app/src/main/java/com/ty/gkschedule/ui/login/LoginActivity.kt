@@ -54,6 +54,11 @@ class LoginActivity : AppCompatActivity() {
                     var showQr by remember(startQr) { mutableStateOf(startQr) }
 
                     LaunchedEffect(Unit) { vm.clearLoginError(); if (captchaImage == null) vm.refreshCaptcha() }
+                    // ponytail: 手动登录页期间关掉“识别后自动重登”，避免用户正输账号时被自动登录顶掉页面
+                    DisposableEffect(Unit) {
+                        vm.suppressAutoLogin(true)
+                        onDispose { vm.suppressAutoLogin(false) }
+                    }
                     // ponytail: 成功回我的页——独立Activity直接finish，由About页状态刷新
                     LaunchedEffect(loginState) {
                         if (loginState is LoginState.Success || loginState is LoginState.ImportResult) {
