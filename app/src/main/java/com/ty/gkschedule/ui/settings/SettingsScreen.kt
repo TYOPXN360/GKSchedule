@@ -643,6 +643,7 @@ internal fun SyncPage(
     examLookaheadWeeks: Int,
     diffColorPerWeek: Boolean,
     autoCheckUpdateDaily: Boolean,
+    checkPrereleaseUpdate: Boolean,
     onAutoSyncOnStartChange: (Boolean) -> Unit,
     onAutoSyncIntervalValueChange: (Int) -> Unit,
     onAutoSyncIntervalUnitChange: (String) -> Unit,
@@ -654,6 +655,7 @@ internal fun SyncPage(
     onExamLookaheadWeeksChange: (Int) -> Unit,
     onDiffColorPerWeekChange: (Boolean) -> Unit,
     onAutoCheckUpdateDailyChange: (Boolean) -> Unit,
+    onCheckPrereleaseUpdateChange: (Boolean) -> Unit,
     onFetchExam: () -> Unit,
     onBack: () -> Unit,
     blurEnabled: Boolean = true
@@ -873,6 +875,7 @@ internal fun SyncPage(
         SectionHeader(stringResource(R.string.settings_category_update))
         SettingsCard {
             SwitchItem(Icons.Default.SystemUpdate, stringResource(R.string.auto_check_update_daily), autoCheckUpdateDaily, onAutoCheckUpdateDailyChange)
+            SwitchItem(Icons.Default.NewReleases, stringResource(R.string.check_prerelease_update), checkPrereleaseUpdate, onCheckPrereleaseUpdateChange)
         }
     }
 }

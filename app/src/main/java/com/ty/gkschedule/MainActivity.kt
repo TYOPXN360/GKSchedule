@@ -178,7 +178,8 @@ class MainActivity : AppCompatActivity() {
                             val today = java.time.LocalDate.now().toString()
                             if (settings.lastUpdateCheckDate.first() == today) return@LaunchedEffect
                             settings.setLastUpdateCheckDate(today)
-                            com.ty.gkschedule.util.UpdateChecker.checkForUpdateWithRetry(this@MainActivity)
+                            val includePrerelease = settings.checkPrereleaseUpdate.first()
+                            com.ty.gkschedule.util.UpdateChecker.checkForUpdateWithRetry(this@MainActivity, includePrerelease = includePrerelease)
                                 .onSuccess { info ->
                                     if (info.isUpdateAvailable) {
                                         com.ty.gkschedule.util.UpdateNotificationHelper.showUpdateNotification(this@MainActivity, info)

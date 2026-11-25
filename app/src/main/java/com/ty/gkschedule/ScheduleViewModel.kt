@@ -117,6 +117,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     val blurEffect: Flow<Boolean> = settings.blurEffect
     val weeklyBlockMultiline: Flow<Boolean> = settings.weeklyBlockMultiline
     val autoCheckUpdateDaily: Flow<Boolean> = settings.autoCheckUpdateDaily
+    val checkPrereleaseUpdate: Flow<Boolean> = settings.checkPrereleaseUpdate
     val courseNames: Flow<List<String>> = courseDao.getAllCourseNames()
 
     private val _selectedWeek = MutableStateFlow(0)
@@ -437,6 +438,10 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
 
     fun setAutoCheckUpdateDaily(enabled: Boolean) {
         viewModelScope.launch { settings.setAutoCheckUpdateDaily(enabled) }
+    }
+
+    fun setCheckPrereleaseUpdate(enabled: Boolean) {
+        viewModelScope.launch { settings.setCheckPrereleaseUpdate(enabled) }
     }
 
     fun setGoSignEnabled(enabled: Boolean) {

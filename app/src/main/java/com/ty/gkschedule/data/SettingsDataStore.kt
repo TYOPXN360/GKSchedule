@@ -64,6 +64,7 @@ class SettingsDataStore(private val context: Context) {
         private val BLUR_EFFECT = booleanPreferencesKey("blur_effect")
         private val WEEKLY_BLOCK_MULTILINE = booleanPreferencesKey("weekly_block_multiline")
         private val AUTO_CHECK_UPDATE_DAILY = booleanPreferencesKey("auto_check_update_daily")
+        private val CHECK_PRERELEASE_UPDATE = booleanPreferencesKey("check_prerelease_update")
         private val LAST_UPDATE_CHECK_DATE = stringPreferencesKey("last_update_check_date")
         private val SCHEDULE_ADJUSTMENTS = stringPreferencesKey("schedule_adjustments")
         private val GO_SIGN_ENABLED = booleanPreferencesKey("go_sign_enabled")
@@ -141,6 +142,8 @@ class SettingsDataStore(private val context: Context) {
     val weeklyBlockMultiline: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[WEEKLY_BLOCK_MULTILINE] ?: true }
     // ponytail: 每日首次启动自动查更新——默认开，关则MainActivity跳过
     val autoCheckUpdateDaily: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[AUTO_CHECK_UPDATE_DAILY] ?: true }
+    // ponytail: 是否把预发布版本也算作可更新——默认关，关着走 /releases/latest
+    val checkPrereleaseUpdate: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[CHECK_PRERELEASE_UPDATE] ?: false }
     val lastUpdateCheckDate: Flow<String> = context.dataStore.data.map { prefs -> prefs[LAST_UPDATE_CHECK_DATE] ?: "" }
     val scheduleAdjustments: Flow<List<ScheduleAdjustment>> = context.dataStore.data.map { prefs ->
         ScheduleAdjustmentCodec.decode(prefs[SCHEDULE_ADJUSTMENTS] ?: "")
@@ -227,6 +230,7 @@ class SettingsDataStore(private val context: Context) {
     suspend fun setBlurEffect(enabled: Boolean) { context.dataStore.edit { it[BLUR_EFFECT] = enabled } }
     suspend fun setWeeklyBlockMultiline(enabled: Boolean) { context.dataStore.edit { it[WEEKLY_BLOCK_MULTILINE] = enabled } }
     suspend fun setAutoCheckUpdateDaily(enabled: Boolean) { context.dataStore.edit { it[AUTO_CHECK_UPDATE_DAILY] = enabled } }
+    suspend fun setCheckPrereleaseUpdate(enabled: Boolean) { context.dataStore.edit { it[CHECK_PRERELEASE_UPDATE] = enabled } }
     suspend fun setLastUpdateCheckDate(date: String) { context.dataStore.edit { it[LAST_UPDATE_CHECK_DATE] = date } }
     suspend fun setScheduleAdjustments(value: List<ScheduleAdjustment>) {
         context.dataStore.edit { it[SCHEDULE_ADJUSTMENTS] = ScheduleAdjustmentCodec.encode(value) }

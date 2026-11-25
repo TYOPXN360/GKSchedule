@@ -28,6 +28,7 @@ import com.ty.gkschedule.ui.theme.Md3CardVariant
 import com.ty.gkschedule.util.UpdateChecker
 import com.ty.gkschedule.util.UpdateInfo
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -187,7 +188,9 @@ fun AboutDetailPage(
                                 isCheckingUpdate = true
                                 updateError = null
                                 GlobalScope.launch(Dispatchers.IO) {
-                                    UpdateChecker.checkForUpdate(context)
+                                    val includePrerelease = com.ty.gkschedule.data.SettingsDataStore(context)
+                                        .checkPrereleaseUpdate.first()
+                                    UpdateChecker.checkForUpdate(context, includePrerelease)
                                         .onSuccess { info ->
                                             withContext(Dispatchers.Main) {
                                                 updateInfo = info

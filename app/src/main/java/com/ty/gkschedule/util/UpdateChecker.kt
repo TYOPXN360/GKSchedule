@@ -21,6 +21,7 @@ data class GitHubRelease(
     val tag_name: String = "",
     val name: String = "",
     val body: String = "",
+    val prerelease: Boolean = false,
     val assets: List<GitHubAsset> = emptyList()
 )
 
@@ -43,6 +44,9 @@ data class UpdateInfo(
 
 object UpdateChecker {
     private const val GITHUB_API = "https://api.github.com/repos/TYOPXN360/GKSchedule/releases/latest"
+    // ponytail: 开启「检查预发布更新」时走列表接口，/releases/latest 永远不含预发布
+    private const val GITHUB_API_RELEASES = "https://api.github.com/repos/TYOPXN360/GKSchedule/releases?per_page=30"
+    private val VERSION_TAG = Regex("""^v\d""")
     // ghfast.top 加速前缀
     private const val GHFAST_PREFIX = "https://ghfast.top/"
 
@@ -62,9 +66,9 @@ object UpdateChecker {
         }
     }
 
-    suspend fun checkForUpdate(context: Context): Result<UpdateInfo> = withContext(Dispatchers.IO) {        try {
+    suspend fun checkForUpdate(context: Context, includePrerelease: Boolean = false): Result<UpdateInfo> = withContext(Dispatchers.IO) {        try {
             val request = Request.Builder()
-                .url(GITHUB_API)
+                .url(if (includePrerelease) GITHUB_API_RELEASES else GITHUB_API)
                 .header("Accept", "application/vnd.github.v3+json")
                 .build()
 
@@ -75,7 +79,14 @@ object UpdateChecker {
                 throw Exception("GitHub API error: ${response.code}")
             }
 
-            val release = json.decodeFromString<GitHubRelease>(body)
+            // ponytail: 列表里只认 vX.Y.Z 开头的版本 tag，跳过模型等其它 release / 没有 APK 的条目
+            val release = if (includePrerelease) {
+                json.decodeFromString<List<GitHubRelease>>(body).firstOrNull {
+                    VERSION_TAG.containsMatchIn(it.tag_name) && it.assets.any { a -> a.name.endsWith(".apk") }
+                } ?: throw Exception("No release found")
+            } else {
+                json.decodeFromString<GitHubRelease>(body)
+            }
             val currentVersion = getCurrentVersion(context)
             val latestVersion = release.tag_name.removePrefix("v")
 
@@ -109,13 +120,14 @@ object UpdateChecker {
     suspend fun checkForUpdateWithRetry(
         context: Context,
         maxAttempts: Int = 3,
-        initialDelayMs: Long = 2000L
+        initialDelayMs: Long = 2000L,
+        includePrerelease: Boolean = false
     ): Result<UpdateInfo> {
         var lastResult: Result<UpdateInfo> = Result.failure(IllegalStateException(context.getString(R.string.update_not_run)))
         repeat(maxAttempts) { attempt ->
             val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
             if (cm.activeNetwork == null) return Result.failure(java.io.IOException(context.getString(R.string.update_no_network)))
-            lastResult = checkForUpdate(context)
+            lastResult = checkForUpdate(context, includePrerelease)
             if (lastResult.isSuccess) return lastResult
             android.util.Log.w("UpdateChecker", "第${attempt + 1}次检查失败", lastResult.exceptionOrNull())
             if (attempt < maxAttempts - 1) kotlinx.coroutines.delay(initialDelayMs * (attempt + 1))

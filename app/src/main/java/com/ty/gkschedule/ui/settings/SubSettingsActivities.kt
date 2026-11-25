@@ -174,6 +174,7 @@ class SubSettingsSyncActivity : SubSettingsBaseActivity() {
         val examLookaheadWeeks by vm.examLookaheadWeeks.collectAsState(initial = 1)
         val diffColorPerWeek by vm.diffColorPerWeek.collectAsState(initial = false)
         val autoCheckUpdateDaily by vm.autoCheckUpdateDaily.collectAsState(initial = true)
+        val checkPrereleaseUpdate by vm.checkPrereleaseUpdate.collectAsState(initial = false)
         val blurEffect by vm.blurEffect.collectAsState(initial = false)
         SyncPage(
             autoSyncOnStart = autoSyncOnStart, autoSyncIntervalValue = autoSyncIntervalValue,
@@ -182,6 +183,7 @@ class SubSettingsSyncActivity : SubSettingsBaseActivity() {
             captchaModelState = captchaModelState,
             showExamSchedule = showExamSchedule, examLookaheadWeeks = examLookaheadWeeks,
             diffColorPerWeek = diffColorPerWeek, autoCheckUpdateDaily = autoCheckUpdateDaily,
+            checkPrereleaseUpdate = checkPrereleaseUpdate,
             onAutoSyncOnStartChange = { vm.setAutoSyncOnStart(it) },
             onAutoSyncIntervalValueChange = { vm.setAutoSyncIntervalValue(it) },
             onAutoSyncIntervalUnitChange = { vm.setAutoSyncIntervalUnit(it) },
@@ -193,6 +195,7 @@ class SubSettingsSyncActivity : SubSettingsBaseActivity() {
             onExamLookaheadWeeksChange = { vm.setExamLookaheadWeeks(it) },
             onDiffColorPerWeekChange = { vm.setDiffColorPerWeek(it) },
             onAutoCheckUpdateDailyChange = { vm.setAutoCheckUpdateDaily(it) },
+            onCheckPrereleaseUpdateChange = { vm.setCheckPrereleaseUpdate(it) },
             onFetchExam = { vm.refreshExamSchedule() },
             onBack = finish, blurEnabled = blurEffect
         )
