@@ -293,6 +293,9 @@
     <string name="go_sign_pick_jump_title">选择要签到的课程</string>
     <string name="go_sign_pick_jump_body" formatted="false">“%1$s”绑定了多门超星课程，请选择本次要跳转的课程。</string>
     <string name="go_sign_bound_count" formatted="false">已绑定 %1$d 门超星课程</string>
+    <string name="go_sign_multi_switch">多选绑定</string>
+    <string name="go_sign_multi_on_hint">可绑定多门超星课程，跳转签到时先选择</string>
+    <string name="go_sign_multi_off_hint">仅绑定一门，跳转时直接签到</string>
     <string name="cx_bind_multi_title">超星签到课程（可多选）</string>
     <string name="cx_bind_multi_empty">尚未绑定超星课程，可在下方手动填写 ID，或保存后点“编辑绑定”多选</string>
     <string name="go_sign_not_installed">未安装 ChaoxingSignFaker</string>

@@ -12,6 +12,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -31,6 +32,7 @@ import com.ty.gkschedule.ui.theme.GkAlertDialog
 /**
  * ponytail: 一门本地课可以绑多门超星课——设置页/课程编辑页共用的多选对话框。
  * 候选来自上次拉取的全量课程；确认后由调用方写入绑定并同步主 ID。
+ * 默认单选，打开“多选”开关后才能勾选多门。
  */
 @Composable
 fun CxCourseMultiSelectDialog(
@@ -42,11 +44,49 @@ fun CxCourseMultiSelectDialog(
 ) {
     // key 用 classId:courseId，避免同名课程互相顶掉
     var selected by remember(courses, initiallySelected) { mutableStateOf(initiallySelected) }
+    var multiEnabled by remember(courses, initiallySelected) { mutableStateOf(initiallySelected.size > 1) }
+
+    fun toggle(key: String) {
+        selected = when {
+            key !in selected && !multiEnabled -> setOf(key)
+            key !in selected -> selected + key
+            else -> selected - key
+        }
+    }
+
     GkAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title, fontWeight = FontWeight.Bold) },
         text = {
             Column(modifier = Modifier.heightIn(max = 420.dp).verticalScroll(rememberScrollState())) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            stringResource(R.string.go_sign_multi_switch),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Text(
+                            stringResource(
+                                if (multiEnabled) R.string.go_sign_multi_on_hint
+                                else R.string.go_sign_multi_off_hint
+                            ),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(
+                        checked = multiEnabled,
+                        onCheckedChange = { on ->
+                            multiEnabled = on
+                            // 关掉多选时只保留一门，避免残留多绑定
+                            if (!on && selected.size > 1) selected = setOf(selected.first())
+                        }
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
                 if (courses.isEmpty()) {
                     Text(
                         stringResource(R.string.go_sign_no_cx_courses),
@@ -65,17 +105,13 @@ fun CxCourseMultiSelectDialog(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable {
-                                selected = if (key in selected) selected - key else selected + key
-                            }
+                            .clickable { toggle(key) }
                             .padding(vertical = 4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Checkbox(
                             checked = key in selected,
-                            onCheckedChange = { checked ->
-                                selected = if (checked) selected + key else selected - key
-                            }
+                            onCheckedChange = { toggle(key) }
                         )
                         Column(modifier = Modifier.padding(start = 8.dp)) {
                             Text(course.name, style = MaterialTheme.typography.bodyLarge)

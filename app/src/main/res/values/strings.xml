@@ -286,6 +286,9 @@
     <string name="go_sign_pick_jump_title">Choose a course to sign in</string>
     <string name="go_sign_pick_jump_body" formatted="false">\"%1$s\" is bound to multiple Chaoxing courses. Choose one to open.</string>
     <string name="go_sign_bound_count" formatted="false">%1$d Chaoxing courses bound</string>
+    <string name="go_sign_multi_switch">Multi-select bindings</string>
+    <string name="go_sign_multi_on_hint">You may bind several Chaoxing courses; a picker appears before sign-in</string>
+    <string name="go_sign_multi_off_hint">Single binding only; the course jumps straight to sign-in</string>
     <string name="cx_bind_multi_title">Chaoxing sign-in courses (multi-select)</string>
     <string name="cx_bind_multi_empty">No Chaoxing course bound. Fill the IDs below, or use \"Edit bindings\" after saving</string>
     <string name="go_sign_not_installed">ChaoxingSignFaker not installed</string>
