@@ -39,7 +39,8 @@ class SettingsDataStore(private val context: Context) {
         private val COLOR_GROUP_MODE = intPreferencesKey("color_group_mode") // 0=same 1=same+sat 2=different
         private val SHOW_DATE_IN_HEADER = booleanPreferencesKey("show_date_in_header")
         private val HIDE_EMPTY_WEEKS = booleanPreferencesKey("hide_empty_weeks")
-        private val REMINDER_MINUTES = intPreferencesKey("reminder_minutes") // 0=off,5,10,15,30
+        private val REMINDER_MINUTES = intPreferencesKey("reminder_minutes") // 0=off,5,10,15,25
+        private const val REMINDER_MINUTES_MAX = 25
         private val REMINDER_MODE = stringPreferencesKey("reminder_mode") // notify=仅通知，countdown=倒计时Live Update
         private val REMINDER_LIVE_UPDATE = booleanPreferencesKey("reminder_live_update")
         private val REMINDER_EXAM_LIVE_UPDATE = booleanPreferencesKey("reminder_exam_live_update")
@@ -114,7 +115,8 @@ class SettingsDataStore(private val context: Context) {
     val colorGroupMode: Flow<Int> = context.dataStore.data.map { prefs -> prefs[COLOR_GROUP_MODE] ?: 2 }
     val showDateInHeader: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[SHOW_DATE_IN_HEADER] ?: false }
     val hideEmptyWeeks: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[HIDE_EMPTY_WEEKS] ?: false }
-    val reminderMinutes: Flow<Int> = context.dataStore.data.map { prefs -> prefs[REMINDER_MINUTES] ?: 0 }
+    // ponytail: 上限 25 分钟；旧版本存过的 30 在这里回落到 25，避免设置页显示空选中
+    val reminderMinutes: Flow<Int> = context.dataStore.data.map { prefs -> (prefs[REMINDER_MINUTES] ?: 0).coerceIn(0, REMINDER_MINUTES_MAX) }
     val reminderMode: Flow<String> = context.dataStore.data.map { prefs -> prefs[REMINDER_MODE] ?: "notify" }
     val reminderLiveUpdate: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[REMINDER_LIVE_UPDATE] ?: true }
     val reminderExamLiveUpdate: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[REMINDER_EXAM_LIVE_UPDATE] ?: false }
@@ -206,7 +208,7 @@ class SettingsDataStore(private val context: Context) {
     suspend fun setColorGroupMode(mode: Int) { context.dataStore.edit { it[COLOR_GROUP_MODE] = mode } }
     suspend fun setShowDateInHeader(show: Boolean) { context.dataStore.edit { it[SHOW_DATE_IN_HEADER] = show } }
     suspend fun setHideEmptyWeeks(hide: Boolean) { context.dataStore.edit { it[HIDE_EMPTY_WEEKS] = hide } }
-    suspend fun setReminderMinutes(min: Int) { context.dataStore.edit { it[REMINDER_MINUTES] = min } }
+    suspend fun setReminderMinutes(min: Int) { context.dataStore.edit { it[REMINDER_MINUTES] = min.coerceIn(0, REMINDER_MINUTES_MAX) } }
     suspend fun setReminderMode(mode: String) { context.dataStore.edit { it[REMINDER_MODE] = mode } }
     suspend fun setReminderLiveUpdate(enabled: Boolean) { context.dataStore.edit { it[REMINDER_LIVE_UPDATE] = enabled } }
     suspend fun setReminderExamLiveUpdate(enabled: Boolean) { context.dataStore.edit { it[REMINDER_EXAM_LIVE_UPDATE] = enabled } }

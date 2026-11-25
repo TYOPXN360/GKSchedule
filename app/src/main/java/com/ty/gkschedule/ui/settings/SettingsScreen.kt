@@ -545,7 +545,7 @@ internal fun NotificationPage(
         }
         SettingsCard {
             DropdownItem(Icons.Default.Notifications, stringResource(R.string.reminder),
-                listOf("0" to stringResource(R.string.reminder_off), "5" to stringResource(R.string.reminder_format, 5), "10" to stringResource(R.string.reminder_format, 10), "15" to stringResource(R.string.reminder_format, 15), "30" to stringResource(R.string.reminder_format, 30)),
+                listOf("0" to stringResource(R.string.reminder_off), "5" to stringResource(R.string.reminder_format, 5), "10" to stringResource(R.string.reminder_format, 10), "15" to stringResource(R.string.reminder_format, 15), "25" to stringResource(R.string.reminder_format, 25)),
                 reminderMinutes.toString(), onSelect = {
                     val v = it.toInt()
                     if (v > 0 && reminderMinutes == 0) { pendingReminder = v; requestBg() }
