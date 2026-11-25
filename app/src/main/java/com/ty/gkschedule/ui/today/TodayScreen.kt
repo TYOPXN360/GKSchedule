@@ -60,6 +60,19 @@ fun TodayScreen(
     val today = LocalDate.now()
     val todayDow = today.dayOfWeek.value
     val context = androidx.compose.ui.platform.LocalContext.current
+    // ponytail: 一门课绑了多门超星课时，跳转前先弹窗选一个
+    var goSignPicker by remember { mutableStateOf<Pair<String, List<com.ty.gkschedule.api.ChaoxingApi.CxTarget>>?>(null) }
+    goSignPicker?.let { (name, targets) ->
+        com.ty.gkschedule.ui.gosign.GoSignTargetPickerDialog(
+            courseName = name,
+            targets = targets,
+            onPick = { target ->
+                goSignPicker = null
+                com.ty.gkschedule.api.ChaoxingApi.openSign(context, target)
+            },
+            onDismiss = { goSignPicker = null }
+        )
+    }
     val tomorrowWeek = if (today.dayOfWeek.value == 7) currentWeek + 1 else currentWeek
 
     val todayCourses = remember(courses, currentWeek, today, semesterStart, scheduleAdjustments) {
@@ -402,7 +415,9 @@ fun TodayScreen(
             blurEnabled = blurEnabled,
              backdrop = backdrop,
             onGoSign = if (!goSignEnabled) null else fun() {
-                com.ty.gkschedule.api.ChaoxingApi.goSignOrToast(context, course, unmatchedTip)
+                val targets = com.ty.gkschedule.api.ChaoxingApi.targetsFor(course)
+                if (targets.size > 1) goSignPicker = course.name to targets
+                else com.ty.gkschedule.api.ChaoxingApi.goSignOrToast(context, course, unmatchedTip)
             }
         )
     }

@@ -32,6 +32,8 @@ class CourseEditActivity : AppCompatActivity() {
                     val courses by vm.courses.collectAsState(initial = emptyList())
                     val periodsPerDay by vm.periodsPerDay.collectAsState(initial = 10)
                 val blurEffect by vm.blurEffect.collectAsState(initial = false)
+                    val goSignBindings by vm.goSignBindings.collectAsState(initial = emptyMap())
+                    val goSignAllCx by vm.goSignAllCxCourses.collectAsState(initial = 0 to emptyList())
                     var currentCourse by remember { mutableStateOf<Course?>(null) }
                     var loaded by remember { mutableStateOf(false) }
 
@@ -69,7 +71,13 @@ class CourseEditActivity : AppCompatActivity() {
                                 finish()
                             },
                             onBack = { finish() },
-                            blurEnabled = blurEffect
+                            blurEnabled = blurEffect,
+                            cxTargets = goSignBindings[currentCourse?.name ?: ""].orEmpty(),
+                            allCxCourses = goSignAllCx,
+                            onSetChaoxingTargets = { targets ->
+                                currentCourse?.name?.takeIf { it.isNotEmpty() }
+                                    ?.let { vm.setCourseChaoxingTargets(it, targets) }
+                            }
                         )
                         }
                     }

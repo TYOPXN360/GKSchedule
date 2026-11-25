@@ -278,6 +278,16 @@
     <string name="go_sign_cancel">Cancel</string>
     <string name="go_sign_bind_ok">Bound</string>
     <string name="go_sign_bind_fail">Bind failed</string>
+    <string name="go_sign_edit_action">Edit</string>
+    <string name="go_sign_edit_title" formatted="false">Choose Chaoxing courses for \"%1$s\" (multi-select)</string>
+    <string name="go_sign_edit_bindings">Edit bindings</string>
+    <string name="go_sign_selected_count" formatted="false">%1$d selected</string>
+    <string name="go_sign_no_cx_courses">No Chaoxing courses fetched yet. Tap \"Fetch course IDs\" first</string>
+    <string name="go_sign_pick_jump_title">Choose a course to sign in</string>
+    <string name="go_sign_pick_jump_body" formatted="false">\"%1$s\" is bound to multiple Chaoxing courses. Choose one to open.</string>
+    <string name="go_sign_bound_count" formatted="false">%1$d Chaoxing courses bound</string>
+    <string name="cx_bind_multi_title">Chaoxing sign-in courses (multi-select)</string>
+    <string name="cx_bind_multi_empty">No Chaoxing course bound. Fill the IDs below, or use \"Edit bindings\" after saving</string>
     <string name="go_sign_not_installed">ChaoxingSignFaker not installed</string>
     <string name="go_sign_need_permission">Enable \"allow other apps to query\" in ChaoxingSignFaker</string>
     <string name="go_sign_fetch_fail">Fetch failed: %s</string>

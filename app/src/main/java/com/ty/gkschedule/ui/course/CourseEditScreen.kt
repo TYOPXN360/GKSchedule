@@ -47,7 +47,10 @@ fun CourseEditScreen(
     onSave: (Course, String?) -> Unit,
     onDelete: (Course) -> Unit,
     onBack: () -> Unit,
-    blurEnabled: Boolean = true
+    blurEnabled: Boolean = true,
+    cxTargets: List<com.ty.gkschedule.api.ChaoxingApi.CxTarget> = emptyList(),
+    allCxCourses: Pair<Int, List<com.ty.gkschedule.api.ChaoxingApi.CxCourse>> = 0 to emptyList(),
+    onSetChaoxingTargets: (List<com.ty.gkschedule.api.ChaoxingApi.CxTarget>) -> Unit = {}
 ) {
     // ponytail: miuix源层
     val backdrop = top.yukonga.miuix.kmp.blur.rememberLayerBackdrop()
@@ -78,6 +81,7 @@ fun CourseEditScreen(
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showM3StartTimePicker by remember { mutableStateOf(false) }
     var showM3EndTimePicker by remember { mutableStateOf(false) }
+    var showCxPicker by remember { mutableStateOf(false) }
 
     var batchCourses by remember { mutableStateOf<List<Course>>(emptyList()) }
     var selectedTabIndex by remember { mutableIntStateOf(0) }
@@ -254,6 +258,25 @@ fun CourseEditScreen(
             OutlinedTextField(value = remark, onValueChange = { remark = it }, label = { Text(stringResource(R.string.course_remark)) }, placeholder = { Text(stringResource(R.string.course_remark_hint)) }, modifier = Modifier.fillMaxWidth(), minLines = 1)
             Text(stringResource(R.string.cx_section), style = MaterialTheme.typography.labelLarge)
             Text(stringResource(R.string.cx_section_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            // ponytail: 与签到联动同一份多选绑定——这里只做展示+入口，新课程保存后再去设置页绑定
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                Text(stringResource(R.string.cx_bind_multi_title), style = MaterialTheme.typography.labelLarge)
+                if (course != null) {
+                    TextButton(onClick = { showCxPicker = true }) { Text(stringResource(R.string.go_sign_edit_bindings)) }
+                }
+            }
+            if (cxTargets.isEmpty()) {
+                Text(stringResource(R.string.cx_bind_multi_empty), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            } else {
+                cxTargets.forEach { target ->
+                    Text("• ${target.name}", style = MaterialTheme.typography.bodyMedium)
+                    Text(
+                        "classId=${target.classId} · courseId=${target.courseId} · fid=${target.fid}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
             OutlinedTextField(value = chaoxingClassId, onValueChange = { chaoxingClassId = it }, label = { Text(stringResource(R.string.cx_classid_label)) }, modifier = Modifier.fillMaxWidth(), singleLine = true)
             OutlinedTextField(value = chaoxingCourseId, onValueChange = { chaoxingCourseId = it }, label = { Text(stringResource(R.string.cx_courseid_label)) }, modifier = Modifier.fillMaxWidth(), singleLine = true)
             OutlinedTextField(value = chaoxingFid, onValueChange = { chaoxingFid = it }, label = { Text(stringResource(R.string.cx_fid_label)) }, modifier = Modifier.fillMaxWidth(), singleLine = true)
@@ -264,6 +287,30 @@ fun CourseEditScreen(
                 onSave(Course(id = currentId, name = name.trim(), teacher = teacher.trim(), classroom = classroom.trim(), dayOfWeek = dayOfWeek, startPeriod = startPeriod, periods = periods, colorIndex = colorIndex, weekRange = finalWeekRange, remark = remark.trim(), isCustomTime = isCustomTime, customStartTime = customStartTime, customEndTime = customEndTime, isManuallyEdited = true, isHidden = isHidden, chaoxingClassId = chaoxingClassId.toIntOrNull() ?: 0, chaoxingCourseId = chaoxingCourseId.toLongOrNull() ?: 0, chaoxingFid = chaoxingFid.toIntOrNull() ?: 0), hiddenScopeName)
             }, modifier = Modifier.fillMaxWidth(), enabled = name.isNotBlank()) { Text(if (batchCourses.size > 1) stringResource(R.string.save_tab_batch_fmt, selectedTabIndex + 1, batchCourses.size) else stringResource(R.string.save)) }
         }
+    if (showCxPicker) {
+        val initial = remember(cxTargets) {
+            cxTargets.map { com.ty.gkschedule.api.ChaoxingApi.cxKey(it.classId, it.courseId) }.toSet()
+        }
+        com.ty.gkschedule.ui.gosign.CxCourseMultiSelectDialog(
+            title = stringResource(R.string.go_sign_edit_title, course?.name ?: name),
+            courses = allCxCourses.second,
+            initiallySelected = initial,
+            onConfirm = { selected ->
+                showCxPicker = false
+                val fid = allCxCourses.first.takeIf { it > 0 }
+                    ?: cxTargets.firstOrNull()?.fid
+                    ?: course?.chaoxingFid ?: 0
+                if (fid > 0) {
+                    onSetChaoxingTargets(
+                        selected.map {
+                            com.ty.gkschedule.api.ChaoxingApi.CxTarget(it.name, it.classId, it.courseId, fid)
+                        }
+                    )
+                }
+            },
+            onDismiss = { showCxPicker = false }
+        )
+    }
     if (showDeleteDialog && course != null) { GkAlertDialog(onDismissRequest = { showDeleteDialog = false }, title = { Text(stringResource(R.string.confirm_delete)) }, text = { Text(stringResource(R.string.confirm_delete_msg)) }, confirmButton = { TextButton(onClick = { onDelete(course); showDeleteDialog = false }) { Text(stringResource(R.string.delete)) } }, dismissButton = { TextButton(onClick = { showDeleteDialog = false }) { Text(stringResource(R.string.cancel)) } }) }
     if (showM3StartTimePicker) { val startParts = customStartTime.split(":"); val timePickerState = rememberTimePickerState(initialHour = startParts.getOrNull(0)?.toIntOrNull() ?: 8, initialMinute = startParts.getOrNull(1)?.toIntOrNull() ?: 0, is24Hour = true); GkAlertDialog(onDismissRequest = { showM3StartTimePicker = false }, confirmButton = { TextButton(onClick = { customStartTime = String.format("%02d:%02d", timePickerState.hour, timePickerState.minute); showM3StartTimePicker = false }) { Text(stringResource(R.string.ok)) } }, dismissButton = { TextButton(onClick = { showM3StartTimePicker = false }) { Text(stringResource(R.string.cancel)) } }, title = { Text(stringResource(R.string.custom_start_time), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }, text = { Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { TimePicker(state = timePickerState) } }) }
     if (showM3EndTimePicker) { val endParts = customEndTime.split(":"); val timePickerState = rememberTimePickerState(initialHour = endParts.getOrNull(0)?.toIntOrNull() ?: 9, initialMinute = endParts.getOrNull(1)?.toIntOrNull() ?: 0, is24Hour = true); GkAlertDialog(onDismissRequest = { showM3EndTimePicker = false }, confirmButton = { TextButton(onClick = { customEndTime = String.format("%02d:%02d", timePickerState.hour, timePickerState.minute); showM3EndTimePicker = false }) { Text(stringResource(R.string.ok)) } }, dismissButton = { TextButton(onClick = { showM3EndTimePicker = false }) { Text(stringResource(R.string.cancel)) } }, title = { Text(stringResource(R.string.custom_end_time), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }, text = { Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { TimePicker(state = timePickerState) } }) }

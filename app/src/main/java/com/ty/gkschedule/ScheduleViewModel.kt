@@ -80,6 +80,14 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
             if (json.isBlank()) 0 to emptyList()
             else runCatching { ChaoxingApi.parseFetchResult(json) }.getOrDefault(0 to emptyList())
         }
+    // 上次拉取的全量超星课程，手动多选绑定时作为候选
+    val goSignAllCxCourses: Flow<Pair<Int, List<ChaoxingApi.CxCourse>>> =
+        settings.goSignAllCourses.map { json ->
+            if (json.isBlank()) 0 to emptyList()
+            else runCatching { ChaoxingApi.parseFetchResult(json) }.getOrDefault(0 to emptyList())
+        }
+    // 本地课名 -> 多选绑定的超星课程
+    val goSignBindings: Flow<Map<String, List<ChaoxingApi.CxTarget>>> = settings.goSignBindings
     val hideCourseManage: Flow<Boolean> = settings.hideCourseManage
     val hideWeeklyEdit: Flow<Boolean> = settings.hideWeeklyEdit
     val savedDeptName: Flow<String> = settings.savedDeptName
@@ -157,6 +165,10 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
             }.getOrDefault(emptyList()).takeIf { it.isNotEmpty() }?.let {
                 ChaoxingApi.cxNames = it.associate { c -> ChaoxingApi.cxKey(c.classId, c.courseId) to c.name }
             }
+        }
+        // ponytail: 多选绑定要能被今日/课表页的跳转逻辑直接读到——同步到 ChaoxingApi 全局缓存
+        viewModelScope.launch {
+            settings.goSignBindings.collect { ChaoxingApi.cxBindings = it }
         }
         viewModelScope.launch {
             _selectedWeek.value = settings.getCurrentWeek().first()
@@ -480,8 +492,11 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
         val (fid, unused) = settings.goSignUnusedCourses.first()
             .let { if (it.isBlank()) 0 to emptyList() else runCatching { ChaoxingApi.parseFetchResult(it) }.getOrDefault(0 to emptyList()) }
         if (unused.isEmpty()) return
-        val bound: Set<Pair<Int, Long>> = courseDao.getAllCourses().first()
-            .map { it.chaoxingClassId to it.chaoxingCourseId }.toSet()
+        val bound: Set<Pair<Int, Long>> = buildSet {
+            courseDao.getAllCourses().first().forEach { add(it.chaoxingClassId to it.chaoxingCourseId) }
+            // 多选绑定也要算进已用，否则重拉后又被列到未匹配里
+            settings.goSignBindings.first().values.flatten().forEach { add(it.classId to it.courseId) }
+        }
         val left = unused.filterNot { (it.classId to it.courseId) in bound }
         if (left.size != unused.size) settings.setGoSignUnusedCourses(ChaoxingApi.toJson(fid, left))
     }
@@ -494,10 +509,49 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                 courseDao.getCoursesByNameOnce(row.name).forEach {
                     courseDao.updateCourse(it.copy(chaoxingClassId = classId, chaoxingCourseId = courseIdCx, chaoxingFid = fid))
                 }
+                // 单条绑定同样落到多选存储里，和设置页/编辑页展示保持一致
+                settings.setGoSignBinding(
+                    row.name,
+                    listOf(
+                        ChaoxingApi.CxTarget(
+                            name = ChaoxingApi.cxNames[ChaoxingApi.cxKey(classId, courseIdCx)] ?: row.name,
+                            classId = classId,
+                            courseId = courseIdCx,
+                            fid = fid
+                        )
+                    )
+                )
                 true
             }
             if (ok) refreshUnusedCxCourses()
             kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) { onDone(ok) }
+        }
+    }
+
+    /**
+     * 手动多选绑定：覆盖某门本地课的全部超星课程。
+     * 课程行上的 classId/courseId/fid 同步成第一项，兼容旧的单条跳转与自动匹配逻辑。
+     */
+    fun setCourseChaoxingTargets(courseName: String, targets: List<ChaoxingApi.CxTarget>) {
+        viewModelScope.launch {
+            settings.setGoSignBinding(courseName, targets)
+            targets.firstOrNull()?.let { first ->
+                courseDao.getCoursesByNameOnce(courseName).forEach { row ->
+                    if (row.chaoxingClassId != first.classId ||
+                        row.chaoxingCourseId != first.courseId ||
+                        row.chaoxingFid != first.fid
+                    ) {
+                        courseDao.updateCourse(
+                            row.copy(
+                                chaoxingClassId = first.classId,
+                                chaoxingCourseId = first.courseId,
+                                chaoxingFid = first.fid
+                            )
+                        )
+                    }
+                }
+            }
+            refreshUnusedCxCourses()
         }
     }
 

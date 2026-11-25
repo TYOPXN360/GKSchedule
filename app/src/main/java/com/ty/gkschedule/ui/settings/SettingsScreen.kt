@@ -1132,12 +1132,16 @@ internal fun GoSignPage(
     fetchResult: String?,
     onFetchChaoxingCourses: ((String) -> Unit) -> Unit,
     onBindChaoxingCourse: (Long, Int, Long, Int, (Boolean) -> Unit) -> Unit,
+    allCxCourses: Pair<Int, List<com.ty.gkschedule.api.ChaoxingApi.CxCourse>> = 0 to emptyList(),
+    bindings: Map<String, List<com.ty.gkschedule.api.ChaoxingApi.CxTarget>> = emptyMap(),
+    onSetCourseBindings: (String, List<com.ty.gkschedule.api.ChaoxingApi.CxTarget>) -> Unit = { _, _ -> },
     onBack: () -> Unit,
     blurEnabled: Boolean = true
 ) {
     var fetching by remember { mutableStateOf(false) }
     var picking by remember { mutableStateOf<com.ty.gkschedule.api.ChaoxingApi.CxCourse?>(null) }
     var confirming by remember { mutableStateOf<com.ty.gkschedule.data.Course?>(null) }
+    var editingCourse by remember { mutableStateOf<com.ty.gkschedule.data.Course?>(null) }
     var showSwitchInfo by remember { mutableStateOf(false) }
     val context = androidx.compose.ui.platform.LocalContext.current
     val matched = remember(courses) { courses.filter { it.chaoxingCourseId > 0L }.distinctBy { it.name }.sortedBy { it.name } }
@@ -1179,8 +1183,7 @@ internal fun GoSignPage(
     if (picking != null) {
         val cx = picking
         val target = confirming
-        if (cx != null && target == null) {
-            GkAlertDialog(
+        if (cx != null && target == null) {            GkAlertDialog(
                 onDismissRequest = { picking = null },
                 title = { Text(stringResource(R.string.go_sign_pick_title, cx.name), fontWeight = FontWeight.Bold) },
                 text = {
@@ -1214,6 +1217,39 @@ internal fun GoSignPage(
                 dismissButton = { TextButton(onClick = { confirming = null }) { Text(stringResource(R.string.go_sign_cancel)) } }
             )
         }
+    }
+
+    // ponytail: 多选编辑——自动匹配后仍可手动改绑，一门课允许绑多门超星课
+    val allCxList = allCxCourses.second
+    val allCxFid = allCxCourses.first
+    editingCourse?.let { course ->
+        val currentBinding = bindings[course.name]?.takeIf { it.isNotEmpty() }
+        val initial = remember(course.name, currentBinding) {
+            currentBinding?.map { com.ty.gkschedule.api.ChaoxingApi.cxKey(it.classId, it.courseId) }?.toSet()
+                ?: if (course.chaoxingCourseId > 0L) {
+                    setOf(com.ty.gkschedule.api.ChaoxingApi.cxKey(course.chaoxingClassId, course.chaoxingCourseId))
+                } else emptySet()
+        }
+        com.ty.gkschedule.ui.gosign.CxCourseMultiSelectDialog(
+            title = stringResource(R.string.go_sign_edit_title, course.name),
+            courses = allCxList,
+            initiallySelected = initial,
+            onConfirm = { selected ->
+                editingCourse = null
+                onSetCourseBindings(
+                    course.name,
+                    selected.map {
+                        com.ty.gkschedule.api.ChaoxingApi.CxTarget(
+                            name = it.name,
+                            classId = it.classId,
+                            courseId = it.courseId,
+                            fid = allCxFid.takeIf { f -> f > 0 } ?: course.chaoxingFid
+                        )
+                    }
+                )
+            },
+            onDismiss = { editingCourse = null }
+        )
     }
 
     SubPage(title = stringResource(R.string.go_sign_entry_title), onBack = onBack, blurEnabled = blurEnabled) {
@@ -1267,14 +1303,39 @@ internal fun GoSignPage(
                     if (course != matched.first()) {
                         HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
                     }
+                    val bound = bindings[course.name].orEmpty()
                     ListItem(
                         headlineContent = { Text(course.name, fontWeight = FontWeight.Medium) },
                         supportingContent = {
-                            Text(
-                                "classId=${course.chaoxingClassId} · courseId=${course.chaoxingCourseId} · fid=${course.chaoxingFid}",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                            if (bound.isNotEmpty()) {
+                                Column {
+                                    Text(
+                                        stringResource(R.string.go_sign_bound_count, bound.size),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Text(
+                                        bound.joinToString(" / ") { it.name },
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            } else {
+                                Text(
+                                    "classId=${course.chaoxingClassId} · courseId=${course.chaoxingCourseId} · fid=${course.chaoxingFid}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        },
+                        trailingContent = {
+                            IconButton(onClick = { editingCourse = course }) {
+                                Icon(
+                                    Icons.Default.Edit,
+                                    contentDescription = stringResource(R.string.go_sign_edit_action),
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            }
                         },
                         colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                     )

@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
+import com.ty.gkschedule.api.ChaoxingApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.time.LocalDate
@@ -69,6 +70,8 @@ class SettingsDataStore(private val context: Context) {
         private val GO_SIGN_FETCH_RESULT = stringPreferencesKey("go_sign_fetch_result")
         private val GO_SIGN_UNUSED_COURSES = stringPreferencesKey("go_sign_unused_courses")
         private val GO_SIGN_ALL_COURSES = stringPreferencesKey("go_sign_all_courses")
+        // 本地课名 -> 多选绑定的超星课程（JSON），一门课可绑多门
+        private val GO_SIGN_BINDINGS = stringPreferencesKey("go_sign_bindings")
         private val HIDE_COURSE_MANAGE = booleanPreferencesKey("hide_course_manage")
         private val HIDE_WEEKLY_EDIT = booleanPreferencesKey("hide_weekly_edit")
 
@@ -243,6 +246,11 @@ class SettingsDataStore(private val context: Context) {
     val goSignUnusedCourses: Flow<String> = context.dataStore.data.map { it[GO_SIGN_UNUSED_COURSES] ?: "" }
     // 上次拉取的全部超学通课，供跳转签到时取超学通课名作标题
     val goSignAllCourses: Flow<String> = context.dataStore.data.map { it[GO_SIGN_ALL_COURSES] ?: "" }
+    val goSignBindings: Flow<Map<String, List<ChaoxingApi.CxTarget>>> = context.dataStore.data.map { prefs ->
+        prefs[GO_SIGN_BINDINGS]?.takeIf { it.isNotBlank() }
+            ?.let { runCatching { ChaoxingApi.parseBindings(it) }.getOrDefault(emptyMap()) }
+            ?: emptyMap()
+    }
     val hideCourseManage: Flow<Boolean> = context.dataStore.data.map { it[HIDE_COURSE_MANAGE] ?: false }
     val hideWeeklyEdit: Flow<Boolean> = context.dataStore.data.map { it[HIDE_WEEKLY_EDIT] ?: false }
 
@@ -272,5 +280,17 @@ class SettingsDataStore(private val context: Context) {
 
     suspend fun setGoSignAllCourses(json: String) {
         context.dataStore.edit { it[GO_SIGN_ALL_COURSES] = json }
+    }
+
+    /** 覆盖某门本地课的全部超星绑定；传空列表即解绑。 */
+    suspend fun setGoSignBinding(courseName: String, targets: List<ChaoxingApi.CxTarget>) {
+        context.dataStore.edit { prefs ->
+            val current = prefs[GO_SIGN_BINDINGS]?.takeIf { it.isNotBlank() }
+                ?.let { runCatching { ChaoxingApi.parseBindings(it) }.getOrDefault(emptyMap()) }
+                ?: emptyMap()
+            val updated = current.toMutableMap()
+            if (targets.isEmpty()) updated.remove(courseName) else updated[courseName] = targets
+            prefs[GO_SIGN_BINDINGS] = ChaoxingApi.bindingsToJson(updated)
+        }
     }
 }

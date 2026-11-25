@@ -124,6 +124,19 @@ fun WeeklyScheduleScreen(
     val backdrop = top.yukonga.miuix.kmp.blur.rememberLayerBackdrop()
     val hapticContext = androidx.compose.ui.platform.LocalContext.current
     val hapticView = androidx.compose.ui.platform.LocalView.current
+    // ponytail: 多课绑定——跳转签到前让用户选一个
+    var goSignPicker by remember { mutableStateOf<Pair<String, List<com.ty.gkschedule.api.ChaoxingApi.CxTarget>>?>(null) }
+    goSignPicker?.let { (name, targets) ->
+        com.ty.gkschedule.ui.gosign.GoSignTargetPickerDialog(
+            courseName = name,
+            targets = targets,
+            onPick = { target ->
+                goSignPicker = null
+                com.ty.gkschedule.api.ChaoxingApi.openSign(hapticContext, target)
+            },
+            onDismiss = { goSignPicker = null }
+        )
+    }
     // ponytail: 课程名显示自适应（默认开）——收窄时间列让课程块每行放得下3个字；
     // 下限=时间文本可读宽，上限=原64dp；屏太窄时优先保时间列
     val labelWidthBase = if (showPeriodLabel) { if (showTimeLabel) 64.dp else 36.dp } else 0.dp
@@ -707,7 +720,9 @@ fun WeeklyScheduleScreen(
             },
             onGoSign = if (showGoSign && item is ScheduleItem.CourseItem) {
                 fun() {
-                    com.ty.gkschedule.api.ChaoxingApi.goSignOrToast(hapticContext, item.course, unmatchedTip)
+                    val targets = com.ty.gkschedule.api.ChaoxingApi.targetsFor(item.course)
+                    if (targets.size > 1) goSignPicker = item.course.name to targets
+                    else com.ty.gkschedule.api.ChaoxingApi.goSignOrToast(hapticContext, item.course, unmatchedTip)
                 }
             } else null,
             colorEngine = colorEngine,
