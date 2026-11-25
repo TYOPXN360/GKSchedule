@@ -1,6 +1,5 @@
 package com.ty.gkschedule.ui.settings
 import com.ty.gkschedule.ui.theme.GKSwitch
-import com.ty.gkschedule.ui.theme.LocalBlurDropdownBackdrop
 
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
@@ -338,7 +337,7 @@ private fun SubPage(
                 .padding(horizontal = 16.dp)
         ) {
             Spacer(modifier = Modifier.height(16.dp))
-            CompositionLocalProvider(LocalBlurDropdownBackdrop provides backdrop) { content() }
+            content()
             Spacer(modifier = Modifier.height(32.dp))
         }
     }
@@ -359,7 +358,7 @@ internal fun SemesterPage(
         SettingsCard {
             DropdownItem(Icons.Default.FirstPage, stringResource(R.string.first_day_of_week),
                 listOf("1" to stringResource(R.string.first_day_monday), "7" to stringResource(R.string.first_day_sunday)),
-                firstDayOfWeek.toString(), onSelect = { onFirstDayOfWeekChange(it.toInt()) }, blurEnabled = blurEnabled)
+                firstDayOfWeek.toString(), onSelect = { onFirstDayOfWeekChange(it.toInt()) })
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
             SwitchItem(Icons.Default.Visibility, stringResource(R.string.hide_empty_weeks), hideEmptyWeeks, onHideEmptyWeeksChange)
         }
@@ -387,15 +386,15 @@ internal fun AppearancePage(
         SettingsCard {
             DropdownItem(Icons.Default.DarkMode, stringResource(R.string.dark_mode),
                 listOf("system" to stringResource(R.string.dark_mode_system), "light" to stringResource(R.string.dark_mode_light), "dark" to stringResource(R.string.dark_mode_dark)),
-                darkMode, onSelect = onDarkModeChange, blurEnabled = blurEnabled)
+                darkMode, onSelect = onDarkModeChange)
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
             DropdownItem(Icons.Default.Language, stringResource(R.string.language),
                 listOf("system" to stringResource(R.string.language_system), "en" to stringResource(R.string.language_en), "zh" to stringResource(R.string.language_zh)),
-                language, onSelect = onLanguageChange, blurEnabled = blurEnabled)
+                language, onSelect = onLanguageChange)
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
             DropdownItem(Icons.Default.Home, stringResource(R.string.start_page),
                 listOf("today" to stringResource(R.string.nav_today), "weekly" to stringResource(R.string.nav_schedule)),
-                startPage, onSelect = onStartPageChange, blurEnabled = blurEnabled)
+                startPage, onSelect = onStartPageChange)
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
             SwitchItem(Icons.Default.BlurOn, stringResource(R.string.blur_effect), blurEffect, onBlurEffectChange)
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
@@ -421,7 +420,7 @@ internal fun AppearancePage(
                             "1" to stringResource(R.string.pill_content_icon),
                             "2" to stringResource(R.string.pill_content_text)
                         ),
-                        pillContentMode.toString(), onSelect = { onPillContentModeChange(it.toInt()) }, blurEnabled = blurEnabled
+                        pillContentMode.toString(), onSelect = { onPillContentModeChange(it.toInt()) }
                     )
                 }
             }
@@ -431,11 +430,11 @@ internal fun AppearancePage(
         SettingsCard {
             DropdownItem(Icons.Default.Palette, stringResource(R.string.color_engine),
                 listOf("0" to stringResource(R.string.color_engine_monet), "1" to stringResource(R.string.color_engine_vibrant), "2" to stringResource(R.string.color_engine_classic), "3" to stringResource(R.string.color_engine_hsl)),
-                colorEngine.toString(), onSelect = { onColorEngineChange(it.toInt()) }, blurEnabled = blurEnabled)
+                colorEngine.toString(), onSelect = { onColorEngineChange(it.toInt()) })
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
             DropdownItem(Icons.Default.FormatColorFill, stringResource(R.string.color_group_mode),
                 listOf("0" to stringResource(R.string.color_group_same), "1" to stringResource(R.string.color_group_same_sat), "2" to stringResource(R.string.color_group_diff)),
-                colorGroupMode.toString(), onSelect = { onColorGroupModeChange(it.toInt()) }, blurEnabled = blurEnabled)
+                colorGroupMode.toString(), onSelect = { onColorGroupModeChange(it.toInt()) })
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
             SwitchItem(Icons.Default.Palette, stringResource(R.string.diff_color_per_week), diffColorPerWeek, onDiffColorPerWeekChange)
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
@@ -551,7 +550,7 @@ internal fun NotificationPage(
                     val v = it.toInt()
                     if (v > 0 && reminderMinutes == 0) { pendingReminder = v; requestBg() }
                     else onReminderMinutesChange(v)
-                }, blurEnabled = blurEnabled)
+                })
             // ponytail: 开启后展开模式二选一，默认仅通知；简介放i弹窗（心跳同款）
             AnimatedVisibility(visible = reminderMinutes > 0, enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) {
                 Column {
@@ -571,7 +570,7 @@ internal fun NotificationPage(
                                         Text(if (reminderMode == "countdown") stringResource(R.string.reminder_mode_countdown) else stringResource(R.string.reminder_mode_notify))
                                         Icon(Icons.Default.ArrowDropDown, null, modifier = Modifier.size(18.dp))
                                     }
-                                    com.ty.gkschedule.ui.theme.BlurDropdownMenu(expanded = modeExpanded, onDismissRequest = { modeExpanded = false }, blurEnabled = blurEnabled) {
+                                    DropdownMenu(expanded = modeExpanded, onDismissRequest = { modeExpanded = false }) {
                                         DropdownMenuItem(text = { Text(stringResource(R.string.reminder_mode_notify)) }, onClick = { onReminderModeChange("notify"); modeExpanded = false })
                                         DropdownMenuItem(text = { Text(stringResource(R.string.reminder_mode_countdown)) }, onClick = { onReminderModeChange("countdown"); modeExpanded = false })
                                     }
@@ -706,7 +705,7 @@ internal fun SyncPage(
                             "h" to stringResource(R.string.auto_sync_unit_h),
                             "d" to stringResource(R.string.auto_sync_unit_d)
                         ),
-                        autoSyncIntervalUnit, onSelect = onAutoSyncIntervalUnitChange, blurEnabled = blurEnabled)
+                        autoSyncIntervalUnit, onSelect = onAutoSyncIntervalUnitChange)
                     HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
 
                     // Value slider with +/- buttons
@@ -1091,7 +1090,7 @@ private fun SwitchItem(icon: androidx.compose.ui.graphics.vector.ImageVector, ti
 }
 
 @Composable
-private fun DropdownItem(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, options: List<Pair<String, String>>, currentKey: String, enabled: Boolean = true, onSelect: (String) -> Unit, blurEnabled: Boolean = true) {
+private fun DropdownItem(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, options: List<Pair<String, String>>, currentKey: String, enabled: Boolean = true, onSelect: (String) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
     val label = options.find { it.first == currentKey }?.second ?: ""
     val alpha = if (enabled) 1f else 0.38f
@@ -1106,7 +1105,7 @@ private fun DropdownItem(icon: androidx.compose.ui.graphics.vector.ImageVector, 
                         Text(label)
                         Icon(Icons.Default.ArrowDropDown, null, modifier = Modifier.size(18.dp))
                     }
-                    com.ty.gkschedule.ui.theme.BlurDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }, blurEnabled = blurEnabled) {
+                    DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                         options.forEach { (key, text) ->
                             DropdownMenuItem(text = { Text(text) }, onClick = { onSelect(key); expanded = false })
                         }

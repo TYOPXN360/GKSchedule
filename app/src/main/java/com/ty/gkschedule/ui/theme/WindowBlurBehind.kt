@@ -30,8 +30,6 @@ import top.yukonga.miuix.kmp.blur.Backdrop
 import top.yukonga.miuix.kmp.blur.blur
 import top.yukonga.miuix.kmp.blur.drawBackdrop
 
-val LocalBlurDropdownBackdrop = staticCompositionLocalOf<Backdrop?> { null }
-
 // ponytail: QPR2结论——Dialog卡片真磨砂对第三方App不可做：
 // ponytail: 反射BackgroundBlurDrawable被blocklist；窗口级需translucent但Compose Dialog全屏糊整屏；
 // ponytail: miuix只能采同窗口源，卡片内容自身透明录下来就是灰白块，糊完还是灰白。
@@ -160,40 +158,4 @@ private fun BlurCardSurface(
             .padding(horizontal = 24.dp, vertical = 8.dp),
         content = content
     )
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun BlurDropdownMenu(
-    expanded: Boolean,
-    onDismissRequest: () -> Unit,
-    backdrop: Backdrop? = null,
-    modifier: Modifier = Modifier,
-    blurEnabled: Boolean = true,
-    content: @Composable ColumnScope.() -> Unit
-) {
-    // ponytail: 阴影只留一层——DropdownMenu自带tonal表面色+BlurCard糊底叠色=双层直角；
-    // 容器透明+阴影0，形状全交BlurCard圆角
-    val activeBackdrop = backdrop ?: LocalBlurDropdownBackdrop.current ?: top.yukonga.miuix.kmp.blur.rememberLayerBackdrop()
-    androidx.compose.material3.DropdownMenu(
-        expanded = expanded,
-        onDismissRequest = onDismissRequest,
-        modifier = modifier,
-        containerColor = Color.Transparent,
-        shadowElevation = 0.dp,
-        tonalElevation = 0.dp
-    ) {
-        Column(
-            modifier = Modifier
-                .clip(RoundedCornerShape(12.dp))
-                .then(
-                    if (blurEnabled) Modifier.drawBackdrop(
-                        backdrop = activeBackdrop,
-                        shape = { RoundedCornerShape(12.dp) },
-                        effects = { blur(28.dp.toPx()) }
-                    ) else Modifier
-                )
-                .background(MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f))
-        ) { content() }
-    }
 }

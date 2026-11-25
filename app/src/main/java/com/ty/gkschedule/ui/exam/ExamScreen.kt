@@ -46,7 +46,6 @@ import com.ty.gkschedule.data.ScheduleResolver
 import com.ty.gkschedule.data.ScheduleItem
 import com.ty.gkschedule.util.CourseColors
 import com.ty.gkschedule.ui.theme.LocalAppIsDark
-import com.ty.gkschedule.ui.theme.BlurDropdownMenu
 import com.ty.gkschedule.ui.theme.Md3Card
 import com.ty.gkschedule.ui.theme.Md3CardVariant
 import java.time.LocalDate
@@ -186,7 +185,7 @@ fun ExamScreen(
                             }
                         }
                         Box {
-                            com.ty.gkschedule.ui.theme.BlurDropdownMenu(backdrop = backdrop, expanded = yearExpanded, onDismissRequest = { yearExpanded = false }, blurEnabled = blurEnabled) {
+                            DropdownMenu(expanded = yearExpanded, onDismissRequest = { yearExpanded = false }) {
                                 years.forEach { y -> DropdownMenuItem(text = { Text(y) }, onClick = { onYearChange(y); yearExpanded = false }) }
                             }
                         }
@@ -199,7 +198,7 @@ fun ExamScreen(
                             }
                         }
                         Box {
-                            com.ty.gkschedule.ui.theme.BlurDropdownMenu(backdrop = backdrop, expanded = semExpanded, onDismissRequest = { semExpanded = false }, blurEnabled = blurEnabled) {
+                            DropdownMenu(expanded = semExpanded, onDismissRequest = { semExpanded = false }) {
                                 DropdownMenuItem(text = { Text(stringResource(R.string.semester_first)) }, onClick = { onSemesterChange("1"); semExpanded = false })
                                 DropdownMenuItem(text = { Text(stringResource(R.string.semester_second)) }, onClick = { onSemesterChange("2"); semExpanded = false })
                             }
