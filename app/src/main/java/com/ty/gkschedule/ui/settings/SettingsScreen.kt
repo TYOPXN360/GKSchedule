@@ -397,12 +397,11 @@ internal fun AppearancePage(
                 listOf("today" to stringResource(R.string.nav_today), "weekly" to stringResource(R.string.nav_schedule)),
                 startPage, onSelect = onStartPageChange)
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
-            // ponytail: 今日页"明日课程"出现时间——原来写死 16:00，这里改成整点可选
-            DropdownItem(
+            // ponytail: 今日页"明日课程"出现时间——整点选择走 4×6 网格弹窗，
+            // 24 个选项塞进 DropdownMenu 会把整屏铺满
+            HourPickerItem(
                 Icons.Default.WbSunny, stringResource(R.string.tomorrow_preview_hour),
-                (0..23).map { hour -> hour.toString() to String.format(java.util.Locale.US, "%02d:00", hour) },
-                tomorrowPreviewHour.toString(),
-                onSelect = { onTomorrowPreviewHourChange(it.toInt()) }
+                tomorrowPreviewHour, onTomorrowPreviewHourChange
             )
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
             SwitchItem(Icons.Default.BlurOn, stringResource(R.string.blur_effect), blurEffect, onBlurEffectChange)
@@ -1061,6 +1060,63 @@ private fun SettingsItem(icon: androidx.compose.ui.graphics.vector.ImageVector, 
         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
         modifier = Modifier.clickable(onClick = onClick)
     )
+}
+
+/** 整点选择：点行弹出 4×6 网格，24 个整点一屏摆完，不再用超长下拉 */
+@Composable
+private fun HourPickerItem(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, hour: Int, onChange: (Int) -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    val label = String.format(java.util.Locale.US, "%02d:00", hour)
+    ListItem(
+        headlineContent = { Text(title) },
+        supportingContent = { Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant) },
+        leadingContent = { Icon(icon, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+        trailingContent = {
+            TextButton(onClick = { expanded = true }) {
+                Text(label)
+                Icon(Icons.Default.ArrowDropDown, null, modifier = Modifier.size(18.dp))
+            }
+        },
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+        modifier = Modifier.clickable { expanded = true }
+    )
+    if (expanded) {
+        GkAlertDialog(
+            onDismissRequest = { expanded = false },
+            title = { Text(title) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    (0 until 24).chunked(4).forEach { rowHours ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            rowHours.forEach { h ->
+                                val selected = h == hour
+                                FilledTonalButton(
+                                    onClick = { onChange(h); expanded = false },
+                                    modifier = Modifier.weight(1f).height(38.dp),
+                                    contentPadding = PaddingValues(horizontal = 0.dp, vertical = 0.dp),
+                                    colors = if (selected) ButtonDefaults.filledTonalButtonColors(
+                                        containerColor = MaterialTheme.colorScheme.primary,
+                                        contentColor = MaterialTheme.colorScheme.onPrimary
+                                    ) else ButtonDefaults.filledTonalButtonColors()
+                                ) {
+                                    Text(
+                                        String.format(java.util.Locale.US, "%02d:00", h),
+                                        style = MaterialTheme.typography.labelLarge
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { expanded = false }) { Text(stringResource(R.string.ok)) }
+            }
+        )
+    }
 }
 
 @Composable
