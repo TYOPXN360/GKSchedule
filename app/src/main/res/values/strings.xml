@@ -396,7 +396,9 @@
     <string name="msg_courses_updated">Updated %1$d courses</string>
     <string name="msg_no_changes">No course changes</string>
     <string name="msg_refresh_fail">Refresh failed: %1$s</string>
-    <string name="msg_refresh_too_frequent">Refreshing too often — max 2 times per minute</string>
+    <string name="msg_refresh_too_frequent_1">Refreshing too often — go have a coffee first</string>
+    <string name="msg_refresh_too_frequent_2">You\'d be better off scrolling TikTok than refreshing this</string>
+    <string name="msg_refresh_too_frequent_3">You\'re refreshing too often — you\'d be better off checking out the food street</string>
     <string name="msg_net_generic">Network error</string>
     <string name="msg_login_fail">Login failed: %1$s</string>
     <string name="msg_no_credentials">No saved credentials, please log in manually</string>

@@ -158,6 +158,11 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     private val manualRefreshTimestamps = ArrayDeque<Long>()
     private val manualRefreshWindowMs = 60_000L
     private val manualRefreshLimit = 2
+    private val refreshTooFrequentMessages = listOf(
+        R.string.msg_refresh_too_frequent_1,
+        R.string.msg_refresh_too_frequent_2,
+        R.string.msg_refresh_too_frequent_3
+    )
 
     // One-shot messages for snackbar（带缓冲：自动重登链路不能被 snackbar 的展示时长阻塞）
     private val _messages = MutableSharedFlow<String>(extraBufferCapacity = 8)
@@ -833,7 +838,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     fun refreshFromSchool(manual: Boolean = false) {
         if (manual && !allowManualRefresh()) {
             viewModelScope.launch {
-                _messages.emit(app.getString(R.string.msg_refresh_too_frequent))
+                _messages.emit(app.getString(refreshTooFrequentMessages.random()))
             }
             return
         }
