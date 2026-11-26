@@ -114,6 +114,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     val showHiddenCourses: Flow<Boolean> = settings.showHiddenCourses
     val compactNavBar: Flow<Boolean> = settings.compactNavBar
     val pillContentMode: Flow<Int> = settings.pillContentMode
+    val tomorrowPreviewHour: Flow<Int> = settings.tomorrowPreviewHour
     val blurEffect: Flow<Boolean> = settings.blurEffect
     val weeklyBlockMultiline: Flow<Boolean> = settings.weeklyBlockMultiline
     val autoCheckUpdateDaily: Flow<Boolean> = settings.autoCheckUpdateDaily
@@ -426,6 +427,10 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
 
     fun setPillContentMode(mode: Int) {
         viewModelScope.launch { settings.setPillContentMode(mode) }
+    }
+
+    fun setTomorrowPreviewHour(hour: Int) {
+        viewModelScope.launch { settings.setTomorrowPreviewHour(hour) }
     }
 
     fun setBlurEffect(enabled: Boolean) {

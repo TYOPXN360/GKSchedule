@@ -73,6 +73,7 @@ class SubSettingsAppearanceActivity : SubSettingsBaseActivity() {
         val blurEffect by vm.blurEffect.collectAsState(initial = false)
         val compactNavBar by vm.compactNavBar.collectAsState(initial = false)
         val pillContentMode by vm.pillContentMode.collectAsState(initial = 1)
+        val tomorrowPreviewHour by vm.tomorrowPreviewHour.collectAsState(initial = 16)
         val colorEngine by vm.colorEngine.collectAsState(initial = 0)
         val colorGroupMode by vm.colorGroupMode.collectAsState(initial = 2)
         val diffColorPerWeek by vm.diffColorPerWeek.collectAsState(initial = false)
@@ -80,7 +81,7 @@ class SubSettingsAppearanceActivity : SubSettingsBaseActivity() {
         val hideCourseManage by vm.hideCourseManage.collectAsState(initial = false)
         AppearancePage(
             darkMode = darkMode, language = language, startPage = startPage, blurEffect = blurEffect,
-            compactNavBar = compactNavBar, pillContentMode = pillContentMode,
+            compactNavBar = compactNavBar, pillContentMode = pillContentMode, tomorrowPreviewHour = tomorrowPreviewHour,
             colorEngine = colorEngine, colorGroupMode = colorGroupMode,
             diffColorPerWeek = diffColorPerWeek, showHiddenCourses = showHiddenCourses,
             hideCourseManage = hideCourseManage,
@@ -91,6 +92,7 @@ class SubSettingsAppearanceActivity : SubSettingsBaseActivity() {
             onBlurEffectChange = { vm.setBlurEffect(it) },
             onCompactNavBarChange = { vm.setCompactNavBar(it) },
             onPillContentModeChange = { vm.setPillContentMode(it) },
+            onTomorrowPreviewHourChange = { vm.setTomorrowPreviewHour(it) },
             onColorEngineChange = { vm.setColorEngine(it) },
             onColorGroupModeChange = { vm.setColorGroupMode(it) },
             onDiffColorPerWeekChange = { vm.setDiffColorPerWeek(it) },

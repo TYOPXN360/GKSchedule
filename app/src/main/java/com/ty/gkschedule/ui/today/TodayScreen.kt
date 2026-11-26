@@ -49,6 +49,8 @@ fun TodayScreen(
     onCourseLongPress: (Course) -> Unit,
     onExamEdit: (com.ty.gkschedule.data.ExamEntity) -> Unit = {},
     diffColorPerWeek: Boolean = false,
+    // ponytail: 明日课程几点整出现——外观设置里可改，原来写死 16:00
+    tomorrowPreviewHour: Int = 16,
     // ponytail: 默认底栏避让开关——悬浮pill不占位，传false不留白
     applyBottomBarInset: Boolean = true,
     // ponytail: 详情Sheet糊开关（ScheduleItemDetailSheet透传）
@@ -271,8 +273,8 @@ fun TodayScreen(
             }
         }
 
-        // Tomorrow preview — only show between 16:00 and 23:59
-        if (currentTimeMinutes >= 960) {
+        // Tomorrow preview — 到设定整点之后才显示（默认 16:00）
+        if (currentTimeMinutes >= tomorrowPreviewHour * 60) {
             item {
                 Spacer(modifier = Modifier.height(8.dp))
                 HorizontalDivider()

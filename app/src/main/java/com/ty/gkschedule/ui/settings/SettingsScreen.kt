@@ -370,11 +370,12 @@ internal fun SemesterPage(
 @Composable
 internal fun AppearancePage(
     darkMode: String, language: String, startPage: String, blurEffect: Boolean,
-    compactNavBar: Boolean, pillContentMode: Int,
+    compactNavBar: Boolean, pillContentMode: Int, tomorrowPreviewHour: Int = 16,
     colorEngine: Int, colorGroupMode: Int, diffColorPerWeek: Boolean, showHiddenCourses: Boolean,
     onDarkModeChange: (String) -> Unit, onLanguageChange: (String) -> Unit,
     onStartPageChange: (String) -> Unit, onBlurEffectChange: (Boolean) -> Unit,
     onCompactNavBarChange: (Boolean) -> Unit, onPillContentModeChange: (Int) -> Unit,
+    onTomorrowPreviewHourChange: (Int) -> Unit = {},
     onColorEngineChange: (Int) -> Unit, onColorGroupModeChange: (Int) -> Unit,
     onDiffColorPerWeekChange: (Boolean) -> Unit, onShowHiddenCoursesChange: (Boolean) -> Unit,
     hideCourseManage: Boolean = false,
@@ -395,6 +396,14 @@ internal fun AppearancePage(
             DropdownItem(Icons.Default.Home, stringResource(R.string.start_page),
                 listOf("today" to stringResource(R.string.nav_today), "weekly" to stringResource(R.string.nav_schedule)),
                 startPage, onSelect = onStartPageChange)
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
+            // ponytail: 今日页"明日课程"出现时间——原来写死 16:00，这里改成整点可选
+            DropdownItem(
+                Icons.Default.WbSunny, stringResource(R.string.tomorrow_preview_hour),
+                (0..23).map { hour -> hour.toString() to String.format(java.util.Locale.US, "%02d:00", hour) },
+                tomorrowPreviewHour.toString(),
+                onSelect = { onTomorrowPreviewHourChange(it.toInt()) }
+            )
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
             SwitchItem(Icons.Default.BlurOn, stringResource(R.string.blur_effect), blurEffect, onBlurEffectChange)
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))

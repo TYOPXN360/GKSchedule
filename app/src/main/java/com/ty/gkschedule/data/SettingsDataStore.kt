@@ -61,6 +61,8 @@ class SettingsDataStore(private val context: Context) {
         private val SHOW_HIDDEN_COURSES = booleanPreferencesKey("show_hidden_courses")
         private val COMPACT_NAV_BAR = booleanPreferencesKey("compact_nav_bar")
         private val PILL_CONTENT_MODE = intPreferencesKey("pill_content_mode") // 0=都显示，1=仅图标，2=仅名字
+        // 今日页几点整开始显示"明日课程"，0-23 整点
+        private val TOMORROW_PREVIEW_HOUR = intPreferencesKey("tomorrow_preview_hour")
         private val BLUR_EFFECT = booleanPreferencesKey("blur_effect")
         private val WEEKLY_BLOCK_MULTILINE = booleanPreferencesKey("weekly_block_multiline")
         private val AUTO_CHECK_UPDATE_DAILY = booleanPreferencesKey("auto_check_update_daily")
@@ -138,6 +140,7 @@ class SettingsDataStore(private val context: Context) {
     // ponytail: 悬浮底栏默认关闭（首次安装就是不占位的普通底栏）；打开后默认「仅图标」
     val compactNavBar: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[COMPACT_NAV_BAR] ?: false }
     val pillContentMode: Flow<Int> = context.dataStore.data.map { prefs -> prefs[PILL_CONTENT_MODE] ?: 1 }
+    val tomorrowPreviewHour: Flow<Int> = context.dataStore.data.map { prefs -> (prefs[TOMORROW_PREVIEW_HOUR] ?: 16).coerceIn(0, 23) }
     val blurEffect: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[BLUR_EFFECT] ?: false }
     // ponytail: 课表块多行名——关=单行截断，开关默认关
     val weeklyBlockMultiline: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[WEEKLY_BLOCK_MULTILINE] ?: true }
@@ -228,6 +231,7 @@ class SettingsDataStore(private val context: Context) {
     suspend fun setShowHiddenCourses(show: Boolean) { context.dataStore.edit { it[SHOW_HIDDEN_COURSES] = show } }
     suspend fun setCompactNavBar(compact: Boolean) { context.dataStore.edit { it[COMPACT_NAV_BAR] = compact } }
     suspend fun setPillContentMode(mode: Int) { context.dataStore.edit { it[PILL_CONTENT_MODE] = mode.coerceIn(0, 2) } }
+    suspend fun setTomorrowPreviewHour(hour: Int) { context.dataStore.edit { it[TOMORROW_PREVIEW_HOUR] = hour.coerceIn(0, 23) } }
     suspend fun setBlurEffect(enabled: Boolean) { context.dataStore.edit { it[BLUR_EFFECT] = enabled } }
     suspend fun setWeeklyBlockMultiline(enabled: Boolean) { context.dataStore.edit { it[WEEKLY_BLOCK_MULTILINE] = enabled } }
     suspend fun setAutoCheckUpdateDaily(enabled: Boolean) { context.dataStore.edit { it[AUTO_CHECK_UPDATE_DAILY] = enabled } }
