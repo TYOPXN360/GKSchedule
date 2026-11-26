@@ -25,11 +25,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.autofill.ContentType
+import androidx.compose.ui.autofill.contentType
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.ty.gkschedule.CaptchaState
@@ -123,9 +124,7 @@ fun LoginScreen(
                 value = studentId,
                 onValueChange = { studentId = it },
                 label = { Text(stringResource(R.string.login_student_id)) },
-                modifier = Modifier.fillMaxWidth().semantics {
-                    this[androidx.compose.ui.semantics.SemanticsProperties.ContentType] = androidx.compose.ui.autofill.ContentType.Username
-                },
+                modifier = Modifier.fillMaxWidth().contentType(ContentType.Username),
                 singleLine = true,
                 enabled = !isLoading
             )
@@ -134,9 +133,7 @@ fun LoginScreen(
             OutlinedSecureTextField(
                 state = passwordState,
                 label = { Text(stringResource(R.string.login_password)) },
-                modifier = Modifier.fillMaxWidth().semantics {
-                    this[androidx.compose.ui.semantics.SemanticsProperties.ContentType] = androidx.compose.ui.autofill.ContentType.Password
-                },
+                modifier = Modifier.fillMaxWidth().contentType(ContentType.Password),
                 enabled = !isLoading,
                 textObfuscationMode = if (passwordVisible) TextObfuscationMode.Visible else TextObfuscationMode.Hidden,
                 trailingIcon = {
