@@ -1,6 +1,8 @@
 package com.ty.gkschedule.ui.gosign
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -57,8 +59,9 @@ fun CxCourseMultiSelectDialog(
     GkAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title, fontWeight = FontWeight.Bold) },
+        // ponytail: 多选开关固定在顶部，只让下方课程列表滚动
         text = {
-            Column(modifier = Modifier.heightIn(max = 420.dp).verticalScroll(rememberScrollState())) {
+            Column(modifier = Modifier.heightIn(max = 420.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
@@ -99,27 +102,30 @@ fun CxCourseMultiSelectDialog(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                }
-                courses.forEach { course ->
-                    val key = ChaoxingApi.cxKey(course.classId, course.courseId)
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { toggle(key) }
-                            .padding(vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Checkbox(
-                            checked = key in selected,
-                            onCheckedChange = { toggle(key) }
-                        )
-                        Column(modifier = Modifier.padding(start = 8.dp)) {
-                            Text(course.name, style = MaterialTheme.typography.bodyLarge)
-                            Text(
-                                "classId=${course.classId} · courseId=${course.courseId}",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    LazyColumn(modifier = Modifier.weight(1f, fill = false)) {
+                        items(courses, key = { "${it.classId}:${it.courseId}" }) { course ->
+                            val key = ChaoxingApi.cxKey(course.classId, course.courseId)
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { toggle(key) }
+                                    .padding(vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Checkbox(
+                                    checked = key in selected,
+                                    onCheckedChange = { toggle(key) }
+                                )
+                                Column(modifier = Modifier.padding(start = 8.dp)) {
+                                    Text(course.name, style = MaterialTheme.typography.bodyLarge)
+                                    Text(
+                                        "classId=${course.classId} · courseId=${course.courseId}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
                         }
                     }
                 }
