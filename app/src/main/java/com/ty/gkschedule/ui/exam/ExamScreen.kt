@@ -88,17 +88,15 @@ fun ExamScreen(
     onBack: () -> Unit,
     blurEnabled: Boolean = true
 ) {
+    // ponytail: 每次进考试页都按手机时间重算学年/学期——之前只在为空时补，
+    // 一旦缓存里存着去年拉取的学年，第二年打开还是旧的
     LaunchedEffect(Unit) {
-        if (examYear.isEmpty()) {
-            val now = LocalDate.now()
-            val month = now.monthValue
-            val startYear = if (month >= 9) now.year else now.year - 1
-            onYearChange("$startYear-${startYear + 1}")
-        }
-        if (examSemester.isEmpty()) {
-            val month = LocalDate.now().monthValue
-            onSemesterChange(if (month in 2..7) "2" else "1")
-        }
+        val now = LocalDate.now()
+        // 8 月-次年 1 月=第一学期，2-7 月=第二学期
+        val semester = if (now.monthValue in 2..7) "2" else "1"
+        val startYear = if (now.monthValue >= 8) now.year else now.year - 1
+        onYearChange("$startYear-${startYear + 1}")
+        onSemesterChange(semester)
     }
 
     val isDark = LocalAppIsDark.current
@@ -178,26 +176,28 @@ fun ExamScreen(
                         val nowYear = LocalDate.now()
                         val curStart = if (nowYear.monthValue >= 9) nowYear.year else nowYear.year - 1
                         val years = ((curStart - 2)..(curStart + 2)).map { "$it-${it + 1}" }.reversed()
-                        OutlinedCard(onClick = { yearExpanded = true }, modifier = Modifier.weight(1f)) {
-                            Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                                Text(examYear.ifEmpty { stringResource(R.string.exam_year_placeholder) }, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
-                                Icon(Icons.Default.ArrowDropDown, null, modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
+                        // ponytail: 下拉必须挂在选择框自己的 Box 里才能贴着框下沿展开；
+                        // 之前 DropdownMenu 放在 Row 末尾的独立空 Box，锚点零尺寸 → 弹到左右下角
+                        Box(modifier = Modifier.weight(1f)) {
+                            OutlinedCard(onClick = { yearExpanded = true }, modifier = Modifier.fillMaxWidth()) {
+                                Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                                    Text(examYear.ifEmpty { stringResource(R.string.exam_year_placeholder) }, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+                                    Icon(Icons.Default.ArrowDropDown, null, modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
+                                }
                             }
-                        }
-                        Box {
                             DropdownMenu(expanded = yearExpanded, onDismissRequest = { yearExpanded = false }) {
                                 years.forEach { y -> DropdownMenuItem(text = { Text(y) }, onClick = { onYearChange(y); yearExpanded = false }) }
                             }
                         }
 
                         var semExpanded by remember { mutableStateOf(false) }
-                        OutlinedCard(onClick = { semExpanded = true }, modifier = Modifier.weight(1f)) {
-                            Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                                Text(if (examSemester == "1") stringResource(R.string.semester_first) else stringResource(R.string.semester_second), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
-                                Icon(Icons.Default.ArrowDropDown, null, modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
+                        Box(modifier = Modifier.weight(1f)) {
+                            OutlinedCard(onClick = { semExpanded = true }, modifier = Modifier.fillMaxWidth()) {
+                                Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                                    Text(if (examSemester == "1") stringResource(R.string.semester_first) else stringResource(R.string.semester_second), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+                                    Icon(Icons.Default.ArrowDropDown, null, modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
+                                }
                             }
-                        }
-                        Box {
                             DropdownMenu(expanded = semExpanded, onDismissRequest = { semExpanded = false }) {
                                 DropdownMenuItem(text = { Text(stringResource(R.string.semester_first)) }, onClick = { onSemesterChange("1"); semExpanded = false })
                                 DropdownMenuItem(text = { Text(stringResource(R.string.semester_second)) }, onClick = { onSemesterChange("2"); semExpanded = false })
