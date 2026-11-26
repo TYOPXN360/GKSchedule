@@ -25,8 +25,8 @@ android {
         applicationId = "com.ty.gkschedule"
         minSdk = 31
         targetSdk = 36
-        versionCode = 28
-        versionName = "2.4.2-pre2"
+        versionCode = 29
+        versionName = "2.4.2"
         // ponytail: onnxruntime-android 的 so 很大（arm64 未压缩 36MB/压缩后约 14MB），
         // 只留 arm64-v8a，否则 APK 会被其它 ABI 撑到 50MB+
         ndk {
