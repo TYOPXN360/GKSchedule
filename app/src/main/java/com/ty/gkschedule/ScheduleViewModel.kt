@@ -715,15 +715,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                 _captchaState.value = CaptchaState.Loaded
                 // ponytail: 离线识别验证码，成功就自动填进输入框；失败保持 null，用户照样能手动输
                 val ocrOn = settings.captchaOcr.first()
-                val text = if (ocrOn) runCatching {
-                    // 模型没下载就直接跳过，省掉预处理开销（行为等同关闭识别）
-                    if (!com.ty.gkschedule.captcha.CaptchaModel.isReady(app)) {
-                        android.util.Log.d("GdustApi", "Captcha OCR skipped: model not ready")
-                        return@runCatching null
-                    }
-                    val bytes = android.util.Base64.decode(imgBase64, android.util.Base64.DEFAULT)
-                    com.ty.gkschedule.captcha.CaptchaOcr.recognize(app, bytes)
-                }.getOrNull() else null
+                val text = if (ocrOn) recognizeCaptcha(imgBase64) else null
                 _captchaText.value = text
                 android.util.Log.d("GdustApi", "Captcha OCR: $text")
                 // ponytail: 识别出验证码就不让用户再点一次——过期态下直接自动重登
@@ -741,6 +733,16 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
             }
         }
     }
+
+    // ponytail: 识别验证码——模型没就绪就当没识别，不让异常影响取码流程
+    private suspend fun recognizeCaptcha(imgBase64: String): String? = runCatching {
+        if (!com.ty.gkschedule.captcha.CaptchaModel.isReady(app)) {
+            android.util.Log.d("GdustApi", "Captcha OCR skipped: model not ready")
+            return@runCatching null
+        }
+        val bytes = android.util.Base64.decode(imgBase64, android.util.Base64.DEFAULT)
+        com.ty.gkschedule.captcha.CaptchaOcr.recognize(app, bytes)
+    }.getOrNull()
 
     fun login(studentId: String, password: String, captcha: String) {
         android.util.Log.d("GdustApi", "login() called: sid=$studentId, captcha=$captcha, uuid=$captchaUuid")
@@ -1047,17 +1049,8 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
             }
             api.login(sid, pwd, captcha, captchaUuid)
                 .onSuccess { user ->
-                    autoLoginAttempts = 0
-                    savedStudentId = sid
-                    _savedStudentIdFlow.value = sid
-                    _loginState.value = LoginState.Success(user.realName.ifEmpty { sid }, sid)
-                    try {
-                        val userInfo = api.getUserInfo().getOrNull()
-                        settings.saveLoginInfo(user.token, sid, user.realName, userInfo?.deptName ?: "")
-                    } catch (_: Exception) {
-                        settings.saveLoginInfo(user.token, sid, user.realName)
-                    }
-                    settings.clearTokenExpired()
+                    applyLoggedIn(user.token, sid, user.realName)
+                    examReloginAttempts = 0
                     // 成功就收掉考试页的重登框，主界面的弹窗由 UI 观察登录态关闭
                     _showExamReloginDialog.value = false
                     if (auto) {
@@ -1094,6 +1087,104 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                         refreshCaptcha(clearError = false)
                     }
                 }
+        }
+    }
+
+    // ponytail: 登录成功的统一收尾——身份/token 落盘 + CAS 票据（考试页 901 靠它）
+    private suspend fun applyLoggedIn(token: String, sid: String, realName: String) {
+        autoLoginAttempts = 0
+        savedStudentId = sid
+        _savedStudentIdFlow.value = sid
+        _loginState.value = LoginState.Success(realName.ifEmpty { sid }, sid)
+        try {
+            val userInfo = api.getUserInfo().getOrNull()
+            settings.saveLoginInfo(token, sid, realName, userInfo?.deptName ?: "")
+        } catch (_: Exception) {
+            settings.saveLoginInfo(token, sid, realName)
+        }
+        settings.clearTokenExpired()
+        settings.saveCasTicket(api.getCasTicket())
+    }
+
+    // ponytail: 考试页 901 专用重登——不先弹框，取码→识别→登录自动重试；
+    // 3 次都过不了（或没凭据/识别不出来）才弹手填框，框里带一张新码
+    private val examReloginMaxAttempts = 3
+    private var examReloginAttempts = 0
+    private var examReloginInFlight = false
+    private val examReloginLock = Any()
+
+    private fun startExamAutoRelogin() {
+        if (autoLoginSuppressed) {
+            _showExamReloginDialog.value = true
+            refreshCaptcha(clearError = false)
+            return
+        }
+        synchronized(examReloginLock) {
+            if (examReloginInFlight) return
+            examReloginInFlight = true
+        }
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            _examLoading.value = true
+            try {
+                // ponytail: 自动识别开关关掉（或模型没下载）就不该"自动重登"——没有能提交的验证码，
+                // 直接取一张新码弹框让用户手输，也别白刷三次
+                val ocrReady = settings.captchaOcr.first() &&
+                    com.ty.gkschedule.captcha.CaptchaModel.isReady(app)
+                if (!ocrReady) {
+                    _showExamReloginDialog.value = true
+                    refreshCaptcha(clearError = false)
+                    return@launch
+                }
+                while (examReloginAttempts < examReloginMaxAttempts) {
+                    examReloginAttempts++
+                    android.util.Log.d("GdustApi", "Exam auto relogin attempt $examReloginAttempts/$examReloginMaxAttempts")
+                    _messages.emit(app.getString(if (examReloginAttempts == 1) R.string.msg_auto_login_trying else R.string.msg_auto_login_retry))
+
+                    val code = api.getLoginCode().getOrNull()
+                    if (code == null) {
+                        kotlinx.coroutines.delay(800)
+                        continue
+                    }
+                    val imgBase64 = code.getImageBase64()
+                    captchaUuid = code.resolveUuid()
+                    _captchaImage.value = imgBase64
+                    _captchaState.value = CaptchaState.Loaded
+                    val text = if (settings.captchaOcr.first()) recognizeCaptcha(imgBase64) else null
+                    _captchaText.value = text
+                    if (text.isNullOrBlank()) {
+                        kotlinx.coroutines.delay(400)
+                        continue
+                    }
+                    val sid = CredentialStore.loadStudentId(app).first()
+                    val pwd = CredentialStore.loadPassword(app).first()
+                    if (sid.isEmpty() || pwd.isEmpty()) {
+                        _messages.emit(app.getString(R.string.msg_no_credentials))
+                        break
+                    }
+                    val result = api.login(sid, pwd, text, captchaUuid)
+                    val user = result.getOrNull()
+                    if (user != null) {
+                        applyLoggedIn(user.token, sid, user.realName)
+                        pendingExamRetry = false
+                        _showExamReloginDialog.value = false
+                        _messages.emit(app.getString(R.string.msg_auto_login_success))
+                        kotlinx.coroutines.delay(300)
+                        refreshExamSchedule()
+                        return@launch
+                    }
+                    val err = result.exceptionOrNull()?.message ?: ""
+                    android.util.Log.w("GdustApi", "Exam auto relogin failed: $err")
+                    if (isTokenExpired(err)) handleTokenExpired()
+                    kotlinx.coroutines.delay(600)
+                }
+                // 到底了：交回手动，验证码仍然自动取好+识别好
+                _messages.emit(app.getString(R.string.msg_auto_login_failed))
+                _showExamReloginDialog.value = true
+                refreshCaptcha(clearError = false)
+            } finally {
+                synchronized(examReloginLock) { examReloginInFlight = false }
+                _examLoading.value = false
+            }
         }
     }
 
@@ -1158,14 +1249,17 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                     // Only delete remote exams, preserve local (manually added) exams
                     examDao.deleteRemoteExams()
                     examDao.insertAll(entities)
+                    // 拉取成功说明重登已彻底恢复，下次 901 重新给 3 次机会
+                    examReloginAttempts = 0
                     _messages.emit(app.getString(R.string.msg_exam_fetched, entities.size))
                 }.onFailure { e ->
                     val msg = e.message ?: ""
                     if (msg.contains("901") || msg.contains("认证失败") || msg.contains("未登录")) {
-                        android.util.Log.d("GdustApi", "Exam auth failed (901), showing re-login dialog")
+                        android.util.Log.d("GdustApi", "Exam auth failed (901), auto relogin")
                         pendingExamRetry = true
-                        refreshCaptcha()
-                        _showExamReloginDialog.value = true
+                        // 先别弹框：自动识别+自动重登，失败 3 次才让用户手填
+                        _showExamReloginDialog.value = false
+                        startExamAutoRelogin()
                     } else {
                         _messages.emit(app.getString(R.string.msg_exam_fetch_fail, msg))
                     }
