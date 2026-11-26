@@ -103,11 +103,18 @@ fun LoginScreen(
                 text = stringResource(R.string.login_school_title),
                 style = MaterialTheme.typography.headlineSmall
             )
-            Text(
-                text = stringResource(R.string.login_school_desc),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = stringResource(R.string.login_school_desc),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = stringResource(R.string.login_password_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                )
+            }
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -136,13 +143,6 @@ fun LoginScreen(
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
                         Icon(if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff, null)
                     }
-                },
-                supportingText = {
-                    Text(
-                        text = stringResource(R.string.login_password_hint),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
-                    )
                 }
             )
 
