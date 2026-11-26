@@ -22,8 +22,10 @@ import androidx.compose.ui.unit.dp
 import com.ty.gkschedule.R
 import com.ty.gkschedule.data.Course
 import com.ty.gkschedule.data.ScheduleResolver
+import com.ty.gkschedule.data.TrainingWeekDetector
 import com.ty.gkschedule.ui.theme.Md3Card
 import com.ty.gkschedule.ui.theme.Md3CardVariant
+import com.ty.gkschedule.ui.theme.TrainingWeekBadge
 import top.yukonga.miuix.kmp.blur.layerBackdrop
 import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
 import com.ty.gkschedule.util.CourseColors
@@ -79,6 +81,10 @@ fun TodayScreen(
 
     val todayCourses = remember(courses, currentWeek, today, semesterStart, scheduleAdjustments) {
         ScheduleResolver.todayCourses(courses, currentWeek, today, semesterStart, scheduleAdjustments)
+    }
+
+    val isTrainingWeek = remember(courses, currentWeek) {
+        TrainingWeekDetector.isTrainingWeek(courses, currentWeek)
     }
 
     val todayExams = remember(exams, showExamSchedule, today) {
@@ -153,11 +159,17 @@ fun TodayScreen(
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Text(
-                text = stringResource(R.string.week_format, currentWeek),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = stringResource(R.string.week_format, currentWeek),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                if (isTrainingWeek) {
+                    Spacer(modifier = Modifier.width(6.dp))
+                    TrainingWeekBadge()
+                }
+            }
             Spacer(modifier = Modifier.height(8.dp))
         }
 

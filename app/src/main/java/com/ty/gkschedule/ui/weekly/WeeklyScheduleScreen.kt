@@ -54,7 +54,9 @@ import com.ty.gkschedule.data.Course
 import com.ty.gkschedule.data.ScheduleResolver
 import com.ty.gkschedule.data.ScheduleAdjustment
 import com.ty.gkschedule.data.ScheduleItem
+import com.ty.gkschedule.data.TrainingWeekDetector
 import com.ty.gkschedule.util.CourseColors
+import com.ty.gkschedule.ui.theme.TrainingWeekBadge
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -112,6 +114,9 @@ fun WeeklyScheduleScreen(
     // Map course dayOfWeek (1=Mon..7=Sun) to visual column position
     fun dayToColumn(courseDay: Int): Int {
         return ((courseDay - startDay + 7) % 7) + 1
+    }
+    val isTrainingWeek = remember(courses, currentWeek) {
+        TrainingWeekDetector.isTrainingWeek(courses, currentWeek)
     }
     var showWeekPicker by remember { mutableStateOf(false) }
     var detailItem by remember { mutableStateOf<ScheduleItem?>(null) }
@@ -313,6 +318,10 @@ fun WeeklyScheduleScreen(
                         Text(stringResource(R.string.week_format, currentWeek),
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onPrimaryContainer)
+                        if (isTrainingWeek) {
+                            Spacer(modifier = Modifier.width(6.dp))
+                            TrainingWeekBadge()
+                        }
                     }
                     IconButton(onClick = {
                         com.ty.gkschedule.util.HapticFeedback.light(hapticView)

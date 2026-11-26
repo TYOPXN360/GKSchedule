@@ -14,6 +14,7 @@
     <string name="current_course">Now</string>
     <string name="next_course">Next</string>
     <string name="week_format">Week %1$d</string>
+    <string name="training_week">Training week</string>
     <string name="date_format">%1$s, %2$d/%3$d</string>
     <!-- Weekly Schedule -->
     <string name="weekly_title">Weekly Schedule</string>
