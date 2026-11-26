@@ -197,11 +197,8 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                 val ticket = settings.casTicket.first()
                 if (ticket.isNotEmpty()) api.setCasTicket(ticket)
                 android.util.Log.d("GdustApi", "restore: login restored, hasToken=${api.hasToken()}, hasTicket=${ticket.isNotEmpty()}")
-                // Load cached exams from DB (or skip if empty)
-                try {
-                    _examYear.value = settings.cachedExamYear.first()
-                    _examSemester.value = settings.cachedExamSemester.first()
-                } catch (_: Exception) {}
+                // ponytail: 不再恢复 cachedExamYear/cachedExamSemester——学年学期每次进页按当前时间算，
+                // 恢复缓存只会把初值又冲回去年（或空串）
                 // Auto-refresh on app start if enabled
                 val syncOnStart = settings.autoSyncOnStart.first()
                 if (syncOnStart) refreshFromSchool()
@@ -1103,9 +1100,11 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     // Exam schedule — backed by Room DB (single source of truth)
     private val _examLoading = MutableStateFlow(false)
     val examLoading: StateFlow<Boolean> = _examLoading
-    private val _examYear = MutableStateFlow("")
+    // ponytail: 学年/学期由手机时间算出来做初值——进考试页就该是匹配当前日期的值，
+    // 不能等 UI 的 LaunchedEffect（会被 init 里恢复的缓存值覆盖，或被异步 DataStore 读到后冲掉）
+    private val _examYear = MutableStateFlow(currentExamAcademicYear())
     val examYear: StateFlow<String> = _examYear
-    private val _examSemester = MutableStateFlow("")
+    private val _examSemester = MutableStateFlow(currentExamSemester())
     val examSemester: StateFlow<String> = _examSemester
     private val _showExamReloginDialog = MutableStateFlow(false)
     val showExamReloginDialog: StateFlow<Boolean> = _showExamReloginDialog
@@ -1114,21 +1113,24 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     fun setExamYear(year: String) { _examYear.value = year }
     fun setExamSemester(semester: String) { _examSemester.value = semester }
 
+    /** 8 月起算新学年：8-12 月用 Y，次年 1-7 月用 Y-1 */
+    private fun currentExamAcademicYear(): String {
+        val now = java.time.LocalDate.now()
+        val startYear = if (now.monthValue >= 8) now.year else now.year - 1
+        return "$startYear-${startYear + 1}"
+    }
+
+    /** 第一学期 8 月-次年 1 月，第二学期 2-7 月 */
+    private fun currentExamSemester(): String =
+        if (java.time.LocalDate.now().monthValue in 2..7) "2" else "1"
+
     fun refreshExamSchedule() {
         viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
             _examLoading.value = true
             try {
                 // Auto-detect academic year if not set
-                val yearStr = _examYear.value.ifEmpty {
-                    val now = java.time.LocalDate.now()
-                    val month = now.monthValue
-                    val startYear = if (month >= 9) now.year else now.year - 1
-                    "$startYear-${startYear + 1}"
-                }
-                val semester = _examSemester.value.ifEmpty {
-                    val month = java.time.LocalDate.now().monthValue
-                    if (month in 2..7) "2" else "1"
-                }
+                val yearStr = _examYear.value.ifEmpty { currentExamAcademicYear() }
+                val semester = _examSemester.value.ifEmpty { currentExamSemester() }
                 if (_examYear.value.isEmpty()) _examYear.value = yearStr
                 if (_examSemester.value.isEmpty()) _examSemester.value = semester
 

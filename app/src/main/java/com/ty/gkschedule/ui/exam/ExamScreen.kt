@@ -88,16 +88,8 @@ fun ExamScreen(
     onBack: () -> Unit,
     blurEnabled: Boolean = true
 ) {
-    // ponytail: 每次进考试页都按手机时间重算学年/学期——之前只在为空时补，
-    // 一旦缓存里存着去年拉取的学年，第二年打开还是旧的
-    LaunchedEffect(Unit) {
-        val now = LocalDate.now()
-        // 8 月-次年 1 月=第一学期，2-7 月=第二学期
-        val semester = if (now.monthValue in 2..7) "2" else "1"
-        val startYear = if (now.monthValue >= 8) now.year else now.year - 1
-        onYearChange("$startYear-${startYear + 1}")
-        onSemesterChange(semester)
-    }
+    // ponytail: 学年/学期初值由 ViewModel 按当前时间算好（进页即匹配），这里不再做兜底，
+    // 否则会和 VM 的初值抢写，还会在重组/旋转时把用户手选的值重置
 
     val isDark = LocalAppIsDark.current
     val themeHue = CourseColors.currentThemeHue()
