@@ -140,19 +140,22 @@ object ReminderScheduler {
                 // ponytail: 倒计时常驻Live Update（课前提醒点→上课），上课后进度链自动接管
                 if (countdown && reminderMinutes > 0 && session.start.isAfter(now)) {
                     val cdTime = session.start.minusMinutes(reminderMinutes.toLong())
-                    if (cdTime.isAfter(now)) {
-                        scheduleEvent(
-                            context = context,
-                            alarmManager = alarmManager,
-                            session = session,
-                            eventType = ReminderReceiver.EVENT_COUNTDOWN,
-                            triggerAt = cdTime,
-                            notificationId = notificationId,
-                            reminderMinutes = reminderMinutes,
-                            triggerTick = true,
-                            requestCodes = newRequestCodes
-                        )
-                    }
+                    // ponytail: 倒计时已经开始也要重排，否则链会永久断掉——cancelAll 会把正在跑的
+                    // 分钟链（tick 请求码同样写进了 request_codes）一起删掉，冷启动/心跳/改设置都会触发
+                    // 一次重排；旧逻辑只在 cdTime 未到时才排，于是首帧之后再也补不上，通知就停在
+                    // "剩 reminderMinutes-1 分钟"上不动，直到上课的 END 闹钟接力成进度。
+                    val triggerAt = if (cdTime.isAfter(now)) cdTime else now.plusSeconds(2)
+                    scheduleEvent(
+                        context = context,
+                        alarmManager = alarmManager,
+                        session = session,
+                        eventType = ReminderReceiver.EVENT_COUNTDOWN,
+                        triggerAt = triggerAt,
+                        notificationId = notificationId,
+                        reminderMinutes = reminderMinutes,
+                        triggerTick = true,
+                        requestCodes = newRequestCodes
+                    )
                     // ponytail: 到点自动转进度——END闹钟当接力棒，Receiver里重排当天触发PROGRESS
                     if (session.end.isAfter(now)) {
                         scheduleEvent(
