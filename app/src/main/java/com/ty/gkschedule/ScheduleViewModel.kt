@@ -154,6 +154,11 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing
 
+    // ponytail: 手动刷新限频——滑动窗口内最多 2 次/分钟，自动同步不占额度
+    private val manualRefreshTimestamps = ArrayDeque<Long>()
+    private val manualRefreshWindowMs = 60_000L
+    private val manualRefreshLimit = 2
+
     // One-shot messages for snackbar（带缓冲：自动重登链路不能被 snackbar 的展示时长阻塞）
     private val _messages = MutableSharedFlow<String>(extraBufferCapacity = 8)
     val messages: SharedFlow<String> = _messages
@@ -824,7 +829,14 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     }
 
     // Public refresh — re-fetch courses using saved token
-    fun refreshFromSchool() {
+    // manual=true 走限频：每分钟最多 2 次，超出只提示、不发请求
+    fun refreshFromSchool(manual: Boolean = false) {
+        if (manual && !allowManualRefresh()) {
+            viewModelScope.launch {
+                _messages.emit(app.getString(R.string.msg_refresh_too_frequent))
+            }
+            return
+        }
         android.util.Log.d("GdustApi", "refreshFromSchool: hasToken=${api.hasToken()}, sid=$savedStudentId")
         if (!api.hasToken() || savedStudentId.isEmpty()) {
             _isRefreshing.value = true
@@ -913,6 +925,19 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                 _isRefreshing.value = false
             }
         }
+    }
+
+    /** 手动刷新滑动窗口限频：窗口内已有 2 次则拒绝并返回 false。 */
+    private fun allowManualRefresh(): Boolean {
+        val now = android.os.SystemClock.elapsedRealtime()
+        while (manualRefreshTimestamps.isNotEmpty() &&
+            now - manualRefreshTimestamps.first() >= manualRefreshWindowMs
+        ) {
+            manualRefreshTimestamps.removeFirst()
+        }
+        if (manualRefreshTimestamps.size >= manualRefreshLimit) return false
+        manualRefreshTimestamps.addLast(now)
+        return true
     }
 
     private fun isTokenExpired(message: String?): Boolean {

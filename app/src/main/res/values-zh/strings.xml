@@ -403,6 +403,7 @@
     <string name="msg_courses_updated">已更新 %1$d 门课程</string>
     <string name="msg_no_changes">课程无变化</string>
     <string name="msg_refresh_fail">刷新失败: %1$s</string>
+    <string name="msg_refresh_too_frequent">刷新太频繁了，每分钟最多 2 次</string>
     <string name="msg_net_generic">网络错误</string>
     <string name="msg_login_fail">登录失败: %1$s</string>
     <string name="msg_no_credentials">无保存的凭据，请手动登录</string>
