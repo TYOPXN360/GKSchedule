@@ -18,6 +18,7 @@ kotlin {
 android {
     namespace = "com.ty.gkschedule"
     compileSdk = 37
+    compileSdkMinor = 2
     buildToolsVersion = "36.0.0"
 
     defaultConfig {
