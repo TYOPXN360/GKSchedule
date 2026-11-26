@@ -14,6 +14,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.compose.material.icons.automirrored.filled.WrapText
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -31,7 +33,6 @@ import com.ty.gkschedule.R
 import com.ty.gkschedule.captcha.CaptchaModelState
 import com.ty.gkschedule.data.ScheduleAdjustment
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.Instant
@@ -232,7 +233,7 @@ private fun SettingsMainPage(
                     listOf(0, 1, 2, 3).forEach { index ->
                         val badgeColor = com.ty.gkschedule.util.CourseColors.getSettingsBadgeColor(index)
                         ListItem(
-                            headlineContent = { Text(catTitles[index], style = MaterialTheme.typography.titleMedium) },
+                            content = { Text(catTitles[index], style = MaterialTheme.typography.titleMedium) },
                             supportingContent = { Text(catDescs[index], style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) },
                             leadingContent = {
                                 Surface(modifier = Modifier.size(40.dp), shape = MaterialTheme.shapes.small, color = badgeColor.container, contentColor = badgeColor.content) {
@@ -259,7 +260,7 @@ private fun SettingsMainPage(
                     listOf(4, 5, 6).forEach { index ->
                         val badgeColor = com.ty.gkschedule.util.CourseColors.getSettingsBadgeColor(index)
                         ListItem(
-                            headlineContent = { Text(catTitles[index], style = MaterialTheme.typography.titleMedium) },
+                            content = { Text(catTitles[index], style = MaterialTheme.typography.titleMedium) },
                             supportingContent = { Text(catDescs[index], style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) },
                             leadingContent = {
                                 Surface(modifier = Modifier.size(40.dp), shape = MaterialTheme.shapes.small, color = badgeColor.container, contentColor = badgeColor.content) {
@@ -274,11 +275,11 @@ private fun SettingsMainPage(
                             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
                             val goSignBadge = com.ty.gkschedule.util.CourseColors.getSettingsBadgeColor(3)
                             ListItem(
-                                headlineContent = { Text(stringResource(R.string.go_sign_entry_title), style = MaterialTheme.typography.titleMedium) },
+                                content = { Text(stringResource(R.string.go_sign_entry_title), style = MaterialTheme.typography.titleMedium) },
                                 supportingContent = { Text(stringResource(R.string.go_sign_entry_desc), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) },
                                 leadingContent = {
                                     Surface(modifier = Modifier.size(40.dp), shape = MaterialTheme.shapes.small, color = goSignBadge.container, contentColor = goSignBadge.content) {
-                                        Box(contentAlignment = Alignment.Center) { Icon(Icons.Default.OpenInNew, contentDescription = null, modifier = Modifier.size(22.dp)) }
+                                        Box(contentAlignment = Alignment.Center) { Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = null, modifier = Modifier.size(22.dp)) }
                                     }
                                 },
                                 trailingContent = { Icon(Icons.Default.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
@@ -523,7 +524,7 @@ internal fun ScheduleStylePage(
         SectionHeader(stringResource(R.string.style_section_block))
         SettingsCard {
             // ponytail: 课表块名多行——关=单行截断，开=最多3行自然折行
-            SwitchItem(Icons.Default.WrapText, stringResource(R.string.block_multiline), blockMultiline, onBlockMultilineChange)
+            SwitchItem(Icons.AutoMirrored.Filled.WrapText, stringResource(R.string.block_multiline), blockMultiline, onBlockMultilineChange)
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
             SwitchItem(Icons.Default.EditOff, stringResource(R.string.hide_weekly_edit), hideWeeklyEdit, onHideWeeklyEditChange)
         }
@@ -565,7 +566,7 @@ internal fun NotificationPage(
                     HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
                     var showModeInfo by remember { mutableStateOf(false) }
                     ListItem(
-                        headlineContent = { Text(stringResource(R.string.reminder_mode)) },
+                        content = { Text(stringResource(R.string.reminder_mode)) },
                         leadingContent = { Icon(Icons.Default.Style, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
                         trailingContent = {
                             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -609,7 +610,7 @@ internal fun NotificationPage(
                     // ponytail: desc改i弹窗（心跳同款BlurCard），行内只留标题+开关
                     var showLiveInfo by remember { mutableStateOf(false) }
                     ListItem(
-                        headlineContent = { Text(stringResource(R.string.reminder_live_update)) },
+                        content = { Text(stringResource(R.string.reminder_live_update)) },
                         leadingContent = { Icon(Icons.Default.Autorenew, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
                         trailingContent = {
                             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -680,6 +681,15 @@ internal fun SyncPage(
         "d" -> 1 to 31
         else -> 1 to 60
     }
+    // 新版 Slider 用 SliderState 承载数值；+/- 按钮改值后同步回滑杆
+    val sliderState = rememberSliderState(
+        value = autoSyncIntervalValue.toFloat(),
+        steps = (maxVal - minVal - 1).coerceAtLeast(0),
+        trackRange = minVal.toFloat()..maxVal.toFloat()
+    )
+    LaunchedEffect(autoSyncIntervalValue, minVal, maxVal) {
+        sliderState.value = autoSyncIntervalValue.toFloat()
+    }
 
     SubPage(stringResource(R.string.settings_category_sync), onBack, blurEnabled = blurEnabled) {
         SettingsCard {
@@ -694,7 +704,7 @@ internal fun SyncPage(
                     HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
 
                     ListItem(
-                        headlineContent = {
+                        content = {
                             Text(stringResource(R.string.auto_sync_schedule))
                         },
                         supportingContent = {
@@ -720,16 +730,14 @@ internal fun SyncPage(
 
                     // Value slider with +/- buttons
                     ListItem(
-                        headlineContent = {
+                        content = {
                             Text("$autoSyncIntervalValue $unitLabel")
                         },
                         supportingContent = {
                             Column {
                                 Slider(
-                                    value = autoSyncIntervalValue.toFloat(),
-                                    onValueChange = { onAutoSyncIntervalValueChange(it.toInt()) },
-                                    valueRange = minVal.toFloat()..maxVal.toFloat(),
-                                    steps = maxVal - minVal - 1
+                                    state = sliderState,
+                                    onValueChange = { onAutoSyncIntervalValueChange(it.toInt()) }
                                 )
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
@@ -772,7 +780,7 @@ internal fun SyncPage(
             }
             var showHeartbeatInfo by remember { mutableStateOf(false) }
             ListItem(
-                headlineContent = { Text(stringResource(R.string.token_heartbeat)) },
+                content = { Text(stringResource(R.string.token_heartbeat)) },
                 leadingContent = { Icon(Icons.Default.Favorite, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
                 trailingContent = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -803,7 +811,7 @@ internal fun SyncPage(
             // 模型不进 APK，按需下载（约 5.2MB）；没就绪时这里只显示下载入口，开关不出现
             var showDeleteModelConfirm by remember { mutableStateOf(false) }
             ListItem(
-                headlineContent = { Text(stringResource(R.string.captcha_ocr)) },
+                content = { Text(stringResource(R.string.captcha_ocr)) },
                 supportingContent = {
                     Text(
                         when (captchaModelState) {
@@ -984,7 +992,7 @@ internal fun ScheduleAdjustmentPage(
                     val source = runCatching { LocalDate.parse(adjustment.sourceDate) }.getOrNull() ?: adjustment.sourceDate
                     val target = runCatching { LocalDate.parse(adjustment.targetDate) }.getOrNull() ?: adjustment.targetDate
                     ListItem(
-                        headlineContent = { Text("$source ↔ $target") },
+                        content = { Text("$source ↔ $target") },
                         supportingContent = {
                             Text(
                                 stringResource(
@@ -1054,7 +1062,7 @@ private fun SettingsCard(content: @Composable ColumnScope.() -> Unit) {
 @Composable
 private fun SettingsItem(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, subtitle: String? = null, onClick: () -> Unit) {
     ListItem(
-        headlineContent = { Text(title) },
+        content = { Text(title) },
         supportingContent = subtitle?.let { { Text(it) } },
         leadingContent = { Icon(icon, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
@@ -1068,7 +1076,7 @@ private fun HourPickerItem(icon: androidx.compose.ui.graphics.vector.ImageVector
     var expanded by remember { mutableStateOf(false) }
     val label = String.format(java.util.Locale.US, "%02d:00", hour)
     ListItem(
-        headlineContent = { Text(title) },
+        content = { Text(title) },
         supportingContent = { Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant) },
         leadingContent = { Icon(icon, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
         trailingContent = {
@@ -1122,7 +1130,7 @@ private fun HourPickerItem(icon: androidx.compose.ui.graphics.vector.ImageVector
 @Composable
 private fun StepperItem(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, value: Int, min: Int, max: Int, onChange: (Int) -> Unit) {
     ListItem(
-        headlineContent = { Text(title) },
+        content = { Text(title) },
         supportingContent = {
             Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 IconButton(onClick = { if (value > min) onChange(value - 1) }, enabled = value > min) { Text("−", style = MaterialTheme.typography.titleLarge) }
@@ -1138,7 +1146,7 @@ private fun StepperItem(icon: androidx.compose.ui.graphics.vector.ImageVector, t
 @Composable
 private fun SwitchItem(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, checked: Boolean, onChange: (Boolean) -> Unit, onInfo: (() -> Unit)? = null) {
     ListItem(
-        headlineContent = { Text(title) },
+        content = { Text(title) },
         leadingContent = { Icon(icon, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
         trailingContent = {
             androidx.compose.foundation.layout.Row(verticalAlignment = Alignment.CenterVertically) {
@@ -1164,7 +1172,7 @@ private fun DropdownItem(icon: androidx.compose.ui.graphics.vector.ImageVector, 
     val alpha = if (enabled) 1f else 0.38f
     Box {
         ListItem(
-            headlineContent = { Text(title, color = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha)) },
+            content = { Text(title, color = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha)) },
             supportingContent = { Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha)) },
             leadingContent = { Icon(icon, null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha)) },
             trailingContent = {
@@ -1322,7 +1330,7 @@ internal fun GoSignPage(
     SubPage(title = stringResource(R.string.go_sign_entry_title), onBack = onBack, blurEnabled = blurEnabled) {
         SettingsCard {
             SwitchItem(
-                Icons.Default.OpenInNew,
+                Icons.AutoMirrored.Filled.OpenInNew,
                 stringResource(R.string.go_sign_switch_title),
                 goSignEnabled,
                 onGoSignEnabledChange,
@@ -1352,7 +1360,7 @@ internal fun GoSignPage(
                 }
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
                 ListItem(
-                    headlineContent = { Text(stringResource(R.string.go_sign_last_result)) },
+                    content = { Text(stringResource(R.string.go_sign_last_result)) },
                     supportingContent = { Text(fetchResult ?: stringResource(R.string.go_sign_never_fetched), color = MaterialTheme.colorScheme.onSurfaceVariant) },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                 )
@@ -1362,7 +1370,7 @@ internal fun GoSignPage(
             SettingsCard {
                 if (matched.isEmpty()) {
                     ListItem(
-                        headlineContent = { Text(stringResource(R.string.go_sign_no_matched), color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                        content = { Text(stringResource(R.string.go_sign_no_matched), color = MaterialTheme.colorScheme.onSurfaceVariant) },
                         supportingContent = { Text(stringResource(R.string.go_sign_fetch_hint)) },
                         colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                     )
@@ -1372,7 +1380,7 @@ internal fun GoSignPage(
                     }
                     val bound = bindings[course.name].orEmpty()
                     ListItem(
-                        headlineContent = { Text(course.name, fontWeight = FontWeight.Medium) },
+                        content = { Text(course.name, fontWeight = FontWeight.Medium) },
                         supportingContent = {
                             if (bound.isNotEmpty()) {
                                 Column {
@@ -1417,7 +1425,7 @@ internal fun GoSignPage(
                             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f))
                         }
                         ListItem(
-                            headlineContent = { Text(course.name, fontWeight = FontWeight.Medium) },
+                            content = { Text(course.name, fontWeight = FontWeight.Medium) },
                             supportingContent = {
                                 Text(
                                     stringResource(R.string.go_sign_unmatched_ids, course.classId, course.courseId, unusedCxFid),

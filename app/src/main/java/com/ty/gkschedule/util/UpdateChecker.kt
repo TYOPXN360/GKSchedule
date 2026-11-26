@@ -73,7 +73,7 @@ object UpdateChecker {
                 .build()
 
             val response = client.newCall(request).execute()
-            val body = response.body?.string() ?: throw Exception("Empty response")
+            val body = response.body.string()
 
             if (!response.isSuccessful) {
                 throw Exception("GitHub API error: ${response.code}")

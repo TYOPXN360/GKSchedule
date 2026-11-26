@@ -5,6 +5,8 @@ import android.util.Base64
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.input.TextObfuscationMode
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -29,8 +31,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.ty.gkschedule.CaptchaState
 import com.ty.gkschedule.LoginState
@@ -58,7 +58,7 @@ fun LoginScreen(
     // ponytail: miuix源层
     val backdrop = top.yukonga.miuix.kmp.blur.rememberLayerBackdrop()
     var studentId by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
+    val passwordState = rememberTextFieldState()
     var captcha by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
 
@@ -124,16 +124,14 @@ fun LoginScreen(
             )
 
             // Password
-            OutlinedTextField(
-                value = password,
-                onValueChange = { password = it },
+            OutlinedSecureTextField(
+                state = passwordState,
                 label = { Text(stringResource(R.string.login_password)) },
                 modifier = Modifier.fillMaxWidth().semantics {
                     this[androidx.compose.ui.semantics.SemanticsProperties.ContentType] = androidx.compose.ui.autofill.ContentType.Password
                 },
-                singleLine = true,
                 enabled = !isLoading,
-                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                textObfuscationMode = if (passwordVisible) TextObfuscationMode.Visible else TextObfuscationMode.Hidden,
                 trailingIcon = {
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
                         Icon(if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff, null)
@@ -174,9 +172,9 @@ fun LoginScreen(
 
             // Login button
             Button(
-                onClick = { onLogin(studentId, password, captcha) },
+                onClick = { onLogin(studentId, passwordState.text.toString(), captcha) },
                 modifier = Modifier.fillMaxWidth().height(48.dp),
-                enabled = !isLoading && studentId.isNotBlank() && password.isNotBlank() && captcha.isNotBlank()
+                enabled = !isLoading && studentId.isNotBlank() && passwordState.text.isNotBlank() && captcha.isNotBlank()
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(modifier = Modifier.size(24.dp),

@@ -32,7 +32,7 @@ abstract class CourseDatabase : RoomDatabase() {
                     CourseDatabase::class.java,
                     "course_database"
                 ).addMigrations(MIGRATION_103_104)
-                 .fallbackToDestructiveMigration()
+                 .fallbackToDestructiveMigration(dropAllTables = true)
                  .build()
                 INSTANCE = instance
                 instance

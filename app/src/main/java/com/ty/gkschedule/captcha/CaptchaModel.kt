@@ -177,7 +177,7 @@ object CaptchaModel {
 
         client.newCall(request).execute().use { response ->
             if (!response.isSuccessful) throw IOException("HTTP ${response.code}")
-            val body = response.body ?: throw IOException("empty body")
+            val body = response.body
             val total = body.contentLength().takeIf { it > 0 } ?: EXPECTED_SIZE
             var received = 0L
             var lastPct = -1

@@ -44,7 +44,7 @@ fun BlurLargeTopBar(
         modifier = Modifier
             .then(
                 if (useBlur) Modifier.drawBackdrop(
-                    backdrop = backdrop!!,
+                    backdrop = backdrop,
                     shape = { RectangleShape },
                     effects = { blur(28.dp.toPx()) }
                 ) else Modifier
@@ -85,7 +85,7 @@ fun BlurTopBar(
         modifier = Modifier
             .then(
                 if (useBlur) Modifier.drawBackdrop(
-                    backdrop = backdrop!!,
+                    backdrop = backdrop,
                     shape = { RectangleShape },
                     effects = { blur(28.dp.toPx()) }
                 ) else Modifier

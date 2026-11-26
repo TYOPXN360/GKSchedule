@@ -656,8 +656,8 @@ private fun ExamCard(exam: com.ty.gkschedule.data.ExamEntity, examColor: com.ty.
     val progress = if (isPast) {
         1f
     } else if (isNow) {
-        val start = startMins ?: 0
-        val end = endMins ?: start
+        val start = startMins
+        val end = endMins
         val duration = end - start
         if (duration > 0) ((nowMins - start).toFloat() / duration).coerceIn(0f, 1f) else 0f
     } else {

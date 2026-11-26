@@ -29,7 +29,6 @@ import com.ty.gkschedule.util.UpdateChecker
 import com.ty.gkschedule.util.UpdateInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import com.ty.gkschedule.ui.theme.GkAlertDialog
@@ -45,6 +44,7 @@ fun AboutDetailPage(
     preloadedUpdateInfo: UpdateInfo? = null
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     var showDisclaimerDialog by remember { mutableStateOf(false) }
     var showUpdateDialog by remember { mutableStateOf(false) }
     var updateInfo by remember { mutableStateOf<UpdateInfo?>(null) }
@@ -187,7 +187,7 @@ fun AboutDetailPage(
 
                                 isCheckingUpdate = true
                                 updateError = null
-                                GlobalScope.launch(Dispatchers.IO) {
+                                scope.launch(Dispatchers.IO) {
                                     val includePrerelease = com.ty.gkschedule.data.SettingsDataStore(context)
                                         .checkPrereleaseUpdate.first()
                                     UpdateChecker.checkForUpdate(context, includePrerelease)

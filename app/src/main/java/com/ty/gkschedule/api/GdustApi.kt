@@ -173,7 +173,7 @@ class GdustApi {
             .build()
 
         val response = client.newCall(request).execute()
-        val body = response.body?.string() ?: throw Exception("Empty response")
+        val body = response.body.string()
         
         // Try to parse as JSON
         val parsed = try {
@@ -206,7 +206,7 @@ class GdustApi {
             .build()
 
         val response = client.newCall(request).execute()
-        val respBody = response.body?.string() ?: throw Exception("Empty response")
+        val respBody = response.body.string()
         android.util.Log.d("GdustApi", "loginByAccount response: ${respBody.take(300)}")
         val parsed = json.decodeFromString<LoginByAccountResponse>(respBody)
         val isSuccess = parsed.success || parsed.ok || parsed.code == 1
@@ -230,7 +230,7 @@ class GdustApi {
             .build()
 
         val response = client.newCall(request).execute()
-        response.body?.string() // might be empty, but cookies are captured
+        response.body.string() // might be empty, but cookies are captured
         ticket
     }
 
@@ -245,7 +245,7 @@ class GdustApi {
             .build()
 
         val response = client.newCall(request).execute()
-        val body = response.body?.string() ?: throw Exception("Empty response")
+        val body = response.body.string()
         val parsed = json.decodeFromString<UserLoginResponse>(body)
         if (parsed.success && parsed.data?.userBase != null) {
             val user = parsed.data.userBase
@@ -283,7 +283,7 @@ class GdustApi {
             .build()
 
         val response = client.newCall(request).execute()
-        val body = response.body?.string() ?: throw Exception("Empty response")
+        val body = response.body.string()
         val parsed = json.decodeFromString<SchoolCalendarResponse>(body)
         if (parsed.success && parsed.data != null) {
             parsed.data
@@ -305,7 +305,7 @@ class GdustApi {
             .build()
 
         val response = client.newCall(request).execute()
-        val body = response.body?.string() ?: throw Exception("Empty response")
+        val body = response.body.string()
         val parsed = json.decodeFromString<CourseListResponse>(body)
         if (parsed.success && parsed.data != null) {
             parsed.data.courseList
@@ -333,7 +333,7 @@ class GdustApi {
                 .header("User-Agent", "Mozilla/5.0")
                 .build()
             val response = client.newCall(request).execute()
-            val stream = response.body?.byteStream() ?: return null to null
+            val stream = response.body.byteStream()
             val reader = stream.bufferedReader()
             var pendingEvent = ""
 
@@ -425,7 +425,7 @@ class GdustApi {
             .build()
 
         val response = client.newCall(request).execute()
-        val body = response.body?.string() ?: throw Exception("Empty response")
+        val body = response.body.string()
         val parsed = json.decodeFromString<UserInfoResponse>(body)
         if (parsed.success && parsed.data != null) {
             parsed.data
@@ -507,7 +507,7 @@ class GdustApi {
         val qResp = jwxtClient.newCall(Request.Builder().url(queryUrl).post(requestBody)
             .header("Content-Type", "application/x-www-form-urlencoded;charset=UTF-8")
             .header("X-Requested-With", "XMLHttpRequest").build()).execute()
-        val body = qResp.body?.string() ?: throw Exception("Empty response")
+        val body = qResp.body.string()
         android.util.Log.d("GdustApi", "Query: status=${qResp.code}, body=${body.take(300)}")
 
         if (qResp.code != 200 || body.contains("<!DOCTYPE") || body.isEmpty()) {
@@ -580,13 +580,13 @@ data class ExamInfo(
  * Simple in-memory cookie jar for OkHttp
  */
 private class InMemoryCookieJar : CookieJar {
-    private val cookies = mutableMapOf<String, List<Cookie>>()
+    private val cookieStore = mutableMapOf<String, List<Cookie>>()
 
-    override fun saveFromResponse(url: HttpUrl, newCookies: List<Cookie>) {
-        cookies[url.host] = newCookies
+    override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {
+        cookieStore[url.host] = cookies
     }
 
     override fun loadForRequest(url: HttpUrl): List<Cookie> {
-        return cookies[url.host] ?: emptyList()
+        return cookieStore[url.host] ?: emptyList()
     }
 }
