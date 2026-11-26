@@ -137,7 +137,7 @@ fun LoginScreen(
                         Icon(if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff, null)
                     }
                 },
-                placeholder = {
+                supportingText = {
                     Text(
                         text = stringResource(R.string.login_password_hint),
                         style = MaterialTheme.typography.bodySmall,

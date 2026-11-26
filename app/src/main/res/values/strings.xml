@@ -205,7 +205,7 @@
     <string name="login_student_id">Student/Staff ID</string>
     <string name="login_student_id_hint"></string>
     <string name="login_password">Password</string>
-    <string name="login_password_hint">If unchanged: gk + last 6 digits of ID</string>
+    <string name="login_password_hint">If you haven\'t changed your password, the default is gk + the last 6 digits of your ID number</string>
     <string name="login_captcha">Captcha</string>
     <string name="login_button">Login</string>
     <string name="login_tips">Your credentials are only sent to the school server and not stored on any third-party service.</string>

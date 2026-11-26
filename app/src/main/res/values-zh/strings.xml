@@ -226,7 +226,7 @@
     <string name="login_student_id">学号/工号</string>
     <string name="login_student_id_hint"></string>
     <string name="login_password">密码</string>
-    <string name="login_password_hint">如果未曾修改过密码，默认密码为gk+身份证后六位</string>
+    <string name="login_password_hint">如果未曾修改过密码,默认密码为gk+身份证后六位</string>
     <string name="login_captcha">验证码</string>
     <string name="login_button">登录</string>
     <string name="login_tips">您的账号信息仅发送至学校服务器，不会存储在任何第三方服务。</string>
