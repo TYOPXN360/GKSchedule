@@ -384,6 +384,11 @@
     <string name="captcha_load_failed_fmt">Failed to load captcha: %1$s</string>
     <string name="captcha_refresh">Refresh captcha</string>
     <string name="msg_import_fail">Import failed: %1$s</string>
+    <string name="msg_import_no_courses">the file contains no courses</string>
+    <string name="msg_import_invalid_courses">the file has invalid course entries</string>
+    <string name="msg_import_version_newer">file version %1$d is newer than this app supports, please update the app</string>
+    <string name="import_confirm_title">Replace schedule?</string>
+    <string name="import_confirm_msg">All current courses will be replaced by the ones in the file. This cannot be undone.</string>
     <string name="msg_login_required">Please log in to the education system first</string>
     <string name="msg_sync_incomplete">Sync incomplete; previous schedule kept</string>
     <string name="msg_courses_updated">Updated %1$d courses</string>

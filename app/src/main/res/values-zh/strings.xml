@@ -391,6 +391,11 @@
     <string name="captcha_load_failed_fmt">验证码加载失败：%1$s</string>
     <string name="captcha_refresh">刷新验证码</string>
     <string name="msg_import_fail">导入失败: %1$s</string>
+    <string name="msg_import_no_courses">文件里没有课程</string>
+    <string name="msg_import_invalid_courses">文件里有不合法的课程数据</string>
+    <string name="msg_import_version_newer">文件版本 %1$d 高于当前应用支持的版本，请先升级应用</string>
+    <string name="import_confirm_title">覆盖导入课表？</string>
+    <string name="import_confirm_msg">将用文件中的课程替换当前全部课程，操作无法撤销。</string>
     <string name="msg_login_required">请先登录教务系统</string>
     <string name="msg_sync_incomplete">同步未完成，已保留原课表</string>
     <string name="msg_courses_updated">已更新 %1$d 门课程</string>

@@ -612,7 +612,8 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
         val allCourses = courseDao.getAllCourses().first()
         if (allCourses.isEmpty()) return null
         val start = settings.semesterStart.first()
-        return IcsExport.exportToIcs(allCourses, start, ::getStartTime, ::getEndTime)
+        val weeks = settings.totalWeeks.first()
+        return IcsExport.exportToIcs(allCourses, start, weeks, ::getStartTime, ::getEndTime)
     }
 
     suspend fun exportJson(): String? {
@@ -663,9 +664,31 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
 
     fun importJson(jsonString: String) {
         viewModelScope.launch {
-            val courses = JsonImportExport.importFromJson(jsonString)
-            courseDao.deleteAllCourses()
-            courses.forEach { courseDao.insertCourse(it) }
+            when (val result = JsonImportExport.importFromJson(jsonString)) {
+                is JsonImportExport.ImportResult.Success -> {
+                    try {
+                        courseDao.deleteAllCourses()
+                        result.courses.forEach { courseDao.insertCourse(it) }
+                        _messages.emit(app.getString(R.string.import_done_fmt, result.courses.size))
+                    } catch (_: Exception) {
+                        _messages.emit(app.getString(R.string.msg_import_fail, app.getString(R.string.import_failed)))
+                    }
+                }
+                is JsonImportExport.ImportResult.Failure -> {
+                    val detail = when (result.reason) {
+                        JsonImportExport.ImportResult.Reason.NEWER_VERSION ->
+                            app.getString(R.string.msg_import_version_newer, result.fileVersion)
+                        JsonImportExport.ImportResult.Reason.EMPTY_FILE,
+                        JsonImportExport.ImportResult.Reason.NO_COURSES ->
+                            app.getString(R.string.msg_import_no_courses)
+                        JsonImportExport.ImportResult.Reason.INVALID_COURSES ->
+                            app.getString(R.string.msg_import_invalid_courses)
+                        JsonImportExport.ImportResult.Reason.MALFORMED ->
+                            app.getString(R.string.import_failed)
+                    }
+                    _messages.emit(app.getString(R.string.msg_import_fail, detail))
+                }
+            }
         }
     }
 

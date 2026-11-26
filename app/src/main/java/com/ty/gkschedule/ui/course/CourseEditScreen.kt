@@ -197,7 +197,10 @@ fun CourseEditScreen(
                                 if (aiClipboardInput.isBlank()) return@FilledTonalButton
                                 try {
                                     val cleanedJson = extractJsonArrayString(aiClipboardInput.trim())
-                                    val parsedList = JsonImportExport.importFromJson(cleanedJson)
+                                    val parsedList = when (val importResult = JsonImportExport.importFromJson(cleanedJson)) {
+                                        is JsonImportExport.ImportResult.Success -> importResult.courses
+                                        is JsonImportExport.ImportResult.Failure -> throw IllegalArgumentException(importResult.reason.name)
+                                    }
                                     val mappedCourses = parsedList.map { data ->
                                         Course(id = 0, name = data.name, teacher = data.teacher, classroom = data.classroom, dayOfWeek = data.dayOfWeek.coerceIn(1, 7), startPeriod = data.startPeriod.coerceIn(1, periodsPerDay), periods = data.periods.coerceIn(1, periodsPerDay), colorIndex = data.colorIndex, weekRange = data.weekRange, remark = data.remark, isCustomTime = data.isCustomTime, customStartTime = data.customStartTime.ifBlank { "08:00" }, customEndTime = data.customEndTime.ifBlank { "09:00" }, isManuallyEdited = true, isHidden = false)
                                     }

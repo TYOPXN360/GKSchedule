@@ -365,12 +365,21 @@ fun ScheduleApp(
     // 专门给截图用的无动画拔除状态，严禁与日常滚动 pillHidden 混用！
     var screenshotHidden by remember { mutableStateOf(false) }
 
+    // ponytail: 导入先落到待确认状态——旧逻辑直接清库写入，选错文件没有撤销余地
+    var pendingImportJson by remember { mutableStateOf<String?>(null) }
+    val uiScope = rememberCoroutineScope()
     val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let {
-            try {
-                val json = context.contentResolver.openInputStream(it)?.bufferedReader()?.readText()
-                if (json != null) viewModel.importJson(json)
-            } catch (_: Exception) {}
+            val json = try {
+                context.contentResolver.openInputStream(it)?.bufferedReader()?.use { reader -> reader.readText() }
+            } catch (_: Exception) {
+                null
+            }
+            if (json.isNullOrBlank()) {
+                uiScope.launch { snackbarHostState.showSnackbar(context.getString(R.string.import_failed)) }
+            } else {
+                pendingImportJson = json
+            }
         }
     }
 
@@ -593,6 +602,25 @@ fun ScheduleApp(
                 }
             }
         }
+    }
+    // ponytail: 覆盖导入前再确认一次，把"清空当前课表"的风险留在用户手上
+    pendingImportJson?.let { json ->
+        AlertDialog(
+            onDismissRequest = { pendingImportJson = null },
+            title = { Text(stringResource(R.string.import_confirm_title)) },
+            text = { Text(stringResource(R.string.import_confirm_msg)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    pendingImportJson = null
+                    viewModel.importJson(json)
+                }) { Text(stringResource(R.string.ok)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingImportJson = null }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
     }
 }
 @Composable
