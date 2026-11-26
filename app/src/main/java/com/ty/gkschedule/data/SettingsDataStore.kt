@@ -135,8 +135,9 @@ class SettingsDataStore(private val context: Context) {
     val cachedExamSemester: Flow<String> = context.dataStore.data.map { prefs -> prefs[CACHED_EXAM_SEMESTER] ?: "" }
     val diffColorPerWeek: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[DIFF_COLOR_PER_WEEK] ?: false }
     val showHiddenCourses: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[SHOW_HIDDEN_COURSES] ?: false }
-    val compactNavBar: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[COMPACT_NAV_BAR] ?: true }
-    val pillContentMode: Flow<Int> = context.dataStore.data.map { prefs -> prefs[PILL_CONTENT_MODE] ?: 0 }
+    // ponytail: 悬浮底栏默认关闭（首次安装就是不占位的普通底栏）；打开后默认「仅图标」
+    val compactNavBar: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[COMPACT_NAV_BAR] ?: false }
+    val pillContentMode: Flow<Int> = context.dataStore.data.map { prefs -> prefs[PILL_CONTENT_MODE] ?: 1 }
     val blurEffect: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[BLUR_EFFECT] ?: false }
     // ponytail: 课表块多行名——关=单行截断，开关默认关
     val weeklyBlockMultiline: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[WEEKLY_BLOCK_MULTILINE] ?: true }

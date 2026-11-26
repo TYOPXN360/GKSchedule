@@ -112,8 +112,8 @@ class SettingsActivity : AppCompatActivity() {
                     val examLookaheadWeeks by vm.examLookaheadWeeks.collectAsState(initial = 1)
                     val diffColorPerWeek by vm.diffColorPerWeek.collectAsState(initial = false)
                     val showHiddenCourses by vm.showHiddenCourses.collectAsState(initial = false)
-                    val compactNavBar by vm.compactNavBar.collectAsState(initial = true)
-                    val pillContentMode by vm.pillContentMode.collectAsState(initial = 0)
+                    val compactNavBar by vm.compactNavBar.collectAsState(initial = false)
+                    val pillContentMode by vm.pillContentMode.collectAsState(initial = 1)
 
                     SettingsScreen(
                         startDestination = settingsStart,
